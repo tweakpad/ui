@@ -52,6 +52,62 @@ The default/control slot contains the registered control, including through a na
 
 The root also publishes `field` and `field-field`. Labels and separators reuse the library Label and Separator. Other wrappers are ordinary layout and descriptive content. Descriptions and error relationships are projected into a native control's own shadow root; ID references do not point across an inaccessible root.
 
+## Custom controls
+
+A custom element joins a Field when it carries `data-field-control`. A `TpFormElement` subclass receives the Field context (disabled, name, invalid, state markers and the autofill opt-out) through `setFieldContext()`, and the Field's label, description and error through `setFieldAssociation()`. A Label's text arrives the same way.
+
+After each update the element writes `aria-label`, `aria-describedby`, `aria-errormessage` and `aria-invalid` on the element that `associationTarget()` returns. It keeps the description and error text as hidden nodes beside that element and restores the values it replaced once the association changes or the element disconnects.
+
+A control whose labelled element it cannot write directly overrides `applyFieldAssociation(attributes)`. It receives a `FieldAssociationAttributes` record with the four values, each a string or `null`: the Field label (else the host's `aria-label`), the description and error node ids, the error node id, and `'true'` while invalid. The hook runs after every update with the current values, also when none of them changed, so an override must be idempotent: applying the same record again must leave the element as it was. Setting or removing each attribute, as the example below does, meets this; adding to an attribute's previous value or queuing work on every call does not. Returning `true` means the control applied them itself: the element then writes nothing to `associationTarget()`, and the description and error text stay in the control's shadow root even when `associationTarget()` returns `null`. The hook is not called on disconnect, and a control that rebuilds its labelled element applies the last values again.
+
+The description and error text sit in the node that the protected `associationContainer()` returns, which is the render root by default; a control whose labelled element lives inside one part of its shadow root can return that part instead, as long as it stays in the same tree.
+
+```ts
+import { TpFormElement, type FieldAssociationAttributes } from '@tweakpad/ui';
+import { html } from 'lit';
+
+class SketchPad extends TpFormElement {
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.setAttribute('data-field-control', '');
+  }
+
+  protected override render() {
+    return html`<div class="surface" role="application" tabindex="0"></div>`;
+  }
+
+  protected override focusTarget(): HTMLElement | null {
+    return this.renderRoot.querySelector<HTMLElement>('.surface');
+  }
+
+  protected override associationTarget(): HTMLElement | null {
+    return null;
+  }
+
+  protected override applyFieldAssociation(attributes: FieldAssociationAttributes): boolean {
+    const surface = this.focusTarget();
+    if (!surface) return false;
+    for (const [name, value] of Object.entries(attributes)) {
+      if (value === null) surface.removeAttribute(name);
+      else surface.setAttribute(name, value);
+    }
+    if (attributes['aria-label'] === null) surface.setAttribute('aria-label', 'Sketch');
+    return true;
+  }
+
+  protected resetFormValue(): void {
+    this.value = '';
+  }
+}
+customElements.define('sketch-pad', SketchPad);
+```
+
+```html
+<tp-field label="Trail map" description="Draw the route you plan to take">
+  <sketch-pad name="route"></sketch-pad>
+</tp-field>
+```
+
 ## Validation and observation
 
 `validate()` and `actions.validate()` return a `ValidationRun`: generation, pending/valid/invalid/failed/cancelled status, ordered fieldResults and completion. `validationRun` retains the newest run. `control`, `value`, `effectiveName`, `mode` and `validityState` are read-only channels.

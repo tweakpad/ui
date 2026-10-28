@@ -1,10 +1,15 @@
 import { FakeIntersectionObserver } from './fakes.test.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setFlagsFromString } from 'node:v8';
+import { runInNewContext } from 'node:vm';
 import {
   canObserveIntersection,
+  observeFonts,
   observeIntersection,
   observeLanguage,
+  observeResize,
   observeScroll,
+  observeSubtree,
 } from './observation.js';
 
 class CountingTarget extends EventTarget {
@@ -210,5 +215,55 @@ describe('shared language observation', () => {
     expect(view.removed).toBe(1);
     view.dispatchEvent(new Event('languagechange'));
     expect(calls).toEqual(['a', 'b']);
+  });
+});
+
+describe('shared registries keep no subscriber (V-585)', () => {
+  setFlagsFromString('--expose-gc');
+  const collect = runInNewContext('gc') as () => void;
+
+  /** An observer that keeps its callback, as a native one does while it observes anything. */
+  class KeepingObserver {
+    constructor(readonly callback: unknown) {}
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  }
+
+  it('the first subscriber of every registry is collected after it leaves while others stay', async () => {
+    const fonts = Object.assign(new EventTarget(), { status: 'loaded' });
+    const view = Object.assign(new EventTarget(), {
+      ResizeObserver: KeepingObserver,
+      IntersectionObserver: KeepingObserver,
+      MutationObserver: KeepingObserver,
+    });
+    const document = { nodeType: 9, defaultView: view, documentElement: {}, fonts };
+    Object.assign(view, { document });
+    const node = () => ({ nodeType: 1, ownerDocument: document }) as unknown as Element;
+    const subscriptions: Record<string, (subscriber: Element) => () => void> = {
+      resize: (subscriber) => observeResize(subscriber, () => void subscriber),
+      intersection: (subscriber) => observeIntersection(subscriber, () => void subscriber),
+      subtree: (subscriber) => observeSubtree(document as unknown as Node, () => void subscriber),
+      language: (subscriber) => observeLanguage(view as unknown as Window, () => void subscriber),
+      fonts: (subscriber) => observeFonts(document as unknown as Document, () => void subscriber),
+    };
+    const firsts = new Map<string, WeakRef<Element>>();
+    const stay: (() => void)[] = [];
+    for (const [name, subscribe] of Object.entries(subscriptions)) {
+      // The first subscriber creates the registry and leaves; a second one keeps it alive.
+      firsts.set(
+        name,
+        (() => {
+          const first = node();
+          subscribe(first)();
+          return new WeakRef(first);
+        })(),
+      );
+      stay.push(subscribe(node()));
+    }
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    collect();
+    for (const [name, first] of firsts) expect(first.deref(), name).toBeUndefined();
+    for (const release of stay) release();
   });
 });

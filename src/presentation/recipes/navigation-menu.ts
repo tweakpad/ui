@@ -84,28 +84,15 @@ export const navigationMenuAppearance: PresentationDictionary = {
   ],
   'navigation-menu-content': [
     ...popupSpacingAppearance,
-    ...presenceMotion(['opacity', 'transform', 'translate']),
-    { selector: '&:is([data-starting-style],[data-ending-style])', declarations: { opacity: '0' } },
+    // Opening and closing the surface fades its panel. Switching items does not move or fade the
+    // labels: the next panel is in place at once and the viewport's size change reveals it, while
+    // the previous panel leaves at once.
+    ...presenceMotion(['opacity'], 'fast'),
     {
-      selector:
-        '&[data-starting-style][data-activation-direction="left"], &[data-ending-style][data-activation-direction="right"]',
-      declarations: { translate: '-50% 0' },
+      selector: '&:is([data-starting-style],[data-ending-style]):not([data-activation-direction])',
+      declarations: { opacity: '0' },
     },
-    {
-      selector:
-        '&[data-starting-style][data-activation-direction="right"], &[data-ending-style][data-activation-direction="left"]',
-      declarations: { translate: '50% 0' },
-    },
-    {
-      selector:
-        '&[data-starting-style][data-activation-direction="up"], &[data-ending-style][data-activation-direction="down"]',
-      declarations: { translate: '0 -50%' },
-    },
-    {
-      selector:
-        '&[data-starting-style][data-activation-direction="down"], &[data-ending-style][data-activation-direction="up"]',
-      declarations: { translate: '0 50%' },
-    },
+    { selector: '&[data-activation-direction]', declarations: { transition: 'none' } },
     ...popup.map((rule) => ({
       ...rule,
       selector: `&:not([data-viewport])${rule.selector?.replace('&', '') ?? ''}`,
@@ -154,10 +141,8 @@ export const navigationMenuAppearance: PresentationDictionary = {
     },
   ],
   'navigation-menu-positioner': [
-    {
-      declarations: {
-        transition: motionTransition(['left', 'top']),
-      },
-    },
+    // The positioner glides from one trigger to the next; its place is its translate.
+    { declarations: { transition: motionTransition(['translate']) } },
+    { selector: '&[data-instant]', declarations: { transition: 'none' } },
   ],
 };

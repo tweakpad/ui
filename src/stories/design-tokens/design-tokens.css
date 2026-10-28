@@ -161,6 +161,7 @@ design-tokens-view {
 
 .design-tokens-color {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--tp-space-2);
   align-items: center;
 }
@@ -204,6 +205,11 @@ design-tokens-view {
   background: var(--_surface);
   color: var(--_token);
   font-weight: var(--tp-font-medium);
+}
+
+/* A content color's foreground sample on its surface and then on the background. */
+.design-tokens-specimen[data-preview='content'] {
+  gap: var(--tp-space-2);
 }
 
 .design-tokens-tile[data-preview='syntax'] {

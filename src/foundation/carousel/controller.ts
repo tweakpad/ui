@@ -285,7 +285,17 @@ export class CarouselController {
     return this.#lastReason;
   }
   subscribe(listener: (snapshot: CarouselSnapshot) => void): () => void {
-    return this.#store.subscribe((change) => listener(change.value), true);
+    // A published snapshot's failing observer is diagnosed; the current one is delivered at once,
+    // so its error reaches the caller.
+    const unsubscribe = this.#store.subscribe(({ value }) => {
+      try {
+        listener(value);
+      } catch (error) {
+        this.#diagnose('Carousel snapshot observer failed.', error);
+      }
+    });
+    listener(this.snapshot);
+    return unsubscribe;
   }
   on(event: CarouselEventName, listener: (snapshot: CarouselSnapshot) => void): () => void {
     return this.#events.on(event, listener);
@@ -830,11 +840,7 @@ export class CarouselController {
       autoplayPaused: this.autoplay?.paused ?? false,
     });
     const wasLocked = this.snapshot.locked;
-    try {
-      this.#store.set(snapshot, reason);
-    } catch (error) {
-      this.#diagnose('Carousel snapshot observer failed.', error);
-    }
+    this.#store.set(snapshot, reason);
     if (this.#initialized && wasLocked !== snapshot.locked) this.#emit('lock-change');
     this.adapter.host.requestUpdate();
   }

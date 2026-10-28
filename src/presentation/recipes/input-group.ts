@@ -1,4 +1,4 @@
-import type { PresentationDictionary } from '../resolver.js';
+import type { PresentationDeclarations, PresentationDictionary } from '../resolver.js';
 import {
   disabledBackground,
   fieldBoundary,
@@ -6,10 +6,25 @@ import {
   fieldInvalid,
 } from './shared/text-control.js';
 
-// A joined editor uses the same field boundary, transferred to its group root.
+/**
+ * Input group's Root boundary (`ucl17-input-group-q1`): a joined editor uses the same field
+ * boundary, transferred to its group root, without padding.
+ */
+export const inputGroupBoundary: PresentationDeclarations = {
+  ...fieldBoundary,
+  padding: '0',
+  'min-inline-size': '0',
+};
+
+/** The block inset of an addon row. */
+export const inputGroupAddonInsetBlock = 'var(--tp-space-1-5)';
+
+/** The inline inset of an addon row. */
+export const inputGroupAddonInsetInline = 'var(--tp-space-2)';
+
 export const inputGroupAppearance: PresentationDictionary = {
   'input-group': [
-    { declarations: { ...fieldBoundary, padding: '0', 'min-inline-size': '0' } },
+    { declarations: inputGroupBoundary },
     { selector: '&:focus-within', declarations: fieldFocus },
     { selector: '&[data-invalid]', declarations: fieldInvalid },
     {
@@ -20,7 +35,7 @@ export const inputGroupAppearance: PresentationDictionary = {
   'input-group-addon': [
     {
       declarations: {
-        padding: 'var(--tp-space-1-5) var(--tp-space-2)',
+        padding: `${inputGroupAddonInsetBlock} ${inputGroupAddonInsetInline}`,
         gap: 'var(--tp-space-2)',
         color: 'var(--tp-muted-foreground)',
         'font-size': 'var(--tp-text-sm)',

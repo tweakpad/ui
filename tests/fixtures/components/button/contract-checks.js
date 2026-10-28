@@ -139,9 +139,11 @@ export async function formSemantics() {
   });
 }
 
+const plusMark = { viewBox: '0 0 24 24', paths: [{ d: 'M12 5v14M5 12h14', strokeWidth: 2 }] };
+
 /** Icon/loading marks, slot restoration, logical direction, spinner color and link semantics. */
 export async function composition() {
-  const icon = { viewBox: '0 0 24 24', paths: [{ d: 'M12 5v14M5 12h14', strokeWidth: 2 }] };
+  const icon = plusMark;
   const button = document.createElement('tp-button');
   button.innerHTML =
     '<span slot="icon-start" aria-hidden="true">S</span>Compose<span slot="icon-end" aria-hidden="true">E</span>';
@@ -270,6 +272,159 @@ export async function composition() {
   });
 }
 
+/**
+ * An empty Label in a text size is `hidden` and takes no space, so marks sit one gap apart with
+ * the icon-edge padding on both sides; in an icon size it stays visually hidden as the name.
+ */
+export async function emptyLabel() {
+  const created = [];
+  const marks =
+    '<span slot="icon-start" aria-hidden="true">S</span><span slot="icon-end" aria-hidden="true">E</span>';
+  const make = (size, markup = '', name = 'Choose a folder') => {
+    const button = document.createElement('tp-button');
+    button.variant = 'outline';
+    button.size = size;
+    if (name) button.setAttribute('aria-label', name);
+    button.innerHTML = markup;
+    host().append(button);
+    created.push(button);
+    return button;
+  };
+  const settled = async (...buttons) => {
+    await Promise.all(buttons.map((button) => button.updateComplete));
+    await frame();
+    await Promise.all(buttons.map((button) => button.updateComplete));
+  };
+  // A text edit or a child change reaches the Label through the slot observer, then one update.
+  const afterMutation = async (button) => {
+    await Promise.resolve();
+    await button.updateComplete;
+  };
+  const labelOf = (button) => button.shadowRoot.querySelector('[part~="button-label"]');
+  const markOf = (button, edge) => button.shadowRoot.querySelector(`[part~="button-${edge}-mark"]`);
+  const collapsed = (button) =>
+    labelOf(button).hidden && getComputedStyle(labelOf(button)).display === 'none';
+  const shown = (button) =>
+    !labelOf(button).hidden &&
+    getComputedStyle(labelOf(button)).display !== 'none' &&
+    labelOf(button).getBoundingClientRect().width > 0;
+  const results = {};
+  try {
+    for (const size of ['xs', 'sm', 'default', 'lg']) {
+      const trigger = make(size, marks);
+      const reference = make(
+        size,
+        '<span slot="icon-start" aria-hidden="true">S</span>Label<span slot="icon-end" aria-hidden="true">E</span>',
+      );
+      const labelOnly = make(size, 'Label');
+      await settled(trigger, reference, labelOnly);
+      const style = getComputedStyle(control(trigger));
+      const marked = getComputedStyle(control(reference));
+      const plain = getComputedStyle(control(labelOnly));
+      const leading = markOf(trigger, 'leading').getBoundingClientRect();
+      const trailing = markOf(trigger, 'trailing').getBoundingClientRect();
+      results[`text:${size}`] =
+        collapsed(trigger) &&
+        Math.abs(trailing.left - leading.right - parseFloat(style.columnGap)) < 0.5 &&
+        style.paddingInlineStart === marked.paddingInlineStart &&
+        style.paddingInlineEnd === marked.paddingInlineEnd &&
+        style.paddingInlineStart !== plain.paddingInlineStart &&
+        style.paddingInlineEnd !== plain.paddingInlineEnd;
+    }
+    for (const size of ['icon-xs', 'icon-sm', 'icon', 'icon-lg']) {
+      const button = make(size, '<span slot="icon-start" aria-hidden="true">S</span>', 'Open');
+      await settled(button);
+      const label = labelOf(button);
+      results[`icon:${size}`] =
+        !label.hidden &&
+        getComputedStyle(label).position === 'absolute' &&
+        label.getBoundingClientRect().width <= 1;
+    }
+
+    const spaced = make(
+      'default',
+      '\n  <span slot="icon-start" aria-hidden="true">S</span>\n  <span slot="icon-end" aria-hidden="true">E</span>\n',
+    );
+    const element = make('default', '<span>Visible</span>');
+    await settled(spaced, element);
+    results.whitespaceHidden = collapsed(spaced);
+    results.elementShown = shown(element);
+
+    const later = make('default', '', '');
+    await settled(later);
+    const laterEmpty = collapsed(later);
+    later.textContent = 'Later';
+    await afterMutation(later);
+    results.textAdded = laterEmpty && shown(later);
+
+    const edited = make('default', marks);
+    const text = document.createTextNode(' ');
+    edited.insertBefore(text, edited.lastChild);
+    await settled(edited);
+    const editedEmpty = collapsed(edited);
+    text.data = 'Edited';
+    await afterMutation(edited);
+    const editedShown = shown(edited);
+    text.data = ' ';
+    await afterMutation(edited);
+    results.textEdited = editedEmpty && editedShown && collapsed(edited);
+
+    const moved = make('default', '<span aria-hidden="true">M</span>');
+    await settled(moved);
+    const movedShown = shown(moved);
+    moved.firstElementChild.slot = 'icon-end';
+    await settled(moved);
+    results.slotChanged = movedShown && collapsed(moved) && !markOf(moved, 'trailing').hidden;
+
+    const supplied = make('sm');
+    supplied.partContracts = { 'button-label': { content: 'Supplied' } };
+    await settled(supplied);
+    const suppliedShown = shown(supplied) && labelOf(supplied).textContent === 'Supplied';
+    supplied.partContracts = {};
+    await settled(supplied);
+    results.contentContract = suppliedShown && collapsed(supplied);
+
+    const owned = make('sm');
+    owned.partContracts = { 'button-label': { hostProperties: { hidden: false } } };
+    await settled(owned);
+    results.hiddenOwned = collapsed(owned);
+
+    const convenience = make('default');
+    convenience.icon = plusMark;
+    await settled(convenience);
+    results.iconProperty =
+      collapsed(convenience) &&
+      !markOf(convenience, 'leading').hidden &&
+      Boolean(markOf(convenience, 'leading').querySelector('tp-icon')) &&
+      markOf(convenience, 'trailing').hidden;
+
+    const reports = new Map();
+    const watched = (name) => {
+      const button = document.createElement('tp-button');
+      button.size = 'sm';
+      if (name) button.setAttribute('aria-label', name);
+      button.innerHTML = marks;
+      const codes = [];
+      button.addEventListener('tp-diagnostic', (event) => codes.push(event.detail?.code));
+      reports.set(button, codes);
+      host().append(button);
+      created.push(button);
+      return button;
+    };
+    const unnamed = watched('');
+    const named = watched('Choose a region');
+    await settled(unnamed, named);
+    await frame();
+    results.unnamedDiagnostic =
+      reports.get(unnamed).filter((code) => code === 'button-accessible-name-missing').length ===
+        1 && collapsed(unnamed);
+    results.namedSilent = reports.get(named).length === 0 && collapsed(named);
+  } finally {
+    created.forEach((button) => button.remove());
+  }
+  return verify('emptyLabel', results);
+}
+
 /** Hover surfaces in light, dark and scoped-token regions. */
 export const hoverVariants = ['default', 'secondary', 'destructive', 'outline', 'ghost'];
 const hoverCases = [
@@ -294,16 +449,33 @@ const hoverCases = [
   ],
 ];
 const hoverSamples = new Map();
+/** Composites colors in paint order; an entry is a color or `[color, opacity]`. */
 const sampleColor = (colors) => {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 1;
   const context = canvas.getContext('2d', { willReadFrequently: true });
   context.clearRect(0, 0, 1, 1);
-  for (const color of colors) {
+  for (const entry of colors) {
+    const [color, opacity = 1] = Array.isArray(entry) ? entry : [entry];
+    context.globalAlpha = opacity;
     context.fillStyle = color;
     context.fillRect(0, 0, 1, 1);
   }
   return [...context.getImageData(0, 0, 1, 1).data];
+};
+const parentOf = (node) =>
+  node.parentElement ?? (node.parentNode instanceof ShadowRoot ? node.parentNode.host : null);
+/** The backgrounds painted behind an element, from the nearest opaque ancestor inward. */
+const backdrop = (element) => {
+  const colors = [];
+  for (let node = parentOf(element); node; node = parentOf(node)) {
+    const color = getComputedStyle(node).backgroundColor;
+    const alpha = sampleColor([color])[3];
+    if (alpha === 0) continue;
+    colors.unshift(color);
+    if (alpha === 255) return colors;
+  }
+  throw new Error('No opaque backdrop behind the Button');
 };
 const luminance = (rgb) => {
   const [red, green, blue] = rgb.slice(0, 3).map((value) => {
@@ -346,14 +518,24 @@ const hoverControl = (name, variant) =>
       `[data-color-case="${name}"] tp-button[data-hover-variant="${variant}"]`,
     ),
   );
-/** Sample one control before hovering it (`phase: 'before'`) and 350ms after (`'after'`). */
+/**
+ * Sample one control before hovering it (`phase: 'before'`) and 350ms after (`'after'`). Every
+ * variant paints its hover on the `::before` fill layer: the layer keeps one color and fades its
+ * opacity, while the control's own fill stays as it is. `mixed` is what shows: the backdrop, the
+ * control's fill and the layer at its current opacity, composited in paint order.
+ */
 export function sampleHover(name, variant, phase) {
   const element = hoverControl(name, variant);
   const style = getComputedStyle(element);
   const layer = getComputedStyle(element, '::before');
-  const layered = variant === 'outline' || variant === 'ghost';
-  const overlay = layered ? layer.backgroundColor : null;
-  const mixed = sampleColor(overlay ? [style.backgroundColor, overlay] : [style.backgroundColor]);
+  const behind = backdrop(element);
+  const rest = sampleColor([...behind, style.backgroundColor]);
+  const mixed = sampleColor([
+    ...behind,
+    style.backgroundColor,
+    [layer.backgroundColor, Number(layer.opacity)],
+  ]);
+  const shown = sampleColor([...behind, style.backgroundColor, layer.backgroundColor]);
   const foreground = luminance(sampleColor([style.color]));
   const background = luminance(mixed);
   const sample = {
@@ -361,11 +543,10 @@ export function sampleHover(name, variant, phase) {
     image: style.backgroundImage,
     foreground: style.color,
     border: style.borderColor,
-    overlay,
+    backdrop: behind,
+    overlay: layer.backgroundColor,
     overlayOpacity: layer.opacity,
-    overlayChanged: sampleColor([style.backgroundColor]).some(
-      (value, index) => value !== mixed[index],
-    ),
+    overlayChanged: shown.some((value, index) => value !== rest[index]),
     backgroundTransition:
       style.transitionProperty.includes('background-color') &&
       style.transitionDuration.split(',').some((duration) => parseFloat(duration) > 0),
@@ -378,52 +559,52 @@ export function sampleHover(name, variant, phase) {
   hoverSamples.set(`${name}:${variant}:${phase}`, sample);
   return sample;
 }
-/** Validates every sampled before/after pair, layered parity and token responsiveness. */
+/** The fill-layer conditions one sampled before/after pair fails; empty when it passes. */
+const hoverFailures = (before, after) =>
+  Object.entries({
+    'gradient image': before.image !== 'none' || after.image !== 'none',
+    'foreground changed': before.foreground !== after.foreground,
+    'border changed': before.border !== after.border,
+    'control fill changed': before.background !== after.background,
+    'background-color transitions': after.backgroundTransition,
+    'no layer opacity transition': !after.overlayTransition,
+    'layer not hidden at rest': before.overlayOpacity !== '0',
+    'layer not shown on hover': after.overlayOpacity !== '1',
+    'layer color changed': before.overlay !== after.overlay,
+    'layer paints nothing': !after.overlayChanged,
+    'hover fill unchanged': before.mixed.join() === after.mixed.join(),
+    [`contrast ${after.contrast.toFixed(2)}`]: after.contrast < 4.5,
+  })
+    .filter(([, failed]) => failed)
+    .map(([condition]) => condition);
+/** Validates every sampled before/after pair, layer parity and token responsiveness. */
 export function verifyHover() {
   const colors = new Map(hoverVariants.map((variant) => [variant, []]));
   const layeredHover = new Map();
+  const failures = {};
   for (const [name] of hoverCases)
     for (const variant of hoverVariants) {
       const before = hoverSamples.get(`${name}:${variant}:before`);
       const after = hoverSamples.get(`${name}:${variant}:after`);
       if (!before || !after) throw new Error(`${name} ${variant}: sample both phases first`);
-      const layered = variant === 'outline' || variant === 'ghost';
-      if (
-        before.image !== 'none' ||
-        before.foreground !== after.foreground ||
-        before.border !== after.border ||
-        after.contrast < 4.5 ||
-        after.image !== 'none' ||
-        !after.backgroundTransition ||
-        (layered &&
-          (!after.overlayTransition ||
-            before.overlayOpacity !== '0' ||
-            after.overlayOpacity !== '1' ||
-            !after.overlayChanged)) ||
-        (!layered && before.background === after.background) ||
-        (variant === 'outline' && before.background !== after.background) ||
-        (variant === 'ghost' && before.background === after.background)
-      )
-        throw new Error(
-          `${variant} hover colors failed for ${name}: ${JSON.stringify({ before, after })}`,
-        );
-      colors.get(variant).push(`${after.background}:${after.mixed.join(',')}`);
-      if (layered) layeredHover.set(name, { ...layeredHover.get(name), [variant]: after });
+      const failed = hoverFailures(before, after);
+      if (failed.length) failures[`${name}:${variant}`] = failed;
+      colors.get(variant).push(`${after.overlay}:${after.mixed.join(',')}`);
+      if (variant === 'outline' || variant === 'ghost')
+        layeredHover.set(name, { ...layeredHover.get(name), [variant]: after });
     }
-  for (const [name, fills] of layeredHover) {
-    const { outline, ghost } = fills;
+  // Outline and ghost share one layer color and content color; only outline paints a boundary.
+  for (const [name, { outline, ghost }] of layeredHover)
     if (
-      outline.background !== ghost.background ||
-      outline.foreground !== ghost.foreground ||
       outline.overlay !== ghost.overlay ||
-      outline.mixed.join() !== ghost.mixed.join() ||
+      outline.foreground !== ghost.foreground ||
       outline.border === ghost.border
     )
-      throw new Error(`Outline and ghost hover surfaces diverged for ${name}`);
-  }
+      failures[`${name}:outline-ghost`] = ['layer parity'];
   for (const [variant, values] of colors)
-    if (new Set(values).size !== 3)
-      throw new Error(`${variant} hover did not respond to light, dark, and scoped tokens`);
+    if (new Set(values).size !== 3) failures[variant] = ['not responsive to scoped tokens'];
+  if (Object.keys(failures).length)
+    throw new Error(`Button hover colors failed: ${JSON.stringify(failures)}`);
   return { cases: hoverCases.length * hoverVariants.length };
 }
 
@@ -550,5 +731,6 @@ export async function runAll() {
     formSemantics: await formSemantics(),
     composition: await composition(),
     reducedMotion: await reducedMotion(),
+    emptyLabel: await emptyLabel(),
   };
 }

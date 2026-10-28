@@ -113,6 +113,14 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
   #syncing = false;
   #queued = false;
   #diagnostics = new Set<string>();
+  /** The member whose content the surface last measured in place. */
+  #measured: NavigationMember | undefined;
+  /** Whether the viewport still held the previous panel at the last update. */
+  #wasTransitioning = false;
+  /** The positioner glides only between triggers: opening and a window resize place it at once. */
+  #positionerInstant = false;
+  #instantTimer: number | undefined;
+  #trackedOpen = false;
   #valueState = new ControllableState<string>({
     host: this,
     initialValue: '',
@@ -238,8 +246,35 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
   closeFromLink(event: Event): void {
     this.#select('', 'link-press', event);
   }
+  /** Holds the positioner in place (no translate transition) through the next 100 ms of writes. */
+  #holdPositioner(): void {
+    const view = this.ownerDocument.defaultView!;
+    view.clearTimeout(this.#instantTimer);
+    this.#positionerInstant = true;
+    this.requestUpdate();
+    this.#instantTimer = view.setTimeout(() => {
+      this.#positionerInstant = false;
+      this.requestUpdate();
+    }, 100);
+  }
+  #windowResize = (): void => {
+    if (this.open) this.#holdPositioner();
+  };
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    // The surface is placed before its panel is measured and again after, with a layout read in
+    // between: the opening frame must not glide from the first place to the settled one.
+    if (this.open && !this.#trackedOpen) this.#holdPositioner();
+    this.#trackedOpen = this.open;
+  }
+  protected override positionerProperties(): Record<string, unknown> {
+    return { ...super.positionerProperties(), 'data-instant': this.#positionerInstant };
+  }
   override connectedCallback(): void {
     super.connectedCallback();
+    this.ownerDocument.defaultView!.addEventListener('resize', this.#windowResize, {
+      passive: true,
+    });
     this.#observer = new this.ownerDocument.defaultView!.MutationObserver(this.itemChanged);
     this.#observer.observe(this, {
       childList: true,
@@ -570,8 +605,33 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     this.#syncMembers();
+    // The surface positioned the new view before its content existed: the item renders into the
+    // container in its own update. Project and style that content now, then size the positioner
+    // and place it once more in this same task, so the move is a single glide from the last place.
+    const active = this.open ? this.#active : undefined;
+    // The panel renders its activation direction from the viewport; once the previous panel has
+    // left, the current one renders again without it, so a later close fades as a plain close.
+    const transitioning = this.viewportState.transitioning;
+    if (transitioning !== this.#wasTransitioning) {
+      this.#wasTransitioning = transitioning;
+      if (!transitioning && active?.host instanceof TpNavigationMenuItem)
+        active.host.requestUpdate();
+    }
+    if (active !== this.#measured) {
+      this.#measured = active;
+      if (active?.container) {
+        if (active.host instanceof TpNavigationMenuItem) active.host.flushContent();
+        // The viewport's own chrome (its border) is part of the positioner's size.
+        this.presentationController.refresh();
+        this.remeasureViewport();
+        void this.updatePosition();
+      }
+    }
   }
   override disconnectedCallback(): void {
+    this.ownerDocument.defaultView?.removeEventListener('resize', this.#windowResize);
+    this.ownerDocument.defaultView?.clearTimeout(this.#instantTimer);
+    this.#positionerInstant = false;
     this.#observer?.disconnect();
     this.#observer = undefined;
     for (const member of this.#members) this.#release(member);

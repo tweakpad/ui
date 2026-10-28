@@ -1,6 +1,8 @@
-import { arrowKeys } from '../../foundation/collection.js';
 import { bindPart } from '../../foundation/part.js';
-import { GeneratedStyleResource } from '../../foundation/generated-style.js';
+import {
+  ResizeSeparatorController,
+  type ResizeSeparatorProposal,
+} from '../../foundation/resize-separator.js';
 import { css, html, type PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
@@ -150,15 +152,31 @@ export class TpResizablePanelGroup extends TpElement {
   #settled: readonly number[] = [];
   #drag:
     | {
-        id: number;
-        element: HTMLElement;
         handle: TpResizableHandle;
-        start: number;
         sizes: readonly number[];
         scale: number;
-        style: GeneratedStyleResource;
       }
     | undefined;
+  /** The separator behavior that every handle's pointer and key input goes through. */
+  readonly #separator = new ResizeSeparatorController({
+    host: this,
+    axis: () => this.orientation,
+    direction: () => this.direction,
+    // Values are proposed as boundary deltas; the separator's own value and limits stay neutral.
+    value: () => 0,
+    min: () => -Infinity,
+    max: () => Infinity,
+    steps: () => {
+      const step =
+        Number.isFinite(this.keyboardStep) && this.keyboardStep > 0 ? this.keyboardStep : 1;
+      return { step, shift: step };
+    },
+    disabled: () => this.disabled || !!this.#drag?.handle.disabled,
+    cursor: () => !this.disableCursor,
+    scale: () => this.#drag?.scale ?? 1,
+    escapeCancels: false,
+    propose: (proposal) => this.#separatorProposal(proposal),
+  });
   readonly #state = new ControllableState<readonly number[]>({
     host: this,
     initialValue: [],
@@ -505,56 +523,44 @@ export class TpResizablePanelGroup extends TpElement {
     )
       return;
     this.#measure();
-    event.preventDefault();
-    const element = event.currentTarget as HTMLElement;
-    element.focus({ preventScroll: true });
     const horizontal = this.orientation === 'horizontal',
       rect = this.getBoundingClientRect(),
       extent = horizontal ? this.offsetWidth : this.offsetHeight;
-    const style = new GeneratedStyleResource(this, this.ownerDocument);
-    style.setText(
-      `*{user-select:none!important;${this.disableCursor ? '' : `cursor:${horizontal ? 'col-resize' : 'row-resize'}!important;`}}`,
-    );
     this.#drag = {
-      id: event.pointerId,
-      element,
       handle,
-      start: horizontal ? event.clientX : event.clientY,
       sizes: [...this.#state.value],
       scale: extent ? (horizontal ? rect.width : rect.height) / extent : 1,
-      style,
     };
-    element.setPointerCapture(event.pointerId);
+    if (!this.#separator.pointerDown(event, event.currentTarget as HTMLElement)) {
+      this.#drag = undefined;
+      return;
+    }
     this.#updateHandles();
   }
   moveResize(event: PointerEvent): void {
-    const drag = this.#drag;
-    if (!drag || event.pointerId !== drag.id) return;
-    if (!event.buttons || this.disabled || drag.handle.disabled) {
-      this.#stop();
-      return;
-    }
-    const coordinate = this.orientation === 'horizontal' ? event.clientX : event.clientY;
-    const delta =
-      ((coordinate - drag.start) / drag.scale) *
-      (this.orientation === 'horizontal' && this.direction === 'rtl' ? -1 : 1);
-    this.#propose(
-      resizeBoundary(drag.sizes, this.#bounds, drag.handle.boundary, delta),
-      'pointer',
-      event,
-    );
+    this.#separator.pointerMove(event);
   }
   endResize(event: PointerEvent): void {
-    if (event.pointerId === this.#drag?.id) this.#stop();
+    this.#separator.pointerUp(event);
   }
-  #stop(): void {
+  #separatorProposal(proposal: ResizeSeparatorProposal): void {
     const drag = this.#drag;
+    if (!drag || proposal.source !== 'pointer') return;
+    if (proposal.phase === 'live') {
+      this.#propose(
+        resizeBoundary(drag.sizes, this.#bounds, drag.handle.boundary, proposal.delta),
+        'pointer',
+        proposal.event ?? undefined,
+      );
+      return;
+    }
+    // A drag that ends in any way keeps the sizes it reached.
     this.#drag = undefined;
-    if (!drag) return;
-    if (drag.element.hasPointerCapture(drag.id)) drag.element.releasePointerCapture(drag.id);
-    drag.style.dispose();
     this.#updateHandles();
     this.#settle();
+  }
+  #stop(): void {
+    this.#separator.release();
   }
   handleKey(handle: TpResizableHandle, event: KeyboardEvent): void {
     if (
@@ -571,15 +577,16 @@ export class TpResizablePanelGroup extends TpElement {
     const i = this.#target(handle),
       bound = this.#bounds[i];
     if (!bound) return;
-    const { next: increase, previous: decrease } = arrowKeys(this.orientation, this.direction);
     let value: number | undefined;
     const current = this.#state.value[i] ?? 0,
-      step = Number.isFinite(this.keyboardStep) && this.keyboardStep > 0 ? this.keyboardStep : 1;
-    if (event.key === increase)
-      value = bound.collapsible && current === bound.collapsed ? bound.min : current + step;
-    else if (event.key === decrease) value = current - step;
-    else if (event.key === 'Home') value = bound.collapsible ? bound.collapsed : bound.min;
-    else if (event.key === 'End') value = bound.max;
+      step = this.#separator.keyStep(event);
+    if (step?.kind === 'delta')
+      value =
+        step.amount > 0 && bound.collapsible && current === bound.collapsed
+          ? bound.min
+          : current + step.amount;
+    else if (step?.kind === 'min') value = bound.collapsible ? bound.collapsed : bound.min;
+    else if (step?.kind === 'max') value = bound.max;
     else if (event.key === 'Enter' && bound.collapsible)
       value =
         current === bound.collapsed

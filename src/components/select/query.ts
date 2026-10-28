@@ -43,6 +43,31 @@ interface CachedIndex {
   readonly locale: string | undefined;
   readonly index: TextIndex<ChoiceModelRecord>;
 }
+/** The collection members that forwarded navigation keys use. */
+export type ForwardedNavigationCollection = Pick<
+  ChoiceCollectionController<unknown, ChoiceModelRecord>,
+  'visible' | 'highlighted' | 'move' | 'boundary'
+>;
+
+/**
+ * Applies a navigation key that an external query owner forwards, as the key typed in the Input
+ * would: Arrow Down and Up move the highlight (from no highlight, to the first or the last item),
+ * Home and End go to the first or the last item. Returns whether it consumed the key: false for
+ * any other key and with no enabled item.
+ */
+export function applyForwardedNavigation(
+  collection: ForwardedNavigationCollection,
+  key: string,
+  loop: boolean,
+): boolean {
+  if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(key)) return false;
+  if (!collection.visible.some((record) => !record.disabled)) return false;
+  if (key === 'Home' || key === 'End') collection.boundary(key === 'End');
+  else if (collection.highlighted) collection.move(key === 'ArrowDown' ? 1 : -1, loop);
+  else collection.boundary(key === 'ArrowUp');
+  return true;
+}
+
 /** Editable policy only. Select retains the sole selection, collection and surface lifecycle. */
 export class SelectQueryController {
   providedValue: string | undefined;
@@ -537,6 +562,12 @@ export class SelectQueryController {
     this.owner.collection.activeIndex = -1;
     this.completion = '';
     this.host.requestUpdate();
+  }
+  /** Aborts a pending source call and forgets its results, so the next opening asks again. */
+  cancelSource(): void {
+    this.run.cancel();
+    this.#requested = undefined;
+    this.#hits = undefined;
   }
   disconnect(): void {
     this.run.cancel();

@@ -59,18 +59,22 @@ interface Block {
 
 const CODE_INDENT = 4;
 const MAYBE_SPECIAL = /^[#`~*+_=<>0-9|:[-]/;
-const ATX_HEADING = /^#{1,6}(?:[ \t]+|$)/;
-const CODE_FENCE = /^`{3,}(?!.*`)|^~{3,}/;
+// Block starts, shared with the serializer so that it escapes exactly what would start a block.
+export const ATX_HEADING = /^#{1,6}(?:[ \t]+|$)/;
+/** An ATX heading's content that is only a closing sequence, and a closing sequence after text. */
+export const ATX_EMPTY_CLOSING = /^[ \t]*#+[ \t]*$/;
+export const ATX_CLOSING = /[ \t]+#+[ \t]*$/;
+export const CODE_FENCE = /^`{3,}(?!.*`)|^~{3,}/;
 const CLOSING_CODE_FENCE = /^(?:`{3,}|~{3,})(?=[ \t]*$)/;
-const SETEXT_HEADING = /^(?:=+|-+)[ \t]*$/;
-const THEMATIC_BREAK = /^(?:\*[ \t]*){3,}$|^(?:_[ \t]*){3,}$|^(?:-[ \t]*){3,}$/;
-const BULLET_MARKER = /^[*+-]/;
-const ORDERED_MARKER = /^(\d{1,9})([.)])/;
-const TASK = /^\[([ xX])\](?=[ \t]|$)/;
-const FOOTNOTE = /^\[\^([^\]\s]+)\]:/;
-const DELIMITER_ROW = /^\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/;
+export const SETEXT_HEADING = /^(?:=+|-+)[ \t]*$/;
+export const THEMATIC_BREAK = /^(?:\*[ \t]*){3,}$|^(?:_[ \t]*){3,}$|^(?:-[ \t]*){3,}$/;
+export const BULLET_MARKER = /^[*+-]/;
+export const ORDERED_MARKER = /^(\d{1,9})([.)])/;
+export const TASK = /^\[([ xX])\](?=[ \t]|$)/;
+export const FOOTNOTE = /^\[\^([^\]\s]+)\]:/;
+export const DELIMITER_ROW = /^\|?[ \t]*:?-+:?[ \t]*(?:\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/;
 /** A table row ends where another block structure starts. */
-const TABLE_INTERRUPT = /^(?:>|#{1,6}(?:[ \t]|$)|`{3,}|~{3,}|<|[*+-][ \t]|\d{1,9}[.)][ \t])/;
+export const TABLE_INTERRUPT = /^(?:>|#{1,6}(?:[ \t]|$)|`{3,}|~{3,}|<|[*+-][ \t]|\d{1,9}[.)][ \t])/;
 
 const isSpaceOrTab = (char: string): boolean => char === ' ' || char === '\t';
 
@@ -345,8 +349,8 @@ class BlockParser {
       heading.level = match[0].trim().length;
       heading.content = line
         .slice(this.#offset)
-        .replace(/^[ \t]*#+[ \t]*$/, '')
-        .replace(/[ \t]+#+[ \t]*$/, '');
+        .replace(ATX_EMPTY_CLOSING, '')
+        .replace(ATX_CLOSING, '');
       this.#advanceOffset(line.length - this.#offset, false);
       return 2;
     }

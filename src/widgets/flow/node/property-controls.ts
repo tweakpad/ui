@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { TpTextControl } from '../../../components/field/text-control.js';
 import type { FlowPropertyControlContext, FlowPropertyControls } from '../types.js';
 
 /**
@@ -7,6 +8,9 @@ import type { FlowPropertyControlContext, FlowPropertyControls } from '../types.
  * `data-flow-property` so the node host re-proposes the control's lane events as node data
  * changes; `number` marks a NumberField root that the host binds after render.
  */
+
+/** The text a text control shows for a property value. */
+const propertyText = (value: unknown): string => (value == null ? '' : String(value));
 
 function optionItems(context: FlowPropertyControlContext) {
   return (context.definition.options ?? []).map((option) => ({
@@ -23,7 +27,7 @@ export const defaultPropertyControls: FlowPropertyControls = {
       id=${context.id}
       size="sm"
       ?mono=${context.definition.mono === true}
-      .value=${context.value == null ? '' : String(context.value)}
+      .value=${propertyText(context.value)}
       placeholder=${context.definition.placeholder ?? ''}
       ?disabled=${context.disabled}
       ?readonly=${context.readOnly}
@@ -34,7 +38,7 @@ export const defaultPropertyControls: FlowPropertyControls = {
       class="control"
       data-flow-property=${context.definition.key}
       id=${context.id}
-      .value=${context.value == null ? '' : String(context.value)}
+      .value=${propertyText(context.value)}
       placeholder=${context.definition.placeholder ?? ''}
       ?disabled=${context.disabled}
       ?readonly=${context.readOnly}
@@ -139,6 +143,17 @@ export const defaultPropertyControls: FlowPropertyControls = {
 export function controlEventValue(control: Element, raw: unknown): unknown {
   if (control.localName === 'tp-slider') return Array.isArray(raw) ? raw[0] : raw;
   return raw;
+}
+
+/**
+ * Writes an edit its owner took back to the bound text control during the control's own
+ * proposal, as a synchronous controlled owner does, so the control keeps the typed text with its
+ * caret and selection. Left to the owner's next render, the control would first restore its
+ * previous text and the render would then replace it, moving the caret to the end. Other
+ * controls take the value on that render.
+ */
+export function acceptControlValue(control: Element, value: unknown): void {
+  if (control instanceof TpTextControl && control.controlled) control.value = propertyText(value);
 }
 
 export function renderControlWrapper(content: TemplateResult): TemplateResult {

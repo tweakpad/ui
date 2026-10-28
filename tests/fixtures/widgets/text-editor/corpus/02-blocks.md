@@ -1,0 +1,44 @@
+# Clayworks studio handbook
+
+Members may use the wheels, the slab roller and the glaze room during open hours. Book the kilns a day ahead and label every shelf you load.
+
+## Opening hours
+
+### Firing schedule
+
+#### Glazes
+
+##### Cleanup
+
+###### Fine print
+
+The two empty paragraphs above stay in HTML.
+
+> Wedge the clay\
+> until it is even,\
+> then let it rest.
+
+> A quote of two paragraphs\
+> becomes one quote with a line break.
+
+```python
+def kiln_ramp(target):
+	# a tab-indented comment
+	return target - 40
+
+
+print("``double`` and ```triple``` backticks")
+
+```
+
+```
+plain code, no language
+```
+
+---
+
+![A wheel with a half-thrown bowl](https://clayworks.example/wheel.jpg)
+
+![](https://clayworks.example/kiln.jpg)
+
+Signed, the studio team

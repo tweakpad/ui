@@ -1,6 +1,7 @@
 import { html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { TpElement } from '../../../foundation/element.js';
 import { CleanupScope } from '../../../foundation/services.js';
+import { containNestedEvents } from '../../../foundation/nested-events.js';
 import {
   NumberFieldController,
   type NumberFieldOptions,
@@ -51,7 +52,11 @@ import type {
   FlowPropertyControls,
   FlowStrings,
 } from '../types.js';
-import { controlEventValue, defaultPropertyControls } from './property-controls.js';
+import {
+  acceptControlValue,
+  controlEventValue,
+  defaultPropertyControls,
+} from './property-controls.js';
 import {
   problemSeverity,
   renderCardShape,
@@ -98,6 +103,10 @@ const NESTED_EVENT_TYPES = [
   'tp-adapter-change',
   'tp-presence-complete',
 ] as const;
+
+/** The control that a node property binds, from inside it. */
+const boundControl = (origin: Node): HTMLElement | null =>
+  ((origin as Element).closest?.('[data-flow-property]') as HTMLElement | null | undefined) ?? null;
 
 const EXPORTED_PARTS = [
   'flow-node',
@@ -221,7 +230,14 @@ export class TpFlowNode extends TpElement {
 
   constructor() {
     super();
-    for (const type of NESTED_EVENT_TYPES) this.addEventListener(type, this.#containNested, true);
+    // Events of authored light-DOM content pass unless it is bound to a node property
+    // (uwg-fl-req-evt-3).
+    containNestedEvents(this, {
+      types: NESTED_EVENT_TYPES,
+      on: 'host',
+      passes: (_event, origin) => origin.getRootNode() !== this.renderRoot && !boundControl(origin),
+      contained: (event, origin) => this.#propertyEvent(event, origin),
+    });
   }
 
   get presentationOwner(): HTMLElement | null {
@@ -386,14 +402,9 @@ export class TpFlowNode extends TpElement {
     this.emit(PORT_ACTIVATE, (event as CustomEvent).detail, { composed: false });
   };
 
-  #containNested = (event: Event): void => {
-    // Capture listeners on the host see the retargeted event; the real target is the path head.
-    const target = event.composedPath()[0] as HTMLElement | undefined;
-    if (!target || target === this) return;
-    const inShadow = target.getRootNode() === this.renderRoot;
-    const bound = target.closest?.('[data-flow-property]') as HTMLElement | null;
-    if (!inShadow && !bound) return;
-    event.stopPropagation();
+  /** A contained constituent event: a bound control's change becomes a node data proposal. */
+  #propertyEvent(event: Event, origin: Node): void {
+    const bound = boundControl(origin);
     if (!bound) return;
     const key = bound.dataset['flowProperty'];
     if (!key || !this.node) return;
@@ -401,13 +412,11 @@ export class TpFlowNode extends TpElement {
     const detail = custom.detail;
     if (event.type === 'tp-value-change' || event.type === 'tp-duration-change') {
       if (!detail || typeof detail !== 'object' || !('value' in detail)) return;
-      const accepted = this.#propose(
-        key,
-        controlEventValue(bound, detail.value),
-        detail.reason,
-        event,
-      );
-      if (!accepted && typeof custom.preventDefault === 'function') custom.preventDefault();
+      const value = controlEventValue(bound, detail.value);
+      // The node owns the bound control's value: a change the graph accepts is written back at
+      // once; a cancelled one cancels the control's proposal (uwg-fl-req-evt-3).
+      if (this.#propose(key, value, detail.reason, event)) acceptControlValue(bound, value);
+      else if (typeof custom.preventDefault === 'function') custom.preventDefault();
     } else if (event.type === 'tp-value-commit') {
       this.#commit(
         key,
@@ -416,7 +425,7 @@ export class TpFlowNode extends TpElement {
         event,
       );
     }
-  };
+  }
 
   #propose(key: string, value: unknown, reason: ChangeReason, sourceEvent: Event): boolean {
     const detail: FlowNodePropertyDetail = {

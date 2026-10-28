@@ -43,9 +43,8 @@ have no CSS notation of their own; the CSS adapter samples them into `linear()`.
 progression is normalized to its own settle time (shown under its controls, capped at 10 s); the
 exported and previewed time is the `duration` lane.
 
-Progression is never clamped to 0–1, so curves overshoot: the graph extends its range in quarter
-steps to hold the curve and the handles, and the frames bar, the thumbnails and the exports keep
-the overshoot.
+Progression is never clamped to 0–1, so curves overshoot: the graph extends its range to hold the
+curve and the handles, and the frames bar, the thumbnails and the exports keep the overshoot.
 
 ## Categories and the Tabs
 
@@ -55,8 +54,10 @@ curve to the default spring, switching to Ease fits a cubic Bézier to it, both 
 value lane with `conversion: true` in the metadata; a rejected conversion keeps the tab where it
 was. An empty editor starts from `ease` or `spring(1 100 10)`. Custom is not a tab: the badge over
 the graph names the matching preset and reads Custom as soon as a handle, point or parameter
-leaves every preset. A press on a parametric curve converts it into a point curve and drags the
-nearest point.
+leaves every preset. A sine, power, expo, circ or back curve shows the handles of its Bézier fit
+from the start: dragging or stepping one converts the curve into that Bézier, and a press beside
+them edits nothing. A press on an elastic, bounce or steps curve converts it into a point curve
+and drags the nearest point.
 
 ## Graph and overshoot
 
@@ -68,13 +69,17 @@ curve's ends and the corner handles clear its rounded corners. The curve clips t
 not to the inset, so an overshoot into the inset stays visible; only the Bézier handles, their
 lines and the custom points may reach past the box. A Badge in its bottom-right corner names the
 matching preset or reads Custom. Bézier curves show two handles
-with their lines; custom curves show one point per entry. While a handle, point or Slider is
-dragged the progression range holds still; when the drag settles (or the value changes otherwise)
-the plot and the frames bar ease to the re-quantized range through the motion role `range`
-(instant under reduced motion), so the graph never jumps under the pointer.
-A press inside a handle keeps the pointer's offset from its center for the whole gesture, so the
-handle moves with the pointer instead of jumping under it; a press elsewhere never moves a Bézier
-handle. On a custom curve a press on the empty graph adds a point there and drags it. Escape or
+with their lines; custom curves show one point per entry. When the curve, a handle or a point
+leaves the unit box, the graph zooms out: one range, centered on the unit box and fitted to the
+furthest value, applies to time and progression alike, so the unit box shrinks around the graph's
+center and stays square. While a handle, point or Slider is dragged the range follows the value
+in the same frame, without easing, outward and back in: a handle dragged past the edge stays on
+the edge while the graph zooms out under it and zooms back in as the pointer returns, leaving the
+edge where the pointer crosses it again; a still pointer never moves it. Other changes (keys,
+fields, presets) ease the plot and the frames bar to the fitted range through the motion role
+`range` (instant under reduced motion).
+A press inside a handle keeps the pointer's offset from its center, so the handle moves with the
+pointer instead of jumping under it; a press elsewhere never moves a Bézier handle. On a custom curve a press on the empty graph adds a point there and drags it. Escape or
 pointer cancellation restores the pre-drag value without a commit; a lost capture settles at the
 last position.
 
@@ -131,15 +136,17 @@ CSS adapter omits the time.
 
 ## Preview
 
-A square animates behind the graph at low opacity. `preview` picks its mode: `scale` (default),
-`scale-x` and `scale-y` grow it from the center from 0 to 1 (uniformly, horizontally or
-vertically); the square at 1 is sized so the graph's shown range fits the area, so an overshoot
-grows past it and stays visible; `rotation` turns a square sized to stay inside the area;
+A square animates behind the graph at low opacity and always fills the graph area. `preview` picks
+its mode: `scale` (default), `scale-x` and `scale-y` grow it from the center from 0 to 1
+(uniformly, horizontally or vertically), and an overshoot grows it past the area's edges, which
+clip it; `rotation` turns it half a revolution, its corners clipped by the area while it turns;
 `none` hides the preview, the play Button and the mode Button. With `previewControls` (default
 true) a Button in the header shows the current mode and cycles to the next one on each press,
 replaying the preview. The preview replays on every settled change (a release, a key, a field
-commit, a preset, a conversion) and on the play Button, running for the duration with the CSS
-easing through the motion role `preview`. Under reduced motion it completes without
+commit, a preset, a conversion), on every settled duration change (a Slider release or key, a
+field commit, a time typed in the expression field) and on the play Button, running for the
+duration with the CSS easing through the motion role `preview`. While the duration Slider is
+dragged the preview runs and a running preview takes each new duration where it is. Under reduced motion it completes without
 motion and the frames bar remains the timing reference.
 
 ## Frames bar

@@ -96,7 +96,7 @@ export function renderBrief(host: WorkspaceHost): TemplateResult {
           <div role="group" aria-label="Preview font">
             <span data-menu-label>Preview font</span
             ><tp-menu-radio-group
-              aria-label="Preview font"
+              label="Preview font"
               .value=${font}
               @tp-value-change=${own<Font>((value) => host.setView('brief.font', value))}
               ><tp-menu-radio-item value="sans">Sans</tp-menu-radio-item
@@ -115,12 +115,14 @@ export function renderBrief(host: WorkspaceHost): TemplateResult {
       <div class="workspace-row">
         <tp-toggle
           aria-label="Bold preview"
+          size="icon"
           .pressed=${bold}
           @tp-value-change=${own<boolean>((value) => host.setView('brief.bold', value))}
           ><tp-icon .icon=${boldIcon}></tp-icon
         ></tp-toggle>
         <tp-toggle
           aria-label="Italic preview"
+          size="icon"
           .pressed=${italic}
           @tp-value-change=${own<boolean>((value) => host.setView('brief.italic', value))}
           ><tp-icon .icon=${italicIcon}></tp-icon

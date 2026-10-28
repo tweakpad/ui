@@ -24,7 +24,7 @@ export const visuallyHiddenExamples = [
   moduleExample({
     title: 'Icon-only controls',
     id: 'visually-hidden-layers',
-    markup: `<tp-toggle-group label="Trail map layers" multiple variant="outline" default-value='["campsites"]'>
+    markup: `<tp-toggle-group label="Trail map layers" multiple variant="outline" size="icon" default-value='["campsites"]'>
   ${layer('campsites', 'Campsites')}
   ${layer('routes', 'Trail routes')}
   ${layer('sun', 'Sun exposure')}

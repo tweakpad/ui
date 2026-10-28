@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { focusManaged } from './focus.js';
 import { HoverSurfaceController } from './hover-surface.js';
@@ -198,5 +199,56 @@ describe('shared hover surface policy', () => {
     preventComponentHandling(cancelled);
     await Promise.resolve();
     expect(f.isOpen()).toBe(true);
+  });
+  it("keeps the open trigger's pending close when another trigger becomes disabled", () => {
+    const f = fixture();
+    f.bind();
+    const other = new EventTarget() as HTMLElement;
+    f.controller.bind(other);
+    f.event('pointerenter', { pointerType: 'mouse' });
+    vi.advanceTimersByTime(100);
+    expect(f.isOpen()).toBe(true);
+    f.event('pointerleave', { pointerType: 'mouse' });
+    // Another trigger's disabled change (a toolbar control's state) does not cancel this close.
+    f.controller.cancelFor(other);
+    vi.advanceTimersByTime(20);
+    expect(f.isOpen()).toBe(false);
+    expect(f.requests).toEqual([
+      [true, 'trigger-hover'],
+      [false, 'trigger-hover'],
+    ]);
+    // The trigger's own disabled change still cancels its pending open.
+    f.event('pointerenter', { pointerType: 'mouse' });
+    f.controller.cancelFor(f.element);
+    vi.advanceTimersByTime(200);
+    expect(f.isOpen()).toBe(false);
+  });
+  it('closes a focus-opened surface after blur even when another trigger becomes disabled', () => {
+    const f = fixture();
+    f.bind();
+    const other = new EventTarget() as HTMLElement;
+    f.controller.bind(other);
+    const target = { matches: (selector: string) => selector === ':focus-visible' };
+    const focus = new Event('focusin');
+    Object.defineProperty(focus, 'composedPath', { value: () => [target] });
+    f.element.dispatchEvent(focus);
+    expect(f.isOpen()).toBe(true);
+    f.event('focusout', { relatedTarget: null });
+    f.controller.cancelFor(other);
+    vi.advanceTimersByTime(20);
+    expect(f.isOpen()).toBe(false);
+    expect(f.requests).toEqual([
+      [true, 'trigger-focus'],
+      [false, 'focus-outside'],
+    ]);
+  });
+  it("cancels only the disabled trigger's pending open or close in hover surfaces", () => {
+    const source = readFileSync(
+      new URL('../components/anchored-surface/anchored-surface.ts', import.meta.url),
+      'utf8',
+    );
+    const hook = source.slice(source.indexOf('protected override triggerBecameDisabled('));
+    expect(hook.slice(0, hook.indexOf('\n  }'))).toContain('this.hover.cancelFor(element);');
+    expect(hook.slice(0, hook.indexOf('\n  }'))).not.toContain('this.hover.cancel();');
   });
 });

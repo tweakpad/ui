@@ -19,7 +19,7 @@ import '@tweakpad/ui/register';
 import '@tweakpad/ui/styles.css';
 
 render(
-  html\`<tp-toggle-group label="Trail map layers" multiple variant="outline">
+  html\`<tp-toggle-group label="Trail map layers" multiple variant="outline" size="icon">
     <tp-toggle value="campsites">
       <tp-icon .icon=\${mapPinIcon}></tp-icon>
       <tp-visually-hidden>Campsites</tp-visually-hidden>

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
-import type { TpToggle } from '../components/toggle/toggle.js';
+import type { ToggleSize, TpToggle } from '../components/toggle/toggle.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import {
@@ -15,7 +15,7 @@ import documentation from '../../docs/toggle.md?raw';
 interface Args {
   pressed: boolean;
   variant: 'ghost' | 'outline';
-  size: 'sm' | 'default' | 'lg';
+  size: ToggleSize;
   disabled: boolean;
   readOnly: boolean;
   nativeAction: boolean;
@@ -48,8 +48,8 @@ function renderToggle(args: Args, content: unknown = 'Bold', stateful = false) {
     >${content}</tp-toggle
   >`;
 }
-function iconSource(iconName: string, icon: unknown, text: string, label = '') {
-  return `import { html, render } from 'lit';\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nconst ${iconName} = ${JSON.stringify(icon, null, 2)};\nrender(html\`<tp-toggle${text ? ' variant="outline"' : ''}${label ? ` aria-label="${label}"` : ''}><tp-icon${text ? ' data-icon="inline-start"' : ''} .icon=\${${iconName}}></tp-icon>${text ? ` ${text}` : ''}</tp-toggle>\`, document.querySelector('#app'));`;
+function iconSource(iconName: string, icon: unknown, text: string, label = '', size = '') {
+  return `import { html, render } from 'lit';\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nconst ${iconName} = ${JSON.stringify(icon, null, 2)};\nrender(html\`<tp-toggle${text ? ' variant="outline"' : ''}${label ? ` aria-label="${label}"` : ''}${size ? ` size="${size}"` : ''}><tp-icon${text ? ' data-icon="inline-start"' : ''} .icon=\${${iconName}}></tp-icon>${text ? ` ${text}` : ''}</tp-toggle>\`, document.querySelector('#app'));`;
 }
 const meta: Meta<Args> = {
   title: 'Components/Toggle',
@@ -77,7 +77,11 @@ const meta: Meta<Args> = {
       description: 'Controlled pressed state; this example accepts proposals.',
     },
     variant: { control: 'select', options: ['ghost', 'outline'] },
-    size: { control: 'select', options: ['sm', 'default', 'lg'] },
+    size: {
+      control: 'select',
+      options: ['xs', 'sm', 'default', 'lg', 'icon-xs', 'icon-sm', 'icon', 'icon-lg'],
+      description: 'Control extent; an icon-only Toggle uses a square icon size.',
+    },
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
     nativeAction: { control: 'boolean' },
@@ -96,9 +100,9 @@ export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
 export const IconOnly: Story = {
-  args: { ariaLabel: 'Bold' },
+  args: { ariaLabel: 'Bold', size: 'icon' },
   render: (args) => renderToggle(args, html`<tp-icon .icon=${boldIcon}></tp-icon>`),
-  parameters: { docs: { source: { code: iconSource('boldIcon', boldIcon, '', 'Bold') } } },
+  parameters: { docs: { source: { code: iconSource('boldIcon', boldIcon, '', 'Bold', 'icon') } } },
 };
 export const IconWithLabel: Story = {
   args: { variant: 'outline' },
@@ -122,13 +126,17 @@ export const StatefulIcon: Story = {
 };
 export const WithButton: Story = {
   render: (args) => {
-    const iconSize = args.size === 'default' ? 'icon' : `icon-${args.size}`;
+    // Text content takes the text step of the chosen size, icon-only content its square step.
+    const textSize = (
+      args.size === 'icon' ? 'default' : args.size.replace(/^icon-/, '')
+    ) as ToggleSize;
+    const iconSize = (textSize === 'default' ? 'icon' : `icon-${textSize}`) as ToggleSize;
     return html`<div>
       <p>
-        <tp-button .variant=${args.variant} .size=${args.size} .disabled=${args.disabled}
+        <tp-button .variant=${args.variant} .size=${textSize} .disabled=${args.disabled}
           >Apply bold</tp-button
         >
-        ${renderToggle({ ...args, ariaLabel: '' }, 'Bold')}
+        ${renderToggle({ ...args, size: textSize, ariaLabel: '' }, 'Bold')}
       </p>
       <p>
         <tp-button
@@ -138,17 +146,20 @@ export const WithButton: Story = {
           .icon=${boldIcon}
           aria-label="Apply bold"
         ></tp-button>
-        ${renderToggle({ ...args, ariaLabel: 'Bold' }, html`<tp-icon .icon=${boldIcon}></tp-icon>`)}
+        ${renderToggle(
+          { ...args, size: iconSize, ariaLabel: 'Bold' },
+          html`<tp-icon .icon=${boldIcon}></tp-icon>`,
+        )}
       </p>
       <p>
         <tp-button
           .variant=${args.variant}
-          .size=${args.size}
+          .size=${textSize}
           .disabled=${args.disabled}
           .icon=${boldIcon}
           >Apply bold</tp-button
         >
-        ${renderToggle({ ...args, ariaLabel: '' }, html`<tp-icon data-icon="inline-start" .icon=${boldIcon}></tp-icon> Bold`)}
+        ${renderToggle({ ...args, size: textSize, ariaLabel: '' }, html`<tp-icon data-icon="inline-start" .icon=${boldIcon}></tp-icon> Bold`)}
       </p>
     </div>`;
   },
@@ -158,7 +169,7 @@ export const WithButton: Story = {
       source: {
         code: `import { html, render } from 'lit';\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nconst boldIcon = ${JSON.stringify(boldIcon)};\nrender(html\`<div>
   <p><tp-button variant="ghost">Apply bold</tp-button> <tp-toggle>Bold</tp-toggle></p>
-  <p><tp-button variant="ghost" size="icon" .icon=\${boldIcon} aria-label="Apply bold"></tp-button> <tp-toggle aria-label="Bold"><tp-icon .icon=\${boldIcon}></tp-icon></tp-toggle></p>
+  <p><tp-button variant="ghost" size="icon" .icon=\${boldIcon} aria-label="Apply bold"></tp-button> <tp-toggle aria-label="Bold" size="icon"><tp-icon .icon=\${boldIcon}></tp-icon></tp-toggle></p>
   <p><tp-button variant="ghost" .icon=\${boldIcon}>Apply bold</tp-button> <tp-toggle><tp-icon data-icon="inline-start" .icon=\${boldIcon}></tp-icon> Bold</tp-toggle></p>
 </div>\`, document.querySelector('#app'));`,
       },

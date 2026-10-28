@@ -162,3 +162,100 @@ export class GeneratedStyleResource {
     this.#disposed = true;
   }
 }
+
+/**
+ * Declarations an element needs to stay behaviorally correct, written through its inline style
+ * (the CSSOM, which a policy without `'unsafe-inline'` allows) only while the owner's
+ * content-security policy suppresses generated styles, which otherwise carry them. Lifecycle as a
+ * generated resource: `disconnect` keeps what is written but drops the policy subscription,
+ * `connect` follows the policy of the owner's current scope again, and `dispose` removes what it
+ * wrote. A declaration whose value changed since it was written is left as it is.
+ */
+export class SuppressionFallbackStyle {
+  /** The written declarations, by property, as the element serializes them; none when unwritten. */
+  #written: Map<string, string> | null = null;
+  #unsubscribe: (() => void) | undefined;
+  #disposed = false;
+  constructor(
+    private readonly owner: HTMLElement,
+    private readonly element: HTMLElement,
+    private readonly declarations: Readonly<Record<string, string>>,
+  ) {}
+  /** Whether the declarations are written. */
+  get written(): boolean {
+    return this.#written !== null;
+  }
+  connect(): void {
+    if (this.#disposed) return;
+    this.#unsubscribe?.();
+    this.#unsubscribe = subscribeContentSecurity(this.owner, this.refresh);
+    this.refresh();
+  }
+  disconnect(): void {
+    this.#unsubscribe?.();
+    this.#unsubscribe = undefined;
+  }
+  readonly refresh = (): void => {
+    if (this.#disposed) return;
+    const suppressed = contentSecurityPolicy(this.owner).disableStyleElements === true;
+    if (suppressed) this.#write();
+    else this.#remove();
+  };
+  #write(): void {
+    if (this.#written) return;
+    const style = this.element.style;
+    const written = new Map<string, string>();
+    for (const [property, value] of Object.entries(this.declarations)) {
+      style.setProperty(property, value);
+      written.set(property, style.getPropertyValue(property));
+    }
+    this.#written = written;
+  }
+  #remove(): void {
+    if (!this.#written) return;
+    const style = this.element.style;
+    for (const [property, value] of this.#written)
+      if (style.getPropertyValue(property) === value) style.removeProperty(property);
+    this.#written = null;
+  }
+  dispose(): void {
+    this.disconnect();
+    this.#remove();
+    this.#disposed = true;
+  }
+}
+
+/**
+ * Style text adopted per root (a document or a shadow root): one generated resource per CSS text,
+ * created by the first adoption (under that owner's content-security policy) and disposed by the
+ * last release.
+ */
+const adoptedTexts = new WeakMap<
+  Document | ShadowRoot,
+  Map<string, { resource: GeneratedStyleResource; count: number }>
+>();
+
+/** Adopts CSS text into a document or shadow root under the owner's content-security policy; the release is idempotent. */
+export function adoptStyleText(
+  owner: HTMLElement,
+  root: Document | ShadowRoot,
+  cssText: string,
+): () => void {
+  let texts = adoptedTexts.get(root);
+  if (!texts) adoptedTexts.set(root, (texts = new Map()));
+  let entry = texts.get(cssText);
+  if (!entry) {
+    const resource = new GeneratedStyleResource(owner, root);
+    resource.setText(cssText);
+    texts.set(cssText, (entry = { resource, count: 0 }));
+  }
+  entry.count++;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    if (--entry.count > 0) return;
+    entry.resource.dispose();
+    texts.delete(cssText);
+  };
+}

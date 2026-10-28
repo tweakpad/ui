@@ -1,7 +1,14 @@
 import { ambientAnimation, motionTransition, presenceMotion } from '../motion.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import { activeRing, focusRing, thumb } from './shared/handle.js';
-import { popupBorder, sectionFooterAppearance, surfaceAppearance } from './shared/surface.js';
+import { selectionFill, selectionLine } from './shared/selection.js';
+import {
+  floatingToolbarAppearance,
+  floatingToolbarStructure,
+  popupBorder,
+  sectionFooterAppearance,
+  surfaceAppearance,
+} from './shared/surface.js';
 
 // Widgets Specification 6.3 Presentation: path geometry, label anchors and port positions are
 // content supplied by the engine; every color below resolves through tokens. The composed
@@ -12,8 +19,6 @@ const dots = 'color-mix(in oklab, var(--tp-foreground) 18%, transparent)';
 const edgeStroke = 'color-mix(in oklab, var(--tp-foreground) 35%, transparent)';
 const edgeHover = 'color-mix(in oklab, var(--tp-foreground) 55%, transparent)';
 const haloStroke = 'color-mix(in oklab, var(--tp-ring) 35%, transparent)';
-const selectionFill = 'color-mix(in oklab, var(--tp-primary) 8%, transparent)';
-const selectionLine = 'color-mix(in oklab, var(--tp-primary) 80%, transparent)';
 const minimapNode = 'color-mix(in oklab, var(--tp-foreground) 15%, transparent)';
 const minimapMask = 'color-mix(in oklab, var(--tp-muted) 60%, transparent)';
 const panelMotion: readonly PresentationRule[] = [
@@ -293,17 +298,7 @@ export const flowAppearance: PresentationDictionary = {
       },
     },
   ],
-  'flow-node-toolbar': [
-    {
-      declarations: {
-        'background-color': 'var(--tp-card)',
-        border: popupBorder,
-        'border-radius': 'var(--tp-radius-md)',
-        'box-shadow': 'var(--tp-shadow-sm)',
-        padding: 'var(--tp-space-1)',
-      },
-    },
-  ],
+  'flow-node-toolbar': floatingToolbarAppearance,
   'flow-node-resizer': [],
   // Four zero-extent lines: each paints the dashed border of its own edge only.
   'flow-node-resizer-line': [
@@ -699,7 +694,7 @@ export const flowStructure: PresentationDictionary = {
   'flow-node-header': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-node-row': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-node-footer': [{ declarations: { gap: 'var(--tp-space-2)' } }],
-  'flow-node-toolbar': [{ declarations: { gap: 'var(--tp-space-1)' } }],
+  'flow-node-toolbar': floatingToolbarStructure,
   // The theme gap between sets, as nested Button groups and toolbars use.
   'flow-controls': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-inspector-header': [

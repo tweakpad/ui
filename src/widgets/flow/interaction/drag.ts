@@ -2,7 +2,7 @@ import { snapPoint } from '../../../foundation/flow/geometry.js';
 import type { FlowChange, FlowPoint, FlowRect, FlowSize } from '../../../foundation/flow/types.js';
 import type { FlowTransaction } from '../../../foundation/flow/model/model.js';
 import type { PointerDragCancelReason } from '../../../foundation/pointer-drag.js';
-import { format } from '../strings.js';
+import { fillTemplate } from '../../../foundation/template.js';
 import type { FlowInteractionHost } from './host.js';
 
 interface DragEntry {
@@ -158,7 +158,7 @@ export class NodeDragSession {
     if (dragged) host.settleDrop(this.ids, event);
     const moved = host.model.getNode(this.#primary)?.position;
     host.announce(
-      format(host.strings.announceMoved, {
+      fillTemplate(host.strings.announceMoved, {
         label: host.nodeLabel(this.#primary),
         x: Math.round(moved?.x ?? 0),
         y: Math.round(moved?.y ?? 0),

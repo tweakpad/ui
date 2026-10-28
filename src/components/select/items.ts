@@ -118,3 +118,19 @@ export function createSelectItems<T, V extends SelectPrimitive>(
     },
   };
 }
+
+/** The option objects of a plain items array, groups' items included; none for a collection. */
+export function plainItemObjects(items: unknown): WeakSet<object> {
+  const objects = new WeakSet<object>();
+  if (!Array.isArray(items)) return objects;
+  const walk = (entries: readonly unknown[]): void => {
+    for (const entry of entries) {
+      if (!entry || typeof entry !== 'object') continue;
+      const group = entry as { readonly items?: unknown };
+      if (Array.isArray(group.items)) walk(group.items);
+      else objects.add(entry);
+    }
+  };
+  walk(items);
+  return objects;
+}

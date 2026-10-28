@@ -1,9 +1,9 @@
-import { SelectQueryController } from './query.js';
+import { applyForwardedNavigation, SelectQueryController } from './query.js';
 import { SURFACE_HOST, isSurfaceHost } from '../../foundation/surface-brand.js';
 import { autofillHint } from '../../foundation/autofill.js';
 import { renderQuery } from './query-view.js';
 import { SelectSource } from './source.js';
-import { isSelectItemCollection, type SelectItemCollection } from './items.js';
+import { isSelectItemCollection, plainItemObjects, type SelectItemCollection } from './items.js';
 import {
   DEFAULT_SELECT_MESSAGES,
   type SelectClearBehavior,
@@ -14,6 +14,7 @@ import {
 import type { SearchSource } from '../../foundation/search/source.js';
 import type { SearchMatching, SearchStatus } from '../../foundation/search/types.js';
 import { renderHighlighted } from '../../foundation/search/highlight.js';
+import type { SearchRange } from '../../foundation/search/types.js';
 import type { TpValueChangeEvent as ValueChangeEvent } from '../../foundation/events.js';
 import { selectStateMarkers } from './state.js';
 import { composedParent, focusManaged } from '../../foundation/focus.js';
@@ -36,7 +37,9 @@ import {
   focusableElements,
   isAvailable,
   restoreFocus,
+  shadowReferenceTarget,
 } from '../../foundation/focus.js';
+import { preserveFocusOnPress } from '../../foundation/press.js';
 import {
   componentHandlingPrevented,
   renderPart,
@@ -74,6 +77,7 @@ import {
   type ChoiceModelRecord,
 } from '../../foundation/choice-model.js';
 import { OwnedPortal } from '../../foundation/owned-portal.js';
+import { scheduleLayoutPass, type LayoutPass } from '../../foundation/layout-batch.js';
 import { ComposedEnvironmentObserver } from '../../foundation/composed-environment.js';
 import { SelectPointer } from './pointer.js';
 import { selectStyles } from './styles.js';
@@ -98,6 +102,13 @@ type SelectWindowUnit =
   | { kind: 'label'; key: string; group: SelectGroupNode }
   | { kind: 'row'; key: string; group: SelectGroupNode | undefined; records: ChoiceModelRecord[] }
   | { kind: 'option'; key: string; group: SelectGroupNode | undefined; record: ChoiceModelRecord };
+/** Whether the list scrolls above and below its viewport, with the scroll arrows' block extents. */
+interface SelectScrollExtent {
+  up: boolean;
+  down: boolean;
+  upHeight: number;
+  downHeight: number;
+}
 
 export class TpSelect extends TpFormElement<unknown> {
   static tagName = 'tp-select';
@@ -176,6 +187,7 @@ export class TpSelect extends TpFormElement<unknown> {
     sideOffset: { type: Number, attribute: 'side-offset', noAccessor: true },
     alignOffset: { type: Number, attribute: 'align-offset' },
     anchor: { attribute: false },
+    queryOwner: { attribute: false },
     disableAnchorTracking: { type: Boolean, attribute: 'disable-anchor-tracking' },
     collisionAvoidance: { attribute: false },
     collisionBoundary: { attribute: false },
@@ -350,6 +362,13 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   alignOffset: GeometryOffset = 0;
   anchor: SelectAnchor = null;
+  /**
+   * The external query owner: an editing element that keeps focus, supplies the query through
+   * `inputValue`, controls `open` and forwards its navigation keys to `handleQueryKey` and
+   * `activateHighlighted`. While it is set the searchable render has no Input and the popup moves
+   * no focus. Property only; `null` by default.
+   */
+  protected queryOwner: HTMLElement | null = null;
   disableAnchorTracking = false;
   collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip', fallbackAxisSide: 'none' };
   collisionBoundary: CollisionBoundary = 'clipping-ancestors';
@@ -475,6 +494,8 @@ export class TpSelect extends TpFormElement<unknown> {
     diagnostic: (message) => this.#diagnose(message),
   });
   readonly #source = new SelectSource();
+  /** The option objects of a plain `items` array, which are the application's own items. */
+  #plainItems = new WeakSet<object>();
   readonly #query = new SelectQueryController(this, {
     collection: this.#collection,
     selection: this.#selection,
@@ -497,7 +518,9 @@ export class TpSelect extends TpFormElement<unknown> {
     },
     submit: () => this.#submitForm(),
     metadata: (record) => ({
-      source: this.#source.sources.get(record.option) ?? record.value,
+      source:
+        this.#source.sources.get(record.option) ??
+        (this.#plainItems.has(record.option) ? record.option : record.value),
       logicalIndex: record.option.index ?? this.#collection.source.indexOf(record),
       row:
         this.#gridRows.get(record) ??
@@ -565,8 +588,11 @@ export class TpSelect extends TpFormElement<unknown> {
   });
   readonly #dismiss = new FloatingDismissController(this, {
     open: () => this.open && !this.inline,
-    anchor: () => this.#trigger,
-    insideElements: () => (this.#content ? [this.#content] : []),
+    anchor: () => this.#trigger ?? this.queryOwner,
+    insideElements: () => [
+      ...(this.#content ? [this.#content] : []),
+      ...(this.queryOwner ? [this.queryOwner] : []),
+    ],
     outside: () => true,
     escape: () => !this.#query.completion,
     topmostOnly: true,
@@ -673,6 +699,69 @@ export class TpSelect extends TpFormElement<unknown> {
     await this.#position?.update();
   }
 
+  // External query owner (Command external-input profile) -----------------------------------
+
+  /** Whether a searchable list takes its query from an external owner. */
+  get #externalQuery(): boolean {
+    return this.searchable && this.queryOwner !== null;
+  }
+
+  /**
+   * Applies a key forwarded by the query owner to the highlight, as the same key typed in the
+   * Input would: Arrow Up and Down move it (`loopFocus`), Home and End go to the first or last
+   * item. Returns whether it consumed the key: false while closed, composing, disabled, for an
+   * already prevented event, any other key, or with no item to highlight. Moves no focus.
+   */
+  protected handleQueryKey(event: KeyboardEvent): boolean {
+    if (
+      !this.open ||
+      event.defaultPrevented ||
+      componentHandlingPrevented(event) ||
+      event.isComposing ||
+      event.keyCode === 229 ||
+      this.#query.composing ||
+      this.effectiveDisabled
+    )
+      return false;
+    if (!applyForwardedNavigation(this.#collection, event.key, this.loopFocus)) return false;
+    this.#query.highlight('list-navigation');
+    return true;
+  }
+
+  /**
+   * Executes the highlighted item for a forwarded Enter or Tab (Tab acting like Enter). Returns
+   * false, so that the key reaches the owner, while closed, disabled, composing or with no
+   * highlighted item. Moves no focus.
+   */
+  protected activateHighlighted(event: Event): boolean {
+    const record = this.#collection.highlighted;
+    if (
+      !this.open ||
+      !record ||
+      record.disabled ||
+      this.effectiveDisabled ||
+      (event as KeyboardEvent).isComposing ||
+      this.#query.composing
+    )
+      return false;
+    this.selectOption(record, event);
+    return true;
+  }
+
+  /**
+   * The element an external owner references with `aria-activedescendant` and `aria-controls`:
+   * this element, whose shadow root forwards the reference to the highlighted option through
+   * `referenceTarget`; `null` with no highlighted option or where `referenceTarget` is not
+   * supported.
+   */
+  protected activeDescendantReference(): HTMLElement | null {
+    const option = this.#collection.element(this.#collection.highlighted);
+    const root = this.renderRoot as ShadowRoot & { referenceTarget?: string };
+    if (!option || !('referenceTarget' in root)) return null;
+    const target = shadowReferenceTarget(option, this.getRootNode());
+    return target === this ? this : null;
+  }
+
   override connectedCallback(): void {
     super.connectedCallback();
     this.#environment.connect();
@@ -718,6 +807,7 @@ export class TpSelect extends TpFormElement<unknown> {
     const previousHighlight = this.#collection.highlighted;
     this.#query.prepare();
     const resultItems = this.searchable ? this.#query.resultItems : undefined;
+    this.#plainItems = plainItemObjects(this.items);
     this.#model.update(
       isSelectItemCollection(this.items)
         ? this.#source.normalize(this.items, [])
@@ -751,12 +841,13 @@ export class TpSelect extends TpFormElement<unknown> {
           (this.clearBehavior !== 'query' && !!this.#values(this.#selection.value).length)),
     );
     this.#repairFocus =
+      !this.#externalQuery &&
       !!focusedOption &&
       (!this.#collection.source.includes(focusedOption) || !!focusedOption.disabled);
     if (this.open && !this.#wasOpen) {
       this.#pointer.opened();
       if (!this.searchable) this.#collection.openAt(this.#values(this.#selection.value));
-      this.#focusPending = !this.inline;
+      this.#focusPending = !this.inline && !this.#externalQuery;
     }
     this.#wasOpen = this.open;
     this.#presence.setPresent(this.open && this.isConnected);
@@ -771,24 +862,28 @@ export class TpSelect extends TpFormElement<unknown> {
     if (this.searchable)
       return html`${this.#part('select', state, {
           properties: { class: 'select-root', 'data-open': this.open, 'data-closed': !this.open },
-          content: renderQuery(this, this.#query, {
-            part: (name, state, options, contract) => this.#part(name, state, options, contract),
-            ref: (key, part, commit) => this.#ref(key, part, commit),
-            values: () => this.#values(this.#selection.value),
-            text: (value) => this.#text(value),
-            state,
-            prefix: this.renderQueryPrefix(),
-            focusOut: () => this.#focusOut(),
-            clearMounted: this.#clearPresence.mounted,
-            clearVisible: this.#clearPresence.mounted && this.#clearPresence.state !== 'retained',
-            bindClear: (element) => {
-              this.#clear = element;
-            },
-            bindEditor: (element) => {
-              this.#query.editor = element as HTMLInputElement | null;
-              this.#trigger = element;
-            },
-          }),
+          content: this.#externalQuery
+            ? nothing
+            : renderQuery(this, this.#query, {
+                part: (name, state, options, contract) =>
+                  this.#part(name, state, options, contract),
+                ref: (key, part, commit) => this.#ref(key, part, commit),
+                values: () => this.#values(this.#selection.value),
+                text: (value) => this.#text(value),
+                state,
+                prefix: this.renderQueryPrefix(),
+                focusOut: () => this.#focusOut(),
+                clearMounted: this.#clearPresence.mounted,
+                clearVisible:
+                  this.#clearPresence.mounted && this.#clearPresence.state !== 'retained',
+                bindClear: (element) => {
+                  this.#clear = element;
+                },
+                bindEditor: (element) => {
+                  this.#query.editor = element as HTMLInputElement | null;
+                  this.#trigger = element;
+                },
+              }),
         })}${!this.container || this.inline ? this.#popup() : nothing}
         <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
           ${this.open ? this.#query.status : ''}
@@ -1344,7 +1439,8 @@ export class TpSelect extends TpFormElement<unknown> {
           },
           '@pointerdown': (event: PointerEvent) => {
             if (event.button !== 0 || disabled) return;
-            if (this.searchable) event.preventDefault();
+            // A searchable list keeps focus in its Input or its query owner.
+            if (this.searchable) preserveFocusOnPress(event);
             this.#pointer.down(record, event.pointerType);
             this.#highlight(record, false);
           },
@@ -1384,8 +1480,16 @@ export class TpSelect extends TpFormElement<unknown> {
             event.preventDefault();
             this.#startScroll(direction);
           },
-          '@pointerenter': (event: PointerEvent) => {
-            if (event.pointerType !== 'touch') this.#startScroll(direction);
+          // A pointer that moves over the arrow scrolls the list; an arrow that appears under a
+          // resting pointer does not, so the list keeps the highlight the keyboard moves.
+          '@pointermove': (event: PointerEvent) => {
+            if (
+              event.pointerType === 'touch' ||
+              (event.movementX === 0 && event.movementY === 0) ||
+              this.#scrollTimer !== undefined
+            )
+              return;
+            this.#startScroll(direction);
           },
           '@pointerleave': () => this.#stopScroll(),
           '@pointerup': () => this.#stopScroll(),
@@ -1490,7 +1594,7 @@ export class TpSelect extends TpFormElement<unknown> {
         void this.updatePosition().then(() => this.#initialFocus());
       }
       // Scroll arrows follow the committed list's layout; their presence renders after this update.
-      queueMicrotask(() => this.#scrollState());
+      this.#queueScrollState();
     } else {
       this.#releaseModality();
       this.#stopScroll();
@@ -1544,7 +1648,11 @@ export class TpSelect extends TpFormElement<unknown> {
         : this.anchor && 'current' in this.anchor
           ? this.anchor.current
           : this.anchor;
-    const anchor = configured ?? (this.searchable ? this.#query.anchor : null) ?? this.#trigger;
+    const anchor =
+      configured ??
+      (this.searchable ? this.#query.anchor : null) ??
+      this.#trigger ??
+      this.queryOwner;
     if (!anchor || !this.#content) return;
     const key = JSON.stringify([
       this.placement,
@@ -1604,7 +1712,8 @@ export class TpSelect extends TpFormElement<unknown> {
       },
       onPosition: () => {
         this.#alignSelectedItem();
-        this.#scrollState();
+        // The first placement runs inside `updated()`.
+        this.#queueScrollState();
       },
     });
   }
@@ -1772,7 +1881,19 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   /** Option text, with matched ranges marked when highlighting. */
   #optionText(record: ChoiceModelRecord): unknown {
-    const ranges = this.highlightMatches ? this.#query.rangesOf(record) : undefined;
+    return this.optionContent(
+      record,
+      this.highlightMatches ? this.#query.rangesOf(record) : undefined,
+    );
+  }
+  /**
+   * The content of an option: its label, with the matched ranges of its text marked when it is
+   * plain text. `ranges` are present while highlighting matches.
+   */
+  protected optionContent(
+    record: ChoiceModelRecord,
+    ranges: readonly SearchRange[] | undefined,
+  ): unknown {
     return ranges?.length && record.label === record.text
       ? renderHighlighted(record.text, ranges, this.choicePart('select-match'))
       : record.label;
@@ -1843,8 +1964,10 @@ export class TpSelect extends TpFormElement<unknown> {
       this.#pointer.opened();
       this.#previousFocus = deepActiveElement(this.ownerDocument);
       if (!this.searchable) this.#collection.openAt(this.#values(this.#selection.value));
-      this.#focusPending = !this.inline;
+      this.#focusPending = !this.inline && !this.#externalQuery;
     } else {
+      // Closing a list under an external owner aborts its pending source call.
+      if (this.#externalQuery) this.#query.cancelSource();
       this.#pointer.reset();
       this.#openingPointerCleanup?.();
       this.#releaseModality();
@@ -1853,12 +1976,14 @@ export class TpSelect extends TpFormElement<unknown> {
       // Editable lists must not pull focus back after the user entered another
       // control. Explicit final-focus resolvers still own their chosen target.
       const active = deepActiveElement(this.ownerDocument);
+      // An external query owner keeps focus: closing moves none.
       if (
-        !this.searchable ||
-        this.finalFocus !== 'trigger' ||
-        !active ||
-        active === this.ownerDocument.body ||
-        this.#dismiss.contains(active)
+        !this.#externalQuery &&
+        (!this.searchable ||
+          this.finalFocus !== 'trigger' ||
+          !active ||
+          active === this.ownerDocument.body ||
+          this.#dismiss.contains(active))
       )
         restoreFocus(this.#focusTarget(this.finalFocus, false));
     }
@@ -1900,21 +2025,39 @@ export class TpSelect extends TpFormElement<unknown> {
     });
   }
   #scrollState(): void {
+    this.#applyScroll(this.#measureScroll());
+  }
+  /**
+   * Follows the list's scroll extent after the current update: the arrows' presence requests a
+   * render, which an update in progress (positioning runs inside `updated()`) must not schedule.
+   */
+  #queueScrollState(): void {
+    scheduleLayoutPass(this.#scrollPass, this.#scrollPass);
+  }
+  readonly #scrollPass: LayoutPass<SelectScrollExtent> = {
+    active: () => this.isConnected,
+    measure: () => this.#measureScroll(),
+    apply: (extent) => this.#applyScroll(extent),
+  };
+  /** Whether the list scrolls above and below its viewport, with the arrows' block extents. */
+  #measureScroll(): SelectScrollExtent {
     const list = this.#list;
     const up = !!list && this.open && list.scrollTop > 1;
     const down = !!list && this.open && list.scrollTop + list.clientHeight < list.scrollHeight - 1;
-    this.#upPresence.setPresent(up);
-    this.#downPresence.setPresent(down);
     // Scroll arrows overlay the list. Use their actual customized block extent so
     // native scrollIntoView also keeps keyboard focus clear of either overlay.
-    list?.style.setProperty(
-      '--_tp-select-scroll-up-height',
-      `${up ? (this.#up?.offsetHeight ?? 0) : 0}px`,
-    );
-    list?.style.setProperty(
-      '--_tp-select-scroll-down-height',
-      `${down ? (this.#down?.offsetHeight ?? 0) : 0}px`,
-    );
+    return {
+      up,
+      down,
+      upHeight: up ? (this.#up?.offsetHeight ?? 0) : 0,
+      downHeight: down ? (this.#down?.offsetHeight ?? 0) : 0,
+    };
+  }
+  #applyScroll(extent: SelectScrollExtent): void {
+    this.#upPresence.setPresent(extent.up);
+    this.#downPresence.setPresent(extent.down);
+    this.#list?.style.setProperty('--_tp-select-scroll-up-height', `${extent.upHeight}px`);
+    this.#list?.style.setProperty('--_tp-select-scroll-down-height', `${extent.downHeight}px`);
   }
   #startScroll(direction: number): void {
     this.#stopScroll();
