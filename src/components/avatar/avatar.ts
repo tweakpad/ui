@@ -1,4 +1,5 @@
 import { css, html, nothing, type PropertyValues } from 'lit';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { observeSlots, slotOccupied } from '../shared/slots.js';
 import { keyed } from 'lit/directives/keyed.js';
 import { TpElement } from '../../foundation/element.js';
@@ -69,9 +70,7 @@ export class TpAvatar extends TpElement {
         justify-content: center;
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   src = '';

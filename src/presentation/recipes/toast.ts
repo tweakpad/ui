@@ -1,5 +1,6 @@
 import { motionDuration, motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
+import { focusRing } from './shared/focus.js';
 
 /** Toast paint; the shared surface contribution supplies popover colors. */
 export const toastAppearance: PresentationDictionary = {
@@ -61,10 +62,7 @@ export const toastAppearance: PresentationDictionary = {
     { selector: '&[data-tp-motion-driven]', declarations: { transition: 'none' } },
     {
       selector: '&:focus-visible',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
+      declarations: focusRing,
     },
   ],
   'toast-content': [

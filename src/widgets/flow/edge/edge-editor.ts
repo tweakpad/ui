@@ -84,10 +84,6 @@ const editorStyles = css`
     --_tp-flow-zoom: 1;
   }
 
-  :host([hidden]) {
-    display: none;
-  }
-
   .anchor {
     position: absolute;
     inline-size: 0;

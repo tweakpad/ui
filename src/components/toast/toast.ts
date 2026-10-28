@@ -4,6 +4,7 @@ import { setLogicalPortalOwner } from '../../foundation/portal-ownership.js';
 import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
+import { hiddenStyles } from '../shared/control-styles.js';
 import { TpElement } from '../../foundation/element.js';
 import { CleanupScope } from '../../foundation/services.js';
 import {
@@ -237,9 +238,7 @@ export class TpToast extends TpElement {
         right: calc(100% - var(--tp-space-3) / 2);
       }
 
-      [hidden] {
-        display: none !important;
-      }
+      ${hiddenStyles}
     `,
   ];
   toastManager: ToastManager | undefined;

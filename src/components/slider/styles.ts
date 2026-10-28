@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { rangeHandleStyles } from '../shared/control-styles.js';
 export const sliderStyles = css`
   :host {
     display: block;
@@ -121,23 +122,5 @@ export const sliderThumbStyles = css`
     touch-action: none;
   }
 
-  .thumb::after {
-    content: '';
-    position: absolute;
-    inset: min(calc(var(--tp-space-2) * -1), calc((100% - var(--tp-target-size-min)) / 2));
-  }
-
-  input {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    padding: 0;
-    margin: 0;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  input[aria-orientation='vertical'] {
-    writing-mode: vertical-lr;
-  }
+  ${rangeHandleStyles('.thumb')}
 `;

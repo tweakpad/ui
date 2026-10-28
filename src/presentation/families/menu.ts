@@ -1,6 +1,6 @@
 import type { ComponentDefinition } from '../definition.js';
 import { definePresentation } from '../family.js';
-import { coarseTarget } from '../recipes/shared/target.js';
+import { menuItemStructure, menuShortcutStructure } from '../recipes/shared/menu-item.js';
 import { menuAppearance } from '../recipes/menu.js';
 
 const definition: ComponentDefinition = {
@@ -71,106 +71,11 @@ export const menuPresentation = definePresentation({
         },
       },
     ],
-    'menu-shortcut': [
-      {
-        declarations: {
-          'margin-inline-start': 'auto',
-          flex: 'none',
-        },
-      },
-    ],
-    'menu-item': [
-      {
-        declarations: {
-          'box-sizing': 'border-box',
-          display: 'flex',
-          'align-items': 'center',
-          'inline-size': '100%',
-          // Items have no fixed or minimum extent (a reused Button sub-trigger
-          // included); touch keeps the accessible target.
-          'block-size': 'auto',
-          'min-block-size': coarseTarget,
-          'text-align': 'start',
-          'justify-content': 'start',
-          cursor: 'pointer',
-        },
-      },
-      {
-        selector: '&[aria-disabled="true"]',
-        declarations: {
-          cursor: 'not-allowed',
-        },
-      },
-    ],
-    'menu-checkbox-item': [
-      {
-        declarations: {
-          'box-sizing': 'border-box',
-          display: 'flex',
-          'align-items': 'center',
-          'inline-size': '100%',
-          // Items have no fixed or minimum extent (a reused Button sub-trigger
-          // included); touch keeps the accessible target.
-          'block-size': 'auto',
-          'min-block-size': coarseTarget,
-          'text-align': 'start',
-          'justify-content': 'start',
-          cursor: 'pointer',
-        },
-      },
-      {
-        selector: '&[aria-disabled="true"]',
-        declarations: {
-          cursor: 'not-allowed',
-        },
-      },
-    ],
-    'menu-radio-item': [
-      {
-        declarations: {
-          'box-sizing': 'border-box',
-          display: 'flex',
-          'align-items': 'center',
-          'inline-size': '100%',
-          // Items have no fixed or minimum extent (a reused Button sub-trigger
-          // included); touch keeps the accessible target.
-          'block-size': 'auto',
-          'min-block-size': coarseTarget,
-          'text-align': 'start',
-          'justify-content': 'start',
-          cursor: 'pointer',
-        },
-      },
-      {
-        selector: '&[aria-disabled="true"]',
-        declarations: {
-          cursor: 'not-allowed',
-        },
-      },
-    ],
-    'menu-sub-trigger': [
-      {
-        declarations: {
-          'box-sizing': 'border-box',
-          display: 'flex',
-          'align-items': 'center',
-          'inline-size': '100%',
-          // Items have no fixed or minimum extent (a reused Button sub-trigger
-          // included); touch keeps the accessible target.
-          'block-size': 'auto',
-          'min-block-size': coarseTarget,
-          'text-align': 'start',
-          'justify-content': 'start',
-          cursor: 'pointer',
-        },
-      },
-      {
-        selector: '&[aria-disabled="true"]',
-        declarations: {
-          cursor: 'not-allowed',
-        },
-      },
-    ],
+    'menu-shortcut': menuShortcutStructure,
+    'menu-item': menuItemStructure,
+    'menu-checkbox-item': menuItemStructure,
+    'menu-radio-item': menuItemStructure,
+    'menu-sub-trigger': menuItemStructure,
   },
   sources: [menuAppearance],
 });

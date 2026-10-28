@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { rangeHandleStyles } from '../../components/shared/control-styles.js';
 
 /** Structure only: layout, geometry, hit targets and hidden inputs. Appearance is the recipe. */
 export const colorPickerStyles = css`
@@ -301,10 +302,6 @@ export const colorSurfaceStyles = css`
     min-inline-size: 0;
   }
 
-  :host([hidden]) {
-    display: none;
-  }
-
   .surface {
     position: relative;
     touch-action: none;
@@ -329,26 +326,7 @@ export const colorSurfaceStyles = css`
     z-index: 1;
   }
 
-  .thumb::after,
-  .handle::after {
-    content: '';
-    position: absolute;
-    inset: min(calc(var(--tp-space-2) * -1), calc((100% - var(--tp-target-size-min)) / 2));
-  }
-
-  input {
-    position: absolute;
-    inline-size: 1px;
-    block-size: 1px;
-    padding: 0;
-    margin: 0;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  input[aria-orientation='vertical'] {
-    writing-mode: vertical-lr;
-  }
+  ${rangeHandleStyles('.thumb, .handle')}
 
   svg.line {
     position: absolute;
