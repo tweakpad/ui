@@ -107,7 +107,7 @@ card.addEventListener('pointerleave', () => (image.zoomed = false));`}
 
 ### Reveal and groups
 
-`reveal` animates an image into place the first time it scrolls into view, from tokens such as `fade up` or `zoom-in`. Wrap a set in `tp-image-group` to wait until every image has loaded, then reveal them in order, `stagger` milliseconds apart.
+`reveal` animates an image into place the first time it scrolls into view, from tokens such as `fade up` or `zoom-in`. Wrap a set in `tp-image-group` to wait until every image has loaded, then reveal them in order, `stagger` milliseconds apart. A reveal that would start during a same-document view transition waits for it to finish.
 
 The group starts fetching every member once it is within 25% of the viewport, so lazy members don't hold the set back. It reveals nothing until every member has settled (loaded and decoded, or failed and showing its fallback). Members that have no `reveal` of their own use the group's `reveal`. Inside a group, members never trigger their own reveal; the group owns their timing. Lay the group out like any block, for example as a grid.
 

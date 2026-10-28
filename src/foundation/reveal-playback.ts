@@ -11,6 +11,7 @@ import {
   type MotionValue,
 } from './motion.js';
 import { canObserveIntersection } from './observation.js';
+import { ViewTransitionHold } from './view-transition.js';
 import { ViewportTrigger } from './viewport-trigger.js';
 
 /** The longest `duration + delay` among an element's transitions, in milliseconds. */
@@ -117,6 +118,7 @@ export interface StandaloneRevealOptions {
  */
 export class StandaloneReveal {
   readonly #trigger: ViewportTrigger;
+  readonly #transition = new ViewTransitionHold();
 
   constructor(
     private readonly element: HTMLElement,
@@ -148,6 +150,9 @@ export class StandaloneReveal {
     this.#trigger.sync(!immediate && (!playback.revealed || this.#repeats()));
     if (playback.revealed || this.options.held() || !this.options.ready()) return;
     if (!immediate && !this.#trigger.inView) return;
+    // An immediate reveal has no motion for a view transition to break.
+    if (!immediate && this.#transition.holds(this.element.ownerDocument, () => this.update()))
+      return;
     void playback.play();
     this.#trigger.sync(!immediate && this.#repeats());
   }

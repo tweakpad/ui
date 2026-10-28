@@ -219,3 +219,14 @@ describe('foundation test fakes', () => {
     expect([host.controllers, host.isConnected]).toEqual([[], true]);
   });
 });
+
+/** A view transition whose `finished` the test settles. */
+export function fakeViewTransition() {
+  let finish!: () => void;
+  let fail!: (reason: unknown) => void;
+  const finished = new Promise<undefined>((resolve, reject) => {
+    finish = () => resolve(undefined);
+    fail = reject;
+  });
+  return { transition: { finished } as unknown as ViewTransition, finish, fail };
+}

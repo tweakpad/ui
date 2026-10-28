@@ -12,6 +12,7 @@ import {
   type ScrollRange,
   type ScrollRangeSpan,
 } from './scroll-progress.js';
+import { ViewTransitionHold } from './view-transition.js';
 import { ViewportTrigger } from './viewport-trigger.js';
 
 export type StaggerFrom = 'first' | 'last' | 'center';
@@ -226,6 +227,7 @@ export class RevealCoordinator {
   readonly #element: HTMLElement;
   readonly #config: RevealCoordinatorConfig;
   readonly #trigger: ViewportTrigger;
+  readonly #transition = new ViewTransitionHold();
   readonly #membership: RevealMembership;
   readonly #member: RevealMember;
   #revealed = false;
@@ -482,13 +484,18 @@ export class RevealCoordinator {
       return;
     }
     if (this.#held(members)) return;
+    // A reveal waits out a same-document view transition; an immediate one has no motion to break.
+    const transitionHolds = () =>
+      !this.#immediate() &&
+      this.#transition.holds(this.#element.ownerDocument, () => this.schedule());
     if (!this.#revealed) {
       if (nested) return;
       const immediate = this.#immediate();
-      if (status.status !== 'loading' && (this.#trigger.inView || immediate))
+      if (status.status !== 'loading' && (this.#trigger.inView || immediate) && !transitionHolds())
         void this.#play(members, 0, immediate);
       return;
     }
+    if (transitionHolds()) return;
     // Already revealed: members that joined later reveal as soon as they are ready.
     for (const member of members)
       if (member.revealing() && !member.revealed() && member.ready()) void member.reveal(0);

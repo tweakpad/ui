@@ -1,4 +1,4 @@
-import { FakeIntersectionObserver } from './fakes.test.js';
+import { FakeIntersectionObserver, fakeViewTransition } from './fakes.test.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   coordinatorStatus,
@@ -152,6 +152,25 @@ describe('reveal coordinator', () => {
     expect(second.reveal).toHaveBeenCalledWith(100);
     expect(third.reveal).toHaveBeenCalledWith(200);
     expect(root.events).toContainEqual(['tp-reveal-change-complete', { revealed: true }]);
+  });
+
+  it('waits out a same-document view transition before revealing its members', async () => {
+    const root = fakeElement(0);
+    coordinate(root);
+    const member = fakeMember(fakeElement(1));
+    root[revealCoordinatorHost]!.register(member);
+    const { transition, fail } = fakeViewTransition();
+    const document = root.ownerDocument as unknown as { activeViewTransition: unknown };
+    document.activeViewTransition = transition;
+    FakeIntersectionObserver.report(root, true);
+    await flush();
+    expect(member.reveal).not.toHaveBeenCalled();
+
+    // A skipped transition releases the reveal too.
+    document.activeViewTransition = null;
+    fail(new DOMException('Skipped', 'AbortError'));
+    await flush();
+    expect(member.reveal).toHaveBeenCalledTimes(1);
   });
 
   it('reveals a member that joins after the sequence without delay', async () => {
