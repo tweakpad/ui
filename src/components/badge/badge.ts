@@ -3,6 +3,12 @@ import { TpElement } from '../../foundation/element.js';
 import { badgePresentation } from '../../presentation/families/badge.js';
 import { fillLayerStyles } from '../../presentation/motion.js';
 
+/**
+ * A compact, passive label for status, category, metadata or a count. Its host is a span with no
+ * tab stop; `interactive` adopts a native button or link supplied through the part contract.
+ *
+ * @slot - The label: text, with an Icon or a Spinner as a decorative mark.
+ */
 export class TpBadge extends TpElement {
   static tagName = 'tp-badge';
   static override presentation = badgePresentation;
@@ -44,9 +50,11 @@ export class TpBadge extends TpElement {
       }
     `,
   ];
+  /** Visual emphasis only: `destructive`, `success` and `warning` are the status pills, `outline` and `secondary` neutral metadata. */
   variant:
     'default' | 'secondary' | 'destructive' | 'success' | 'warning' | 'outline' | 'ghost' | 'link' =
     'default';
+  /** Declares that the badge acts; the `badge` part contract supplies the native button or link that does. */
   interactive = false;
   protected override render() {
     return this.renderPart(

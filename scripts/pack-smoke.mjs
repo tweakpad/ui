@@ -34,8 +34,12 @@ const fail = (message) => {
 // 1. Pack and inspect the tarball contents.
 const [pack] = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', work]));
 const files = new Set(pack.files.map((file) => file.path));
-const forbidden = [...files].filter((path) =>
-  /^(src|tmp|plans|external|docs|scripts|tests|\.storybook)\/|^\.env|stylesheet\.js/u.test(path),
+// The documentation pages (`docs/components`, `docs/widgets`) ship; the library's internal
+// markdown under `docs/` does not.
+const forbidden = [...files].filter(
+  (path) =>
+    /^(src|tmp|plans|external|scripts|tests|\.storybook)\/|^\.env|stylesheet\.js/u.test(path) ||
+    (/^docs\//u.test(path) && !/^docs\/(?:components|widgets)\/[^/]+\.mdx$/u.test(path)),
 );
 if (forbidden.length) fail(`unexpected files in the package: ${forbidden.slice(0, 10).join(', ')}`);
 const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
@@ -46,7 +50,13 @@ for (const [subpath, target] of Object.entries(manifest.exports)) {
     if (!files.has(path.replace(/^\.\//u, ''))) fail(`export ${subpath} -> ${path} is not packed`);
   }
 }
-for (const required of ['LICENSE', 'README.md', 'dist/custom-elements.json'])
+for (const required of [
+  'LICENSE',
+  'README.md',
+  'dist/custom-elements.json',
+  'dist/docs.json',
+  'docs/components/badge.mdx',
+])
   if (!files.has(required)) fail(`${required} is not packed`);
 // Every license notice that the build emits for bundled third-party portions ships beside them.
 const notices = [
@@ -211,6 +221,9 @@ import * as textEditor from '@tweakpad/ui/text-editor';
 import * as textEditorTiptap from '@tweakpad/ui/text-editor/adapters/tiptap';
 import * as textEditorLexical from '@tweakpad/ui/text-editor/adapters/lexical';
 import packageJson from '@tweakpad/ui/package.json' with { type: 'json' };
+import { parseDoc, elementApi, type DocsIndex } from '@tweakpad/ui/docs';
+import { literalCode } from '@tweakpad/ui/docs/vite';
+import docsIndex from '@tweakpad/ui/docs.json' with { type: 'json' };
 
 defineElement(TpButton.tagName, TpButton);
 const button: HTMLElementTagNameMap['tp-button'] = document.createElement('tp-button');
@@ -218,7 +231,8 @@ button.variant = 'outline';
 const editor: HTMLElementTagNameMap['tp-text-editor'] = document.createElement('tp-text-editor');
 // @ts-expect-error The text editor publishes no controlled value.
 editor.value = editor.value;
-export const used = [TpIcon, editor, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, emoji.builtinEmojiData().emojis.length, flow.FLOW_DOCUMENT_VERSION, textEditor, textEditorTiptap, textEditorLexical, widgetEntries.length, packageJson.version];
+const pageIds: DocsIndex['pages'][number]['id'][] = docsIndex.pages.map((page) => page.id);
+export const used = [TpIcon, editor, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, emoji.builtinEmojiData().emojis.length, flow.FLOW_DOCUMENT_VERSION, textEditor, textEditorTiptap, textEditorLexical, widgetEntries.length, packageJson.version, parseDoc, elementApi, literalCode().name, pageIds.length];
 `,
 );
 writeFileSync(join(consumer, 'css.d.ts'), "declare module '*.css';\n");
@@ -242,6 +256,18 @@ writeFileSync(
     2,
   ),
 );
+
+// The documentation tooling is DOM-free: a build step reads the shipped pages and the index in Node.
+run(
+  process.execPath,
+  [
+    '--input-type=module',
+    '-e',
+    "import { readFileSync } from 'node:fs'; import { createRequire } from 'node:module'; import { dirname, join } from 'node:path'; const require = createRequire(import.meta.url); const { parseDoc, elementApi, relatedPages } = await import('@tweakpad/ui/docs'); const index = require('@tweakpad/ui/docs.json'); const root = dirname(require.resolve('@tweakpad/ui/package.json')); const manifest = JSON.parse(readFileSync(join(root, require('@tweakpad/ui/package.json').customElements), 'utf8')); const page = parseDoc(readFileSync(join(root, 'docs/components/badge.mdx'), 'utf8'), 'components/badge'); if (page.tag !== 'tp-badge' || !page.hero || index.pages[0].tag !== 'tp-badge' || !elementApi(manifest, 'tp-badge').cssParts.length || !relatedPages(manifest, index.pages).has('components/badge')) process.exit(1);",
+  ],
+  consumer,
+);
+console.log('pack-smoke: @tweakpad/ui/docs reads the shipped pages in Node');
 
 // The QR encoder is DOM-free: it must run in Node without a document or Lit.
 run(

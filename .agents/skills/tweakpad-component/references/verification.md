@@ -187,6 +187,10 @@ matrix. Cite live requirements before treating a feature as supported or omitted
 
 ## Documentation and demo reuse acceptance
 
+- The documentation page (`docs/components/<slug>.mdx`) parses and passes `npm test`
+  (skeleton, story pairing) and `npm run build` (every API row of the element and its
+  constituent tags described); the hero preview is the Default story's source and renders on
+  both renderings.
 - The base example renders the actual component using its intended default
   presentation. Props needed for meaningful content are distinct from demo-only
   fixture knobs; document differences between example args and API defaults.
@@ -198,8 +202,9 @@ matrix. Cite live requirements before treating a feature as supported or omitted
   setup out of the component API table. A generated Docs title/default story is
   insufficient evidence for full documentation.
 - Review the Docs page and index through MCP. Confirm base-first presentation,
-  complete API references, and curated examples. Verification matrices must not
-  reappear as public attribute-permutation galleries through automatic inclusion.
+  the generated API with slots and parts, Related, and every preview running its script.
+  Verification matrices must not reappear as public attribute-permutation galleries
+  through automatic inclusion.
 - Inspect every nested UI role in rendered demos and copyable code against the
   composition reuse map. Confirm the actual custom-element registration and
   instance, then exercise representative public behavior and theming in context.

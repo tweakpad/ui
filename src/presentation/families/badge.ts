@@ -26,6 +26,7 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'badge',
+      description: 'The pill: the host of the label and of the variant appearance.',
       axes: ['variant'],
     },
   ],

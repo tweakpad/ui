@@ -4,7 +4,7 @@ import {
   REQUIRED_TOKEN_ROLES,
   TOKEN_FAMILIES,
   type RequiredTokenRole,
-} from '../../presentation/tokens.js';
+} from '../presentation/tokens.js';
 import {
   DESCRIPTIONS,
   FAMILIES,
@@ -20,7 +20,7 @@ import {
   type Rgba,
 } from './token-catalog.js';
 
-const stylesheet = readFileSync(new URL('../../styles.css', import.meta.url), 'utf8');
+const stylesheet = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
 
 /** The content color hues, in their listed order. */
 const HUES = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'];

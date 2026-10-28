@@ -7,6 +7,12 @@ export type DefinitionKind =
 
 export interface PartDefinition {
   name: string;
+  /**
+   * What the part is, for the generated API reference (`::part(<name>)`): one sentence that a
+   * consumer styling it needs. Parts without a description are flagged by the documentation
+   * build of the elements that expose them.
+   */
+  description?: string;
   slot?: string;
   /** Axes (by name) whose values this part resolves to `<part>-<axis>-<value>` keys. */
   axes?: readonly string[];

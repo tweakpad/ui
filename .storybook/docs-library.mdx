@@ -1,0 +1,333 @@
+import React, { Fragment } from 'react';
+import { Canvas, DocsContext, useOf } from '@storybook/addon-docs/blocks';
+import { MDXProvider } from '@storybook/addon-docs/mdx-react-shim';
+import { manifest } from './manifest.js';
+import { elementApi } from '../src/docs/api.js';
+import { mountPreview, previewSource } from '../src/docs/preview-runtime.js';
+import { relatedPages } from '../src/docs/related.js';
+import { libraryDocPages } from '../src/stories/library-docs.js';
+
+export const LibraryDocContext = React.createContext(null);
+
+export function PreviewCanvas({ preview }) {
+  // The library's documentation page of a component, rendered on its Docs page: the page's own
+  // content (`LibraryDoc`), then the generated API and Related sections. `Preview` and `Keys`
+  // are the two elements the pages use; the website renders the same pages with its own
+  // versions. Top-level comments are prose to MDX, so the notes live inside the blocks.
+  const host = React.useRef(null);
+  React.useEffect(() => {
+    const mounted = mountPreview(host.current, preview);
+    return () => mounted.dispose();
+  }, [preview]);
+  // A scrolling use case: the preview itself is the scroll container (and the size container that
+  // pinned sections fill), at the height the example asks for.
+  const style = preview.viewport
+    ? {
+        blockSize: preview.viewport,
+        overflow: 'auto',
+        containerType: 'size',
+        paddingInline: 'var(--tp-space-6)',
+      }
+    : undefined;
+  return (
+    <div
+      className="tp-docs-example-preview"
+      data-align={preview.align || 'center'}
+      ref={host}
+      style={style}
+    />
+  );
+}
+
+export function Preview(props) {
+  const context = React.useContext(LibraryDocContext);
+  const preview = React.useMemo(
+    () => props,
+    [props.code, props.script, props.viewport, props.align],
+  );
+  const components = React.useMemo(
+    () => ({ Story: () => <PreviewCanvas preview={preview} /> }),
+    [preview],
+  );
+  // The hero is the Default story above; the page's first preview is not shown twice.
+  const hero = context?.hero;
+  if (hero && hero.title === props.title && hero.code === props.code) return null;
+  const source = {
+    code: previewSource(props.code, props.script),
+    language: props.language || 'html',
+    format: false,
+  };
+  return (
+    <figure className="tp-docs-example">
+      <figcaption>{props.title}</figcaption>
+      {props.codeOnly ? (
+        <Canvas withToolbar={false} source={source} sourceState="shown" />
+      ) : (
+        <MDXProvider components={components}>
+          <Canvas
+            layout={props.viewport ? 'fullscreen' : 'padded'}
+            withToolbar={false}
+            source={source}
+          />
+        </MDXProvider>
+      )}
+    </figure>
+  );
+}
+
+export const KEY_ALIASES = {
+  up: 'arrowup',
+  down: 'arrowdown',
+  left: 'arrowleft',
+  right: 'arrowright',
+  esc: 'escape',
+};
+
+export function Keys({ keys }) {
+  const names = keys
+    .split('+')
+    .map((key) => key.trim())
+    .filter(Boolean)
+    .map((key) => KEY_ALIASES[key.toLowerCase()] ?? (key.length === 1 ? key.toUpperCase() : key));
+  return (
+    <tp-key-hint-group>
+      {names.map((name, index) => (
+        <KeyHint key={index} name={name} />
+      ))}
+    </tp-key-hint-group>
+  );
+}
+
+export function KeyHint({ name }) {
+  // `key` is reserved by React, so the attribute is set on the element itself.
+  const set = React.useCallback((element) => element?.setAttribute('key', name), [name]);
+  return <tp-key-hint ref={set} />;
+}
+
+export function useLibraryDoc() {
+  const resolved = useOf('meta', ['meta']);
+  return resolved.preparedMeta.parameters.docs?.library ?? null;
+}
+
+export function LibraryDoc() {
+  const doc = useLibraryDoc();
+  if (!doc) return null;
+  const { page, Content } = doc;
+  const components = { Preview, Keys };
+  // MDX resolves member-expression elements through its provider, so the context provider is
+  // created directly.
+  return React.createElement(
+    LibraryDocContext.Provider,
+    { value: { hero: page.hero } },
+    <MDXProvider components={components}>
+      <Content components={components} />
+    </MDXProvider>,
+  );
+}
+
+export function Prose({ text }) {
+  if (!text) return '—';
+  return text.split('`').map((part, index) => (index % 2 ? <code key={index}>{part}</code> : part));
+}
+
+export function ApiRows({ label, columns, rows }) {
+  if (!rows.length) return null;
+  return (
+    <table className="tp-docs-api">
+      <caption>{label}</caption>
+      <thead>
+        <tr>
+          {columns.map((column) => (
+            <th key={column.title}>{column.title}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row, index) => (
+          <tr key={index}>
+            {columns.map((column) => (
+              <td key={column.title}>{column.cell(row)}</td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export const code = (value) => (value ? <code>{value}</code> : '—');
+
+export function ElementApi({ tag, attributes }) {
+  const api = elementApi(manifest, tag);
+  if (!api)
+    return (
+      <p>
+        No manifest entry for <code>{tag}</code>.
+      </p>
+    );
+  return (
+    <>
+      {attributes && (
+        <ApiRows
+          label="Attributes"
+          columns={[
+            { title: 'Attribute', cell: (row) => <code>{row.name}</code> },
+            { title: 'Property', cell: (row) => code(row.property) },
+            { title: 'Type', cell: (row) => code(row.type) },
+            { title: 'Default', cell: (row) => code(row.default) },
+            { title: 'Description', cell: (row) => <Prose text={row.description} /> },
+          ]}
+          rows={api.attributes}
+        />
+      )}
+      <ApiRows
+        label="Properties"
+        columns={[
+          {
+            title: 'Property',
+            cell: (row) => (
+              <>
+                <code>{row.name}</code>
+                {row.readonly && ' (read-only)'}
+              </>
+            ),
+          },
+          { title: 'Type', cell: (row) => code(row.type) },
+          { title: 'Default', cell: (row) => code(row.default) },
+          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
+        ]}
+        rows={api.properties}
+      />
+      <ApiRows
+        label="Methods"
+        columns={[
+          { title: 'Method', cell: (row) => <code>{row.signature}</code> },
+          { title: 'Returns', cell: (row) => code(row.returns) },
+          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
+        ]}
+        rows={api.methods}
+      />
+      <ApiRows
+        label="Events"
+        columns={[
+          { title: 'Event', cell: (row) => <code>{row.name}</code> },
+          { title: 'Type', cell: (row) => code(row.type) },
+          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
+        ]}
+        rows={api.events}
+      />
+      <ApiRows
+        label="Slots"
+        columns={[
+          { title: 'Slot', cell: (row) => (row.name ? <code>{row.name}</code> : 'default') },
+          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
+        ]}
+        rows={api.slots}
+      />
+      <ApiRows
+        label="CSS parts"
+        columns={[
+          { title: 'Part', cell: (row) => <code>::part({row.name})</code> },
+          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
+        ]}
+        rows={api.cssParts}
+      />
+      <ApiRows
+        label="CSS custom properties"
+        columns={[
+          { title: 'Property', cell: (row) => <code>{row.name}</code> },
+          { title: 'Default', cell: (row) => code(row.default) },
+          { title: 'Description', cell: (row) => <Prose text={row.description} /> },
+        ]}
+        rows={api.cssProperties}
+      />
+    </>
+  );
+}
+
+export function Api() {
+  const doc = useLibraryDoc();
+  if (!doc) return null;
+  const { page } = doc;
+  return (
+    <>
+      <h2 id="api">API</h2>
+      <p>
+        Attributes and properties of <code>&lt;{page.tag}&gt;</code> are the public properties
+        above. Every element also accepts <code>disabled</code> and <code>motion-policy</code>.
+      </p>
+      <ElementApi tag={page.tag} attributes={false} />
+      {page.parts.map((part) => (
+        <Fragment key={part}>
+          <h3 id={`api-${part}`}>
+            <code>&lt;{part}&gt;</code>
+          </h3>
+          <ElementApi tag={part} attributes />
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
+export const docsStoryId = (page) =>
+  `${page.section}-${page.slug.replace(/[^a-z0-9]+/g, '-')}--docs`;
+
+export function PageLink({ page }) {
+  const context = React.useContext(DocsContext);
+  const storyId = docsStoryId(page);
+  const open = (event) => {
+    event.preventDefault();
+    context.channel.emit('selectStory', { storyId, viewMode: 'docs' });
+  };
+  return (
+    <a href={`?path=/docs/${storyId}`} onClick={open}>
+      {page.title}
+    </a>
+  );
+}
+
+export function PageList({ title, ids }) {
+  if (!ids.length) return null;
+  const pages = ids
+    .map((id) => libraryDocPages.find((doc) => doc.page.id === id)?.page)
+    .filter(Boolean);
+  return (
+    <>
+      <h3>{title}</h3>
+      <ul>
+        {pages.map((page) => (
+          <li key={page.id}>
+            <PageLink page={page} />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+export function Related() {
+  const doc = useLibraryDoc();
+  const related = React.useMemo(
+    () =>
+      doc &&
+      relatedPages(
+        manifest,
+        libraryDocPages.map((entry) => entry.page),
+      ).get(doc.page.id),
+    [doc],
+  );
+  if (!related) return null;
+  return (
+    <>
+      <h2 id="related">Related</h2>
+      {related.renders.length || related.renderedBy.length ? (
+        <>
+          <PageList title="Renders" ids={related.renders} />
+          <PageList title="Used by" ids={related.renderedBy} />
+        </>
+      ) : (
+        <p>No other documented component renders this one or is rendered by it.</p>
+      )}
+    </>
+  );
+}

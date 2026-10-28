@@ -4,7 +4,7 @@
  * manifest analyzer, its Lit plugins and the shipped config's plugins, so the tests observe the
  * manifest that `npm run cem` writes, not a single plugin in isolation.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import type * as TypeScript from 'typescript';
 import { describe, expect, it } from 'vitest';
 
@@ -358,6 +358,47 @@ describe('custom elements manifest: tp-text-editor', () => {
     ).toEqual(['attributes not in the contract: value']);
     expect(withDefect((editor) => editor.events.splice(4, 1))).toEqual([
       'events missing: tp-text-editor-ready',
+    ]);
+  });
+});
+
+describe('custom elements manifest: documentation fields', () => {
+  it('lists the tags an element renders (its elementDependencies, up the class chain) and the parts it exposes', async () => {
+    const root = new URL('../', import.meta.url);
+    const paths = [
+      'src/foundation/element.ts',
+      'src/foundation/form-element.ts',
+      'src/components/badge/badge.ts',
+      'src/components/select/select.ts',
+      'src/components/select/option.ts',
+      'src/components/icon/icon.ts',
+      'src/components/button/button.ts',
+      'src/components/spinner/spinner.ts',
+      'src/components/input-group/input-group.ts',
+    ];
+    const sources = Object.fromEntries(
+      paths
+        .filter((path) => existsSync(new URL(path, root)))
+        .map((path) => [path, readFileSync(new URL(path, root), 'utf8')]),
+    );
+    const manifest = await manifestOf(sources);
+    const declarations = manifest.modules.flatMap((module) => module.declarations ?? []);
+    const element = (tagName: string) =>
+      declarations.find((entry) => entry.tagName === tagName) as
+        { renders?: string[]; cssParts?: { name: string; description?: string }[] } | undefined;
+    const select = element('tp-select');
+    expect(select?.renders).toEqual(
+      ['tp-badge', 'tp-button', 'tp-icon', 'tp-input-group', 'tp-spinner'].filter((tag) =>
+        declarations.some((entry) => entry.tagName === tag),
+      ),
+    );
+    const badge = element('tp-badge');
+    expect(badge?.renders).toEqual([]);
+    expect(badge?.cssParts).toEqual([
+      {
+        name: 'badge',
+        description: 'The pill: the host of the label and of the variant appearance.',
+      },
     ]);
   });
 });

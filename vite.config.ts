@@ -65,6 +65,10 @@ export default defineConfig({
         // The widgets section ships through its own entries; `index` and `register` never reach it.
         widgets: resolve(import.meta.dirname, 'src/widgets/index.ts'),
         'register/widgets': resolve(import.meta.dirname, 'src/register/widgets.ts'),
+        // The documentation tooling: page reader, API rows and preview runtime, plus the Vite
+        // plugin the renderings compile the pages with. Both are DOM-free on import.
+        'docs/index': resolve(import.meta.dirname, 'src/docs/index.ts'),
+        'docs/vite': resolve(import.meta.dirname, 'src/docs/vite.ts'),
         ...iconEntries,
       },
       formats: ['es'],

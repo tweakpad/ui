@@ -90,6 +90,7 @@ export class TpElement extends LitElement {
     ${unsafeCSS(visuallyHiddenRule('.visually-hidden'))}
   `;
 
+  /** Takes the element out of interaction: its actions do nothing and it shows the disabled appearance. */
   disabled = false;
   readOnly = false;
   invalid = false;

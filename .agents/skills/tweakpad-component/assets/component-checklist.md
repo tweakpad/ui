@@ -140,12 +140,12 @@ at the work boundaries specified in SKILL.md.
 
 ## Documentation synchronization
 
-- [ ] Base example, actual Controls, constituent APIs and reference agree with code.
-- [ ] Added/removed/changed properties, events, methods, slots and hooks are updated.
-- [ ] Verification fixtures are separate from curated public examples.
-- [ ] Rendered and copyable compositions reuse existing components.
-- [ ] Imports and registration work outside Storybook's global setup.
-- [ ] Generator handling and changed tests preserve the intended documentation.
+- [ ] `docs/components/<slug>.mdx` follows the skeleton; the story renders it with `libraryDocs()`; the tag is off `scripts/docs/pending.json`.
+- [ ] JSDoc covers the element summary, every public field and method, slots, events and CSS properties; parts carry a description in the family; `npm run build` reports no undescribed row.
+- [ ] `elementDependencies` is complete, so Related lists what the element renders.
+- [ ] Verification fixtures are separate from the page (tests/fixtures or `!autodocs` stories).
+- [ ] Rendered and copyable previews reuse existing components; scripts import only what previews may.
+- [ ] Preview code works outside Storybook: registration is the page's, imports are the package's.
 
 ## Completion / handoff
 
