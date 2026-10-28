@@ -16,6 +16,7 @@ export const toggleAppearance: PresentationDictionary = {
     fillHidden(pressedInteraction),
   ],
   'toggle-content': [{ declarations: { gap: 'inherit' } }],
+  'toggle-size-xs': [{ declarations: { 'min-inline-size': 'var(--tp-control-height-xs)' } }],
   'toggle-size-sm': [{ declarations: { 'min-inline-size': 'var(--tp-control-height-sm)' } }],
   'toggle-size-lg': [{ declarations: { 'min-inline-size': 'var(--tp-control-height-lg)' } }],
 };

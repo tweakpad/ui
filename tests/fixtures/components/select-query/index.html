@@ -14,7 +14,10 @@
       main {
         display: grid;
         gap: var(--tp-space-6);
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--tp-spacing) * 70)), 1fr));
+        grid-template-columns: repeat(
+          auto-fit,
+          minmax(min(100%, calc(var(--tp-spacing) * 70)), 1fr)
+        );
       }
       section {
         min-width: 0;
@@ -22,6 +25,12 @@
       tp-select {
         width: 100%;
         max-width: calc(var(--tp-spacing) * 90);
+      }
+      #external-owner {
+        min-block-size: calc(var(--tp-spacing) * 16);
+        padding: var(--tp-space-2);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        border-radius: var(--tp-radius-md);
       }
       #sandbox {
         margin-top: var(--tp-space-6);
@@ -35,7 +44,8 @@
         <h2>Single selection</h2>
         <form id="single-form">
           <tp-field label="Fruit" description="Search or select a fruit"
-            ><tp-select searchable
+            ><tp-select
+              searchable
               id="single"
               name="fruit"
               placeholder="Choose fruit"
@@ -48,13 +58,24 @@
         <h2>Multiple values</h2>
         <form id="multi-form">
           <tp-field label="Contributors"
-            ><tp-select searchable id="multi" name="people" multiple placeholder="Add people"></tp-select
+            ><tp-select
+              searchable
+              id="multi"
+              name="people"
+              multiple
+              placeholder="Add people"
+            ></tp-select
           ></tp-field>
         </form>
       </section>
       <section>
         <h2>Rich groups</h2>
-        <tp-select searchable id="rich" label="Formatting" placeholder="Search formatting"></tp-select>
+        <tp-select
+          searchable
+          id="rich"
+          label="Formatting"
+          placeholder="Search formatting"
+        ></tp-select>
       </section>
       <section>
         <h2>Native registered items</h2>
@@ -72,7 +93,8 @@
       </section>
       <section>
         <h2>Independent controls</h2>
-        <tp-select searchable
+        <tp-select
+          searchable
           id="options"
           label="Optional controls"
           placeholder="Query or selection"
@@ -83,6 +105,19 @@
         <h2>Explicit portal</h2>
         <tp-select searchable id="portal" label="Portaled options" placeholder="Search"></tp-select>
         <div id="portal-target"></div>
+      </section>
+      <section>
+        <h2>External query owner</h2>
+        <div
+          id="external-owner"
+          contenteditable="true"
+          role="textbox"
+          aria-label="Field log"
+          aria-multiline="true"
+          spellcheck="false"
+        ></div>
+        <div id="external-list-slot"></div>
+        <p id="external-log" aria-live="off"></p>
       </section>
       <section>
         <h2>Inline in Dialog</h2>

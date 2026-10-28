@@ -12,6 +12,7 @@ import type { ChangeReason, ValueChangeDetail } from '../../foundation/types.js'
 import { defaultTrue } from '../../foundation/converters.js';
 import { bindPart, preventComponentHandling } from '../../foundation/part.js';
 import { CleanupScope } from '../../foundation/services.js';
+import { containNestedEvents } from '../../foundation/nested-events.js';
 import { surfaceInteraction } from '../../foundation/surface-focus.js';
 import type { TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
@@ -318,6 +319,11 @@ export class TpColorPicker extends TpFormElement<string> {
   #panel: HTMLElement | null = null;
   #authoredTrigger = false;
   #lightObserver: MutationObserver | undefined;
+  /**
+   * No constituent lane event leaves this shadow root (uwg-cp-req-evt-2); the inline and popup
+   * panels bind these listeners too.
+   */
+  readonly #nestedListeners = containNestedEvents(this, { types: NESTED_EVENT_TYPES, on: 'root' });
   #eyedropperAbort: AbortController | undefined;
   #strings: ColorPickerStrings = resolveStrings();
   #eyedropperSupported = false;
@@ -506,9 +512,6 @@ export class TpColorPicker extends TpFormElement<string> {
     // Field discovers its control through this marker (Field's selector list is closed).
     this.setAttribute('data-field-control', '');
     this.#eyedropperSupported = supportsEyeDropper(this.ownerDocument.defaultView);
-    // Safety net: no constituent lane event leaves this shadow root (Widgets 6.1 Events).
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.addEventListener(type, this.#containNested);
     const view = this.ownerDocument.defaultView;
     if (view) {
       this.#lightObserver = new view.MutationObserver(() => this.requestUpdate());
@@ -518,8 +521,6 @@ export class TpColorPicker extends TpFormElement<string> {
   }
 
   override disconnectedCallback(): void {
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.removeEventListener(type, this.#containNested);
     this.#lightObserver?.disconnect();
     this.#lightObserver = undefined;
     this.#eyedropperAbort?.abort();
@@ -795,11 +796,6 @@ export class TpColorPicker extends TpFormElement<string> {
       this.#customHandles.length ? [base, ...this.#customHandles.slice(1)] : undefined,
     );
   }
-
-  /** Nested constituent events stop at this shadow root; the widget republishes its own lanes. */
-  #containNested = (event: Event): void => {
-    if (event.target !== this) event.stopPropagation();
-  };
 
   // ---- surfaces ------------------------------------------------------------------------------
 
@@ -1471,16 +1467,9 @@ export class TpColorPicker extends TpFormElement<string> {
     });
   }
 
-  /** Inline and popup listeners that keep every nested lane event inside the widget. */
-  #panelListeners(): Record<string, unknown> {
-    const listeners: Record<string, unknown> = {};
-    for (const type of NESTED_EVENT_TYPES) listeners[`@${type}`] = this.#containNested;
-    return listeners;
-  }
-
   #renderPanel() {
     return html`<div
-      ${bindPart({ class: 'panel', ...this.#panelListeners() }, [this.#panelReference])}
+      ${bindPart({ class: 'panel', ...this.#nestedListeners }, [this.#panelReference])}
     >
       ${this.#renderViews()}${this.#renderFields()}
     </div>`;
@@ -1527,7 +1516,7 @@ export class TpColorPicker extends TpFormElement<string> {
             // the panel padding), in spacing units.
             '--_tp-color-picker-popup-min': String(this.#editorsRowUnits()),
           },
-          ...this.#panelListeners(),
+          ...this.#nestedListeners,
         },
         content: html`${this.#renderHeader()}${this.#renderViews()}${this.#renderFields()}${this.#renderRecent()}`,
       })}</tp-popover

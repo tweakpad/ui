@@ -1,0 +1,879 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000001",
+        "align": null,
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Tide pool field notes"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000002",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Low tide came at 06:42. "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "italic"
+            }
+          ],
+          "text": "Calm"
+        },
+        {
+          "type": "text",
+          "text": " water, "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "clear"
+        },
+        {
+          "type": "text",
+          "text": " skies and "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "strike"
+            }
+          ],
+          "text": "strong"
+        },
+        {
+          "type": "text",
+          "text": " light wind. A soft line break joins this line to the one before it."
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "A backslash at the end of a line is a hard break."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000003",
+        "align": null,
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Species seen"
+        }
+      ]
+    },
+    {
+      "type": "taskList",
+      "content": [
+        {
+          "type": "taskItem",
+          "attrs": {
+            "id": "te00000004",
+            "checked": true
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Ochre sea star"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "taskItem",
+          "attrs": {
+            "id": "te00000005",
+            "checked": false
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Giant green anemone"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "taskItem",
+          "attrs": {
+            "id": "te00000006",
+            "checked": true
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Hermit crab"
+                }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "id": "te00000007"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "in a borrowed whelk shell"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "orderedList",
+      "attrs": {
+        "start": 3,
+        "type": null
+      },
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000008"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Arrive before the turn of the tide"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000009"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Step only on bare rock"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "attrs": {
+        "id": "te00000010",
+        "headerRow": true,
+        "headerColumn": false
+      },
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Species"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": "end"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": "center"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Zone"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Sea star"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": "end"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "4"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": "center"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "mid"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Anemone"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": "end"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "11"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": "center"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "low"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "marks": [
+                        {
+                          "type": "code"
+                        }
+                      ],
+                      "text": "Pagurus"
+                    },
+                    {
+                      "type": "text",
+                      "text": " crab"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": "end"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": "center"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "high"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": {
+        "id": "te00000011",
+        "language": "python"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "counts = {\"sea star\": 4, \"anemone\": 11}\nprint(sum(counts.values()))"
+        }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "attrs": {
+        "id": "te00000012",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Bring a hand lens and a towel."
+        }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "attrs": {
+        "id": "te00000013",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A plain quote over two lines."
+        }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "attrs": {
+        "id": "te00000014",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A nested quote leaves its parent."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000015",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Send reports to "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "http://www.tidepools.example"
+              }
+            }
+          ],
+          "text": "www.tidepools.example"
+        },
+        {
+          "type": "text",
+          "text": " or to "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "mailto:logs@tidepools.example"
+              }
+            }
+          ],
+          "text": "logs@tidepools.example"
+        },
+        {
+          "type": "text",
+          "text": ", or read "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://tidepools.example/guide"
+              }
+            }
+          ],
+          "text": "https://tidepools.example/guide"
+        },
+        {
+          "type": "text",
+          "text": " first."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000016",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The survey follows a line transect."
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "superscript"
+            }
+          ],
+          "text": "1"
+        },
+        {
+          "type": "text",
+          "text": " Raw HTML the policy admits: "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "underline"
+            }
+          ],
+          "text": "underlined"
+        },
+        {
+          "type": "text",
+          "text": ", H"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "subscript"
+            }
+          ],
+          "text": "2"
+        },
+        {
+          "type": "text",
+          "text": "O, area = r"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "superscript"
+            }
+          ],
+          "text": "2"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "red"
+              }
+            }
+          ],
+          "text": "red text"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "blue"
+              }
+            }
+          ],
+          "text": "a blue mark"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "yellow"
+              }
+            }
+          ],
+          "text": "a plain mark"
+        },
+        {
+          "type": "text",
+          "text": " and Ctrl. HTML it does not admit stays text: <script>alert(1)</script> and <div>a div</div>."
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "attrs": {
+        "id": "te00000017",
+        "src": "https://tidepools.example/dawn.jpg",
+        "alt": "A rock pool at dawn",
+        "width": null
+      }
+    },
+    {
+      "type": "horizontalRule",
+      "attrs": {
+        "id": "te00000018"
+      }
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000019",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://tidepools.example/guide"
+              }
+            }
+          ],
+          "text": "reference link"
+        },
+        {
+          "type": "text",
+          "text": " and a final paragraph."
+        }
+      ]
+    },
+    {
+      "type": "orderedList",
+      "attrs": {
+        "start": 1,
+        "type": null
+      },
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000020"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A twenty-meter line laid across the pool, with counts every meter."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -282,6 +282,13 @@ Set a controlled property before connection to select that lane's controlled mod
 | `inline`, `busy`, `modal`                    | all `false`                                                                     | same names                                                                     |
 | `keepMounted`                                | `false`; retain a closed inert surface                                          | `keep-mounted`                                                                 |
 
+A subclass can take the query from an editing element that keeps focus: set the protected
+`queryOwner` (default null) to that element. The searchable render then has no Input, the query
+arrives through the controlled `inputValue`, the owner controls `open`, opening moves no focus,
+and the subclass forwards the owner's navigation keys to the protected `handleQueryKey(event)`
+and `activateHighlighted(event)`. `tp-command-list` makes these members public, as described in
+[Command list with an external input](command-palette.md#command-list-with-an-external-input).
+
 ### Matching and search sources
 
 Searchable Select shares [Text search](autocomplete.md#matching) with Autocomplete and Command palette. `matching` selects how the query matches options: `contains` (the default; locale collation, so case, accents and punctuation are ignored), `prefix` (every query word begins a word), `exact`, or `fuzzy`, which ranks options by relevance and tolerates typos and words typed out of order. Results come from, in order: `filteredItems`, a `source`, a `filter`, and otherwise `matching`; `limit` applies last. With `source`, the source's results are the options: a query waits `searchDelay` milliseconds without typing, a newer query aborts the previous one, previous results stay visible while loading, and `searchStatus` (`idle`, `loading`, `loaded`, `error`) with the `tp-search-status` and `tp-search-error` events report progress. While loading the list is busy and a status row (spinner and text) replaces the empty state; after a failure it shows the error text. The empty state and the status row follow the list, outside the listbox, so the `empty` slot may hold interactive content; the list then has no options, carries `data-empty` and drops its block padding. The status region announces the same text. `highlightMatches` marks matched text in the `select-match` part.

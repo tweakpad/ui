@@ -1,0 +1,20 @@
+/* tp-switch appearance */
+/* switch */
+& ~ tp-label:not([hidden]){padding-inline-start:var(--tp-space-2)}
+&{background:light-dark(var(--tp-input), color-mix(in oklab, var(--tp-input) 80%, transparent));border:var(--tp-border-width) var(--tp-border-style) transparent;border-radius:var(--tp-radius-full)}
+&::before{background-color:var(--tp-primary)}
+&[data-checked]::before{opacity:1}
+&[data-disabled]{cursor:not-allowed}
+&[data-readonly]:not([data-disabled]){cursor:default}
+&[data-focus-visible]:focus-visible{outline:none;border-color:var(--tp-ring);box-shadow:0 0 0 var(--tp-ring-width) color-mix(in oklab, var(--tp-ring) 50%, transparent)}
+&[data-invalid][data-focus-visible]:focus-visible{outline:none;border-color:light-dark(var(--tp-destructive), color-mix(in oklab, var(--tp-destructive) 50%, transparent));box-shadow:0 0 0 var(--tp-ring-width) light-dark(color-mix(in oklab, var(--tp-destructive) 20%, transparent), color-mix(in oklab, var(--tp-destructive) 40%, transparent))}
+&[data-invalid]{border-color:light-dark(var(--tp-destructive), color-mix(in oklab, var(--tp-destructive) 50%, transparent));box-shadow:0 0 0 var(--tp-ring-width) light-dark(color-mix(in oklab, var(--tp-destructive) 20%, transparent), color-mix(in oklab, var(--tp-destructive) 40%, transparent))}
+/* switch-size-sm */
+/* switch-size-default */
+/* switch-thumb */
+&{background:light-dark(var(--tp-background), var(--tp-foreground));border-radius:var(--tp-radius-full);transition:transform calc(var(--tp-duration-fast) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
+&[data-checked]{background:light-dark(var(--tp-background), var(--tp-primary-foreground))}
+/* switch-thumb-size-sm */
+/* switch-thumb-size-default */
+
+/* tp-switch structure */

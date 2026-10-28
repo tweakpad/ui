@@ -26,4 +26,4 @@ export {
   DEFAULT_SPRING,
 } from './spring.js';
 export { toCssEasing, cssLinear, cssEasingSupported, type CssEasingOptions } from './css.js';
-export { convertEasingCurve, fitBezier, closestParametric } from './convert.js';
+export { convertEasingCurve, fitBezier, closestParametric, hasBezierFit } from './convert.js';

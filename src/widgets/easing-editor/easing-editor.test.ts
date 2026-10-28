@@ -13,38 +13,67 @@ import { builtinPresetGroups } from './presets.js';
 import { previewKeyframes } from './preview.js';
 import { DEFAULT_STRINGS } from './strings.js';
 import {
+  axisAt,
+  axisFraction,
   curveRange,
   curvePolyline,
   FRAME_TICKS,
   frameTicks,
-  progressionAt,
-  progressionFraction,
-  quantizeRange,
+  fitRange,
+  shownCurve,
   thumbnailPolyline,
 } from './surfaces/geometry.js';
 
 const curve = (text: string) => parseEasingCurve(text)!;
 
 describe('easing editor geometry', () => {
-  it('keeps the unit range for curves inside it and widens in quarter steps otherwise', () => {
+  it('keeps the unit range inside it and otherwise fits the extent around the center', () => {
     expect(curveRange(curve('ease-out'))).toEqual({ min: 0, max: 1 });
-    expect(curveRange(curve('cubic-bezier(0.34, 1.56, 0.64, 1)'))).toEqual({ min: 0, max: 1.75 });
-    expect(curveRange(curve('back(in-out)')).min).toBeLessThan(0);
-    expect(curveRange(curve('linear(0, 1.3 50%, 1)'))).toEqual({ min: 0, max: 1.5 });
+    const overshoot = curveRange(curve('cubic-bezier(0.34, 1.56, 0.64, 1)'));
+    expect(overshoot.max).toBeCloseTo(1.56);
+    expect(overshoot.min).toBeCloseTo(-0.56);
+    const back = curveRange(curve('back(in-out)'));
+    expect(back.min).toBeLessThan(0);
+    expect(back.min + back.max).toBeCloseTo(1);
+    // An ease drawn with its Bézier fit keeps the fit's handles inside the range.
+    const fit = shownCurve(curve('back(in-out)'));
+    expect(fit.kind).toBe('bezier');
+    if (fit.kind === 'bezier') expect(back.max).toBeGreaterThanOrEqual(Math.max(fit.y1, fit.y2));
+    expect(shownCurve(curve('elastic(out)')).kind).toBe('parametric');
+    const linear = curveRange(curve('linear(0, 1.3 50%, 1)'));
+    expect(linear.max).toBeCloseTo(1.3);
+    expect(linear.min).toBeCloseTo(-0.3);
     expect(curveRange(null)).toEqual({ min: 0, max: 1 });
-    expect(quantizeRange({ min: -0.1, max: 1.01 })).toEqual({ min: -0.25, max: 1.25 });
+    expect(fitRange({ min: 0.2, max: 0.9 })).toEqual({ min: 0, max: 1 });
+    const low = fitRange({ min: -0.1, max: 1 });
+    expect(low.min).toBeCloseTo(-0.1);
+    expect(low.max).toBeCloseTo(1.1);
+    const high = fitRange({ min: 0, max: 1.4 });
+    expect(high.min).toBeCloseTo(-0.4);
+    expect(high.max).toBeCloseTo(1.4);
   });
 
-  it('maps progression to the plot and back', () => {
-    const range = { min: -1, max: 2 };
-    expect(progressionFraction(-1, range)).toBe(0);
-    expect(progressionFraction(2, range)).toBe(1);
-    expect(progressionAt(progressionFraction(0.5, range), range)).toBeCloseTo(0.5);
+  it('maps both axes to the plot and back through the shared range', () => {
+    const range = { min: -0.5, max: 1.5 };
+    expect(axisFraction(-0.5, range)).toBe(0);
+    expect(axisFraction(1.5, range)).toBe(1);
+    expect(axisFraction(0, range)).toBe(0.25);
+    expect(axisFraction(1, range)).toBe(0.75);
+    expect(axisAt(axisFraction(0.3, range), range)).toBeCloseTo(0.3);
   });
 
   it('builds the curve polyline and thumbnails from samples', () => {
     const points = curvePolyline(easingFunction(curve('linear')), { min: 0, max: 1 }, 100, 100, 4);
     expect(points).toBe('0.00,100.00 25.00,75.00 50.00,50.00 75.00,25.00 100.00,0.00');
+    // A widened range shrinks the unit box on both axes around the center.
+    const zoomed = curvePolyline(
+      easingFunction(curve('linear')),
+      { min: -0.5, max: 1.5 },
+      100,
+      100,
+      2,
+    );
+    expect(zoomed).toBe('25.00,75.00 50.00,50.00 75.00,25.00');
     const thumb = thumbnailPolyline(curve('ease'));
     expect(thumb.split(' ')).toHaveLength(33);
     expect(thumb.startsWith('6.0,26.0')).toBe(true);

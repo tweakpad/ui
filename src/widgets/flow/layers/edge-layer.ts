@@ -25,7 +25,7 @@ import type {
 import type { FlowEdgeRunState } from '../../../foundation/flow/run/types.js';
 import type { TpFlowEdgeLabel } from '../edge/edge-label.js';
 import type { FlowEdgeTemplate, FlowStrings } from '../types.js';
-import { format } from '../strings.js';
+import { fillTemplate } from '../../../foundation/template.js';
 
 export interface EdgeLayerOptions {
   model: () => FlowModel;
@@ -390,7 +390,7 @@ export class EdgeLayer {
     strings: FlowStrings,
     nodeLabel: (id: string) => string,
   ): string {
-    return format(strings.edgeFrom, {
+    return fillTemplate(strings.edgeFrom, {
       source: nodeLabel(edge.source),
       target: nodeLabel(edge.target),
     });

@@ -1,18 +1,46 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { REQUIRED_TOKEN_ROLES, TOKEN_FAMILIES } from '../../presentation/tokens.js';
+import {
+  REQUIRED_TOKEN_ROLES,
+  TOKEN_FAMILIES,
+  type RequiredTokenRole,
+} from '../../presentation/tokens.js';
 import {
   DESCRIPTIONS,
   FAMILIES,
+  MINIMUM_CONTRAST,
   PAIRED_SURFACE,
   SYNTAX_SAMPLES,
   authoredTokens,
   bezierPoints,
   contrastRatio,
+  contrastSurfaces,
   hex,
+  previewKind,
+  type Rgba,
 } from './token-catalog.js';
 
 const stylesheet = readFileSync(new URL('../../styles.css', import.meta.url), 'utf8');
+
+/** The content color hues, in their listed order. */
+const HUES = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'];
+
+/** The light and dark values of a `light-dark()` value; a plain value serves both modes. */
+const modes = (value: string): readonly [string, string] => {
+  const match = /^light-dark\(\s*([^,]+?)\s*,\s*([^)]+?)\s*\)$/u.exec(value);
+  return match ? [match[1]!, match[2]!] : [value, value];
+};
+
+/** A `#rgb`, `#rrggbb` or `#rrggbbaa` color as sRGB bytes. */
+const rgba = (color: string): Rgba => {
+  const digits = /^#([0-9a-f]+)$/iu.exec(color)?.[1] ?? '';
+  const full = digits.length === 3 ? [...digits].map((digit) => digit + digit).join('') : digits;
+  if (full.length !== 6 && full.length !== 8) throw new Error(`Not a hex color: ${color}`);
+  const [red, green, blue, alpha = 255] = (full.match(/../gu) ?? []).map((pair) =>
+    Number.parseInt(pair, 16),
+  );
+  return [red!, green!, blue!, alpha];
+};
 
 describe('design token catalog', () => {
   it('describes every role and family', () => {
@@ -49,5 +77,64 @@ describe('design token catalog', () => {
     expect(bezierPoints('ease-in')).toEqual([0.42, 0, 1, 1]);
     expect(bezierPoints('steps(4)')).toBeNull();
     expect(bezierPoints('linear(0, 0.5, 1)')).toBeNull();
+  });
+
+  describe('content colors', () => {
+    const tokens = authoredTokens(stylesheet);
+    const background = modes(tokens.get('background') ?? '');
+    const pairs = HUES.map((hue) => {
+      const surface = modes(tokens.get(`content-${hue}`) ?? '');
+      const foreground = modes(tokens.get(`content-${hue}-foreground`) ?? '');
+      return { hue, surface, foreground };
+    });
+    const schemes = ['light', 'dark'] as const;
+
+    it('lists a surface and a foreground for each content hue (ccx-roles)', () => {
+      expect(TOKEN_FAMILIES.content).toEqual(
+        HUES.flatMap((hue) => [`content-${hue}`, `content-${hue}-foreground`]),
+      );
+      expect(FAMILIES.content.value).toBe('color');
+    });
+
+    it('defines every content role for light and dark (ccx-defined)', () => {
+      for (const hue of HUES)
+        for (const role of [`content-${hue}`, `content-${hue}-foreground`])
+          expect(tokens.get(role), role).toMatch(/^light-dark\(#[0-9a-f]{6}, #[0-9a-f]{6}\)$/u);
+    });
+
+    it('keeps each content foreground at 4.5:1 on the background and on its surface in both modes (ccx-defined)', () => {
+      for (const { hue, surface, foreground } of pairs) {
+        schemes.forEach((scheme, index) => {
+          const text = rgba(foreground[index]!);
+          const onBackground = contrastRatio(text, rgba(background[index]!));
+          const onSurface = contrastRatio(text, rgba(surface[index]!));
+          expect(onBackground, `${hue} ${scheme} on background`).toBeGreaterThanOrEqual(
+            MINIMUM_CONTRAST,
+          );
+          expect(onSurface, `${hue} ${scheme} on surface`).toBeGreaterThanOrEqual(MINIMUM_CONTRAST);
+        });
+      }
+    });
+
+    it('keeps each content surface apart from the background in both modes (ccx-defined)', () => {
+      for (const { hue, surface } of pairs) {
+        schemes.forEach((scheme, index) => {
+          expect(rgba(surface[index]!), `${hue} ${scheme}`).not.toEqual(rgba(background[index]!));
+        });
+      }
+    });
+
+    it('measures each content foreground on its surface and on the background (ccx-defined, req-cl-52-pair-use)', () => {
+      for (const hue of HUES) {
+        const foreground = `content-${hue}-foreground` as RequiredTokenRole;
+        expect(PAIRED_SURFACE[foreground], hue).toBe(`content-${hue}`);
+      }
+      expect(contrastSurfaces('content-blue-foreground')).toEqual(['content-blue', 'background']);
+      expect(contrastSurfaces('primary-foreground')).toEqual(['primary']);
+      expect(contrastSurfaces('border')).toEqual([]);
+      expect(previewKind('content-blue-foreground', 'content')).toBe('content');
+      expect(previewKind('content-blue', 'content')).toBe('fill');
+      expect(previewKind('primary-foreground', 'color')).toBe('foreground');
+    });
   });
 });

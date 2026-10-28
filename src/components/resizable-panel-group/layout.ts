@@ -2,6 +2,8 @@ import type { PanelBounds, PanelExtent } from './types.js';
 const epsilon = 0.00001;
 export const equalSizes = (a: readonly number[], b: readonly number[]) =>
   a.length === b.length && a.every((v, i) => Math.abs(v - b[i]!) < epsilon);
+/** A percentage as a separator announces it: two decimals, without floating-point residue. */
+export const separatorValue = (value: number): number => Math.round(value * 100) / 100;
 export function extentInPixels(
   value: PanelExtent | undefined,
   group: number,

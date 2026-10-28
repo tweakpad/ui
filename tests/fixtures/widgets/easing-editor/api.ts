@@ -114,6 +114,8 @@ function pointer(
 const pressToggle = (toggle: Element): void => {
   (toggle.shadowRoot?.querySelector('button') ?? (toggle as HTMLElement)).click();
 };
+const sameRange = (a: { min: number; max: number }, b: { min: number; max: number }) =>
+  Math.abs(a.min - b.min) < 1e-9 && Math.abs(a.max - b.max) < 1e-9;
 const center = (element: Element) => {
   const rect = element.getBoundingClientRect();
   return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
@@ -448,6 +450,50 @@ export async function assertKinds(): Promise<Report> {
             (e.metadata as { surface?: string })?.surface === 'graph',
         ),
       tabs.value,
+    ),
+  );
+  target.setValue('sine(out)');
+  await settle(target);
+  const shownHandle = surface.querySelector<HTMLElement>('.handle[data-handle="2"]')!;
+  checks.push(
+    check(
+      'a sine curve shows its Bézier fit handles from the start',
+      surface.querySelectorAll('.handle').length === 2 && target.kind === 'parametric',
+      { handles: surface.querySelectorAll('.handle').length, kind: target.kind },
+    ),
+  );
+  pointer(surface, 'pointerdown', box.left + box.width * 0.5, box.top + box.height * 0.5);
+  await tick();
+  pointer(surface, 'pointerup', box.left + box.width * 0.5, box.top + box.height * 0.5);
+  await settle(target);
+  checks.push(
+    check(
+      'a bare press beside the shown handles keeps the sine curve',
+      target.value === 'sine(out)',
+      target.value,
+    ),
+  );
+  const handleBox = shownHandle.getBoundingClientRect();
+  const hx = handleBox.left + handleBox.width / 2;
+  const hy = handleBox.top + handleBox.height / 2;
+  pointer(shownHandle, 'pointerdown', hx, hy);
+  await tick();
+  pointer(shownHandle, 'pointermove', hx, hy + box.height * 0.1);
+  await frame();
+  pointer(shownHandle, 'pointerup', hx, hy + box.height * 0.1);
+  await settle(target);
+  checks.push(
+    check(
+      'dragging a shown handle converts the sine curve to a Bézier',
+      target.kind === 'bezier' &&
+        target.value.startsWith('cubic-bezier(') &&
+        badge() === 'Custom' &&
+        captured.events.some(
+          (e) =>
+            (e.metadata as { conversion?: boolean })?.conversion === true &&
+            (e.metadata as { handle?: number })?.handle !== undefined,
+        ),
+      { value: target.value, badge: badge() },
     ),
   );
   const veto = (event: Event) => event.preventDefault();
@@ -902,8 +948,8 @@ export async function assertGraph(): Promise<Report> {
   const graph = graphOf(target);
   checks.push(
     check(
-      'overshoot range extends in quarter steps',
-      graph.range.min === 0 && graph.range.max === 1.75,
+      'overshoot range fits the furthest handle around the center',
+      Math.abs(graph.range.max - 1.56) < 1e-9 && Math.abs(graph.range.min + 0.56) < 1e-9,
       graph.range,
     ),
   );
@@ -981,42 +1027,89 @@ export async function assertGraph(): Promise<Report> {
     ),
   );
   {
-    // The range holds while a handle drags past it and re-quantizes on release (V-20).
-    const handle2 = graph.shadowRoot.querySelector<HTMLElement>('.handle[data-handle="2"]')!;
-    const c = center(handle2);
+    // The range follows a handle dragged past the edge in the same frame, outward and back in;
+    // a still pointer never moves the value; back at the press position the handle is under the
+    // pointer again and then follows it one to one (V-20).
+    const handleOf = () => graph.shadowRoot.querySelector<HTMLElement>('.handle[data-handle="2"]')!;
+    const y2 = () => (target.curve?.kind === 'bezier' ? target.curve.y2 : NaN);
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const c = center(handleOf());
     const rangeBefore = { ...graph.range };
-    pointer(handle2, 'pointerdown', c.x, c.y);
+    const outY = c.y - graphBox.height * 0.35;
+    const steps = 20;
+    pointer(handleOf(), 'pointerdown', c.x, c.y);
     await tick();
-    pointer(surface, 'pointermove', c.x, c.y - graphBox.height * 0.8);
+    for (let step = 1; step <= steps; step++) {
+      pointer(surface, 'pointermove', c.x, c.y + ((outY - c.y) * step) / steps);
+      await frame();
+    }
+    await settle(target);
+    const y2Out = y2();
+    const grown = { ...graph.range };
+    for (let repeat = 0; repeat < 5; repeat++) {
+      pointer(surface, 'pointermove', c.x, outY);
+      await frame();
+    }
+    await settle(target);
+    const y2Still = y2();
+    const stillRange = { ...graph.range };
+    for (let step = steps - 1; step >= 0; step--) {
+      pointer(surface, 'pointermove', c.x, c.y + ((outY - c.y) * step) / steps);
+      await frame();
+    }
+    await settle(target);
+    const back = center(handleOf());
+    const shrunk = { ...graph.range };
+    pointer(surface, 'pointermove', c.x, c.y + 20);
     await frame();
     await settle(target);
-    const held = { ...graph.range };
-    const y2Mid = target.curve?.kind === 'bezier' ? target.curve.y2 : null;
-    pointer(surface, 'pointerup', c.x, c.y - graphBox.height * 0.8);
+    const below = center(handleOf());
+    const rangeBelow = { ...graph.range };
+    pointer(surface, 'pointerup', c.x, c.y + 20);
     await settle(target);
-    await frame();
-    await frame();
-    const easing = { ...graph.range };
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    await settle(target);
-    const released = { ...graph.range };
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    const releasedNow = { ...graph.range };
+    await wait(300);
     const stable = { ...graph.range };
     checks.push(
       check(
-        'the range holds during the drag, then eases to the re-quantized range on release',
-        held.max === rangeBefore.max &&
-          held.min === rangeBefore.min &&
-          y2Mid !== null &&
-          y2Mid > rangeBefore.max &&
-          easing.max > rangeBefore.max &&
-          easing.max < released.max &&
-          released.max > rangeBefore.max &&
-          stable.max === released.max,
-        { before: rangeBefore, held, y2Mid, easing, released, stable },
+        'the range grows with the handle in the same frame, centered, without easing',
+        y2Out > rangeBefore.max &&
+          Math.abs(grown.max - y2Out) < 1e-9 &&
+          Math.abs(grown.min + grown.max - 1) < 1e-9 &&
+          sameRange(stillRange, grown),
+        { before: rangeBefore, y2Out, grown },
+      ),
+    );
+    checks.push(
+      check('a still pointer never moves the handle', y2Still === y2Out, { y2Out, y2Still }),
+    );
+    checks.push(
+      check(
+        'moving back in shrinks the range during the drag and returns the handle under the pointer',
+        shrunk.max < grown.max - 0.1 &&
+          Math.abs(shrunk.max - rangeBefore.max) < 0.02 &&
+          Math.abs(back.y - c.y) < 3 &&
+          Math.abs(back.x - c.x) < 1,
+        { shrunk, dy: back.y - c.y, dx: back.x - c.x },
+      ),
+    );
+    checks.push(
+      check(
+        'inside the range the handle follows the pointer one to one',
+        Math.abs(below.y - back.y - 20) < 1 && sameRange(rangeBelow, shrunk),
+        { dy: below.y - back.y },
+      ),
+    );
+    checks.push(
+      check(
+        'the release changes no range',
+        sameRange(releasedNow, rangeBelow) && sameRange(stable, rangeBelow),
+        { rangeBelow, releasedNow, stable },
       ),
     );
     target.setValue('cubic-bezier(0.34, 1.56, 0.64, 1)');
+    // The range eases back; later drags convert at the settled scale.
+    await wait(400);
     await settle(target);
   }
   const badgeBox = target.shadowRoot!.querySelector('tp-badge.badge')?.getBoundingClientRect();
@@ -1074,11 +1167,14 @@ export async function assertGraph(): Promise<Report> {
   await settle(target);
   captured.stop();
   const x1 = target.curve?.kind === 'bezier' ? target.curve.x1 : NaN;
+  // The pointer distance converts at the shown scale: the plot frame spans the shown range.
+  const plotWidth = graph.shadowRoot.querySelector<HTMLElement>('.frame')!.offsetWidth;
+  const expectedX1 = 0.34 + ((box.width * 0.2) / plotWidth) * (graph.range.max - graph.range.min);
   checks.push(
     check(
       'drag moved x1 by the pointer distance (grip keeps the offset)',
-      Math.abs(x1 - 0.54) < 0.03,
-      x1,
+      Math.abs(x1 - expectedX1) < 0.03,
+      { x1, expectedX1 },
     ),
   );
   checks.push(
@@ -1407,10 +1503,11 @@ export async function assertPreview(): Promise<Report> {
   const shapeBox = shape.getBoundingClientRect();
   checks.push(
     check(
-      'shape covers the graph area, centered',
+      'shape fills the graph area',
       Math.abs(shapeBox.height - layerBox.height) < 1 &&
-        Math.abs(shapeBox.width - shapeBox.height) < 1 &&
-        Math.abs(shapeBox.left + shapeBox.width / 2 - (layerBox.left + layerBox.width / 2)) < 1,
+        Math.abs(shapeBox.width - layerBox.width) < 1 &&
+        Math.abs(shapeBox.left - layerBox.left) < 1 &&
+        Math.abs(shapeBox.top - layerBox.top) < 1,
       { shape: [shapeBox.width, shapeBox.height], layer: [layerBox.width, layerBox.height] },
     ),
   );
@@ -1487,9 +1584,9 @@ export async function assertPreview(): Promise<Report> {
   const layer = graph.shadowRoot.querySelector<HTMLElement>('.preview-layer')!;
   checks.push(
     check(
-      'rotation fits the square inside the area (side ≈ 70.7 %)',
-      Math.abs(shape.offsetHeight / layer.offsetHeight - 0.707) < 0.01 &&
-        Math.abs(shape.offsetWidth - shape.offsetHeight) <= 1,
+      'rotation turns a square that fills the area',
+      Math.abs(shape.offsetHeight - layer.offsetHeight) <= 1 &&
+        Math.abs(shape.offsetWidth - layer.offsetWidth) <= 1,
       shape.offsetHeight / layer.offsetHeight,
     ),
   );
@@ -1498,16 +1595,69 @@ export async function assertPreview(): Promise<Report> {
   checks.push(check('the cycle wraps to scale', target.preview === 'scale', target.preview));
   target.setValue('cubic-bezier(0.34, 1.56, 0.64, 1)');
   await settle(target);
-  // The range eases to 1.75 (S-13); measure once it has settled.
+  // The range eases to fit the overshoot (S-13); measure once it has settled.
   await new Promise((resolve) => setTimeout(resolve, 400));
   await settle(target);
   checks.push(
     check(
-      'the square leaves room for the shown overshoot (1 / 1.75 of the area)',
-      Math.abs(shape.offsetHeight / layer.offsetHeight - 1 / 1.75) < 0.01,
-      shape.offsetHeight / layer.offsetHeight,
+      'the square still fills the area with an overshoot shown',
+      Math.abs(shape.offsetHeight - layer.offsetHeight) <= 1 &&
+        Math.abs(shape.offsetWidth - layer.offsetWidth) <= 1,
+      [shape.offsetWidth, shape.offsetHeight, layer.offsetWidth, layer.offsetHeight],
     ),
   );
+  {
+    // A duration change retimes the running preview in place; a settled one replays it.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    target.duration = 2;
+    await settle(target);
+    void target.play();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    const running = shape.getAnimations()[0];
+    const progressBefore = running
+      ? Number(running.currentTime) / Number(running.effect!.getTiming().duration)
+      : NaN;
+    target.duration = 1;
+    await settle(target);
+    const retimed = shape.getAnimations()[0];
+    const timing = retimed?.effect?.getTiming();
+    const progressAfter = retimed ? Number(retimed.currentTime) / Number(timing!.duration) : NaN;
+    checks.push(
+      check(
+        'a duration change retimes the running preview, keeping its progress',
+        retimed === running &&
+          Number(timing?.duration) === 1000 &&
+          Math.abs(progressAfter - progressBefore) < 0.1,
+        { duration: timing?.duration, progressBefore, progressAfter },
+      ),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    await settle(target);
+    const playingBefore = target.playing;
+    const sliderThumb = target
+      .shadowRoot!.querySelector('[part~="easing-editor-duration"] tp-slider')!
+      .shadowRoot!.querySelector('tp-slider-thumb')!;
+    const thumb = (sliderThumb.shadowRoot ?? sliderThumb).querySelector<HTMLInputElement>(
+      'input[type="range"]',
+    )!;
+    thumb.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'ArrowRight',
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      }),
+    );
+    await settle(target);
+    await tick();
+    checks.push(
+      check(
+        'a settled duration Slider step replays the preview',
+        !playingBefore && target.duration === 1.01 && target.playing,
+        { playingBefore, duration: target.duration, playing: target.playing },
+      ),
+    );
+  }
   target.preview = 'none';
   await settle(target);
   checks.push(

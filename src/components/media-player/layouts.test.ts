@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import type { KeyShortcut } from '../../foundation/key-bindings.js';
 import { createMediaMessages } from '../../foundation/media/messages.js';
 import type { MediaState } from '../../foundation/media/state.js';
+import { templateMarkup } from '../../template-markup.test.js';
 import type { MediaButtonContext } from './button-state.js';
 import { DEFAULT_MEDIA_STATE } from './context.js';
 import {
@@ -9,6 +11,7 @@ import {
   mediaLayoutTooltip,
   mediaVideoLayoutVariant,
   parseMediaLayoutHide,
+  type MediaLayoutTooltipControl,
 } from './layout-state.js';
 import { TpMediaAudioLayout, TpMediaVideoLayout } from './layouts.js';
 import { mediaPopupScopeBrand } from './context.js';
@@ -104,6 +107,17 @@ describe('layout tooltips (visual label and key hint of each button)', () => {
 customElements.define('tp-media-video-layout-unit', class extends TpMediaVideoLayout {});
 customElements.define('tp-media-audio-layout-unit', class extends TpMediaAudioLayout {});
 
+let published: KeyShortcut | undefined;
+class HintLayout extends TpMediaVideoLayout {
+  override shortcut(): KeyShortcut | undefined {
+    return published;
+  }
+  tooltip(control: MediaLayoutTooltipControl): unknown {
+    return this.tooltipContent(control);
+  }
+}
+customElements.define('tp-media-video-layout-hint-unit', HintLayout);
+
 describe('layout elements', () => {
   it('have the documented defaults and are popup scopes for the player', () => {
     for (const tag of ['tp-media-video-layout-unit', 'tp-media-audio-layout-unit']) {
@@ -114,5 +128,28 @@ describe('layout elements', () => {
       expect(layout.tooltipProvider.openDelay).toBe(600);
       expect(layout.tooltipProvider.restTimeout).toBe(400);
     }
+  });
+});
+
+describe('layout tooltip key hints', () => {
+  it('shows the published binding of a layout tooltip as Key hints (`mp-kb-publish`)', () => {
+    const layout = new HintLayout();
+    const label = (text: string) =>
+      `<span data-media-tooltip-label style="display: inline-flex; align-items: center; gap: var(--tp-space-2)">${text}`;
+    published = { aria: 'k Space', display: 'K', keys: ['K'] };
+    expect(templateMarkup(layout.tooltip('play'))).toBe(
+      `${label('Play')}<tp-key-hint key=K></tp-key-hint></span>`,
+    );
+    published = { aria: 'Shift+p', display: 'Shift+P', keys: ['Shift', 'P'] };
+    expect(templateMarkup(layout.tooltip('play'))).toBe(
+      `${label('Play')}<tp-key-hint-group><tp-key-hint key=Shift></tp-key-hint><tp-key-hint key=P></tp-key-hint></tp-key-hint-group></span>`,
+    );
+    expect(templateMarkup(layout.tooltip('settings'))).toBe(`${label('Settings')}</span>`);
+    published = undefined;
+    expect(templateMarkup(layout.tooltip('play'))).toBe(`${label('Play')}</span>`);
+    published = { aria: '', display: '', keys: [] };
+    expect(templateMarkup(layout.tooltip('fullscreen'))).toBe(
+      `${label('Enter fullscreen')}</span>`,
+    );
   });
 });

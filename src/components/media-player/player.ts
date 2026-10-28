@@ -8,6 +8,7 @@ import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import {
   CleanupScope,
   Scheduler,
+  deferRelease,
   resolveLocale,
   type Diagnostic,
 } from '../../foundation/services.js';
@@ -41,7 +42,7 @@ import {
   type MediaState,
   type MediaStreamTypeConfig,
 } from '../../foundation/media/state.js';
-import { MediaStore, deferMediaDestroy } from '../../foundation/media/store.js';
+import { MediaStore } from '../../foundation/media/store.js';
 import type { MediaTarget, MediaTracksAdapter } from '../../foundation/media/target.js';
 import {
   closeMediaPopups,
@@ -543,7 +544,7 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     // Detach synchronously; destroy two frames later unless the root reconnects (a DOM move).
     this.#store.detach();
     const store = this.#store;
-    this.#cancelDestroy = deferMediaDestroy(this.ownerDocument.defaultView ?? undefined, () => {
+    this.#cancelDestroy = deferRelease(this.ownerDocument.defaultView, () => {
       this.#cancelDestroy = undefined;
       store.destroy();
     });

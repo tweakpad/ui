@@ -1,0 +1,828 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000001",
+        "align": null,
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Keeper's log, Gull Rock light"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000002",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Plain text, then "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "bold"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "italic"
+            }
+          ],
+          "text": "italic"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "underline"
+            }
+          ],
+          "text": "underlined"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "strike"
+            }
+          ],
+          "text": "struck"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ],
+          "text": "inline code"
+        },
+        {
+          "type": "text",
+          "text": " and "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://gullrock.example/log"
+              }
+            }
+          ],
+          "text": "a link"
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000003",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            },
+            {
+              "type": "italic"
+            },
+            {
+              "type": "strike"
+            },
+            {
+              "type": "underline"
+            }
+          ],
+          "text": "Four marks on one run"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://gullrock.example/lamp"
+              }
+            },
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "a bold link"
+        },
+        {
+          "type": "text",
+          "text": " and "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://gullrock.example/"
+              }
+            }
+          ],
+          "text": "https://gullrock.example/"
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000004",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Code inside a link: "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://gullrock.example/manual#lens"
+              }
+            },
+            {
+              "type": "code"
+            }
+          ],
+          "text": "lens.rotate(90)"
+        },
+        {
+          "type": "text",
+          "text": "; bold code stays code: "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ],
+          "text": "trim_wick()"
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000005",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Lamp oil is C"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "subscript"
+            }
+          ],
+          "text": "16"
+        },
+        {
+          "type": "text",
+          "text": "H"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "subscript"
+            }
+          ],
+          "text": "34"
+        },
+        {
+          "type": "text",
+          "text": ", the beam reaches 2"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "superscript"
+            }
+          ],
+          "text": "4"
+        },
+        {
+          "type": "text",
+          "text": " miles, and the inner mark wins: "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "superscript"
+            }
+          ],
+          "text": "raised "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "subscript"
+            }
+          ],
+          "text": "lowered"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "subscript"
+            }
+          ],
+          "text": "lowered "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "superscript"
+            }
+          ],
+          "text": "raised"
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000006",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Text colors: "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "gray"
+              }
+            }
+          ],
+          "text": "gray"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "brown"
+              }
+            }
+          ],
+          "text": "brown"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "orange"
+              }
+            }
+          ],
+          "text": "orange"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "yellow"
+              }
+            }
+          ],
+          "text": "yellow"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "green"
+              }
+            }
+          ],
+          "text": "green"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "blue"
+              }
+            }
+          ],
+          "text": "blue"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "purple"
+              }
+            }
+          ],
+          "text": "purple"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "pink"
+              }
+            }
+          ],
+          "text": "pink"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "red"
+              }
+            }
+          ],
+          "text": "red"
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000007",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Highlights: "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "gray"
+              }
+            }
+          ],
+          "text": "gray"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "brown"
+              }
+            }
+          ],
+          "text": "brown"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "orange"
+              }
+            }
+          ],
+          "text": "orange"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "yellow"
+              }
+            }
+          ],
+          "text": "yellow"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "green"
+              }
+            }
+          ],
+          "text": "green"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "blue"
+              }
+            }
+          ],
+          "text": "blue"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "purple"
+              }
+            }
+          ],
+          "text": "purple"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "pink"
+              }
+            }
+          ],
+          "text": "pink"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "red"
+              }
+            }
+          ],
+          "text": "red"
+        },
+        {
+          "type": "text",
+          "text": ", and "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "yellow"
+              }
+            }
+          ],
+          "text": "a mark with no name"
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000008",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://gullrock.example/storm"
+              }
+            },
+            {
+              "type": "bold"
+            },
+            {
+              "type": "italic"
+            },
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "yellow"
+              }
+            },
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "blue"
+              }
+            }
+          ],
+          "text": "Every outer mark"
+        },
+        {
+          "type": "text",
+          "text": " around "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            },
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "red"
+              }
+            }
+          ],
+          "text": "red bold"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "red"
+              }
+            }
+          ],
+          "text": " and red"
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000009",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "  Two leading spaces, then three   inside a line."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000010",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Characters that are Markdown syntax stay text: *stars*, _underscores_, `ticks`, [brackets](not a link), <angle>, a & b, ~~tildes~~, a | pipe and a back\\slash."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000011",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "# not a heading"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000012",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "1. not an ordered item"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000013",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "- not a bullet"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000014",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "> not a quote"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000015",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "מגדלור — منارة"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000016",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Weather symbols: 🌊 🌬️ ⛈️ and a family 👨‍👩‍👧."
+        }
+      ]
+    }
+  ]
+}

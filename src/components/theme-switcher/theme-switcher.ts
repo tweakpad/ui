@@ -282,7 +282,7 @@ export class TpThemeSwitcher extends TpElement {
     if (state.variant === 'group')
       return html`<tp-toggle-group
         variant="outline"
-        size=${state.size}
+        size=${state.size === 'sm' ? 'icon-sm' : 'icon'}
         spacing="0"
         label=${this.label || 'Theme'}
         ?disabled=${state.disabled}

@@ -182,19 +182,26 @@ interface ResizeRegistry {
 }
 const resizeRegistries = new WeakMap<Window, ResizeRegistry>();
 
+/*
+ * Every shared registry is built by a function of its own: an observer or listener closure created
+ * inside a subscribing call would keep that call's scope, and with it the first subscriber's
+ * element and callback, reachable for as long as the registry lives (V-585).
+ */
+function createResizeRegistry(view: Window & typeof globalThis): ResizeRegistry {
+  const callbacks = new Map<Element, Set<ResizeCallback>>();
+  const observer = new view.ResizeObserver((entries) => {
+    for (const entry of entries)
+      for (const notify of [...(callbacks.get(entry.target) ?? [])]) notify(entry);
+  });
+  return { observer, callbacks };
+}
+
 /** Observes `element`'s size through the window's single shared ResizeObserver. */
 export function observeResize(element: Element, callback: ResizeCallback): () => void {
   const view = element.ownerDocument.defaultView;
   if (!view?.ResizeObserver) return () => {};
   let registry = resizeRegistries.get(view);
-  if (!registry) {
-    const callbacks = new Map<Element, Set<ResizeCallback>>();
-    const observer = new view.ResizeObserver((entries) => {
-      for (const entry of entries)
-        for (const notify of [...(callbacks.get(entry.target) ?? [])]) notify(entry);
-    });
-    resizeRegistries.set(view, (registry = { observer, callbacks }));
-  }
+  if (!registry) resizeRegistries.set(view, (registry = createResizeRegistry(view)));
   const { observer, callbacks } = registry;
   let set = callbacks.get(element);
   if (!set) {
@@ -231,6 +238,22 @@ interface IntersectionRegistry {
 /** Keyed by root (or window for the viewport), then by margin and thresholds. */
 const intersectionRegistries = new WeakMap<object, Map<string, IntersectionRegistry>>();
 
+function createIntersectionRegistry(
+  view: Window & typeof globalThis,
+  init: IntersectionObserverInit,
+): IntersectionRegistry {
+  const callbacks = new Map<Element, Set<IntersectionCallback>>();
+  const entries = new Map<Element, IntersectionObserverEntry>();
+  const observer = new view.IntersectionObserver((records) => {
+    for (const entry of records) {
+      if (!callbacks.has(entry.target)) continue;
+      entries.set(entry.target, entry);
+      for (const notify of [...(callbacks.get(entry.target) ?? [])]) notify(entry);
+    }
+  }, init);
+  return { observer, callbacks, entries };
+}
+
 /** Whether `node`'s window can observe intersections; without it, treat targets as visible. */
 export function canObserveIntersection(node: Node): boolean {
   return Boolean((node.ownerDocument ?? (node as Document)).defaultView?.IntersectionObserver);
@@ -256,22 +279,17 @@ export function observeIntersection(
   let byOptions = intersectionRegistries.get(root ?? view);
   if (!byOptions) intersectionRegistries.set(root ?? view, (byOptions = new Map()));
   let registry = byOptions.get(key);
-  if (!registry) {
-    const callbacks = new Map<Element, Set<IntersectionCallback>>();
-    const entries = new Map<Element, IntersectionObserverEntry>();
-    const observer = new view.IntersectionObserver(
-      (records) => {
-        for (const entry of records) {
-          if (!callbacks.has(entry.target)) continue;
-          entries.set(entry.target, entry);
-          for (const notify of [...(callbacks.get(entry.target) ?? [])]) notify(entry);
-        }
-      },
-      // scrollMargin is ignored where unsupported; members then join at the visible edge.
-      { root, rootMargin, scrollMargin, threshold } as IntersectionObserverInit,
+  // scrollMargin is ignored where unsupported; members then join at the visible edge.
+  if (!registry)
+    byOptions.set(
+      key,
+      (registry = createIntersectionRegistry(view, {
+        root,
+        rootMargin,
+        scrollMargin,
+        threshold,
+      } as IntersectionObserverInit)),
     );
-    byOptions.set(key, (registry = { observer, callbacks, entries }));
-  }
   const { observer, callbacks, entries } = registry;
   let set = callbacks.get(element);
   if (!set) {
@@ -318,6 +336,19 @@ export interface SubtreeOptions {
   readonly subtree?: boolean;
 }
 
+function createSubtreeRegistry(
+  view: Window & typeof globalThis,
+  root: Node,
+  init: MutationObserverInit,
+): SubtreeRegistry {
+  const callbacks = new Set<() => void>();
+  const observer = new view.MutationObserver(() => {
+    for (const notify of [...callbacks]) notify();
+  });
+  observer.observe(root, init);
+  return { observer, callbacks };
+}
+
 const subtreeKey = (options: SubtreeOptions) =>
   `${options.content ? (options.attributes === false ? 'text' : 'content') : 'structure'}|${options.subtree === false ? 'children' : 'subtree'}`;
 
@@ -337,29 +368,27 @@ export function observeSubtree(
   if (!byOptions) subtreeRegistries.set(root, (byOptions = new Map()));
   const key = subtreeKey(options);
   let registry = byOptions.get(key);
-  if (!registry) {
-    const callbacks = new Set<() => void>();
-    const observer = new view.MutationObserver(() => {
-      for (const notify of [...callbacks]) notify();
-    });
-    observer.observe(
-      root,
-      options.content
-        ? {
-            subtree: options.subtree !== false,
-            childList: true,
-            characterData: true,
-            attributes: options.attributes !== false,
-          }
-        : {
-            subtree: options.subtree !== false,
-            childList: true,
-            attributes: true,
-            attributeFilter: ['id', 'hidden', 'open'],
-          },
+  if (!registry)
+    byOptions.set(
+      key,
+      (registry = createSubtreeRegistry(
+        view,
+        root,
+        options.content
+          ? {
+              subtree: options.subtree !== false,
+              childList: true,
+              characterData: true,
+              attributes: options.attributes !== false,
+            }
+          : {
+              subtree: options.subtree !== false,
+              childList: true,
+              attributes: true,
+              attributeFilter: ['id', 'hidden', 'open'],
+            },
+      )),
     );
-    byOptions.set(key, (registry = { observer, callbacks }));
-  }
   const { observer, callbacks } = registry;
   callbacks.add(callback);
   let active = true;
@@ -393,31 +422,32 @@ const languageRegistries = new WeakMap<Window, LanguageRegistry>();
  * preferred languages change, through one shared observer and listener per window, released when
  * its last subscriber leaves.
  */
+function createLanguageRegistry(view: Window): LanguageRegistry {
+  const callbacks = new Set<LanguageCallback>();
+  const notify = () => {
+    for (const subscriber of [...callbacks]) subscriber();
+  };
+  view.addEventListener('languagechange', notify);
+  const Observer = (view as Window & { MutationObserver?: typeof MutationObserver })
+    .MutationObserver;
+  const observer = Observer ? new Observer(notify) : undefined;
+  observer?.observe(view.document.documentElement, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['lang'],
+  });
+  return {
+    callbacks,
+    release: () => {
+      view.removeEventListener('languagechange', notify);
+      observer?.disconnect();
+    },
+  };
+}
+
 export function observeLanguage(view: Window, callback: LanguageCallback): () => void {
   let registry = languageRegistries.get(view);
-  if (!registry) {
-    const callbacks = new Set<LanguageCallback>();
-    const notify = () => {
-      for (const subscriber of [...callbacks]) subscriber();
-    };
-    view.addEventListener('languagechange', notify);
-    const Observer = (view as Window & { MutationObserver?: typeof MutationObserver })
-      .MutationObserver;
-    const observer = Observer ? new Observer(notify) : undefined;
-    observer?.observe(view.document.documentElement, {
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['lang'],
-    });
-    registry = {
-      callbacks,
-      release: () => {
-        view.removeEventListener('languagechange', notify);
-        observer?.disconnect();
-      },
-    };
-    languageRegistries.set(view, registry);
-  }
+  if (!registry) languageRegistries.set(view, (registry = createLanguageRegistry(view)));
   const current = registry;
   current.callbacks.add(callback);
   let active = true;
@@ -458,19 +488,20 @@ export function whenFontsReady(document: Document): Promise<void> {
  * Calls `callback` whenever fonts finish loading in `document`, through one shared listener per
  * document, released when its last subscriber leaves.
  */
+function createFontRegistry(fonts: FontFaceSet): FontRegistry {
+  const callbacks = new Set<FontsCallback>();
+  const notify = () => {
+    for (const subscriber of [...callbacks]) subscriber();
+  };
+  fonts.addEventListener('loadingdone', notify);
+  return { callbacks, release: () => fonts.removeEventListener('loadingdone', notify) };
+}
+
 export function observeFonts(document: Document, callback: FontsCallback): () => void {
   const fonts = (document as Document & { fonts?: FontFaceSet }).fonts;
   if (!fonts || typeof fonts.addEventListener !== 'function') return () => {};
   let registry = fontRegistries.get(document);
-  if (!registry) {
-    const callbacks = new Set<FontsCallback>();
-    const notify = () => {
-      for (const subscriber of [...callbacks]) subscriber();
-    };
-    fonts.addEventListener('loadingdone', notify);
-    registry = { callbacks, release: () => fonts.removeEventListener('loadingdone', notify) };
-    fontRegistries.set(document, registry);
-  }
+  if (!registry) fontRegistries.set(document, (registry = createFontRegistry(fonts)));
   const { callbacks } = registry;
   callbacks.add(callback);
   let active = true;

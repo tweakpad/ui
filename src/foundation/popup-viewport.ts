@@ -28,6 +28,7 @@ export class PopupViewportController implements ReactiveController {
   constructor(
     private host: ReactiveControllerHost,
     private viewport: () => HTMLElement | null,
+    private surface: () => HTMLElement | null = () => null,
   ) {
     host.addController(this);
     this.#exit = new PresenceController(host, {
@@ -75,11 +76,12 @@ export class PopupViewportController implements ReactiveController {
     this.#currentElement = current;
     const view = current?.ownerDocument.defaultView;
     this.#observer =
-      view && current ? new view.ResizeObserver(([entry]) => this.#measure(entry)) : null;
+      view && current ? new view.ResizeObserver(([entry]) => this.measure(entry)) : null;
     if (current) this.#observer?.observe(current);
-    this.#measure();
+    this.measure();
   }
-  #measure(entry?: ResizeObserverEntry): void {
+  /** Reads the current view's size now; the observer keeps it current afterwards. */
+  measure(entry?: ResizeObserverEntry): void {
     const element = this.#currentElement;
     // Presence transforms change painted bounds, not the layout space required
     // by the content. Measuring them here clips the settled viewport.
@@ -104,6 +106,29 @@ export class PopupViewportController implements ReactiveController {
     const viewport = this.viewport();
     viewport?.style.setProperty('--tp-popup-width', `${box.width}px`);
     viewport?.style.setProperty('--tp-popup-height', `${box.height}px`);
+    // The positioner takes the next view's outer size at once, so its position is computed once
+    // for the settled geometry and the viewport morphs inside a box that no longer moves it.
+    const surface = this.surface();
+    const view = viewport?.ownerDocument.defaultView;
+    if (surface && viewport && view) {
+      const style = view.getComputedStyle(viewport);
+      const extent = (...names: string[]) =>
+        names.reduce((sum, name) => sum + (parseFloat(style.getPropertyValue(name)) || 0), 0);
+      const inline = extent(
+        'border-left-width',
+        'border-right-width',
+        'padding-left',
+        'padding-right',
+      );
+      const block = extent(
+        'border-top-width',
+        'border-bottom-width',
+        'padding-top',
+        'padding-bottom',
+      );
+      surface.style.setProperty('--tp-positioner-width', `${box.width + inline}px`);
+      surface.style.setProperty('--tp-positioner-height', `${box.height + block}px`);
+    }
     this.host.requestUpdate();
   }
   hostDisconnected(): void {

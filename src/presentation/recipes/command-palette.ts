@@ -16,6 +16,16 @@ export const commandPaletteAppearance: PresentationDictionary = {
   'command-palette-input': selectAppearance['select-input']!,
   'command-palette-list': selectAppearance['select-list']!,
   'command-palette-group': selectAppearance['select-group']!,
+  // The List item description paint, a secondary line after the label.
+  'command-palette-item-description': [
+    {
+      declarations: {
+        display: 'block',
+        color: 'var(--tp-muted-foreground)',
+        'font-size': 'var(--tp-text-sm)',
+      },
+    },
+  ],
   'command-palette-match': searchMatchRules,
   'command-palette-item': [
     ...commandItemAppearance,

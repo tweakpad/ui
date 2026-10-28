@@ -427,7 +427,7 @@ const examples = {
   'tp-status-dot': () =>
     html`<tp-status-dot variant="success" label="Running" show-label></tp-status-dot>`,
   'tp-visually-hidden': () => html`
-    <tp-toggle-group label="Trail map layers" multiple variant="outline">
+    <tp-toggle-group label="Trail map layers" multiple variant="outline" size="icon">
       <tp-toggle value="campsites">
         <tp-icon .icon=${mapPinIcon}></tp-icon>
         <tp-visually-hidden>Campsites</tp-visually-hidden>

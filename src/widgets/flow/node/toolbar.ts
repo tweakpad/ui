@@ -1,14 +1,13 @@
 import { css, html, type PropertyValues } from 'lit';
+import { ContextualToolbarController } from '../../../foundation/contextual-toolbar.js';
 import { TpElement } from '../../../foundation/element.js';
 import {
-  positionSurface,
   rect,
   themeSpacing,
-  type PositioningHandle,
   type Rect,
   type VirtualAnchor,
 } from '../../../foundation/positioning.js';
-import { ToolbarController, type ToolbarRegistration } from '../../../foundation/toolbar.js';
+import type { ToolbarRegistration } from '../../../foundation/toolbar.js';
 import { TpButtonGroup } from '../../../components/button-group/button-group.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
 import { resolveStrings } from '../strings.js';
@@ -43,10 +42,11 @@ const toolbarStyles = css`
 `;
 
 /**
- * The node toolbar (Widgets 6.3 Anatomy): a Foundation toolbar of slotted Buttons in a Button
- * group, positioned above (or below) the selected node outside the zoom transform. The root
- * hands it the node's client rect each frame through `setAnchor`; the surface follows it
- * through the frame-synchronized positioning owner and flips when it would leave the pane.
+ * The node toolbar (Widgets 6.3 Anatomy): a contextual Foundation toolbar of slotted Buttons in a
+ * Button group, positioned above (or below) the selected node outside the zoom transform. The
+ * root hands it the node's client rect each frame through `setAnchor`; the contextual toolbar
+ * owner follows it through frame-synchronized positioning and flips it when it would leave the
+ * pane.
  */
 export class TpFlowNodeToolbar extends TpElement {
   static tagName = 'tp-flow-node-toolbar';
@@ -73,8 +73,12 @@ export class TpFlowNodeToolbar extends TpElement {
   label = '';
 
   #anchor: Rect | null = null;
-  #handle: PositioningHandle | undefined;
-  #toolbar: ToolbarController | undefined;
+  #contextual: ContextualToolbarController | undefined;
+  /** One stable virtual anchor over the node's latest client rect. */
+  readonly #virtualAnchor: VirtualAnchor = {
+    getBoundingRectangle: () => this.#anchor ?? rect(0, 0, 0, 0),
+    contextElement: this,
+  };
   readonly #items = new Map<HTMLElement, ToolbarRegistration<unknown>>();
   readonly #parts = new Map<HTMLElement, () => void>();
 
@@ -106,9 +110,7 @@ export class TpFlowNodeToolbar extends TpElement {
           next.height !== previous.height));
     this.#anchor = next;
     this.toggleAttribute('data-anchored', !!next);
-    if (!next) this.#destroyHandle();
-    else if (!this.#handle) this.#createHandle();
-    else if (changed) void this.#handle.update();
+    this.#syncSurface(!!changed);
   }
 
   override focus(options?: FocusOptions): void {
@@ -119,10 +121,15 @@ export class TpFlowNodeToolbar extends TpElement {
     else super.focus(options);
   }
 
+  override connectedCallback(): void {
+    super.connectedCallback();
+    // A reconnected toolbar builds its contextual owner again at its next update.
+    if (this.hasUpdated) this.requestUpdate();
+  }
+
   override disconnectedCallback(): void {
-    this.#destroyHandle();
-    this.#toolbar?.dispose();
-    this.#toolbar = undefined;
+    this.#contextual?.dispose();
+    this.#contextual = undefined;
     this.#items.clear();
     for (const release of this.#parts.values()) release();
     this.#parts.clear();
@@ -132,13 +139,39 @@ export class TpFlowNodeToolbar extends TpElement {
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     const root = this.renderRoot.querySelector<HTMLElement>('.toolbar');
-    if (root && !this.#toolbar) this.#toolbar = new ToolbarController(root, {});
-    this.#toolbar?.update({ orientation: 'horizontal', disabled: this.disabled });
+    if (root && !this.#contextual)
+      this.#contextual = new ContextualToolbarController(this, {
+        root,
+        ...this.#positioning(),
+      });
+    this.#contextual?.update({ orientation: 'horizontal', disabled: this.disabled });
     this.#syncItems();
-    if (changed.has('open') || changed.has('placement') || changed.has('offset')) {
-      this.#destroyHandle();
-      if (this.open && this.#anchor) this.#createHandle();
+    if (changed.has('placement') || changed.has('offset'))
+      this.#contextual?.update(this.#positioning());
+    this.#syncSurface(false);
+  }
+
+  /** The positioning of the node toolbar: absolute, frame-synchronized, flipping on its side. */
+  #positioning() {
+    return {
+      placement: this.placement,
+      offset: this.offset ?? themeSpacing(this, 2),
+      strategy: 'absolute' as const,
+      collision: { side: 'flip' as const, align: 'shift' as const },
+      tracking: { frameSynchronized: true, ancestorScroll: false, elementResize: true },
+    };
+  }
+
+  /** Shows the surface at the node while it is open and anchored; hides it otherwise. */
+  #syncSurface(moved: boolean): void {
+    const contextual = this.#contextual;
+    if (!contextual) return;
+    if (!this.open || !this.#anchor || !this.isConnected) {
+      contextual.hide();
+      return;
     }
+    if (!contextual.shown) contextual.show(this.#virtualAnchor);
+    else if (moved) void contextual.reposition();
   }
 
   #slotChange = (): void => {
@@ -147,7 +180,7 @@ export class TpFlowNodeToolbar extends TpElement {
 
   /** Slotted Buttons join the roving order and present as `flow-control` parts. */
   #syncItems(): void {
-    const toolbar = this.#toolbar;
+    const toolbar = this.#contextual?.toolbar;
     if (!toolbar) return;
     const present = new Set<HTMLElement>();
     for (const element of this.querySelectorAll<HTMLElement>('tp-button, button')) {
@@ -168,26 +201,6 @@ export class TpFlowNodeToolbar extends TpElement {
         release();
         this.#parts.delete(element);
       }
-  }
-
-  #createHandle(): void {
-    if (this.#handle || !this.open || !this.#anchor || !this.isConnected) return;
-    const anchor: VirtualAnchor = {
-      getBoundingRectangle: () => this.#anchor ?? rect(0, 0, 0, 0),
-      contextElement: this,
-    };
-    this.#handle = positionSurface(anchor, this, {
-      placement: this.placement,
-      offset: this.offset ?? themeSpacing(this, 2),
-      strategy: 'absolute',
-      collision: { side: 'flip', align: 'shift' },
-      tracking: { frameSynchronized: true, ancestorScroll: false, elementResize: true },
-    });
-  }
-
-  #destroyHandle(): void {
-    this.#handle?.destroy();
-    this.#handle = undefined;
   }
 
   protected override render() {

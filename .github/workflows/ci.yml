@@ -21,6 +21,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+      # Type-checks src with tests and stories, .storybook and the configs, which the build leaves out.
+      - run: npm run typecheck
       # Builds, packs and installs the tarball into a consumer project (types, exports, tree-shaking).
       - run: npm run test:package
       # Per-component bundle sizes; fails if the package entry ships modules a component does not use.
