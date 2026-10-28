@@ -1,0 +1,317 @@
+---
+title: Carousel
+description: Slides at discrete positions, with buttons, keyboard, swipe and indicators sharing one selection.
+tag: tp-carousel
+---
+
+<Preview
+  align="stretch"
+  code={`<tp-carousel label="What's new in 2.4" style="max-inline-size:32rem">
+  <tp-card>
+    <h3 slot="header">Single sign-on</h3>
+    <span slot="description">SAML and OIDC are now available on every plan.</span>
+  </tp-card>
+  <tp-card>
+    <h3 slot="header">Audit log</h3>
+    <span slot="description">Every permission change, kept for 400 days.</span>
+  </tp-card>
+  <tp-card>
+    <h3 slot="header">Faster exports</h3>
+    <span slot="description">Large CSV exports finish up to five times sooner.</span>
+  </tp-card>
+  <tp-card>
+    <h3 slot="header">Scheduled reports</h3>
+    <span slot="description">Email a dashboard to your team every Monday.</span>
+  </tp-card>
+</tp-carousel>`}
+/>
+
+## Usage
+
+Use a Carousel when a set of peers deserves the same prominent spot but only one, or a few, fit at a time: release highlights, testimonials, a row of related items. Each child is one slide. The previous and next buttons, arrow keys, swipe and the indicators all move the same selection, and the current position is announced politely. Give every Carousel a `label` and size it through CSS. Content people must not miss belongs in a list they can read in full, not behind navigation.
+
+### A row of cards
+
+<Preview
+  align="stretch"
+  code={`<tp-carousel id="carousel-projects" label="Recent projects" items-per-movement="2" style="max-inline-size:40rem">
+  <tp-card size="sm">
+    <h3 slot="header">Atlas</h3>
+    <span slot="description">Design system · 12 members</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Billing v2</h3>
+    <span slot="description">Payments · 5 members</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Onboarding</h3>
+    <span slot="description">Growth · 8 members</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Mobile app</h3>
+    <span slot="description">iOS and Android · 9 members</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Search</h3>
+    <span slot="description">Platform · 4 members</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Status page</h3>
+    <span slot="description">Infrastructure · 3 members</span>
+  </tp-card>
+</tp-carousel>`}
+  script={`await customElements.whenDefined('tp-carousel');
+document.getElementById('carousel-projects').options = {
+  layout: { itemsPerView: 2.25, gap: 12 },
+};`}
+/>
+
+Layout, navigation and indicator settings live in `options`. A fractional number of slides in view lets the next card peek in, a cue that the row continues, and moving two at a time keeps steps in proportion to what is shown.
+
+### Testimonials
+
+<Preview
+  align="stretch"
+  code={`<tp-carousel id="carousel-quotes" label="Customer stories" style="max-inline-size:32rem">
+  <tp-card>
+    <blockquote style="margin:0;font-size:var(--tp-text-lg)">“We replaced three internal tools in a week.”</blockquote>
+    <span slot="footer" style="color:var(--tp-muted-foreground)">Priya Raman, Head of Ops at Northwind</span>
+  </tp-card>
+  <tp-card>
+    <blockquote style="margin:0;font-size:var(--tp-text-lg)">“Release reviews went from an hour to ten minutes.”</blockquote>
+    <span slot="footer" style="color:var(--tp-muted-foreground)">Daniel Okafor, Engineering Manager at Lumen</span>
+  </tp-card>
+  <tp-card>
+    <blockquote style="margin:0;font-size:var(--tp-text-lg)">“Our designers and engineers finally share one source.”</blockquote>
+    <span slot="footer" style="color:var(--tp-muted-foreground)">Mara Lindqvist, Design Lead at Fjord</span>
+  </tp-card>
+</tp-carousel>`}
+  script={`await customElements.whenDefined('tp-carousel');
+document.getElementById('carousel-quotes').options = {
+  navigation: { placement: 'inside' },
+  indicators: { type: 'bullets', clickable: true },
+};`}
+/>
+
+The indicators show a fraction by default; bullets suit a short set, and clickable bullets become real buttons that jump to a slide. Placing the arrows inside the viewport keeps a compact block compact; they can also sit in the footer or outside the slides.
+
+### Rotating tips
+
+<Preview
+  align="stretch"
+  code={`<tp-carousel label="Getting started tips" loop autoplay="5000" style="max-inline-size:28rem">
+  <tp-card size="sm">
+    <h3 slot="header">Press ⌘K anywhere</h3>
+    <span slot="description">Jump to any project, page or setting.</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Invite your team</h3>
+    <span slot="description">Projects are more useful with reviewers.</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Connect your repository</h3>
+    <span slot="description">Link pull requests to tasks automatically.</span>
+  </tp-card>
+</tp-carousel>`}
+/>
+
+`loop` lets navigation wrap past either end, and `autoplay` advances on an interval with a pause button in front of the slides; hover, focus, reduced motion and hidden tabs pause it on their own. Use autoplay sparingly: moving content is hard to read and easy to miss, so keep it for repeated or decorative content, never the only path to information.
+
+### Upcoming events
+
+<Preview
+  align="stretch"
+  code={`<tp-carousel id="carousel-events" label="Upcoming events" orientation="vertical" style="block-size:17rem;max-inline-size:22rem">
+  <tp-card size="sm">
+    <h3 slot="header">Design review</h3>
+    <span slot="description">Tue, Oct 13 · 10:00</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Sprint planning</h3>
+    <span slot="description">Wed, Oct 14 · 14:30</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Customer call: Lumen</h3>
+    <span slot="description">Thu, Oct 15 · 09:00</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Release 2.5 go/no-go</h3>
+    <span slot="description">Fri, Oct 16 · 16:00</span>
+  </tp-card>
+</tp-carousel>`}
+  script={`await customElements.whenDefined('tp-carousel');
+document.getElementById('carousel-events').options = { layout: { itemsPerView: 2, gap: 8 } };`}
+/>
+
+`orientation="vertical"` moves the track, the arrow keys and swipe to the block axis, for a side column of upcoming items. A vertical Carousel needs a definite block size.
+
+### Transitions
+
+<Preview
+  title="Crossfade"
+  align="stretch"
+  code={`<tp-carousel id="carousel-crossfade" label="Release highlights" loop style="max-inline-size:32rem">
+  <tp-card>
+    <h3 slot="header" data-carousel-layer="1">Single sign-on</h3>
+    <span slot="description" data-carousel-layer="2">SAML and OIDC are now available on every plan.</span>
+  </tp-card>
+  <tp-card>
+    <h3 slot="header" data-carousel-layer="1">Audit log</h3>
+    <span slot="description" data-carousel-layer="2">Every permission change, kept for 400 days.</span>
+  </tp-card>
+  <tp-card>
+    <h3 slot="header" data-carousel-layer="1">Faster exports</h3>
+    <span slot="description" data-carousel-layer="2">Large CSV exports finish up to five times sooner.</span>
+  </tp-card>
+</tp-carousel>`}
+  script={`import { carouselCrossfadeEffect } from '@tweakpad/ui';
+
+await customElements.whenDefined('tp-carousel');
+document.getElementById('carousel-crossfade').effect = carouselCrossfadeEffect({ duration: 600 });`}
+/>
+
+<Preview
+  title="Layered photos"
+  align="stretch"
+  code={`<tp-carousel id="carousel-layered" label="Weekend escapes" style="max-inline-size:36rem">
+  <figure style="position:relative;margin:0;aspect-ratio:16/9;overflow:hidden;border-radius:var(--tp-radius-lg);background:var(--tp-muted)">
+    <img data-carousel-media src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200&q=80" alt="A winding road through green hills at sunset" style="display:block;inline-size:100%;block-size:100%;object-fit:cover">
+    <figcaption style="position:absolute;inset-inline-start:var(--tp-space-6);inset-block-end:var(--tp-space-6);display:grid;gap:var(--tp-space-1);color:white;text-shadow:0 1px 12px rgb(0 0 0 / 55%)">
+      <strong data-carousel-layer="1" style="font-size:var(--tp-text-2xl)">Hill country</strong>
+      <span data-carousel-layer="2" style="font-size:var(--tp-text-sm)">Three days by car · from $420</span>
+    </figcaption>
+  </figure>
+  <figure style="position:relative;margin:0;aspect-ratio:16/9;overflow:hidden;border-radius:var(--tp-radius-lg);background:var(--tp-muted)">
+    <img data-carousel-media src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1200&q=80" alt="Mountain lake at dawn" style="display:block;inline-size:100%;block-size:100%;object-fit:cover">
+    <figcaption style="position:absolute;inset-inline-start:var(--tp-space-6);inset-block-end:var(--tp-space-6);display:grid;gap:var(--tp-space-1);color:white;text-shadow:0 1px 12px rgb(0 0 0 / 55%)">
+      <strong data-carousel-layer="1" style="font-size:var(--tp-text-2xl)">Alpine lakes</strong>
+      <span data-carousel-layer="2" style="font-size:var(--tp-text-sm)">Hut to hut · from $610</span>
+    </figcaption>
+  </figure>
+  <figure style="position:relative;margin:0;aspect-ratio:16/9;overflow:hidden;border-radius:var(--tp-radius-lg);background:var(--tp-muted)">
+    <img data-carousel-media src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1200&q=80" alt="A bicycle in a wet alley" style="display:block;inline-size:100%;block-size:100%;object-fit:cover">
+    <figcaption style="position:absolute;inset-inline-start:var(--tp-space-6);inset-block-end:var(--tp-space-6);display:grid;gap:var(--tp-space-1);color:white;text-shadow:0 1px 12px rgb(0 0 0 / 55%)">
+      <strong data-carousel-layer="1" style="font-size:var(--tp-text-2xl)">Old town by bike</strong>
+      <span data-carousel-layer="2" style="font-size:var(--tp-text-sm)">Guided weekend · from $290</span>
+    </figcaption>
+  </figure>
+</tp-carousel>`}
+  script={`import { carouselLayeredEffect } from '@tweakpad/ui';
+
+await customElements.whenDefined('tp-carousel');
+document.getElementById('carousel-layered').effect = carouselLayeredEffect();`}
+/>
+
+<Preview
+  title="Centered focus"
+  align="stretch"
+  code={`<tp-carousel id="carousel-focus" label="Destinations" loop style="max-inline-size:44rem">
+  <figure style="position:relative;margin:0;aspect-ratio:4/5;overflow:hidden;border-radius:var(--tp-radius-lg);background:var(--tp-muted)">
+    <img data-carousel-media src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=80" alt="Mountain lake at dawn" style="display:block;inline-size:100%;block-size:100%;object-fit:cover">
+    <figcaption data-carousel-layer="1" style="position:absolute;inset-inline-start:var(--tp-space-4);inset-block-end:var(--tp-space-4);color:white;font-weight:var(--tp-font-semibold);text-shadow:0 1px 12px rgb(0 0 0 / 55%)">Dolomites</figcaption>
+  </figure>
+  <figure style="position:relative;margin:0;aspect-ratio:4/5;overflow:hidden;border-radius:var(--tp-radius-lg);background:var(--tp-muted)">
+    <img data-carousel-media src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=800&q=80" alt="A building facade" style="display:block;inline-size:100%;block-size:100%;object-fit:cover">
+    <figcaption data-carousel-layer="1" style="position:absolute;inset-inline-start:var(--tp-space-4);inset-block-end:var(--tp-space-4);color:white;font-weight:var(--tp-font-semibold);text-shadow:0 1px 12px rgb(0 0 0 / 55%)">Porto</figcaption>
+  </figure>
+  <figure style="position:relative;margin:0;aspect-ratio:4/5;overflow:hidden;border-radius:var(--tp-radius-lg);background:var(--tp-muted)">
+    <img data-carousel-media src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800&q=80" alt="A winding road through green hills at sunset" style="display:block;inline-size:100%;block-size:100%;object-fit:cover">
+    <figcaption data-carousel-layer="1" style="position:absolute;inset-inline-start:var(--tp-space-4);inset-block-end:var(--tp-space-4);color:white;font-weight:var(--tp-font-semibold);text-shadow:0 1px 12px rgb(0 0 0 / 55%)">Tuscany</figcaption>
+  </figure>
+  <figure style="position:relative;margin:0;aspect-ratio:4/5;overflow:hidden;border-radius:var(--tp-radius-lg);background:var(--tp-muted)">
+    <img data-carousel-media src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=800&q=80" alt="A rooftop terrace" style="display:block;inline-size:100%;block-size:100%;object-fit:cover">
+    <figcaption data-carousel-layer="1" style="position:absolute;inset-inline-start:var(--tp-space-4);inset-block-end:var(--tp-space-4);color:white;font-weight:var(--tp-font-semibold);text-shadow:0 1px 12px rgb(0 0 0 / 55%)">Lisbon</figcaption>
+  </figure>
+  <figure style="position:relative;margin:0;aspect-ratio:4/5;overflow:hidden;border-radius:var(--tp-radius-lg);background:var(--tp-muted)">
+    <img data-carousel-media src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=800&q=80" alt="A bicycle in a wet alley" style="display:block;inline-size:100%;block-size:100%;object-fit:cover">
+    <figcaption data-carousel-layer="1" style="position:absolute;inset-inline-start:var(--tp-space-4);inset-block-end:var(--tp-space-4);color:white;font-weight:var(--tp-font-semibold);text-shadow:0 1px 12px rgb(0 0 0 / 55%)">Amsterdam</figcaption>
+  </figure>
+</tp-carousel>`}
+  script={`import { carouselFocusEffect } from '@tweakpad/ui';
+
+await customElements.whenDefined('tp-carousel');
+const carousel = document.getElementById('carousel-focus');
+carousel.options = {
+  layout: { itemsPerView: 2.4, gap: 16, centered: true },
+  interaction: { navigateOnItemClick: true },
+};
+carousel.effect = carouselFocusEffect();`}
+/>
+
+By default the track slides. The `effect` property swaps in a richer transition built by a factory you import, so pages without one bundle none. The crossfade fades between slides and reveals their text in order; the layered effect turns the outgoing photo away in perspective and raises the next caption line by line; the focus effect dims and shrinks the slides away from the center, which suits a row of destinations or products. A parallax effect and a shader transition are available the same way. Every effect follows a drag, plays backwards when navigation reverses and respects reduced motion.
+
+### A long archive from data
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:36rem">
+  <div id="carousel-archive"></div>
+  <span id="carousel-archive-status" style="font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Showing invoices 1–2 of 200</span>
+</div>`}
+  script={`import { html } from 'lit';
+
+// Data and controlled selection are set before the carousel initializes, so it is configured before it connects.
+const carousel = document.createElement('tp-carousel');
+carousel.label = 'Invoice archive';
+const status = document.getElementById('carousel-archive-status');
+carousel.items = Array.from({ length: 200 }, (_, index) => ({
+  id: 'INV-' + String(3001 + index),
+  amount: 180 + ((index * 37) % 900),
+}));
+carousel.renderItem = (invoice) => html\`
+  <tp-card size="sm">
+    <h3 slot="header">\${invoice.id}</h3>
+    <span slot="description">$\${invoice.amount.toLocaleString('en-US')}.00 · Paid</span>
+  </tp-card>\`;
+carousel.options = { layout: { itemsPerView: 2, gap: 12 }, virtual: {} };
+carousel.value = 0;
+carousel.addEventListener('tp-value-change', (event) => {
+  carousel.value = event.detail.value;
+});
+carousel.addEventListener('tp-value-commit', () => {
+  status.textContent = 'Showing invoices ' + (carousel.index + 1) + '–' + (carousel.index + 2) + ' of 200';
+});
+document.getElementById('carousel-archive').append(carousel);`}
+/>
+
+With `items` and `renderItem` the slides come from data instead of children, and virtualization keeps only the slides near the viewport in the document, so a long archive stays light. Setting `value` makes the selection controlled: each proposal waits for your listener to publish it, which is where a router or a store steps in.
+
+### Onboarding steps
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:28rem">
+  <tp-carousel id="carousel-steps" label="Onboarding steps">
+  <tp-card size="sm">
+    <h3 slot="header">Create a workspace</h3>
+    <span slot="description">Name it after your team or company.</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Import your data</h3>
+    <span slot="description">Bring tasks over from a CSV file.</span>
+  </tp-card>
+  <tp-card size="sm">
+    <h3 slot="header">Invite your team</h3>
+    <span slot="description">Send invitations by email.</span>
+  </tp-card>
+  </tp-carousel>
+  <span id="carousel-steps-status" style="font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Step 1 of 3</span>
+</div>`}
+  script={`const carousel = document.getElementById('carousel-steps');
+const status = document.getElementById('carousel-steps-status');
+carousel.addEventListener('tp-value-commit', () => {
+  status.textContent = 'Step ' + (carousel.index + 1) + ' of 3';
+});`}
+/>
+
+When something outside the Carousel follows its position, such as a step counter or a matching detail panel, listen for `tp-value-commit`, which fires once a move is accepted, and read `index`. For finer control, the `controller` drives navigation and autoplay from code.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="left" /> <Keys keys="right" /> | Previous or next slide in a horizontal carousel, following the writing direction |
+| <Keys keys="up" /> <Keys keys="down" /> | Previous or next slide in a vertical carousel |
+| <Keys keys="home" /> <Keys keys="end" /> | First or last slide |
+
+Keys a control inside a slide owns, such as those of a text field or a slider, stay with that control.

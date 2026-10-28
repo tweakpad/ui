@@ -253,7 +253,7 @@ describe('text-editing icons', () => {
     const files = [
       ...Object.keys(MODULES).map((module) => `src/icons/${module}.ts`),
       'src/icons/icons.test.ts',
-      'docs/icon.md',
+      'docs/components/icon.mdx',
       'README.md',
       ...folder('.changeset', (file) => file.endsWith('.md')),
       ...folder('tests/fixtures/components/icon', () => true),

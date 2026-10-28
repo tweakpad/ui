@@ -2,7 +2,12 @@ import { css, html } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { aspectRatioPresentation } from '../../presentation/families/aspect-ratio.js';
 
-/** A ratio owns its geometry; intrinsic child dimensions cannot enlarge it. */
+/**
+ * A box whose height follows its width at a fixed ratio, so media never shifts the layout. Its
+ * content fills the box and cannot stretch it.
+ *
+ * @slot - The content that fills the box, usually an image or a video.
+ */
 export class TpAspectRatio extends TpElement {
   static tagName = 'tp-aspect-ratio';
   static override presentation = aspectRatioPresentation;
@@ -57,7 +62,9 @@ export class TpAspectRatio extends TpElement {
     `,
   ];
   #ratio = 16 / 9;
+  /** How an image or a video fills the box: `cover` crops, `contain` letterboxes, `fill` stretches. */
   fit: 'fill' | 'contain' | 'cover' | 'none' | 'scale-down' = 'fill';
+  /** The width divided by the height, such as `1.7778` for 16:9 or `1` for a square; always set it. */
   get ratio(): number {
     return this.#ratio;
   }

@@ -128,8 +128,9 @@ const CONSTITUENT_PROPERTIES = [
 ] as const;
 
 /**
- * `tp-media-player`: the media player root and provider (`sec-1810-media-player`, Library
- * `ucl21-media-player`). It owns one `MediaStore`, discovers its media (registered custom media,
+ * A media player built around a native video or audio element, with composable controls, a
+ * default layout, keyboard shortcuts, gestures and announcements. It owns one `MediaStore`,
+ * discovers its media (registered custom media,
  * else the first `<video>`/`<audio>` in its light DOM), attaches the store to `{media, container}`,
  * and publishes state markers and ARIA on the container. The container is the root itself unless
  * a `tp-media-container` descendant is present. The root renders no visual structure: it is
@@ -142,6 +143,7 @@ const CONSTITUENT_PROPERTIES = [
  * @fires tp-media-error - The media error became non-null.
  * @fires tp-media-attach - The store attached to `{media, container}`.
  * @fires tp-media-detach - The store detached from `{media, container}`.
+ * @fires tp-shortcut-change - The keyboard shortcuts changed, for example after a hotkey binding was added; controls refresh the shortcuts they show.
  * @fires tp-diagnostic - Configuration and discovery diagnostics (not localized).
  * @slot - The media element and all constituents.
  */
@@ -187,12 +189,14 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     `,
   ];
 
+  /** @internal Marks the element as a media player for its constituents. */
   readonly [mediaPlayerBrand] = true as const;
 
   /** Title; falls back to media content data. An authored `''` stops the fallback. */
   contentTitle: string | null = null;
   /** Poster URL; falls back to media content data, then `video.poster`. */
   poster: string | null = null;
+  /** Whether the media is on demand or live; `auto` reads it from the media's duration. */
   streamType: MediaStreamTypeConfig = 'auto';
   /** Rate options; must be sorted and positive (invalid entries are diagnosed and ignored). */
   playbackRates: readonly number[] = DEFAULT_PLAYBACK_RATES;
@@ -305,7 +309,7 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
   // Requests
 
   /**
-   * Proposes a media change through the request pipeline (`mp-f-request`): a cancelable
+   * Proposes a media change through the request pipeline: a cancelable
    * `tp-media-request`, gating (disabled player, capability), execution and
    * `tp-media-request-failed`. Before attach it rejects with `InvalidStateError`.
    */
@@ -330,12 +334,15 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     return this.#store.requestAvailability(action);
   }
 
+  /** Starts playback; resolves with the outcome of the request. */
   play(): Promise<MediaRequestOutcome<'play'>> {
     return this.request('play');
   }
+  /** Pauses playback. */
   pause(): Promise<MediaRequestOutcome<'pause'>> {
     return this.request('pause');
   }
+  /** Plays when paused and pauses when playing. */
   togglePaused(): Promise<MediaRequestOutcome<'toggle-paused'>> {
     return this.request('toggle-paused');
   }
@@ -343,18 +350,23 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
   seek(time: number): Promise<MediaRequestOutcome<'seek'>> {
     return this.request('seek', time);
   }
+  /** Seeks `delta` seconds forward, or back when negative. */
   seekBy(delta: number): Promise<MediaRequestOutcome<'seek-by'>> {
     return this.request('seek-by', delta);
   }
+  /** Jumps to the live edge of a live stream. */
   seekToLiveEdge(): Promise<MediaRequestOutcome<'seek-to-live-edge'>> {
     return this.request('seek-to-live-edge');
   }
+  /** Sets the volume, from 0 to 1. */
   setVolume(volume: number): Promise<MediaRequestOutcome<'set-volume'>> {
     return this.request('set-volume', volume);
   }
+  /** Mutes or unmutes. */
   setMuted(muted: boolean): Promise<MediaRequestOutcome<'set-muted'>> {
     return this.request('set-muted', muted);
   }
+  /** Sets the playback speed, such as `1.5`. */
   setPlaybackRate(rate: number): Promise<MediaRequestOutcome<'set-playback-rate'>> {
     return this.request('set-playback-rate', rate);
   }
@@ -366,15 +378,19 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     if (this.#nativeFullscreen > 0) return super.requestFullscreen(options);
     return this.request('request-fullscreen').then(() => undefined);
   }
+  /** Leaves fullscreen. */
   exitFullscreen(): Promise<MediaRequestOutcome<'exit-fullscreen'>> {
     return this.request('exit-fullscreen');
   }
+  /** Moves the video into a floating picture-in-picture window. */
   requestPictureInPicture(): Promise<MediaRequestOutcome<'request-picture-in-picture'>> {
     return this.request('request-picture-in-picture');
   }
+  /** Returns the video from picture-in-picture. */
   exitPictureInPicture(): Promise<MediaRequestOutcome<'exit-picture-in-picture'>> {
     return this.request('exit-picture-in-picture');
   }
+  /** Opens the browser's prompt for playing on a remote device. */
   promptRemotePlayback(): Promise<MediaRequestOutcome<'prompt-remote-playback'>> {
     return this.request('prompt-remote-playback');
   }
@@ -382,9 +398,11 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
   selectTextTrack(id: string | null): Promise<MediaRequestOutcome<'select-text-track'>> {
     return this.request('select-text-track', id);
   }
+  /** Shows or hides captions; `force` sets the state instead of toggling. */
   toggleCaptions(force?: boolean): Promise<MediaRequestOutcome<'toggle-captions'>> {
     return this.request('toggle-captions', force);
   }
+  /** Switches to the audio track with `id`, such as another language. */
   selectAudioTrack(id: string): Promise<MediaRequestOutcome<'select-audio-track'>> {
     return this.request('select-audio-track', id);
   }
@@ -392,6 +410,7 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
   selectVideoRendition(id: string): Promise<MediaRequestOutcome<'select-video-rendition'>> {
     return this.request('select-video-rendition', id);
   }
+  /** Shows or hides the controls; `force` sets the state instead of toggling. */
   toggleControls(force?: boolean): Promise<MediaRequestOutcome<'toggle-controls'>> {
     return this.request('toggle-controls', force);
   }
@@ -436,14 +455,17 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
   // ---------------------------------------------------------------------------------------------
   // Constituent services (see `context.ts`)
 
+  /** @internal Called by constituents: keeps the controls shown while focus is inside `element`. */
   trackFocusWithin(element: HTMLElement): () => void {
     return this.#store.activity.trackFocusWithin(element);
   }
 
+  /** @internal Called by constituents: keeps the controls shown while `element` is hovered. */
   trackHover(element: HTMLElement): () => void {
     return this.#store.activity.trackHover(element);
   }
 
+  /** The keyboard shortcut bound to `action` (and `value`), for showing it in a tooltip or menu. */
   shortcut(action: MediaRequestAction, value?: unknown): KeyShortcut | undefined {
     return this.#keyOwner?.shortcut(action, value);
   }
@@ -461,6 +483,7 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     };
   }
 
+  /** @internal Called by constituents to re-render when the configuration changes. */
   registerConstituent(element: ReactiveControllerHost): () => void {
     this.#constituents.add(element);
     return () => this.#constituents.delete(element);

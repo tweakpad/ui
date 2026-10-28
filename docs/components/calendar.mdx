@@ -1,0 +1,226 @@
+---
+title: Calendar
+description: Month grids that select one date, several dates or a date range as date-only ISO strings.
+tag: tp-calendar
+---
+
+<Preview
+  code={`<tp-card section-colors="off" style="inline-size:fit-content">
+  <tp-calendar label="Delivery date" name="delivery" today="2026-06-08" default-value="2026-06-12"></tp-calendar>
+</tp-card>`}
+/>
+
+## Usage
+
+A Calendar shows whole months, for choices where the weekday and the surrounding dates matter: a delivery slot, a stay, a sprint. Its values are `YYYY-MM-DD` strings with no time zone, so a selected 20th never becomes the 19th. It has no surface of its own; place it in a Card, a Popover or a page section that provides one.
+
+With a `name`, the Calendar submits its value and takes part in validation, and `required` reports a missing date through Field. `locale` formats the captions, weekdays and accessible date names, and sets the first day of the week; inside `dir="rtl"` the grid, the chevrons and the arrow keys flip. Calendar values are dates only: collect a time in labelled time Inputs beside it and combine the two in your own code.
+
+### Hotel stay
+
+<Preview
+  code={`<tp-card section-colors="off" style="inline-size:fit-content">
+  <tp-calendar
+    label="Stay"
+    name="stay"
+    selection-mode="range"
+    visible-months="2"
+    minimum-nights="2"
+    today="2026-01-05"
+    default-value="2026-01-12/2026-01-19"
+  ></tp-calendar>
+</tp-card>`}
+/>
+
+A range starts on the first click and completes on the second, and two months side by side let a stay cross the end of a month without paging. `minimum-nights` and `maximum-nights` bound its length; `range-exclusion` decides whether a range across an unavailable night is refused or restarts there.
+
+### Delivery days
+
+<Preview
+  code={`<tp-card section-colors="off" style="inline-size:fit-content">
+  <tp-calendar
+    label="Delivery days"
+    name="deliveries"
+    selection-mode="multiple"
+    maximum-selection-count="5"
+    today="2026-06-01"
+    default-value="2026-06-03 2026-06-10 2026-06-17"
+  ></tp-calendar>
+</tp-card>`}
+/>
+
+In multiple selection each click toggles one date, and the form receives one entry per date. A cap such as five deliveries a month belongs in `maximum-selection-count`, so further clicks are refused rather than validated after the fact.
+
+### Appointment booking
+
+<Preview
+  code={`<tp-card section-colors="off" style="inline-size:fit-content">
+  <tp-calendar
+    id="calendar-booking"
+    label="Appointment"
+    today="2026-06-08"
+    min="2026-06-08"
+    max="2026-06-26"
+  ></tp-calendar>
+</tp-card>`}
+  script={`await customElements.whenDefined('tp-calendar');
+const calendar = document.getElementById('calendar-booking');
+// Weekends are closed; two days are fully booked.
+const booked = new Set(['2026-06-11', '2026-06-18']);
+calendar.unavailableDates = booked;
+calendar.disabledDates = (date) => [0, 6].includes(new Date(date + 'T00:00').getDay());`}
+/>
+
+`min` and `max` set the booking window: dates outside it stay visible but cannot be chosen. Closed weekdays are disabled dates; days that are open but taken are unavailable dates, flagged apart in each day's state so `renderDay` and `messages.day` can tell "full" from "closed". Neither can be selected, and keyboard movement skips both.
+
+### Nightly prices
+
+<Preview
+  code={`<tp-card section-colors="off" style="inline-size:fit-content">
+  <tp-calendar
+    id="calendar-prices"
+    label="Stay"
+    selection-mode="range"
+    today="2026-12-01"
+    default-value="2026-12-08/2026-12-11"
+    style="--tp-calendar-cell-size:calc(var(--tp-spacing) * 14)"
+  ></tp-calendar>
+</tp-card>`}
+  script={`import { html } from 'lit';
+
+await customElements.whenDefined('tp-calendar');
+const calendar = document.getElementById('calendar-prices');
+const booked = new Set(['2026-12-17', '2026-12-18', '2026-12-19', '2026-12-20']);
+const weekend = (date) => [5, 6].includes(new Date(date + 'T00:00').getDay());
+calendar.disabledDates = booked;
+calendar.dayModifiers = { booked };
+calendar.messages = {
+  day: (day) => (day.modifiers.booked ? day.label + ', booked' : day.label),
+};
+calendar.renderDay = (day) => {
+  const number = Number(day.date.slice(8));
+  if (day.modifiers.booked) return html\`<s>\${number}</s>\`;
+  if (day.outside) return undefined;
+  const price = weekend(day.date) ? '$180' : '$140';
+  return html\`<span style="display:grid;line-height:1.1">\${number}<small style="font-size:var(--tp-text-xs);opacity:0.7">\${price}</small></span>\`;
+};`}
+/>
+
+`renderDay` puts your own content inside each day button, here a nightly rate, while the button keeps its date name, focus and selection; keep that content passive. `dayModifiers` tags the booked nights, so the struck-through days also say "booked" to screen readers through `messages.day`. A larger `--tp-calendar-cell-size` makes room for the second line.
+
+### Date of birth
+
+<Preview
+  code={`<tp-card section-colors="off" style="inline-size:fit-content">
+  <tp-calendar label="Date of birth" name="birthday" caption-layout="dropdown" default-value="1994-03-21"></tp-calendar>
+</tp-card>`}
+/>
+
+When the date may be decades away, month and year dropdowns in the caption reach it in two choices instead of hundreds of clicks. One dropdown, for the month or the year only, suits dates that are close in the other unit.
+
+### Sprint planning
+
+<Preview
+  code={`<tp-card section-colors="off" style="inline-size:fit-content">
+  <tp-calendar
+    label="Sprint start"
+    name="sprint"
+    show-week-number
+    fixed-weeks
+    week-starts-on="1"
+    today="2026-09-14"
+    default-value="2026-09-21"
+  >
+    <p slot="footer" style="margin:0;font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Sprints start on Mondays.</p>
+  </tp-calendar>
+</tp-card>`}
+/>
+
+Teams that plan by week number see it in its own column, here with weeks starting on Monday. `fixed-weeks` keeps six rows in every month so the layout around the Calendar never jumps, and the `footer` slot holds a note about the choice.
+
+### Follow-up presets
+
+<Preview
+  code={`<tp-card id="calendar-presets" size="sm" section-colors="off" style="inline-size:fit-content">
+  <tp-calendar label="Follow-up date" today="2026-02-12" value="2026-02-12" displayed-month="2026-02-01" fixed-weeks></tp-calendar>
+  <tp-button-group slot="footer" aria-label="Quick picks">
+    <tp-button variant="outline" size="sm" data-days="0">Today</tp-button>
+    <tp-button variant="outline" size="sm" data-days="1">Tomorrow</tp-button>
+    <tp-button variant="outline" size="sm" data-days="7">Next week</tp-button>
+  </tp-button-group>
+</tp-card>`}
+  script={`await customElements.whenDefined('tp-calendar');
+const card = document.getElementById('calendar-presets');
+const calendar = card.querySelector('tp-calendar');
+calendar.addEventListener('tp-value-change', (event) => {
+  if (!event.defaultPrevented) calendar.value = event.detail.value;
+});
+calendar.addEventListener('tp-displayed-month-change', (event) => {
+  if (!event.defaultPrevented) calendar.displayedMonth = event.detail.value;
+});
+for (const button of card.querySelectorAll('[data-days]')) {
+  button.addEventListener('click', () => {
+    const date = new Date(calendar.today + 'T00:00');
+    date.setDate(date.getDate() + Number(button.dataset.days));
+    const iso = [date.getFullYear(), date.getMonth() + 1, date.getDate()]
+      .map((part) => String(part).padStart(2, '0'))
+      .join('-');
+    calendar.value = iso;
+    calendar.displayedMonth = iso.slice(0, 8) + '01';
+  });
+}`}
+/>
+
+Shortcut buttons drive a controlled Calendar: they set `value` to pick the date and `displayed-month` to bring its month into view. Because both are controlled, the two listeners accept the reader's own clicks and month changes; a listener that leaves the value unchanged rejects the change.
+
+### Date picker
+
+<Preview
+  code={`<tp-field label="Due date" style="inline-size:18rem">
+  <tp-popover id="calendar-picker" label="Choose a due date" placement="bottom start">
+    <tp-button id="calendar-picker-trigger" slot="trigger" variant="outline" style="display:block">
+      <tp-time id="calendar-picker-label" mode="absolute" preset="date-long" tooltip="false">Pick a date</tp-time>
+    </tp-button>
+    <tp-calendar id="calendar-picker-calendar" label="Due date" today="2026-06-08"></tp-calendar>
+  </tp-popover>
+</tp-field>`}
+  script={`import { calendarIcon } from '@tweakpad/ui/icons/calendar';
+
+await customElements.whenDefined('tp-popover');
+const popover = document.getElementById('calendar-picker');
+const calendar = document.getElementById('calendar-picker-calendar');
+const trigger = document.getElementById('calendar-picker-trigger');
+const setTrigger = (empty) => {
+  trigger.partContracts = {
+    button: {
+      styleHook: {
+        'justify-content': 'flex-start',
+        'font-weight': 'var(--tp-font-normal)',
+        ...(empty ? { color: 'var(--tp-muted-foreground)' } : {}),
+      },
+    },
+  };
+};
+trigger.icon = calendarIcon;
+setTrigger(true);
+popover.initialFocus = calendar;
+calendar.addEventListener('tp-value-change', (event) => {
+  if (event.defaultPrevented) return;
+  setTrigger(!event.detail.value);
+  document.getElementById('calendar-picker-label').datetime = event.detail.value ?? undefined;
+  popover.close();
+});`}
+/>
+
+A Popover supplies the floating surface and returns focus to the trigger; the Calendar supplies the date and closes the popover once one is picked. A Time inside the trigger formats the chosen date for the reader's locale, and shows its own text until there is one.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="tab" /> | Moves into the grid on one day: the focused, selected or today's date, or the first available one. |
+| <Keys keys="left" /> <Keys keys="right" /> | Move by one day, following the writing direction. |
+| <Keys keys="up" /> <Keys keys="down" /> | Move by one week. |
+| <Keys keys="Home" /> <Keys keys="End" /> | Move to the first or the last day of the week. |
+| <Keys keys="PageUp" /> <Keys keys="PageDown" /> | Move by one month; with <Keys keys="shift" />, by one year. |
+| <Keys keys="enter" /> <Keys keys="space" /> | Select the focused day. |

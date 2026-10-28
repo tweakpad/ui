@@ -38,6 +38,28 @@ const controls =
   'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-one-time-code-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-autocomplete,tp-toggle-group,tp-calendar,tp-file-upload,input,textarea,select,[data-field-control]';
 
 export const fieldSubmission = Symbol('Field submission');
+/**
+ * Owns everything around one form value: its visible name, help text, errors and the dirty, touched
+ * and invalid state. It registers the first compatible control inside it, names it, connects its
+ * description and error for assistive technology and validates it on the chosen trigger.
+ *
+ * @slot - The control, directly or inside a layout wrapper.
+ * @slot control - The control, when it sits beside other default content.
+ * @slot item - A wrapper around one member of a grouped choice; its disabled state scopes that
+ * member.
+ * @slot label - Rich label content; takes precedence over `label`.
+ * @slot title - Rich name of a grouped choice; takes precedence over `title`.
+ * @slot description - Rich help text; takes precedence over `description`.
+ * @slot error - Rich error content, shown while the Field is invalid; takes precedence over the
+ * error messages.
+ * @slot legend - Rich caption of a group of Fields; takes precedence over `legend`.
+ * @slot group - Peer Fields captioned by the legend, usually inside one layout wrapper.
+ * @slot separator - A caption centered over a dividing line below the Field.
+ * @fires tp-validation - After a validation run settles; `detail.run` is the run and `detail.state`
+ * the Field's validity state.
+ * @fires tp-presence-complete - After the error finishes appearing or disappearing;
+ * `detail.present` says which.
+ */
 export class TpField extends TpElement {
   static tagName = 'tp-field';
   /** Library elements this element renders; defining it defines them too. */
@@ -194,25 +216,75 @@ export class TpField extends TpElement {
       }
     `,
   ];
+  /**
+   * The form name of the value; takes precedence over the control's own `name` without overwriting
+   * it.
+   */
   name = '';
+  /** The visible name of the control, rendered as a Label that focuses it. */
   label = '';
+  /** Help text below the control, announced with it. */
   description = '';
+  /** An error message from your own checks or the server; shown while the Field is invalid. */
   error = '';
+  /**
+   * Several error messages at once, as strings or `{ message }` records; duplicates are dropped and
+   * the rest render as a list.
+   */
   errors: FieldError[] = [];
+  /**
+   * The caption of a group of Fields in the `group` slot; the Field then renders as a native
+   * fieldset.
+   */
   legend = '';
+  /** Sizes the legend as a section heading or as a field label. */
   legendScale: 'section' | 'field' = 'section';
   override orientation: 'horizontal' | 'vertical' | 'responsive' = 'vertical';
+  /**
+   * Whether a click on the label activates the control; turn it off for a control that opens a
+   * popup, so one click does not open it twice.
+   */
   nativeLabel = true;
   /** Opts the Field's text-entry control out of host and extension autofill. */
   noAutofill = false;
+  /**
+   * Which failures show the error: `false` hides it, `true` always shows authored messages, and a
+   * validity key such as `valueMissing` shows it only for that constraint.
+   */
   errorMatch: boolean | keyof ValidityState | undefined;
+  /**
+   * Your own check: receives the value and every named value in the same form, and returns an error
+   * message, a list of them, nothing, or a promise of one of these.
+   */
   validator: FieldValidator | undefined;
+  /**
+   * When the Field validates: on submit, when the control loses focus, or on every change. Without
+   * it the Field follows its Form, else validates on submit.
+   */
   validationMode: FieldValidationMode | undefined;
+  /** Milliseconds to wait after a change before validating in `on-change` mode. */
   validationDebounce = 0;
+  /**
+   * Overrides whether the value counts as changed from its initial value; leave unset to let the
+   * Field track it.
+   */
   dirty: boolean | undefined;
+  /** Overrides whether the control counts as visited; leave unset to let the Field track it. */
   touched: boolean | undefined;
+  /**
+   * Renders extra content below the control from the current validity state, such as a strength
+   * meter.
+   */
   validityContent: ((state: FieldValidity) => unknown) | undefined;
+  /**
+   * The name of a grouped choice, such as a set of Checkboxes or a Radio group, shown above its
+   * options.
+   */
   override title = '';
+  /**
+   * The Field's actions as plain functions, for passing `validate` to code that holds no reference
+   * to the element.
+   */
   readonly actions = { validate: () => this.validate() };
   #control: FieldControl | null = null;
   #lastValue: unknown;
@@ -245,6 +317,7 @@ export class TpField extends TpElement {
     onComplete: (present) => this.emit('tp-presence-complete', { present }),
   });
 
+  /** Whether the Field is disabled, by itself or by the grouping Field around it. */
   get effectiveDisabled(): boolean {
     const parent = this.parentElement?.closest('tp-field') as TpField | null;
     const group = this.closest('[slot=group]');
@@ -257,12 +330,17 @@ export class TpField extends TpElement {
     );
     return this.disabled || inherited;
   }
+  /** Whether the Field captions a group of Fields rather than owning a control. */
   get fieldSet(): boolean {
     return !this.#control && this.#ownSlots('group').length > 0;
   }
+  /** The control the Field registered, or `null` while it has none. */
   get control(): FieldControl | null {
     return this.#control;
   }
+  /**
+   * The current value of the registered control: its text, checked or pressed state, or selection.
+   */
   get value(): unknown {
     if (this.#control && 'fieldValue' in this.#control) return this.#control.fieldValue;
     if (this.#control && ['tp-checkbox', 'tp-switch'].includes(this.#control.localName))
@@ -270,12 +348,18 @@ export class TpField extends TpElement {
     if (this.#control?.localName === 'tp-toggle') return this.#control.pressed;
     return this.#control?.value;
   }
+  /** The name the value submits under: the Field's `name`, else the control's. */
   get effectiveName(): string {
     return this.name || this.#control?.name || '';
   }
+  /** The newest validation run, with its status and completion promise. */
   get validationRun(): ValidationRun | null {
     return this.#run;
   }
+  /**
+   * A snapshot of the Field's state: value, initial value, errors, native validity flags, and
+   * whether it is dirty, touched, filled, focused or pending.
+   */
   get validityState(): FieldValidity {
     const errors = deduplicate([
       ...this.#serverErrors,
@@ -308,6 +392,7 @@ export class TpField extends TpElement {
     const errors = owner?.errors?.[this.effectiveName];
     return typeof errors === 'string' ? [errors] : (errors ?? []);
   }
+  /** The validation trigger in effect, after following the Form when `validationMode` is unset. */
   get mode(): FieldValidationMode {
     const form = this.closest('tp-form') as
       | (HTMLElement & {
@@ -857,11 +942,19 @@ export class TpField extends TpElement {
     );
   }
 
+  /**
+   * Validates as part of a submission, marking the Field touched first; the enclosing Form calls
+   * it.
+   */
   [fieldSubmission](): ValidationRun {
     this.#submitted = true;
     this.#touched = true;
     return this.validate();
   }
+  /**
+   * Validates now and returns the run; a newer run supersedes this one, and a promise from the
+   * validator leaves the Field pending until it settles.
+   */
   validate(): ValidationRun {
     this.#cancel();
     const generation = this.#generation;

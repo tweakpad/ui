@@ -72,9 +72,9 @@ interface Encoding {
 }
 
 /**
- * A text value as a scannable QR Code symbol on a light tile (`ucl21-qr-code`, behavior
- * Foundation §18.21 QR code), with opt-in copy and download actions and SVG, PNG and JPEG
- * exports. The encoder is built in and published on its own as `@tweakpad/ui/qr`.
+ * A text value as a scannable QR code on a light tile, with opt-in copy and download actions and
+ * SVG, PNG and JPEG exports. The encoder is built in and published on its own as
+ * `@tweakpad/ui/qr`.
  *
  * @csspart tile - The square light surface.
  * @csspart symbol - The SVG image, named by `label`.
@@ -153,8 +153,9 @@ export class TpQrCode extends TpElement {
   value = '';
   /** Error correction level: L, M (default), Q or H. */
   errorCorrection: QrErrorCorrection = 'M';
-  /** Light border around the modules, in modules; 4 as ISO/IEC 18004 requires. */
+  /** The light border around the modules, in modules; scanners expect at least 4. */
   quietZone = DEFAULT_QUIET_ZONE;
+  /** The side of the tile. */
   size: QrCodeSize = 'default';
   /** Accessible name and export title; the QR code message when empty. */
   label = '';
@@ -166,12 +167,14 @@ export class TpQrCode extends TpElement {
   exportSize = DEFAULT_EXPORT_SIZE;
   /** Download file name without its extension. */
   filename = 'qr-code';
+  /** Replacements for the built-in text, such as the action names; missing entries keep the defaults. */
   messages: QrCodeMessages = {};
 
   #encoding: Encoding | undefined;
   #announcer: LiveAnnouncer | undefined;
   #reportedContrast = '';
 
+  /** The text in use: `messages` over the defaults. */
   get qrCodeMessages(): Required<QrCodeMessages> {
     return { ...DEFAULT_QR_CODE_MESSAGES, ...this.messages };
   }

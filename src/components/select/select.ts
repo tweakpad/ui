@@ -110,8 +110,28 @@ interface SelectScrollExtent {
   downHeight: number;
 }
 
+/**
+ * Chooses one or several values from a finite list in its own popup, with keyboard navigation and
+ * typeahead, and submits them with the form. `searchable` adds an editable query that filters the
+ * list.
+ *
+ * @slot - Native `option`, `optgroup` and `hr` children, or Select Options, declaring the choices
+ * when `items` is unset.
+ * @slot empty - Shown in place of the options when none matches the query.
+ * @csspart select-action-host - The element around each trigger, clear and chip-remove button;
+ *   style the buttons through their own parts.
+ * @fires tp-value-change - Cancelable proposal of a new value, before it commits; `detail.value`,
+ * `detail.previousValue` and `detail.reason`.
+ * @fires tp-field-value - After a value commits; an enclosing Field tracks its dirty state from it.
+ * @fires tp-open-change - Cancelable proposal to open or close the list; `detail.value` and
+ * `detail.reason`.
+ * @fires tp-open-change-complete - `{ open }` after the list finishes opening or closing.
+ * @fires tp-search-status - `{ status, query, total }` as a search source loads, settles or fails.
+ * @fires tp-search-error - `{ error, query }` when a search source fails.
+ */
 export class TpSelect extends TpFormElement<unknown> {
   static tagName = 'tp-select';
+  /** @internal Marks the element as the owner of a floating surface. */
   readonly [SURFACE_HOST] = true as const;
   /** Library elements this element renders; defining it defines them too. */
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
@@ -216,6 +236,10 @@ export class TpSelect extends TpFormElement<unknown> {
   };
   static override styles: CSSResultGroup = [TpElement.styles, anchoredArrowStyles, selectStyles];
   #defaultValue: unknown = undefined;
+  /**
+   * The initial selection of an uncontrolled Select, restored on form reset; an array with
+   * `multiple`.
+   */
   get defaultValue(): unknown {
     return this.#defaultValue;
   }
@@ -224,12 +248,28 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#defaultValue = value;
     this.requestUpdate('defaultValue', previous);
   }
+  /** Opens the list on first render without controlling `open`. */
   defaultOpen = false;
+  /**
+   * Selects several values: the value becomes an array in selection order, and the list stays open
+   * while options toggle.
+   */
   multiple = false;
+  /**
+   * The choices as data, replacing the children: option records, groups, separators, plain values,
+   * or a collection from `createSelectItems`.
+   */
   items: readonly SelectEntry[] | SelectItemCollection<unknown> | undefined;
+  /**
+   * Replaces the trigger with an editable query that filters the list as people type. The query is
+   * never submitted.
+   */
   searchable = false;
+  /** The initial query of an uncontrolled searchable Select. */
   defaultInputValue: string | undefined;
+  /** The options to show for the current query, when the application filters them itself. */
   filteredItems: readonly unknown[] | undefined;
+  /** A custom test of an item against the query; `null` turns filtering off. */
   filter:
     ((item: unknown, query: string, text: (item: unknown) => string) => boolean) | null | undefined;
   /** How the query matches items: `contains` (default), `prefix`, `exact` or ranked `fuzzy`. */
@@ -246,34 +286,80 @@ export class TpSelect extends TpFormElement<unknown> {
   messages: SelectMessages = {};
   /** Submits the owning form after an item is accepted (selection-free mode). */
   submitOnItemClick = false;
+  /** The most matching options listed at once; a negative number lists them all. */
   limit = -1;
+  /** Locale of matching and typeahead, when it differs from the page's. */
   locale: string | undefined;
+  /**
+   * How the query completes: `list` filters the list, `inline` previews the highlighted option's
+   * text after the caret, `both` does both and `none` neither.
+   */
   completionMode: SelectCompletionMode = 'list';
+  /**
+   * What the clear button clears: the query, the selection, both, or (`contextual`) the query while
+   * there is one and otherwise the selection.
+   */
   clearBehavior: SelectClearBehavior = 'contextual';
+  /**
+   * Highlights the first match, so Enter selects it: after typing (`true`) or whenever the list
+   * shows options (`always`).
+   */
   autoHighlight: boolean | 'always' = false;
+  /** Keeps the highlighted option while the query changes, as long as it still matches. */
   keepHighlight = false;
+  /** Lets the arrow keys wrap from the last option to the first and back. */
   loopFocus = true;
+  /**
+   * Lays options out in rows that the arrow keys move through in two dimensions; rows come from
+   * `columns` or each option's `row`.
+   */
   grid = false;
   /** Grid mode: rows of this many options per group, formed from the displayed order. */
   columns: number | undefined;
+  /**
+   * Renders a searchable Select's list in the page flow under the query, always shown, instead of
+   * in a popup.
+   */
   inline = false;
   /**
    * Mounts only the rows near the list's viewport. Without `mountedItems` the Select owns the
    * window; with it, the consumer does.
    */
   virtualized = false;
+  /**
+   * With `virtualized`, the slice of `items` the application renders itself; unset, the Select
+   * chooses the rendered rows.
+   */
   mountedItems: readonly unknown[] | undefined;
   /** Consumer-declared busy state (for example while options load); shows the loading status row. */
   busy = false;
+  /** Opens the list when the query is clicked. */
   openOnInputClick = true;
+  /**
+   * Whether choosing an option closes the list; unset, a single selection closes it and a multiple
+   * one keeps it open.
+   */
   closeOnSelect: boolean | undefined;
+  /** Shows the button beside a searchable query that opens the list. */
   showTrigger = true;
+  /** Shows a button that clears what `clearBehavior` names, while there is something to clear. */
   showClear = false;
+  /** Shows a remove button on each chip of a searchable multiple Select. */
   showChipRemove = true;
+  /** Keeps the clear button mounted, hidden, while there is nothing to clear. */
   clearKeepMounted = false;
+  /**
+   * Called with each proposed query change, which is also dispatched as `tp-input-value-change`; a
+   * controlled owner accepts it by setting `inputValue`.
+   */
   onInputValueChange: ((event: TpValueChangeEvent<string>) => void) | undefined;
+  /** Called when the highlight moves, with the option's value, its index and the reason. */
   onItemHighlighted:
     ((value: unknown, details: { index: number; reason: ChangeReason }) => void) | undefined;
+  /**
+   * The query of a searchable Select. Setting it controls the query: accept proposals in
+   * `onInputValueChange`.
+   */
   get inputValue(): string {
     return this.#query.value;
   }
@@ -283,6 +369,7 @@ export class TpSelect extends TpFormElement<unknown> {
     this.requestUpdate('inputValue', before);
     if (this.hasUpdated) this.#query.state.sync();
   }
+  /** Another name for `inputValue`. */
   get query(): string {
     return this.inputValue;
   }
@@ -308,26 +395,41 @@ export class TpSelect extends TpFormElement<unknown> {
   set query(value: string | undefined) {
     this.inputValue = value;
   }
+  /** Proposes clearing what `clearBehavior` names, as the clear button does. */
   clear(event?: Event): void {
     this.#query.clear(event);
   }
+  /** Proposes removing one value from a multiple selection, as its chip's remove button does. */
   removeChip(value: unknown, event?: Event): void {
     this.#query.remove(value, event);
   }
   override get inputElement(): HTMLInputElement | null {
     return this.#query.editor;
   }
+  /** Shown while nothing is selected, or in an empty query. */
   placeholder = '';
+  /** Accessible name of the list when no Field labels the Select. */
   label = 'Options';
+  /** ID of the trigger or the query; the list takes a related ID. */
   identifier = createId('tp-select');
+  /** Autofill hint for the selection, such as `country`. */
   autocomplete = '';
   /** Opts the autofill receiver and the query editor out of host and extension autofill. */
   noAutofill = false;
+  /** Whether autofill is off, from `no-autofill` here or on an enclosing Field or Form. */
   get effectiveNoAutofill(): boolean {
     return this.noAutofill || this.inheritedNoAutofill;
   }
+  /**
+   * Keeps the trigger a native button; turn it off when a render delegate replaces the trigger with
+   * another element.
+   */
   nativeAction = true;
   #providedModal: boolean | undefined;
+  /**
+   * Makes the rest of the page inert and locks its scrolling while the list is open; off by default
+   * for a searchable Select.
+   */
   get modal(): boolean {
     return this.#providedModal ?? !this.searchable;
   }
@@ -336,10 +438,17 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#providedModal = value;
     this.requestUpdate('modal', before);
   }
+  /** Moves the highlight with the pointer. */
   highlightItemOnHover = true;
+  /** Keeps the closed popup in the DOM, hidden and inert. */
   keepMounted = false;
+  /** An element to render the popup into, instead of the Select's own top layer. */
   container: SelectContainer = null;
   #providedAlignment: boolean | undefined;
+  /**
+   * Places the popup so the selected option sits over the trigger; off by default for a searchable
+   * Select.
+   */
   get alignItemWithTrigger(): boolean {
     return this.#providedAlignment ?? !this.searchable;
   }
@@ -348,10 +457,17 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#providedAlignment = value;
     this.requestUpdate('alignItemWithTrigger', before);
   }
+  /**
+   * Side and alignment of the popup against the trigger, in logical words such as `block-end
+   * start`.
+   */
   placement = 'block-end start';
+  /** Overrides the side of `placement`. */
   side: LogicalSide | undefined;
+  /** Overrides the alignment of `placement`. */
   align: Alignment | undefined;
   #sideOffset: GeometryOffset | undefined;
+  /** Gap between the trigger and the popup, in pixels or from a function of the geometry. */
   get sideOffset(): GeometryOffset {
     return this.#sideOffset ?? themeSpacing(this, 3);
   }
@@ -360,7 +476,9 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#sideOffset = value ?? undefined;
     this.requestUpdate('sideOffset', previous);
   }
+  /** Shift of the popup along its alignment, in pixels or from a function of the geometry. */
   alignOffset: GeometryOffset = 0;
+  /** An element or virtual rectangle the popup positions against instead of the trigger. */
   anchor: SelectAnchor = null;
   /**
    * The external query owner: an editing element that keeps focus, supplies the query through
@@ -369,11 +487,17 @@ export class TpSelect extends TpFormElement<unknown> {
    * no focus. Property only; `null` by default.
    */
   protected queryOwner: HTMLElement | null = null;
+  /** Stops following the trigger as it moves; call `updatePosition()` instead. */
   disableAnchorTracking = false;
+  /**
+   * How the popup avoids the edges of its boundary: flipping or shifting its side and alignment.
+   */
   collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip', fallbackAxisSide: 'none' };
+  /** The area the popup stays inside: the clipping ancestors, elements or a rectangle. */
   collisionBoundary: CollisionBoundary = 'clipping-ancestors';
   #collisionPadding:
     number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>> | undefined;
+  /** Space kept between the popup and its boundary, overall or per side. */
   get collisionPadding(): number | Partial<Record<'top' | 'bottom' | 'left' | 'right', number>> {
     return this.#collisionPadding ?? themeSpacing(this, 3);
   }
@@ -384,14 +508,28 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#collisionPadding = value ?? undefined;
     this.requestUpdate('collisionPadding', previous);
   }
+  /** Keeps the popup in view after the trigger scrolls out of the boundary. */
   sticky = false;
+  /** Positions the popup with `absolute` or `fixed` CSS positioning. */
   positionMethod: PositioningStrategy = 'absolute';
+  /**
+   * What receives focus when the list opens: the trigger, the first option, the popup, an element
+   * or nothing.
+   */
   initialFocus: SelectFocusTarget = 'trigger';
+  /**
+   * Where focus goes when the list closes: the trigger, the previously focused element, an element
+   * or nowhere.
+   */
   finalFocus: SelectFocusTarget = 'trigger';
+  /** Keeps the scroll-up arrow mounted while the list cannot scroll up. */
   scrollUpKeepMounted = false;
+  /** Keeps the scroll-down arrow mounted while the list cannot scroll down. */
   scrollDownKeepMounted = false;
+  /** Draws an arrow from the popup to the trigger. */
   showArrow = false;
   #arrowPadding: number | undefined;
+  /** Closest distance between the arrow and the popup's corners. */
   get arrowPadding(): number {
     return this.#arrowPadding ?? themeSpacing(this, 2);
   }
@@ -407,6 +545,7 @@ export class TpSelect extends TpFormElement<unknown> {
     return 2;
   }
   #arrowWidth: number | undefined;
+  /** Width of the arrow's base. */
   get arrowWidth(): number {
     return this.#arrowWidth ?? themeSpacing(this, this.defaultArrowWidthUnits);
   }
@@ -416,6 +555,7 @@ export class TpSelect extends TpFormElement<unknown> {
     this.requestUpdate('arrowWidth', previous);
   }
   #arrowHeight: number | undefined;
+  /** Length of the arrow from base to tip. */
   get arrowHeight(): number {
     return this.#arrowHeight ?? themeSpacing(this, this.defaultArrowHeightUnits);
   }
@@ -424,16 +564,36 @@ export class TpSelect extends TpFormElement<unknown> {
     this.#arrowHeight = value ?? undefined;
     this.requestUpdate('arrowHeight', previous);
   }
+  /** Rounds the arrow's tip. */
   arrowTipRadius = 0;
+  /** An SVG path that draws the arrow instead of the default triangle. */
   arrowPath = '';
+  /** Color of the arrow's outline. */
   arrowBorderColor = '';
+  /** Width of the arrow's outline. */
   arrowBorderWidth = 0;
+  /** Draws a backdrop behind the open popup. */
   showBackdrop = false;
+  /**
+   * Whether two values are the same choice, for object values that are not identical between
+   * renders.
+   */
   isItemEqual: ((a: unknown, b: unknown) => boolean) | undefined;
+  /** Text of a value, for typeahead, matching, the closed trigger and form submission. */
   itemToText: ((value: unknown) => string) | undefined;
+  /** Rich label of a value whose option has none of its own. */
   itemToLabel: ((value: unknown) => unknown) | undefined;
+  /**
+   * Called with each proposed value before `tp-value-change`; a controlled owner accepts it by
+   * setting `value`.
+   */
   onValueChange: ((event: TpValueChangeEvent<unknown>) => void) | undefined;
+  /**
+   * Called with each proposed opening or closing before `tp-open-change`; a controlled owner
+   * accepts it by setting `open`.
+   */
   onOpenChange: ((event: TpSurfaceOpenChangeEvent) => void) | undefined;
+  /** Called after the list finishes opening or closing. */
   onOpenChangeComplete: ((open: boolean) => void) | undefined;
   #providedValue: unknown;
   #providedOpen: boolean | undefined;
@@ -446,6 +606,10 @@ export class TpSelect extends TpFormElement<unknown> {
     this.requestUpdate('value', previous);
     if (this.hasUpdated) this.#selection.sync();
   }
+  /**
+   * Whether the list is open. Setting it controls the open state: accept proposals in
+   * `onOpenChange`.
+   */
   get open(): boolean {
     return this.searchable && this.inline ? !this.effectiveDisabled : this.#surface.open;
   }
@@ -455,6 +619,10 @@ export class TpSelect extends TpFormElement<unknown> {
     this.requestUpdate('open', previous);
     if (this.hasUpdated) this.#surface.sync(true);
   }
+  /**
+   * An imperative handle with `open()`, `close()` and `unmount()`, to pass where a function is
+   * expected.
+   */
   readonly actions: SelectActions = {
     open: () => this.setOpen(true),
     close: () => this.setOpen(false),
@@ -640,18 +808,23 @@ export class TpSelect extends TpFormElement<unknown> {
   #openingEvent: Event | undefined;
   #closingEvent: Event | undefined;
 
+  /** The rendered trigger, which takes focus and the label. */
   get triggerElement(): HTMLElement | null {
     return this.#trigger;
   }
+  /** The rendered popup, or `null` while it is not mounted. */
   get popupElement(): HTMLElement | null {
     return this.#content;
   }
+  /** The rendered list, or `null` while it is not mounted. */
   get listElement(): HTMLElement | null {
     return this.#list;
   }
+  /** Value of the highlighted option. */
   get highlightedValue(): unknown {
     return this.#collection.highlighted?.value;
   }
+  /** Where the popup is in its lifecycle: absent, starting, open, ending or retained. */
   get presenceState(): string {
     return this.#presence.state;
   }
@@ -661,6 +834,10 @@ export class TpSelect extends TpFormElement<unknown> {
   protected override associationTarget(): HTMLElement | null {
     return this.#trigger;
   }
+  /**
+   * Proposes opening or closing the list, with a reason and source event, as a cancelable
+   * `tp-open-change`.
+   */
   setOpen(open: boolean, reason: ChangeReason = 'imperative-action', event?: Event): void {
     if (this.searchable && this.inline) {
       if (!open) this.#query.resetTransient(event);
@@ -671,9 +848,11 @@ export class TpSelect extends TpFormElement<unknown> {
     else this.#closingEvent = event;
     this.#surface.request(open, reason, event, this.#trigger ?? undefined);
   }
+  /** Proposes closing the list. */
   close(): void {
     this.setOpen(false);
   }
+  /** Closes the list and removes popup content that `keepMounted` retained. */
   unmount(): void {
     this.#closingEvent = undefined;
     if (this.open) {
@@ -695,6 +874,7 @@ export class TpSelect extends TpFormElement<unknown> {
       this.requestUpdate();
     }
   }
+  /** Measures and positions the popup again, for when anchor tracking is off. */
   async updatePosition(): Promise<void> {
     await this.#position?.update();
   }

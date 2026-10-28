@@ -2,6 +2,13 @@ import { css, nothing } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { separatorPresentation } from '../../presentation/families/separator.js';
 
+/**
+ * A thin rule that divides content horizontally or vertically. It fills its container along its
+ * axis, reserves no spacing of its own, and is hidden from assistive technology unless it marks a
+ * real boundary.
+ *
+ * @csspart root - The rule's inner element, which carries the separator role when it is not decorative.
+ */
 export class TpSeparator extends TpElement {
   static tagName = 'tp-separator';
   static override presentation = separatorPresentation;
@@ -24,6 +31,7 @@ export class TpSeparator extends TpElement {
       }
     `,
   ];
+  /** Set to `false` when the rule marks a boundary between groups, so assistive technology announces it as a separator. */
   decorative = true;
   protected override render() {
     return this.renderPart(

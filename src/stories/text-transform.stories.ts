@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/text-transform.md?raw';
-import { textTransformExamples } from './text-transform.examples.js';
+import { libraryDocs } from './library-docs.js';
 import { TEXT_PRESETS, type TruncatePosition, type TruncateUnit } from '../index.js';
 
 interface Args {
@@ -20,15 +19,7 @@ interface Args {
 const meta = {
   title: 'Components/Text transform',
   component: 'tp-text-transform',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: textTransformExamples,
-      source: {
-        code: '<tp-text-transform preset="currency" currency="EUR" value="1234.5"></tp-text-transform>',
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/text-transform') },
   args: {
     value: '1234.5',
     preset: 'currency',
@@ -43,14 +34,14 @@ const meta = {
     width: 320,
   },
   argTypes: {
-    value: { control: 'text', description: 'Number, bigint or text; the text content when unset.' },
+    value: { control: 'text' },
     preset: {
       control: 'select',
       options: [...TEXT_PRESETS],
       table: { defaultValue: { summary: 'text' } },
     },
-    currency: { control: 'text', description: 'Currency code of the currency preset.' },
-    unit: { control: 'text', description: 'Unit identifier of the unit preset.' },
+    currency: { control: 'text' },
+    unit: { control: 'text' },
     decimals: {
       control: { type: 'number', min: 0, max: 20 },
       table: { type: { summary: 'number' } },

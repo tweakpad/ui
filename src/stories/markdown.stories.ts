@@ -1,7 +1,26 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/markdown.md?raw';
-import { markdownDefaultSource, markdownExamples, markdownSample } from './markdown.examples.js';
+import { libraryDocs } from './library-docs.js';
+
+const markdownSample = `# Release 2.4
+
+Shared workspaces are here. Invite up to **50 teammates**, assign roles, and keep billing in one
+place. See the [migration notes](#migration) before you upgrade.
+
+## Migration
+
+- [x] Workspace roles and permissions
+- [x] Consolidated invoices
+- [ ] Audit log export
+
+\`\`\`js
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+\`\`\`
+
+| Plan | Seats | Price |
+| :--- | ---: | ---: |
+| Starter | 5 | $0 |
+| Team | 50 | $12 / seat |`;
 
 interface Args {
   size: 'default' | 'sm';
@@ -13,13 +32,7 @@ interface Args {
 const meta = {
   title: 'Components/Markdown',
   component: 'tp-markdown',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: markdownExamples,
-      source: { code: markdownDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/markdown') },
   args: {
     size: 'default',
     headingOffset: 0,
@@ -30,22 +43,18 @@ const meta = {
     size: {
       control: 'inline-radio',
       options: ['default', 'sm'],
-      description: 'Typography and flow scale; `sm` fits chat bubbles and dense panels.',
       table: { defaultValue: { summary: 'default' } },
     },
     headingOffset: {
       control: { type: 'number', min: 0, max: 5, step: 1 },
-      description: '`heading-offset`: levels added to every heading, capped at 6.',
       table: { defaultValue: { summary: '0' } },
     },
     idPrefix: {
       control: 'text',
-      description: '`id-prefix`: prefix for heading and footnote identifiers.',
       table: { defaultValue: { summary: "''" } },
     },
     streaming: {
       control: 'boolean',
-      description: 'Completes unfinished syntax in the last block while the source grows.',
       table: { defaultValue: { summary: 'false' } },
     },
   },

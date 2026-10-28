@@ -1,0 +1,118 @@
+---
+title: Scroll trigger
+description: Reveals the text, images and groups inside it in order as it scrolls into view, or ties their reveal to the scroll position.
+tag: tp-scroll-trigger
+---
+
+<Preview
+  code={`<tp-scroll-trigger stagger="200" style="max-inline-size:40rem">
+  <h3 style="margin:0 0 var(--tp-space-3);font-size:var(--tp-text-2xl);line-height:var(--tp-leading-tight)">
+    <tp-text-motion split="words lines" mask="lines" reveal="up">Quiet spaces, open light</tp-text-motion>
+  </h3>
+  <tp-image-group reveal="fade up" stagger="120">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--tp-space-3)">
+      <tp-image ratio="1" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=480&q=75&auto=format&fit=crop" alt="" style="border-radius:var(--tp-radius-md)"></tp-image>
+      <tp-image ratio="1" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=480&q=75&auto=format&fit=crop" alt="" style="border-radius:var(--tp-radius-md)"></tp-image>
+      <tp-image ratio="1" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=480&q=75&auto=format&fit=crop" alt="" style="border-radius:var(--tp-radius-md)"></tp-image>
+    </div>
+  </tp-image-group>
+  <p style="margin:var(--tp-space-3) 0 0;color:var(--tp-muted-foreground)">
+    <tp-text-motion reveal="fade">Three rooms designed for focused work.</tp-text-motion>
+  </p>
+</tp-scroll-trigger>`}
+/>
+
+## Usage
+
+A Scroll trigger turns the Text motions, Images, Image groups and nested triggers inside it into one sequence. As it nears the view it asks every member to prepare, so images start loading; once it is in view and everything is ready, it reveals the members in document order, `stagger` milliseconds apart. So a heading waits for its font, and a caption for the images before it. The trigger is an unstyled block that never changes its own box, so lay out its content as you like. `reveal-repeat` plays the sequence again each time the section comes back into view; keep it for sections people return to.
+
+### Process steps
+
+<Preview
+  align="stretch"
+  code={`<tp-scroll-trigger stagger="120" stagger-from="center" reveal="fade up" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(7rem,1fr));gap:var(--tp-space-4)">
+  <p style="margin:0;font-size:var(--tp-text-xl);font-weight:var(--tp-font-semibold)"><tp-text-motion split="chars" stagger="20">Plan</tp-text-motion></p>
+  <p style="margin:0;font-size:var(--tp-text-xl);font-weight:var(--tp-font-semibold)"><tp-text-motion split="chars" stagger="20">Design</tp-text-motion></p>
+  <p style="margin:0;font-size:var(--tp-text-xl);font-weight:var(--tp-font-semibold)"><tp-text-motion split="chars" stagger="20">Build</tp-text-motion></p>
+  <p style="margin:0;font-size:var(--tp-text-xl);font-weight:var(--tp-font-semibold)"><tp-text-motion split="chars" stagger="20">Review</tp-text-motion></p>
+  <p style="margin:0;font-size:var(--tp-text-xl);font-weight:var(--tp-font-semibold)"><tp-text-motion split="chars" stagger="20">Ship</tp-text-motion></p>
+</tp-scroll-trigger>`}
+/>
+
+Members without a reveal of their own take the trigger's, and the sequence can start from the first, the last or the center member, here spreading out from the middle step.
+
+### Scroll-linked reveal
+
+<Preview
+  align="stretch"
+  code={`<div style="block-size:20rem;overflow:auto;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg);padding-inline:var(--tp-space-6)">
+  <div style="display:grid;gap:var(--tp-space-3);align-content:end;block-size:20rem;padding-block:var(--tp-space-6);box-sizing:border-box">
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:45%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:90%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:6rem"></tp-skeleton>
+  </div>
+  <tp-scroll-trigger scrub scrub-range="cover" scrub-smoothing="0.8" stagger="150" reveal="fade left">
+    <p style="margin:0;font-size:var(--tp-text-xl)"><tp-text-motion>The first line slides in with the scroll,</tp-text-motion></p>
+    <p style="margin:0;font-size:var(--tp-text-xl)"><tp-text-motion>then the second,</tp-text-motion></p>
+    <p style="margin:0;font-size:var(--tp-text-xl)"><tp-text-motion>and back out as you scroll up.</tp-text-motion></p>
+  </tp-scroll-trigger>
+  <div style="display:grid;gap:var(--tp-space-3);block-size:20rem;padding-block:var(--tp-space-6);box-sizing:border-box">
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:80%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:6rem"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:60%"></tp-skeleton>
+  </div>
+</div>`}
+/>
+
+`scrub` maps the scroll position onto the sequence a timed reveal would play, in both directions, and smoothing lets it trail the scroll slightly. `scrub-range` picks the stretch of scroll that drives it, with offsets that work like a CSS animation range: `entry 25% contain 40%` starts once a quarter of the section has entered and finishes well before the middle of the view, so the content sits still while people read it. `scrub-once` leaves revealed content at rest when scrolling back.
+
+### Pinned scene
+
+<Preview
+  align="stretch"
+  code={`<div style="block-size:24rem;overflow:auto;container-type:size;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg);padding-inline:var(--tp-space-6)">
+  <div style="display:grid;gap:var(--tp-space-3);align-content:start;min-block-size:100cqb;padding-block:var(--tp-space-6);box-sizing:border-box">
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:40%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:90%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:6rem"></tp-skeleton>
+  </div>
+  <tp-scroll-trigger scrub pin stagger="250" style="--tp-scroll-trigger-pin-length:150cqb">
+    <div style="block-size:100%;display:grid;align-content:center;gap:var(--tp-space-4)">
+      <h3 style="margin:0;font-size:var(--tp-text-2xl);line-height:var(--tp-leading-tight)">
+        <tp-text-motion split="words" mask="words" reveal="up" stagger="80">Every metric, one calm dashboard</tp-text-motion>
+      </h3>
+      <p style="margin:0;color:var(--tp-muted-foreground)"><tp-text-motion split="words" reveal="fade" stagger="40">Revenue, retention and usage stay pinned while you read.</tp-text-motion></p>
+      <p style="margin:0;color:var(--tp-muted-foreground)"><tp-text-motion split="words" reveal="fade" stagger="40">Scroll back up to play it in reverse.</tp-text-motion></p>
+    </div>
+  </tp-scroll-trigger>
+  <div style="display:grid;gap:var(--tp-space-3);min-block-size:100cqb;padding-block:var(--tp-space-6);box-sizing:border-box">
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:85%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:6rem"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:60%"></tp-skeleton>
+  </div>
+</div>`}
+/>
+
+`pin` holds the content in a sticky stage while the scroll advances through an extra length; with `scrub`, the reveal plays across that length. The stage fills the nearest scroll container that sets `container-type: size`, and the viewport without one.
+
+### Reacting to the reveal
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-3)">
+  <tp-scroll-trigger id="scroll-trigger-welcome" stagger="200" reveal="fade up">
+    <p style="margin:0;font-size:var(--tp-text-xl);font-weight:var(--tp-font-semibold)"><tp-text-motion split="words">Welcome to your workspace</tp-text-motion></p>
+    <p style="margin:var(--tp-space-1) 0 0;color:var(--tp-muted-foreground)"><tp-text-motion>Your projects, people and files in one place.</tp-text-motion></p>
+  </tp-scroll-trigger>
+  <output id="scroll-trigger-welcome-status" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">Waiting</output>
+</div>`}
+  script={`const trigger = document.getElementById('scroll-trigger-welcome');
+const status = document.getElementById('scroll-trigger-welcome-status');
+trigger.addEventListener('tp-reveal-change', (event) => {
+  if (event.target === trigger && event.detail.revealed) status.textContent = 'Revealing…';
+});
+trigger.addEventListener('tp-reveal-change-complete', (event) => {
+  if (event.target === trigger && event.detail.revealed) status.textContent = 'Revealed';
+});`}
+/>
+
+The trigger announces when its sequence starts and when the last member settles, for work that should follow the reveal; while scrubbing, it reports the progress each frame for an animation of your own. The members' events bubble under the same names, so check that the event comes from the trigger.

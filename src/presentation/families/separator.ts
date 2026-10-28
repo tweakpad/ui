@@ -16,6 +16,7 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'separator',
+      description: 'The rule itself: the host, drawn in the border color across its axis.',
       axes: ['orientation'],
     },
   ],

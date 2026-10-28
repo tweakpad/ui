@@ -1,0 +1,110 @@
+---
+title: Switch
+description: A binary setting that applies immediately, with Checkbox's form and validation behavior.
+tag: tp-switch
+---
+
+<Preview
+  code={`<tp-field orientation="horizontal" label="Product updates" description="Email me about new features and releases.">
+  <tp-switch name="product-updates" default-checked></tp-switch>
+</tp-field>`}
+/>
+
+## Usage
+
+Use a Switch for a setting that takes effect as soon as it flips, such as turning notifications on. When the choice only applies after a Save or Submit, a Checkbox reads more honestly. Name the Switch with a horizontal Field, which also carries its description and errors and puts the Switch at the end of the row.
+
+### Security settings
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-5)">
+  <tp-field orientation="horizontal" label="Two-factor authentication" description="Require a code from your authenticator app.">
+    <tp-switch name="two-factor" default-checked></tp-switch>
+  </tp-field>
+  <tp-field orientation="horizontal" label="Login alerts" description="Notify me when a new device signs in.">
+    <tp-switch name="login-alerts"></tp-switch>
+  </tp-field>
+  <tp-field orientation="horizontal" label="Single sign-on" description="Available on the Enterprise plan.">
+    <tp-switch name="sso" disabled></tp-switch>
+  </tp-field>
+  <tp-field orientation="horizontal" label="Audit logging" description="Managed by your organization.">
+    <tp-switch name="audit" default-checked readonly></tp-switch>
+  </tp-field>
+</div>`}
+/>
+
+One Field per row keeps every Switch aligned at the end and its description announced with it. A setting the plan does not include is `disabled`, which also leaves it out of the form data; one an administrator manages is `readonly`, so it stays focusable and submitted but cannot flip.
+
+### Dependent settings
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-5)">
+  <tp-field orientation="horizontal" label="Email notifications" description="Mentions, assignments and review requests.">
+    <tp-switch id="switch-dependent-email" name="email"></tp-switch>
+  </tp-field>
+  <tp-field orientation="horizontal" label="Weekly digest" description="Needs email notifications.">
+    <tp-switch id="switch-dependent-digest" name="digest"></tp-switch>
+  </tp-field>
+</div>`}
+  script={`const state = { email: true, digest: true };
+const email = document.getElementById('switch-dependent-email');
+const digest = document.getElementById('switch-dependent-digest');
+const render = () => {
+  email.checked = state.email;
+  digest.checked = state.email && state.digest;
+  digest.disabled = !state.email;
+};
+email.onCheckedChange = (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  state.email = event.detail.value;
+  render();
+};
+digest.onCheckedChange = (event) => {
+  if (event.defaultPrevented || event.detail.cancelled) return;
+  state.digest = event.detail.value;
+  render();
+};
+render();`}
+/>
+
+When one setting depends on another, drive both from your own state: set `checked`, and each flip arrives as a proposal in `onCheckedChange` that moves the Switch only once you write the accepted value back. Turning email off here also turns the digest off and locks it. Cancel the proposal instead to keep the current state, for example while a confirmation is pending.
+
+### Toolbar option
+
+<Preview
+  code={`<div style="display:flex;align-items:center;gap:var(--tp-space-4)">
+  <tp-button variant="outline" size="sm">Export</tp-button>
+  <tp-switch size="sm" name="compact" default-checked>Compact rows</tp-switch>
+</div>`}
+/>
+
+In a toolbar or a dense table header, the small size sits with small buttons. Text in the default slot names the Switch and is a click target of its own, so a one-line option needs no Field.
+
+### State icon in the thumb
+
+<Preview
+  code={`<tp-field orientation="horizontal" label="Auto-renew subscription">
+  <tp-switch id="switch-thumb-renew" name="auto-renew" default-checked>
+    <tp-icon id="switch-thumb-icon" slot="thumb" size="0.625rem" style="color:light-dark(var(--tp-foreground), var(--tp-background))"></tp-icon>
+  </tp-switch>
+</tp-field>`}
+  script={`import { checkIcon } from '@tweakpad/ui/icons/check';
+import { xIcon } from '@tweakpad/ui/icons/x';
+
+const control = document.getElementById('switch-thumb-renew');
+const icon = document.getElementById('switch-thumb-icon');
+await customElements.whenDefined('tp-switch');
+icon.icon = control.checked ? checkIcon : xIcon;
+control.addEventListener('tp-field-value', (event) => {
+  icon.icon = event.detail.value ? checkIcon : xIcon;
+});`}
+/>
+
+Content in the `thumb` slot moves with the thumb, such as an Icon that confirms the state at a glance. It is decorative, so the Switch still takes its name from the Field.
+
+## Keyboard
+
+| Key                   | Action                                      |
+| --------------------- | ------------------------------------------- |
+| <Keys keys="space" /> | Flips the Switch.                           |
+| <Keys keys="enter" /> | Flips the Switch, like a press on a button. |

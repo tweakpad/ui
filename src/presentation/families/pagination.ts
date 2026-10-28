@@ -16,25 +16,32 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'pagination',
+      description: 'The navigation landmark around the links.',
     },
     {
       name: 'pagination-list',
+      description: 'The list of links.',
     },
     {
       name: 'pagination-page-item',
+      description: 'The list item around each link or omitted range.',
     },
     {
       name: 'pagination-page-link',
+      description: 'A numbered page link; the current page is marked `aria-current="page"`.',
       axes: ['pageLinkVariant'],
     },
     {
       name: 'pagination-previous',
+      description: 'The link to the previous page.',
     },
     {
       name: 'pagination-next',
+      description: 'The link to the next page.',
     },
     {
       name: 'pagination-ellipsis',
+      description: 'The mark for an omitted range of pages, hidden from assistive technology.',
     },
   ],
 };

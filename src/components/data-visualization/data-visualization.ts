@@ -28,6 +28,15 @@ import { TpTooltip } from '../tooltip/tooltip.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpIcon } from '../icon/icon.js';
 
+/**
+ * The frame around a chart: it connects a renderer of your own to responsive sizing, series colors
+ * from the theme, an accessible description, and a tooltip and legend drawn from what the renderer
+ * reports. It is not a chart engine.
+ *
+ * @slot table - A Table with the complete dataset, the text equivalent of the chart.
+ * @slot - Supplementary content below the chart.
+ * @fires tp-resize - The plot was measured at a new size; `detail` holds its `width` and `height`.
+ */
 export class TpDataVisualization extends TpElement {
   static tagName = 'tp-data-visualization';
   /** Library elements this element renders; defining it defines them too. */
@@ -47,13 +56,21 @@ export class TpDataVisualization extends TpElement {
     legendOptions: { attribute: false },
   };
   static override styles = [TpElement.styles, visualizationStructure];
+  /** The chart's accessible name. */
   label = 'Data visualization';
+  /** The chart's takeaway in words, shown as its caption; a chart needs it or a `table`. */
   description = '';
+  /** How people inspect values: by pointer, by keyboard focus, both, or not at all. */
   interaction: VisualizationInteraction = 'none';
+  /** The records the renderer draws, in order. */
   data: readonly Record<string, unknown>[] = [];
+  /** The series by key, each with its label, icon and color; colors default to the theme's chart palette. */
   series: VisualizationSeriesMap = {};
+  /** The chart engine: an object whose `mount(plot, { inspect, legend })` returns `{ update(snapshot), destroy() }`. */
   renderer: VisualizationRenderer | undefined;
+  /** How the tooltip presents an inspected datum, such as its indicator and formatters. */
   tooltipOptions: VisualizationTooltipOptions = {};
+  /** How the legend presents the series, such as its placement and formatter. */
   legendOptions: VisualizationLegendOptions = {};
   #scope = '';
   #viewport = new VisualizationResponsiveViewport();
@@ -72,18 +89,23 @@ export class TpDataVisualization extends TpElement {
   #popup: HTMLElement | null = null;
   #generation = 0;
   #missingDescription = false;
+  /** The plot's current width and height in pixels. */
   get dimensions() {
     return this.#viewport.dimensions;
   }
+  /** The chart's stable scope, which prefixes its series color properties. */
   get scopeIdentifier(): string {
     return this.#scope;
   }
+  /** The series and resolved colors, for building tooltip or legend content of your own. */
   get metadataProvider(): VisualizationMetadataProvider {
     return { owner: this, series: this.series, colors: this.#colors };
   }
+  /** The datum currently inspected, as the renderer last reported it. */
   get inspection(): VisualizationInspection {
     return this.#inspection;
   }
+  /** The legend entries the renderer last reported. */
   get legendPayload(): readonly VisualizationPayload[] {
     return this.#legend;
   }
@@ -104,12 +126,13 @@ export class TpDataVisualization extends TpElement {
     this.#popup = null;
     super.disconnectedCallback();
   }
-  /** Engine callbacks retain the original inspection object and ordered payload. */
+  /** Reports the inspected datum, as the renderer's `inspect` callback does; the tooltip shows it. */
   setInspection(state: VisualizationInspection): void {
     if (state.active && this.interaction !== 'both' && this.interaction !== state.source) return;
     this.#inspection = state;
     this.#repaint();
   }
+  /** Reports the legend entries in the engine's order, as the renderer's `legend` callback does. */
   setLegend(payload: readonly VisualizationPayload[]): void {
     const current = this.#legend;
     // Renderers republish their legend on every update; only a different one repaints.

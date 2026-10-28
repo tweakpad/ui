@@ -33,7 +33,16 @@ function owner(host: TpNativeSelect): ValueOwner {
   return value;
 }
 
-/** Native picker policy on the shared form, value-transaction and part owners. */
+/**
+ * The browser's own select and picker, styled like Input and wired into Field and form submission.
+ * Its choices are native `option`, `optgroup` and `hr` children.
+ *
+ * @slot - Native `option`, `optgroup` and `hr` elements declaring the choices.
+ * @slot indicator - Replaces the chevron at the end of a single select.
+ * @fires tp-value-change - Cancelable proposal of a new value, before it commits; `detail.value`,
+ * `detail.previousValue` and `detail.reason`.
+ * @fires tp-field-value - After a value commits; an enclosing Field tracks its dirty state from it.
+ */
 export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
   static tagName = 'tp-native-select';
   /** Library elements this element renders; defining it defines them too. */
@@ -97,12 +106,27 @@ export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
       }
     `,
   ];
+  /**
+   * The initial value of an uncontrolled select, restored on form reset; an array with `multiple`.
+   */
   defaultValue: NativeSelectValue | undefined;
+  /**
+   * Called with each proposed value before `tp-value-change`; a controlled owner accepts it by
+   * setting `value`.
+   */
   onValueChange: ((event: TpValueChangeEvent<NativeSelectValue>) => void) | undefined;
+  /** Attributes, properties and listeners applied to the inner native `select`. */
   hostProperties: Record<string, unknown> = {};
+  /**
+   * Selects several values with the native list box instead of a dropdown; the value becomes an
+   * array.
+   */
   multiple = false;
+  /** A disabled first option shown while nothing is selected. */
   placeholder = '';
+  /** Accessible name when no Field labels the select. */
   label = 'Options';
+  /** Height and text size, matching Input's sizes. */
   size: 'sm' | 'default' = 'default';
   #items: NativeItem[] = [];
   #observer: MutationObserver | null = null;
@@ -152,15 +176,19 @@ export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
     if (this.#initialized) state.controller?.sync();
     this.requestUpdate('value', previous);
   }
+  /** Whether the application controls `value`. */
   get controlled(): boolean {
     return owner(this).controller?.controlled ?? owner(this).supplied !== undefined;
   }
+  /** The native select's selected options. */
   get selectedOptions(): HTMLCollectionOf<HTMLOptionElement> | null {
     return this.#control?.selectedOptions ?? null;
   }
+  /** The native select's options. */
   get options(): HTMLOptionsCollection | null {
     return this.#control?.options ?? null;
   }
+  /** Index of the first selected option, as on a native select; setting it proposes that option. */
   get selectedIndex(): number {
     return this.#control?.selectedIndex ?? -1;
   }
@@ -169,9 +197,11 @@ export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
     this.#control.selectedIndex = value;
     this.#request(this.#readNative(), 'programmatic');
   }
+  /** Proposes a value as if chosen in the picker, and returns whether it was accepted. */
   setValue(value: NativeSelectValue): boolean {
     return this.#request(value, 'programmatic');
   }
+  /** Sets a custom validation message; an empty string clears it. */
   setCustomValidity(message: string): void {
     this.#customValidity = message;
     this.#syncForm();

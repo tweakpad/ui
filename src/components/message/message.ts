@@ -6,7 +6,15 @@ import { messagePresentation } from '../../presentation/families/message.js';
 import { TpTime } from '../time/time.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-/** Sender-relative layout only. Transport and conversation state belong to the app. */
+/**
+ * One row of a conversation: the sender's avatar, a header, the content and a footer, laid out on
+ * the sender's side. It sends nothing and infers no delivery state; the application supplies both.
+ *
+ * @slot - The content: a Bubble or a Bubble group, and Attachments.
+ * @slot avatar - The sender's Avatar; an empty element keeps the column on earlier rows of a group.
+ * @slot header - Replaces the header built from `author` and `timestamp`.
+ * @slot footer - Delivery status, read receipts, reactions or action controls; replaces the built-in status.
+ */
 export class TpMessage extends TpElement {
   static tagName = 'tp-message';
   /** Library elements this element renders; defining it defines them too. */
@@ -122,11 +130,15 @@ export class TpMessage extends TpElement {
       ${hiddenStyles}
     `,
   ];
+  /** The sender's side, in writing direction: `end` for the current user's own messages. */
   align: 'start' | 'end' = 'start';
+  /** The sender's name in the header. */
   author = '';
-  /** Time input presented through Time; unresolvable text is shown unchanged. */
+  /** When the message was sent, shown in the header through Time; text it cannot read is shown unchanged. */
   timestamp: TimeInput = '';
+  /** Shows a Sending status in an empty footer while the application delivers the message. */
   pending = false;
+  /** Shows a Failed to send alert in an empty footer. */
   failed = false;
   get #hasTimestamp(): boolean {
     return this.timestamp !== '' && this.timestamp !== null && this.timestamp !== undefined;

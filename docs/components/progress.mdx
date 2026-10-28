@@ -1,0 +1,93 @@
+---
+title: Progress
+description: A noninteractive bar that reports how much of a task is complete, or that it is still running.
+tag: tp-progress
+---
+
+<Preview
+  align="stretch"
+  code={`<tp-progress value="56" style="max-inline-size:22rem">
+  <span slot="label">Uploading design-review.fig</span>
+  <span slot="output">56%</span>
+</tp-progress>`}
+/>
+
+## Usage
+
+Progress reports a task the person is waiting on: an upload, an import, a setup that runs in steps. It never changes on its own; the application sets its value as the work advances. When people choose the number themselves, use a Slider. The `label` slot gives the bar a visible name that assistive technology reads too, and the `output` slot shows the value in the words that fit the task; without it, no number shows.
+
+### Import with live updates
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);justify-items:start;max-inline-size:22rem">
+  <tp-progress id="progress-import" value="0" style="inline-size:100%">
+    <span slot="label">Importing contacts</span>
+    <span slot="output" id="progress-import-count">0 of 1,200</span>
+  </tp-progress>
+  <tp-button id="progress-import-start" variant="outline" size="sm">Start import</tp-button>
+</div>`}
+  script={`const bar = document.getElementById('progress-import');
+const count = document.getElementById('progress-import-count');
+let timer;
+document.getElementById('progress-import-start').addEventListener('click', () => {
+  clearInterval(timer);
+  let done = 0;
+  timer = setInterval(() => {
+    done = Math.min(1200, done + 60);
+    bar.value = (done / 1200) * 100;
+    count.textContent = done.toLocaleString('en-US') + ' of 1,200';
+    if (done === 1200) clearInterval(timer);
+  }, 120);
+});`}
+/>
+
+Set the value from the task each time it reports. Progress does not announce every change, so a fast-moving bar stays quiet for screen readers; when the work finishes, tell the person in a message the application owns, such as an Alert.
+
+### Waiting for a connection
+
+<Preview
+  align="stretch"
+  code={`<tp-progress style="max-inline-size:22rem">
+  <span slot="label">Connecting to GitHub…</span>
+</tp-progress>`}
+/>
+
+Without a value the bar is indeterminate: it shows a moving fill instead of an amount, which stops when the person prefers reduced motion. Use it until the task can say how far it has come, then set the value.
+
+### Setup in steps
+
+<Preview
+  align="stretch"
+  code={`<tp-progress value="3" maximum="5" value-text="Step 3 of 5" style="max-inline-size:22rem">
+  <span slot="label">Workspace setup</span>
+  <span slot="output">Step 3 of 5</span>
+</tp-progress>`}
+/>
+
+Count in the task's own unit, steps or bytes, by setting the range, and the fill follows. `value-text` gives assistive technology the same phrasing the output shows, instead of a percentage.
+
+### Formatted for the reader
+
+<Preview
+  align="stretch"
+  code={`<div id="progress-formatted" style="display:grid;gap:var(--tp-space-6);max-inline-size:22rem">
+  <tp-progress value="56" lang="de">
+    <span slot="label">Hochladen</span>
+  </tp-progress>
+  <tp-progress value="41.5" maximum="50" data-format="storage">
+    <span slot="label">Backing up</span>
+  </tp-progress>
+</div>`}
+  script={`await customElements.whenDefined('tp-progress');
+for (const bar of document.querySelectorAll('#progress-formatted tp-progress')) {
+  if (bar.dataset.format === 'storage') {
+    bar.format = { style: 'unit', unit: 'gigabyte', maximumFractionDigits: 1 };
+  }
+  bar.partContracts = {
+    'progress-value-output': { content: (state) => state.formattedValue },
+  };
+}`}
+/>
+
+Instead of writing the output yourself, let the value part show the formatted value through its part contract. It formats for the nearest `lang`, as a percentage by default or with the number format options in `format`, which then apply to the value in its own unit.

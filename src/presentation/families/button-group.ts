@@ -16,18 +16,22 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'button-group',
+      description: 'The group around the members, named by `label`.',
       axes: ['orientation'],
     },
     {
       name: 'button-group-control',
+      description: 'The boundary of each member control, where the group joins the seams.',
       axes: ['orientation'],
     },
     {
       name: 'button-group-text-segment',
+      description: 'The box of a Button group text, joined like a member.',
       axes: ['orientation'],
     },
     {
       name: 'button-group-separator',
+      description: 'A Separator between members, turned across the row.',
       axes: ['orientation'],
     },
   ],

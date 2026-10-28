@@ -17,6 +17,14 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 
 type ButtonType = 'button' | 'submit' | 'reset';
 
+/**
+ * One action or navigation target. It renders a native button, or a native link when `href` is
+ * set, and owns no selection, open or pending state: a Toggle or a disclosure component owns those.
+ *
+ * @slot - The label. In an icon size it is hidden visually and still names the Button.
+ * @slot icon-start - A custom mark before the label, used when neither `icon` nor `loadingPosition` fills that side.
+ * @slot icon-end - A custom mark after the label, used when neither `icon` nor `loadingPosition` fills that side.
+ */
 export class TpButton extends TpElement {
   static tagName = 'tp-button';
   /** Library elements this element renders; defining it defines them too. */
@@ -109,20 +117,35 @@ export class TpButton extends TpElement {
     `,
   ];
 
+  /** The form action: `submit` and `reset` act on the owning form; the default `button` never submits by accident. */
   type: ButtonType = 'button';
+  /** Visual emphasis only; `href`, not the `link` treatment, makes the Button navigate. */
   variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link' = 'default';
+  /** The control height; an icon size makes a square Button the height of the matching text size and shows only its marks. */
   size: 'xs' | 'sm' | 'default' | 'lg' | 'icon-xs' | 'icon-sm' | 'icon' | 'icon-lg' = 'default';
+  /** The name a submit Button contributes to the form data as the submitter. */
   name = '';
+  /** The value a submit Button contributes under its `name`. */
   value = '';
+  /** A decorative icon drawn as a mark beside the label; the label stays the accessible name. */
   icon: IconDefinition | undefined;
+  /** The side of the label that `icon` takes, following the writing direction. */
   iconPosition: LogicalPosition = 'leading';
+  /** Shows a Spinner on that side and marks the Button busy without disabling it. */
   loadingPosition: LogicalPosition | null = null;
+  /** Makes the Button a native link to this address, keeping its visual treatment. */
   href: string | null = null;
+  /** The browsing context a link Button opens in. */
   target: string | null = null;
+  /** The relationship of a link Button's target to the current page. */
   rel: string | null = null;
+  /** Makes a link Button download its target, optionally under this file name. */
   download: string | null = null;
+  /** Set to `false` to render a non-native button host that still activates with Enter and Space. */
   nativeAction = true;
+  /** Keeps a disabled Button in the tab order, announced as disabled and still unable to activate. */
   focusableWhenDisabled = false;
+  /** The accessible name when no visible label names the Button, as for an icon with a chevron. */
   declare ariaLabel: string | null;
   readonly #press = new SyntheticPress(() => this.click());
   #unnamedReported = false;
@@ -336,14 +359,17 @@ export class TpButton extends TpElement {
     if (slotOccupied(this, '', { text: true }) !== this.#labelOccupied) this.requestUpdate();
   };
 
+  /** Focuses the rendered button or link. */
   override focus(options?: FocusOptions): void {
     this.#control()?.focus(options);
   }
 
+  /** Removes focus from the rendered button or link. */
   override blur(): void {
     this.#control()?.blur();
   }
 
+  /** Activates the rendered button or link, as a pointer click would. */
   override click(): void {
     this.#control()?.click();
   }

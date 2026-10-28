@@ -10,15 +10,21 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'cursor',
+      description: 'The cursor host, which paints nothing itself.',
     },
     {
       name: 'cursor-surface',
+      description:
+        'The fixed, pointer-transparent box in the top layer; it carries the opacity and blend.',
     },
     {
       name: 'cursor-content',
+      description:
+        "The content the cursor shows: the default ring, slotted content or the active zone's template.",
     },
     {
       name: 'cursor-zone',
+      description: 'The zone host, which takes no layout box.',
     },
   ],
 };

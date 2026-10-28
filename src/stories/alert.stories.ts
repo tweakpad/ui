@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import type { AlertAnnouncement, AlertSeverity } from '../components/alert/index.js';
-import { plusIcon } from '../icons/plus.js';
-import documentation from '../../docs/alert.md?raw';
+import { infoIcon } from '../icons/info.js';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   severity: AlertSeverity;
@@ -13,22 +13,19 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Alert',
   component: 'tp-alert',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/alert') },
   args: { severity: 'informational', announcement: 'off', title: 'Update available' },
   argTypes: {
     severity: {
       control: 'select',
       options: ['informational', 'success', 'warning', 'danger'],
-      description: 'Visual emphasis. The message text must also communicate the condition.',
     },
     announcement: {
       control: 'select',
       options: ['off', 'polite', 'assertive'],
-      description: 'Live announcement policy. Reserve assertive for urgent conditions.',
     },
     title: {
       control: 'text',
-      description: 'Optional text fallback; the title slot takes precedence.',
     },
   },
   render: (args) =>
@@ -37,7 +34,7 @@ const meta: Meta<Args> = {
       .announcement=${args.announcement}
       .title=${args.title}
     >
-      <tp-icon slot="icon" .icon=${plusIcon} size="var(--tp-icon-size-sm)"></tp-icon>
+      <tp-icon slot="icon" .icon=${infoIcon} size="var(--tp-icon-size-sm)"></tp-icon>
       A new version is ready. Review the changes before updating.
       <tp-button slot="actions" variant="outline" size="sm" href="#release-notes"
         >Release notes</tp-button

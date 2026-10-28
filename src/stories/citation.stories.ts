@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html, nothing } from 'lit';
-import documentation from '../../docs/citation.md?raw';
-import { citationExamples, siteMark } from './citation.examples.js';
+import { libraryDocs } from './library-docs.js';
 import type { TpCitation } from '../components/citation/citation.js';
 
 interface Args {
@@ -15,20 +14,15 @@ interface Args {
   variant: TpCitation['variant'];
 }
 
-const mark = siteMark('#2563eb', 'T');
+/** A small site mark as an inline image, so the story never fetches a remote icon. */
+const mark = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="4" fill="#2563eb"/><text x="8" y="11.5" font-family="system-ui,sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="white">T</text></svg>',
+)}`;
 
 const meta = {
   title: 'Components/Citation',
   component: 'tp-citation',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: citationExamples,
-      source: {
-        code: '<tp-citation href="https://tides.example/turbines">tides.example</tp-citation>',
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/citation') },
   args: {
     label: 'tides.example',
     index: null,

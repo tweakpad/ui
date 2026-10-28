@@ -40,9 +40,6 @@ const entries = [
   ...widgetEntries.map((entry) => ({ ...entry, section: 'widgets' as const })),
 ];
 const families = [...presentationFamilies, ...widgetPresentationFamilies];
-const pending = new Set<string>(
-  (JSON.parse(read('scripts/docs/pending.json')) as { tags: string[] }).tags,
-);
 
 /** Every `static tagName` under the component and widget sources. */
 const declaredTags = new Set(
@@ -97,6 +94,9 @@ const NATIVE_ALLOWED: Record<string, readonly string[]> = {
   'components/select': ['select'],
   'components/label': ['label', 'input'],
   'components/field': ['input'],
+  // A tab's trigger is a native button slotted into the tab list; a Button there would nest
+  // focusable controls.
+  'components/tabs': ['button'],
 };
 
 /** Names and citations that never appear in the pages: the docs describe the library on its own. */
@@ -104,27 +104,17 @@ const PROSE_NEVER =
   /\b(?:Storybook|WAI-ARIA|W3C|WCAG|APG|shadcn|Radix|Tiptap|Lexical|Swiper|dnd-kit|xyflow|Lucide|Floating UI|MapLibre|ProseMirror)\b/;
 
 describe('documentation pages', () => {
-  it('exist for every catalog entry that is not pending, and only for catalog entries', () => {
+  it('exist for every catalog entry, and only for catalog entries', () => {
     for (const page of pages) {
       const entry = entries.find((candidate) => candidate.tagName === page.tag);
       expect(entry, `${page.id}: ${page.tag} is not a catalog entry`).toBeDefined();
       expect(entry!.section, `${page.id} is in the wrong section`).toBe(page.section);
       expect(page.title, `${page.id}: the title is the catalog name`).toBe(entry!.name);
-      expect(
-        pending.has(page.tag),
-        `${page.id}: ${page.tag} has a page; take it off pending.json`,
-      ).toBe(false);
     }
     for (const entry of entries)
-      if (!pending.has(entry.tagName))
-        expect(
-          pages.some((page) => page.tag === entry.tagName),
-          `${entry.tagName} needs docs/${entry.section}/<slug>.mdx or a pending.json entry`,
-        ).toBe(true);
-    for (const tag of pending)
       expect(
-        entries.some((entry) => entry.tagName === tag),
-        `pending.json lists ${tag}, which is not a catalog entry`,
+        pages.some((page) => page.tag === entry.tagName),
+        `${entry.tagName} needs docs/${entry.section}/<slug>.mdx`,
       ).toBe(true);
   });
 
@@ -232,7 +222,7 @@ describe('documentation pages', () => {
       expect(section, `${page.id}: Variants holds one Preview`).toHaveLength(1);
       const unmarked = (
         section[0]!.code.match(/<tp-[\w-]+(?![^>]*\svariant=)[^>]*>/g) ?? []
-      ).filter((tag) => tag.startsWith(`<${page.tag}`)).length;
+      ).filter((tag) => new RegExp(`^<${page.tag}(?=[\\s>])`).test(tag)).length;
       for (const value of axis.values) {
         const shown = (counts.get(value) ?? 0) + (value === axis.default ? unmarked : 0);
         expect(shown, `${page.id}: Variants shows ${value} once`).toBe(1);

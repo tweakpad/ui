@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/tabs.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   value: string;
@@ -17,7 +17,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Tabs',
   component: 'tp-tabs',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/tabs') },
   args: {
     value: 'account',
     label: 'Settings',
@@ -29,21 +29,14 @@ const meta: Meta<Args> = {
     renderBeforeActivation: false,
   },
   argTypes: {
-    value: {
-      control: 'select',
-      options: ['account', 'password'],
-      description: 'Controlled value; this example accepts change proposals.',
-    },
-    label: { control: 'text', description: 'Accessible name of the tab list.' },
+    value: { control: 'select', options: ['account', 'password'] },
+    label: { control: 'text' },
     variant: { control: 'select', options: ['enclosed', 'underline'] },
     orientation: { control: 'select', options: ['horizontal', 'vertical'] },
     activation: { control: 'select', options: ['manual', 'automatic'] },
     loopFocus: { control: 'boolean' },
     disabled: { control: 'boolean' },
-    renderBeforeActivation: {
-      control: 'boolean',
-      description: 'Allow an optional indicator to render before a measurable selection exists.',
-    },
+    renderBeforeActivation: { control: 'boolean' },
   },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();

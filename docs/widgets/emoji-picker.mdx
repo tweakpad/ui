@@ -1,0 +1,122 @@
+---
+title: Emoji picker
+description: Chooses one emoji from a searchable, categorized grid with skin tones, recent and custom emoji, inline or in a popup.
+tag: tp-emoji-picker
+---
+
+<Preview code={`<tp-emoji-picker label="Reaction"></tp-emoji-picker>`} />
+
+## Usage
+
+Use an Emoji picker to add an emoji to a message, react to content or give something an emoji of its own, such as a status or a channel. The value is the emoji itself, with the skin tone applied. Without `data` the picker uses a compact English dataset that covers every standard category, and it hides emoji newer than the platform can draw; the grid only renders the rows in view, so a complete dataset of several thousand emoji stays fast. The `@tweakpad/ui/emoji` entry holds helpers that build a complete, localized dataset from files you host, and that look up or convert stored emoji.
+
+Every pick dispatches `tp-action`, even when the same emoji is picked again, so listen to it to insert emoji. A pick that changes the value also proposes a cancelable `tp-value-change` and then commits.
+
+### Message composer
+
+<Preview
+  code={`<div style="display:flex;align-items:end;gap:var(--tp-space-2);max-inline-size:32rem">
+  <tp-field label="Message" style="flex:1">
+    <tp-text-area id="emoji-picker-message" rows="3" default-value="Release notes are ready "></tp-text-area>
+  </tp-field>
+  <tp-emoji-picker id="emoji-picker-insert" picker="popup" label="Insert emoji"></tp-emoji-picker>
+</div>`}
+  script={`const message = document.getElementById('emoji-picker-message');
+const picker = document.getElementById('emoji-picker-insert');
+picker.addEventListener('tp-action', (event) => {
+  const end = message.value.length;
+  message.setRangeText(event.detail.value, message.selectionStart ?? end, message.selectionEnd ?? end, 'end');
+});
+picker.addEventListener('tp-open-change', (event) => {
+  if (!event.detail.value && event.detail.reason === 'item-press') event.preventDefault();
+});`}
+/>
+
+Beside a text field the popup keeps the composer compact, and its trigger shows the chosen emoji. A pick normally closes the popup; cancelling that close keeps it open for several picks, while the trigger, Escape and outside presses still close it.
+
+### Status in a form
+
+<Preview
+  code={`<tp-form style="max-inline-size:24rem">
+  <tp-field label="Status emoji" description="Shown next to your name in the workspace.">
+    <tp-emoji-picker picker="popup" name="status" default-value="🏠" required></tp-emoji-picker>
+  </tp-field>
+  <div slot="actions">
+    <tp-button type="submit">Save status</tp-button>
+    <tp-button type="reset" variant="outline">Reset</tp-button>
+  </div>
+</tp-form>`}
+/>
+
+When the emoji is a setting, the picker is a form control: it submits under `name`, `required` validates, and a reset restores the default. Inside a Field the label names it and the Field shows its error. `readonly` keeps browsing and submission but blocks picks.
+
+### Reactions with recent picks
+
+<Preview
+  code={`<tp-emoji-picker id="emoji-picker-recent" label="Reaction"></tp-emoji-picker>`}
+  script={`await customElements.whenDefined('tp-emoji-picker');
+const picker = document.getElementById('emoji-picker-recent');
+picker.recent = ['👍', '🎉', '🙏', '👀', '🔥'];
+picker.addEventListener('tp-action', (event) => {
+  const value = event.detail.value;
+  picker.recent = [value, ...picker.recent.filter((entry) => entry !== value)].slice(0, 18);
+});`}
+/>
+
+The picker keeps no history, so the application decides what counts as recent and where it lives: per device, per account or per workspace. Hand the list back through `recent` and it appears as the first category. The skin tone works the same way: the footer's menu tones every emoji that accepts one, and to remember it, store the tone from `tp-skin-tone-change` and pass it back as the default next time.
+
+### Workspace emoji
+
+<Preview
+  code={`<tp-emoji-picker id="emoji-picker-custom" label="Team reaction"></tp-emoji-picker>`}
+  script={`await customElements.whenDefined('tp-emoji-picker');
+// A rounded tile with a letter, standing in for the workspace's own artwork.
+const tile = (color, letter) => 'data:image/svg+xml,' + encodeURIComponent(
+  \`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="\${color}"/><text x="16" y="22" font-family="sans-serif" font-size="16" font-weight="700" text-anchor="middle" fill="#fff">\${letter}</text></svg>\`,
+);
+document.getElementById('emoji-picker-custom').custom = [{
+  id: 'workspace',
+  label: 'Workspace',
+  emojis: [
+    { id: 'ship-it', label: 'Ship it', keywords: ['deploy', 'release'], src: tile('#16a34a', 'S') },
+    { id: 'looks-good', label: 'Looks good', keywords: ['approve', 'review'], src: tile('#2563eb', 'L') },
+    { id: 'on-it', label: 'On it', keywords: ['working', 'busy'], src: tile('#d97706', 'O') },
+    { id: 'blocked', label: 'Blocked', keywords: ['stop', 'waiting'], src: tile('#dc2626', 'B') },
+  ],
+}];`}
+/>
+
+A team's own image emoji join the picker as categories of their own, after the recent ones and before the standard set. They are searchable by label and keywords, and a custom pick publishes `:id:` as its value, which `recent` accepts too.
+
+### Curated reaction bar
+
+<Preview
+  code={`<tp-emoji-picker id="emoji-picker-data" label="Reaction" size="lg" columns="6" category-bar="false" preview="false" skin-tone-selector="false" sticky="false"></tp-emoji-picker>`}
+  script={`await customElements.whenDefined('tp-emoji-picker');
+const reaction = (emoji, label, keywords) => ({ emoji, label, keywords, category: 'reactions' });
+document.getElementById('emoji-picker-data').data = {
+  locale: 'en',
+  categories: [{ id: 'reactions', label: 'Reactions' }],
+  emojis: [
+    reaction('👍', 'Thumbs up', ['yes', 'agree']),
+    reaction('❤️', 'Red heart', ['love']),
+    reaction('😂', 'Face with tears of joy', ['funny']),
+    reaction('🎉', 'Party popper', ['celebrate']),
+    reaction('👀', 'Eyes', ['looking']),
+    reaction('🚀', 'Rocket', ['launch', 'ship']),
+  ],
+};`}
+/>
+
+A small dataset of your own suits a fixed set of reactions: a few large cells, without the category bar, the preview footer or the tone menu. A dataset lists its categories in display order and its emoji, each with a label, keywords and a category. `data` also takes a function that loads a dataset per `locale`; the picker shows a loading state while it runs and offers Retry when it fails.
+
+## Keyboard
+
+Focus stays in the search field while the highlight moves through the grid.
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="down" /> <Keys keys="up" /> | Move to the next or previous row, keeping the column |
+| <Keys keys="left" /> <Keys keys="right" /> | Move to the previous or next emoji, following the writing direction |
+| <Keys keys="Home" /> <Keys keys="End" /> | Move to the first or last emoji |
+| <Keys keys="enter" /> | Pick the highlighted emoji |

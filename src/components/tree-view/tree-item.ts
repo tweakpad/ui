@@ -29,9 +29,9 @@ import type { TreeItemOwner, TreeItemState } from './types.js';
 const NAMED_SLOTS = new Set(['leading', 'trailing', 'indicator', 'handle']);
 
 /**
- * One Tree view item (`ucl20-tree-view` Item). In markup mode it is authored inside a
- * `tp-tree-view` (or another item) and nests its children; in records mode the tree renders one
- * per mounted row. The owning tree publishes the state; the item renders it.
+ * One item of a Tree view. Authored inside a `tp-tree-view` (or another item), it nests its child
+ * items; when the tree is built from records, the tree renders one per mounted row. The owning
+ * tree publishes the item's state (selected, expanded, level); the item renders it.
  *
  * @slot - The label; text and elements without a known slot name.
  * @slot leading - Content before the label, such as an icon.
@@ -41,7 +41,9 @@ const NAMED_SLOTS = new Set(['leading', 'trailing', 'indicator', 'handle']);
  * @csspart indent - Indentation and guides.
  * @csspart indicator - The disclosure indicator region.
  * @csspart checkbox - The checked indicator; `data-checked`, `data-indeterminate`.
- * @csspart leading - @csspart label - @csspart trailing - Content regions.
+ * @csspart leading - The region before the label.
+ * @csspart label - The label region.
+ * @csspart trailing - The region after the label.
  * @csspart handle - The reorder handle region.
  * @csspart status - Loading or load-error line.
  * @csspart group - Markup mode: the region holding child items.
@@ -211,10 +213,12 @@ export class TpTreeItem extends TpElement {
     this.addEventListener('click', this.#press);
   }
 
+  /** The region holding the child items, once rendered. */
   get groupElement(): HTMLElement | null {
     return this.renderRoot?.querySelector<HTMLElement>("[part~='group']") ?? null;
   }
 
+  /** The pressable row, once rendered. */
   get rowElement(): HTMLElement | null {
     return this.renderRoot?.querySelector<HTMLElement>("[part~='row']") ?? null;
   }

@@ -11,30 +11,47 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'toast',
+      description: 'The landmark that holds the stack.',
     },
     {
       name: 'toast-viewport',
+      description: 'The fixed layer that places the stack at its position.',
     },
     {
       name: 'toast-toast',
+      description: 'Each notification.',
     },
     {
       name: 'toast-content',
+      description: 'The text of a notification: its title and description.',
     },
     {
       name: 'toast-title',
+      description: 'The title of a notification.',
     },
     {
       name: 'toast-description',
+      description: 'The description of a notification.',
     },
     {
       name: 'toast-action',
+      description: 'The action Button of a notification.',
     },
     {
       name: 'toast-close',
+      description: 'The Close button of a notification.',
     },
     {
       name: 'toast-icon',
+      description: 'The icon of a notification type, or its Spinner while loading.',
+    },
+    {
+      name: 'positioner',
+      description: 'The layer that places a notification in the stack, or against its anchor.',
+    },
+    {
+      name: 'arrow',
+      description: 'The arrow of a notification anchored to a control, with `showArrow`.',
     },
   ],
 };

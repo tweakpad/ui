@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
-import documentation from '../../docs/tooltip.md?raw';
-import { plusIcon } from '../icons/plus.js';
+import { libraryDocs } from './library-docs.js';
 import type { TooltipSide, TooltipAlign, TooltipDescribes } from '../components/tooltip/index.js';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
 interface Args {
@@ -25,7 +24,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Tooltip',
   component: 'tp-tooltip',
-  parameters: { layout: 'centered', docs: { description: { component: documentation } } },
+  parameters: { layout: 'centered', docs: libraryDocs('components/tooltip') },
   args: {
     open: false,
     label: 'Save changes',
@@ -44,8 +43,8 @@ const meta: Meta<Args> = {
     keepMounted: false,
   },
   argTypes: {
-    open: { control: 'boolean', description: 'Controlled state; this example accepts proposals.' },
-    label: { control: 'text', description: 'Text fallback when the default slot is empty.' },
+    open: { control: 'boolean' },
+    label: { control: 'text' },
     side: {
       control: 'select',
       options: [
@@ -69,11 +68,7 @@ const meta: Meta<Args> = {
     disableHoverablePopup: { control: 'boolean' },
     closeOnClick: { control: 'boolean' },
     trackCursorAxis: { control: 'select', options: ['none', 'horizontal', 'vertical', 'both'] },
-    describes: {
-      control: 'select',
-      options: ['trigger', 'none'],
-      description: 'none keeps the tooltip visual only (no accessible description).',
-    },
+    describes: { control: 'select', options: ['trigger', 'none'] },
     keepMounted: { control: 'boolean' },
   },
   render: (args) => {
@@ -102,21 +97,3 @@ const meta: Meta<Args> = {
 export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
-export const RichContent: Story = {
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Descriptive content can include an Icon and KeyHint. Interactive content belongs in Popover.',
-      },
-    },
-  },
-  render: () =>
-    html`<tp-tooltip
-      ><tp-button slot="trigger" variant="outline">Add item</tp-button
-      ><tp-icon .icon=${plusIcon} size="var(--tp-icon-size-sm)"></tp-icon> Add item
-      <tp-key-hint-group separator="none" platform="mac"
-        ><tp-key-hint key="command"></tp-key-hint
-        ><tp-key-hint key="K"></tp-key-hint></tp-key-hint-group
-    ></tp-tooltip>`,
-};

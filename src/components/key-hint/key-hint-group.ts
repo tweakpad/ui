@@ -5,7 +5,12 @@ import type { KeyHintSeparator } from '../../foundation/key-notation.js';
 import { keyHintPresentation } from '../../presentation/families/key-hint.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-/** Parent sequence layout; each slotted Key remains its own real component. */
+/**
+ * The keys of one shortcut, or the steps of a sequence, spaced and separated as one notation. Its
+ * platform and key labels pass down to the keys and groups inside it.
+ *
+ * @slot - The Key hints, or nested groups for a sequence of chords, as direct children.
+ */
 export class TpKeyHintGroup extends KeyHintElement {
   static tagName = 'tp-key-hint-group';
   /** Library elements this element contains (Keys, nested groups); defining it defines them too. */
@@ -14,6 +19,7 @@ export class TpKeyHintGroup extends KeyHintElement {
   }
   static override presentation = keyHintPresentation;
   static override properties = { ...KeyHintElement.properties, separator: { type: String } };
+  /** What sits between the children: `plus` for a chord, `none` for adjacent keycaps, `then` for a sequence. */
   separator: KeyHintSeparator = 'plus';
   #members = new Set<KeyHintElement>();
   #observer: MutationObserver | undefined;

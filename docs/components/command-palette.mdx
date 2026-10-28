@@ -1,0 +1,121 @@
+---
+title: Command palette
+description: A searchable list of commands with groups, icons and shortcuts, shown inline or in a dialog.
+tag: tp-command-palette
+parts: [tp-command-list]
+---
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-3)">
+  <tp-command-palette id="command-palette-commands" inline label="Commands" placeholder="Search commands…" style="inline-size:32rem;max-inline-size:100%"></tp-command-palette>
+  <output id="command-palette-commands-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)"></output>
+</div>`}
+  script={`import { fileTextIcon } from '@tweakpad/ui/icons/file-text';
+import { folderIcon } from '@tweakpad/ui/icons/folder';
+import { navigationIcons } from '@tweakpad/ui/icons/navigation';
+
+const palette = document.getElementById('command-palette-commands');
+palette.items = [
+  { type: 'group', label: 'Create', items: [
+    { value: 'new-document', label: 'New document', description: 'A blank page in this project', icon: fileTextIcon, shortcut: '⌘N', keywords: ['page', 'write'] },
+    { value: 'new-project', label: 'New project', description: 'A workspace with its own members', icon: folderIcon, shortcut: '⌘⇧N' },
+  ] },
+  { type: 'separator' },
+  { type: 'group', label: 'Account', items: [
+    { value: 'profile', label: 'Profile', icon: navigationIcons.account, shortcut: '⌘P' },
+    { value: 'billing', label: 'Billing', icon: navigationIcons.card, keywords: ['invoice', 'plan', 'payment'] },
+    { value: 'sign-out', label: 'Sign out', icon: navigationIcons.logout, disabled: true },
+  ] },
+];
+palette.addEventListener('tp-execute', (event) => {
+  document.getElementById('command-palette-commands-output').textContent = \`Ran “\${event.detail.commandId}”\`;
+});`}
+/>
+
+## Usage
+
+The `items` property takes the commands: items with a `value` and a `label`, groups of items and separators. An item's `description` is a second line after its label and its accessible description; `keywords` are extra words that find it, and `shortcut` shows the keys that run it elsewhere in the app. Typing filters and ranks the list, the arrow keys move the active command and Enter runs it.
+
+Running a command fires a cancelable `tp-execute` with its `commandId`. The palette does not select, remember or close anything on its own, so the handler decides what happens next. The shortcuts it shows are information only: the palette never installs key bindings. For a value that fills a form field, use a Select or an Autocomplete instead.
+
+### Jump to a page
+
+<Preview
+  code={`<tp-command-palette id="command-palette-goto" label="Go to" placeholder="Jump to a page…">
+  <tp-button slot="trigger" variant="outline">
+    Go to…
+    <tp-key-hint-group slot="icon-end" aria-hidden="true">
+      <tp-key-hint key="mod"></tp-key-hint>
+      <tp-key-hint>J</tp-key-hint>
+    </tp-key-hint-group>
+  </tp-button>
+  <option value="dashboard">Dashboard</option>
+  <option value="projects">Projects</option>
+  <option value="invoices">Invoices</option>
+  <option value="team">Team members</option>
+  <option value="settings">Workspace settings</option>
+</tp-command-palette>`}
+  script={`const palette = document.getElementById('command-palette-goto');
+palette.addEventListener('tp-execute', () => palette.close());
+document.addEventListener('keydown', (event) => {
+  if (!palette.isConnected) return;
+  if (event.key.toLowerCase() === 'j' && (event.metaKey || event.ctrlKey)) {
+    event.preventDefault();
+    palette.setOpen(true, 'programmatic', event);
+  }
+});`}
+/>
+
+Without `inline`, the palette opens in a modal Dialog from the Button in its `trigger` slot, with the dialog's focus management, Escape and outside dismissal. The page owns the shortcut: its `keydown` listener opens the palette with `setOpen()`, and the `tp-execute` handler closes it after navigating. For a short fixed list, native `option` children stand in for `items`.
+
+### Finding a teammate
+
+<Preview
+  code={`<tp-command-palette inline label="Teammates" default-query="priya" placeholder="Search teammates…" style="inline-size:32rem;max-inline-size:100%">
+  <option value="maya">Maya Patel</option>
+  <option value="jordan">Jordan Lee</option>
+  <option value="ana">Ana Ruiz</option>
+  <span slot="empty">No teammates match. Invite them from Team settings.</span>
+</tp-command-palette>`}
+/>
+
+When nothing matches, the `empty` slot points people somewhere useful instead of a bare “No results found.” `default-query` sets the starting search text; `query` with `onQueryChange` hands the search text to the application, for example to keep it in the URL.
+
+### Searching the documentation
+
+<Preview
+  code={`<tp-command-palette id="command-palette-server" inline label="Search docs" placeholder="Search the documentation…" style="inline-size:32rem;max-inline-size:100%"></tp-command-palette>`}
+  script={`const pages = [
+  'Installing the CLI', 'Inviting teammates', 'Managing billing', 'Exporting data as CSV',
+  'Connecting GitHub', 'Setting up single sign-on', 'Rotating API keys', 'Webhooks reference',
+  'Audit log retention', 'Deleting a workspace',
+];
+await customElements.whenDefined('tp-command-palette');
+const palette = document.getElementById('command-palette-server');
+palette.shouldFilter = false;
+const show = (titles) => {
+  palette.items = titles.map((title) => ({ value: title.toLowerCase().replaceAll(' ', '-'), label: title }));
+};
+show(pages.slice(0, 4));
+let request = 0;
+palette.addEventListener('tp-query-change', (event) => {
+  const query = event.detail.value.trim().toLowerCase();
+  const current = ++request;
+  // Stands in for fetch('/api/search?q=' + query); stale responses are ignored.
+  setTimeout(() => {
+    if (current !== request) return;
+    show(query ? pages.filter((page) => page.toLowerCase().includes(query)) : pages.slice(0, 4));
+  }, 300);
+});`}
+/>
+
+When a server does the searching, the `shouldFilter` property set to `false` shows `items` exactly as supplied, and the application replaces them as each `tp-query-change` reports new search text. To keep searching in the page but change the ranking, assign a `filter` function instead: it returns `false` to hide an item, or a number to sort by, lowest first.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="down" /> <Keys keys="up" /> | Moves the active command to the next or previous one. |
+| <Keys keys="home" /> <Keys keys="end" /> | Moves the active command to the first or the last one. |
+| <Keys keys="enter" /> | Runs the active command. |
+| <Keys keys="esc" /> | Closes the palette when it is in a dialog. |

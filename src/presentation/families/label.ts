@@ -10,9 +10,11 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'label',
+      description: "The Label's host, which carries the label text style.",
     },
     {
       name: 'label-optional-indicator',
+      description: 'The "Optional" hint after the text.',
     },
   ],
 };

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
+import { libraryDocs } from './library-docs.js';
 import { useArgs } from 'storybook/preview-api';
-import documentation from '../../docs/alert-dialog.md?raw';
 import type { TpAlertDialog, TpSurfaceOpenChangeEvent } from '../components/alert-dialog/index.js';
 
 interface Args {
@@ -16,7 +16,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Alert dialog',
   component: 'tp-alert-dialog',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/alert-dialog') },
   args: {
     open: false,
     label: 'Delete project?',
@@ -30,31 +30,24 @@ const meta: Meta<Args> = {
   argTypes: {
     open: {
       control: 'boolean',
-      description:
-        'Controlled open state. This example accepts change proposals through Storybook args.',
     },
-    label: { control: 'text', description: 'Visible title fallback when the title slot is empty.' },
+    label: { control: 'text' },
     description: {
       control: 'text',
-      description: 'Consequence text fallback when the description slot is empty.',
     },
     initialFocus: {
       control: 'select',
       options: ['cancel', 'confirm', 'popup'],
-      description: 'Default: cancel, falling back to the first available decision control.',
     },
     closeOnEscape: {
       control: 'boolean',
-      description: 'Allows the topmost surface to propose an Escape close. Default: true.',
     },
     keepMounted: {
       control: 'boolean',
-      description: 'Retains semantically hidden content after exit. Default: false.',
     },
     motionPolicy: {
       control: 'radio',
       options: ['inherit', 'normal', 'reduce'],
-      description: 'Motion policy. Default: inherit.',
     },
   },
   render: (args) => {

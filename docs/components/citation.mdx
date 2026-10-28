@@ -1,0 +1,87 @@
+---
+title: Citation
+description: An inline chip that attributes a statement to its source, with an optional number, site icon and hover preview.
+tag: tp-citation
+parts: [tp-citation-list]
+---
+
+<Preview
+  align="stretch"
+  code={`<p style="max-inline-size:40rem;margin:0;line-height:1.75">
+  Tidal turbines generate on a timetable set by the moon
+  <tp-citation href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%2316a34a'/%3E%3C/svg%3E">energy.example</tp-citation>,
+  so grid operators can plan storage weeks in advance
+  <tp-citation href="https://northwind.example/grid-storage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%232563eb'/%3E%3C/svg%3E">Grid storage notes</tp-citation>.
+</p>`}
+/>
+
+## Usage
+
+A Citation sits in running text after the statement it supports: in an article, a report or a generated answer. Its label names the source, and with an `href` it links to it. Use one style per passage: labelled chips like these, or numbered markers that point to a Citation list. The default outline treatment reads below the surrounding copy; `variant` gives a citation more or less weight when it needs it.
+
+### Sources with and without a site
+
+<Preview
+  code={`<tp-citation href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%2316a34a'/%3E%3C/svg%3E">energy.example</tp-citation>
+<tp-citation href="https://marine.example/survey">
+  <tp-icon slot="icon" id="citation-document-icon"></tp-icon>
+  Coastal survey 2025
+</tp-citation>
+<tp-citation href="https://northwind.example/grid-storage">Grid storage notes</tp-citation>
+<tp-citation>Interview with the site engineer</tp-citation>`}
+  script={`import { fileTextIcon } from '@tweakpad/ui/icons/file-text';
+
+document.getElementById('citation-document-icon').icon = fileTextIcon;`}
+/>
+
+`src` shows the site's icon and keeps its space while it loads; without it, or when it fails, the `icon` slot is used, else a generic web mark. A long label ends in an ellipsis. A link to another site opens in a new tab unless `target` says otherwise, and while it is hovered or focused an external-link mark fades in over the end of the label without changing its width, so the text around it never moves. A source with no address, such as an interview, is plain text and takes no tab stop.
+
+### Previewing a source
+
+<Preview
+  align="stretch"
+  code={`<p style="max-inline-size:40rem;margin:0;line-height:1.75">
+  Turbine blades now last about twenty years underwater
+  <tp-citation
+    href="https://energy.example/tidal"
+    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%2316a34a'/%3E%3C/svg%3E"
+    source-title="Blade wear in fast tidal streams"
+    description="Ten-year inspection results from three test sites, with corrosion and fatigue measurements."
+  >energy.example</tp-citation>.
+</p>`}
+/>
+
+A `description` adds a card that opens after a short hover or on keyboard focus, with the site's icon, its host, `source-title` and the description; the `preview` slot adds content of your own. Use `source-title` for the full title when the label is only the site's name. The card is supplementary: the citation still opens its link, and the destination should carry everything a reader needs.
+
+### Footnotes in an article
+
+<Preview
+  align="stretch"
+  code={`<article style="display:grid;gap:var(--tp-space-4);max-inline-size:40rem">
+  <p style="margin:0;line-height:1.75">
+    Output is predictable<tp-citation source="tidal-1" href="#tidal-1" superscript></tp-citation>
+    and storage needs stay small<tp-citation source="tidal-2" href="#tidal-2" superscript></tp-citation>,
+    though flow varies with the season<tp-citation source="tidal-3" href="#tidal-3" superscript></tp-citation>.
+  </p>
+  <tp-citation-list label="Sources">
+    <tp-citation id="tidal-1" href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%2316a34a'/%3E%3C/svg%3E" description="Ten-year inspection results from three test sites.">Blade wear in fast tidal streams</tp-citation>
+    <tp-citation id="tidal-2" href="https://northwind.example/grid-storage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%232563eb'/%3E%3C/svg%3E" description="How predictable generation reduces battery sizing.">Grid storage notes</tp-citation>
+    <tp-citation id="tidal-3" href="https://marine.example/survey" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%23d97706'/%3E%3C/svg%3E" description="Seasonal flow records for estuary sites.">Coastal survey 2025</tp-citation>
+  </tp-citation-list>
+</article>`}
+/>
+
+A Citation list numbers its entries in document order. A marker in the text names an entry by its `id` in `source` and takes the entry's number, address, title and preview, so an empty marker renders as a plain number, raised like a footnote marker by `superscript`. Give each marker its entry's fragment as `href`: activating it moves focus to the entry, and the entry opens the site. Editing an entry updates every marker that names it.
+
+### A source strip under an answer
+
+<Preview
+  align="stretch"
+  code={`<tp-citation-list label="Sources" orientation="horizontal" style="max-inline-size:40rem">
+  <tp-citation href="https://energy.example/tidal" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%2316a34a'/%3E%3C/svg%3E">energy.example</tp-citation>
+  <tp-citation href="https://northwind.example/grid-storage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%232563eb'/%3E%3C/svg%3E">northwind.example</tp-citation>
+  <tp-citation href="https://marine.example/survey" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='4' fill='%23d97706'/%3E%3C/svg%3E">marine.example</tp-citation>
+</tp-citation-list>`}
+/>
+
+A horizontal list wraps its entries in rows, a compact strip of numbered sources under a generated answer. `start` and `index` change the numbering when a strip continues an earlier one.

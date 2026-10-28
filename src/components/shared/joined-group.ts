@@ -19,8 +19,7 @@ const TEXT_SEGMENT = 'button-group-text-segment';
 
 /**
  * Layout and part composition only: members retain all interaction and value ownership.
- * Button group and Field group bind their part vocabulary and member policy to this owner
- * (Component Library §22 Button group and Field group seam contracts).
+ * Button group and Field group bind their part vocabulary and member policy to this owner.
  */
 export abstract class TpJoinedGroup extends TpElement {
   static override properties = {
@@ -72,7 +71,12 @@ export abstract class TpJoinedGroup extends TpElement {
   /** The family parts this group registers; set by each public group. */
   protected abstract readonly groupParts: JoinedGroupParts;
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
+  /**
+   * Joins the members' borders into one shape with shared seams; turn it off to keep each
+   * member's own corners and a gap between them.
+   */
   joined = true;
+  /** The accessible name of the group. */
   label = '';
   #bindings = new Map<TpElement, Binding>();
   #observer: MutationObserver | undefined;

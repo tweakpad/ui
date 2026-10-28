@@ -1,8 +1,26 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { html } from 'lit';
-import documentation from '../../docs/autocomplete.md?raw';
-import { autocompleteDefaultSource, autocompleteExamples } from './autocomplete.examples.js';
+import { libraryDocs } from './library-docs.js';
+
+const cities = [
+  'Amsterdam',
+  'Barcelona',
+  'Berlin',
+  'Copenhagen',
+  'Edinburgh',
+  'Lisbon',
+  'London',
+  'Madrid',
+  'Paris',
+  'Prague',
+  'Vienna',
+];
+const defaultSource = `<tp-field label="Destination" description="Try a typo: amsterdma, lisbn">
+  <tp-autocomplete name="destination" placeholder="Search cities">
+${cities.map((city) => `    <option>${city}</option>`).join('\n')}
+  </tp-autocomplete>
+</tp-field>`;
 
 interface Args {
   matching: 'fuzzy' | 'contains' | 'prefix' | 'exact';
@@ -19,13 +37,7 @@ interface Args {
 const meta = {
   title: 'Components/Autocomplete',
   component: 'tp-autocomplete',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: autocompleteExamples,
-      source: { code: autocompleteDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/autocomplete') },
   args: {
     matching: 'fuzzy',
     completionMode: 'list',
@@ -41,44 +53,36 @@ const meta = {
     matching: {
       control: 'inline-radio',
       options: ['fuzzy', 'contains', 'prefix', 'exact'],
-      description: 'How the text matches items; `fuzzy` ranks by relevance and tolerates typos.',
       table: { defaultValue: { summary: 'fuzzy' } },
     },
     completionMode: {
       control: 'inline-radio',
       options: ['list', 'both', 'inline', 'none'],
-      description: '`completion-mode`: filtering and inline completion of the text.',
       table: { defaultValue: { summary: 'list' } },
     },
     autoHighlight: {
       control: 'inline-radio',
       options: ['false', 'true', 'always'],
-      description: '`auto-highlight`: highlight the first suggestion after typing, or always.',
       table: { defaultValue: { summary: 'false' } },
     },
     highlightMatches: {
       control: 'boolean',
-      description: '`highlight-matches`: mark matched text in suggestions.',
       table: { defaultValue: { summary: 'true' } },
     },
     limit: {
       control: { type: 'number', min: -1, step: 1 },
-      description: 'Maximum suggestions; `-1` shows all.',
       table: { defaultValue: { summary: '-1' } },
     },
     showClear: {
       control: 'boolean',
-      description: '`show-clear`: a clear button while there is text.',
       table: { defaultValue: { summary: 'false' } },
     },
     showTrigger: {
       control: 'boolean',
-      description: '`show-trigger`: a button that opens and closes the suggestions.',
       table: { defaultValue: { summary: 'false' } },
     },
     openOnInputClick: {
       control: 'boolean',
-      description: '`open-on-input-click`: open the suggestions when the input is pressed.',
       table: { defaultValue: { summary: 'false' } },
     },
     disabled: { control: 'boolean', table: { defaultValue: { summary: 'false' } } },
@@ -98,9 +102,9 @@ const meta = {
     ]
       .filter(Boolean)
       .join(' ');
-    const markup = autocompleteDefaultSource.replace(
-      '<tp-autocomplete name="fruit"',
-      `<tp-autocomplete name="fruit" ${attributes}`,
+    const markup = defaultSource.replace(
+      '<tp-autocomplete name="destination"',
+      `<tp-autocomplete name="destination" ${attributes}`,
     );
     return html`<div style="max-inline-size: 22rem">${unsafeHTML(markup)}</div>`;
   },
@@ -108,5 +112,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<Args>;
 
-/** Fruit suggestions with ranked, typo-tolerant matching and highlighted matches. */
+/** City suggestions with ranked, typo-tolerant matching and highlighted matches. */
 export const Default: Story = {};

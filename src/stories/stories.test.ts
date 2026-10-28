@@ -79,14 +79,11 @@ describe('Storybook catalog entries', () => {
     expect(docsPage.indexOf('<Primary />')).toBeLessThan(docsPage.indexOf('<Controls />'));
     expect(docsPage).toContain('## Public properties');
     expect(docsPage).toContain('example setup is not a component property');
-    // After the controls, a component's library documentation page, then its generated API and
-    // Related sections; a component without a page keeps its stories, reference and examples.
-    expect(docsPage.indexOf('<Controls />')).toBeLessThan(docsPage.indexOf('<Body />'));
-    const body = docsPage.slice(docsPage.indexOf('export function Body'));
-    expect(body.indexOf('<LibraryDoc />')).toBeLessThan(body.indexOf('<Api />'));
-    expect(body.indexOf('<Api />')).toBeLessThan(body.indexOf('<Related />'));
-    expect(body.indexOf('<Stories title="Examples"')).toBeLessThan(body.indexOf('<Description />'));
-    expect(body.indexOf('<Description />')).toBeLessThan(body.indexOf('<Examples />'));
+    // After the controls, the component's documentation page, then its generated API and Related.
+    expect(docsPage.indexOf('<Controls />')).toBeLessThan(docsPage.indexOf('<LibraryDoc />'));
+    expect(docsPage.indexOf('<LibraryDoc />')).toBeLessThan(docsPage.indexOf('<Api />'));
+    expect(docsPage.indexOf('<Api />')).toBeLessThan(docsPage.indexOf('<Related />'));
+    expect(docsPage).not.toContain('<Stories');
 
     for (const source of elementStories) {
       expect(source.match(/export const \w+: Story/u)?.[0]).toBe('export const Default: Story');
@@ -146,132 +143,5 @@ describe('Storybook catalog entries', () => {
       } else expect(uses, `${file} renders a page that does not exist`).toBeUndefined();
     }
     for (const id of pages) expect(declared.has(id), `no story renders docs/${id}.mdx`).toBe(true);
-  });
-
-  it('keeps Collapsible controls limited to its public properties', () => {
-    const collapsibleStory = story('collapsible');
-    expect(collapsibleStory).toContain('export const LeadingContent: Story');
-    expect(collapsibleStory).toContain('<tp-badge slot="leading" variant="accent">New</tp-badge>');
-    expect(collapsibleStory).not.toContain('<span slot="leading">New</span>');
-    expect(collapsibleStory).toContain('export const TrailingContent: Story');
-    expect(collapsibleStory).toContain('export const ExternalLineByLineMotion: Story');
-    expect(collapsibleStory).toContain("from './line-by-line-motion.js'");
-    // Attribute values are Controls, not stories.
-    expect(collapsibleStory).not.toMatch(
-      /export const (?:Open|Disabled|Retained|FindInPage|LeadingIndicator|LabelAlignedContent): Story/u,
-    );
-    for (const property of [
-      'open',
-      'defaultOpen',
-      'disabled',
-      'keepMounted',
-      'hiddenUntilFound',
-      'motionPolicy',
-      'contentAlignment',
-      'indicatorPosition',
-      'headingLevel',
-      'onOpenChange',
-    ]) {
-      expect(collapsibleStory).toContain(`    ${property}: {`);
-    }
-    for (const fixtureProperty of ['showLeadingContent', 'showTrailingContent', 'contentMotion']) {
-      expect(collapsibleStory).not.toContain(`    ${fixtureProperty}: {`);
-    }
-  });
-
-  it('keeps Accordion controls limited to its public Root properties', () => {
-    const accordionStory = story('accordion');
-    expect(accordionStory).toContain('export const PositionalContent: Story');
-    expect(accordionStory).toContain('export const ExternalLineByLineMotion: Story');
-    expect(accordionStory).toContain("from './line-by-line-motion.js'");
-    expect(accordionStory).not.toMatch(
-      /export const (?:Line|Outline|Separated|LabelAlignedContent|ReducedMotion|Multiple|Collapsible|Disabled|DisabledItem|Retained|FindInPage|MixedIndicatorPositions): Story/u,
-    );
-    for (const property of [
-      'variant',
-      'selectionMode',
-      'value',
-      'defaultValue',
-      'collapsible',
-      'disabled',
-      'keepMounted',
-      'hiddenUntilFound',
-      'motionPolicy',
-      'contentAlignment',
-      'onValueChange',
-    ]) {
-      expect(accordionStory).toContain(`    ${property}: {`);
-    }
-    for (const fixtureProperty of ['showLeadingContent', 'contentMotion']) {
-      expect(accordionStory).not.toContain(`    ${fixtureProperty}: {`);
-    }
-  });
-
-  it('documents Icon artwork, accessibility, and size in a maintained controls story', () => {
-    const iconStory = story('icon');
-    for (const property of ['icon', 'label', 'size']) {
-      expect(iconStory).toContain(`    ${property}: {`);
-    }
-  });
-
-  it('exposes the Button contract in a maintained controls story', () => {
-    const buttonStory = story('button');
-    for (const property of [
-      'variant',
-      'size',
-      'type',
-      'disabled',
-      'focusableWhenDisabled',
-      'nativeAction',
-      'ariaLabel',
-      'name',
-      'value',
-      'icon',
-      'iconPosition',
-      'loadingPosition',
-      'href',
-      'target',
-      'rel',
-      'download',
-    ]) {
-      expect(buttonStory).toContain(`    ${property}: {`);
-    }
-    // Distinct use cases stay; variant, size and state values are Controls.
-    for (const configuration of ['IconOnly', 'AsLink', 'WithMarks', 'FormActions']) {
-      expect(buttonStory).toContain(`export const ${configuration}: Story`);
-    }
-    expect(buttonStory).not.toMatch(
-      /export const (?:Secondary|Destructive|Outline|Ghost|LinkAppearance|ExtraSmall|Small|Large|IconExtraSmall|IconSmall|IconLarge|IconLeading|IconTrailing|LoadingLeading|LoadingTrailing|Disabled|FocusableDisabled|SyntheticAction): Story/u,
-    );
-  });
-
-  it('documents Button group layout while reusing Button members', () => {
-    const buttonGroupStory = story('button-group');
-    for (const property of ['orientation', 'joined', 'label']) {
-      expect(buttonGroupStory).toContain(`    ${property}: {`);
-    }
-    expect(buttonGroupStory).toContain('examples: buttonGroupExamples');
-    expect(buttonGroupStory).not.toMatch(
-      /export const (?:Sizes|Vertical|MultipleGroups|Unjoined):/,
-    );
-    expect(buttonGroupStory).toContain('<tp-button variant="outline"');
-    expect(buttonGroupStory).not.toContain('<button');
-  });
-
-  it('shows Card sections and independent presentation properties', () => {
-    const cardStory = story('card');
-    expect(cardStory).toContain("component: 'tp-card'");
-    expect(cardStory).not.toContain("options: ['default', 'elevated']");
-    for (const property of ['elevated', 'borders', 'sectionColors', 'size']) {
-      expect(cardStory).toContain(`    ${property}: {`);
-    }
-    expect(cardStory).toContain('export const ContentOnly: Story');
-    expect(cardStory).not.toMatch(
-      /export const (?:Elevated|BordersOff|SectionColorsOff|BothOff): Story/u,
-    );
-    for (const slot of ['header', 'description', 'footer']) {
-      expect(cardStory).toContain(`slot="${slot}"`);
-    }
-    expect(cardStory).toContain('<tp-button slot="footer"');
   });
 });

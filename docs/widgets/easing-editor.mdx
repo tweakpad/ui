@@ -1,0 +1,159 @@
+---
+title: Easing editor
+description: Edits one easing curve on a graph with Bézier handles, custom points or spring parameters, with presets, a duration, a live preview and export adapters.
+tag: tp-easing-editor
+---
+
+<Preview
+  code={`<tp-easing-editor label="Motion" name="easing" default-value="ease-out"></tp-easing-editor>`}
+/>
+
+## Usage
+
+Use an Easing editor where people tune how motion feels: a motion settings panel, a design token tool, an animation inspector. Any easing notation goes in, a CSS keyword, `cubic-bezier()`, `linear()`, a spring or a classic family such as `back(out 1.702)`, and the value reads back canonical. The Ease and Spring tabs switch the category by converting the curve, and the badge over the graph names the matching preset or reads Custom once a handle leaves every preset. Progression is never clamped, so a curve may overshoot and the graph widens to keep it in view.
+
+The editor sizes itself: with its presets in a column beside the graph it grows no wider than both, and the compact layout fills its container up to a comfortable width.
+
+### Transition setting in a dialog
+
+<Preview
+  code={`<tp-button id="easing-editor-dialog-trigger" variant="outline">Edit transition</tp-button>
+<tp-dialog id="easing-editor-dialog" label="Card hover transition">
+  <tp-easing-editor label="Card hover" layout="compact" default-value="cubic-bezier(0.34, 1.56, 0.64, 1)"></tp-easing-editor>
+</tp-dialog>`}
+  script={`await customElements.whenDefined('tp-dialog');
+const dialog = document.getElementById('easing-editor-dialog');
+document.getElementById('easing-editor-dialog-trigger').addEventListener('click', () => {
+  dialog.setOpen(true, 'trigger-press');
+});`}
+/>
+
+When the curve is one setting among others, use the compact layout in a Dialog or Popover: the presets wait behind a header Toggle and overlay the graph only while someone chooses, and a pick closes them again.
+
+### Springs and hand-drawn curves
+
+<Preview
+  code={`<div style="display:flex;flex-wrap:wrap;align-items:start;gap:var(--tp-space-6)">
+  <tp-easing-editor label="Sheet entrance" layout="compact" default-value="spring(1 200 14)" style="inline-size:22rem"></tp-easing-editor>
+  <tp-easing-editor label="Bounce in" layout="compact" default-value="linear(0, 0.36 30%, 1.12 62%, 0.95 80%, 1)" timing="false" style="inline-size:22rem"></tp-easing-editor>
+</div>`}
+/>
+
+A spring suits motion that should feel physical, such as a sheet sliding in: its Sliders set mass, stiffness and damping, and its progression is normalized to its own settle time. A point curve draws anything else by hand; press the empty graph to add a point and drag points between their neighbours. Springs and the classic families have no CSS notation of their own, so the CSS export samples them into `linear()`.
+
+### Motion tokens of a design system
+
+<Preview
+  code={`<tp-easing-editor id="easing-editor-presets" label="Motion token" default-value="cubic-bezier(0.2, 0, 0, 1)"></tp-easing-editor>`}
+  script={`await customElements.whenDefined('tp-easing-editor');
+document.getElementById('easing-editor-presets').presets = [
+  {
+    id: 'standard',
+    label: 'Standard',
+    presets: [
+      { id: 'standard', label: 'Standard', value: 'cubic-bezier(0.2, 0, 0, 1)' },
+      { id: 'decelerate', label: 'Decelerate', value: 'cubic-bezier(0, 0, 0, 1)' },
+      { id: 'accelerate', label: 'Accelerate', value: 'cubic-bezier(0.3, 0, 1, 1)' },
+    ],
+  },
+  {
+    id: 'expressive',
+    label: 'Expressive',
+    presets: [
+      { id: 'emphasized', label: 'Emphasized', value: 'cubic-bezier(0.05, 0.7, 0.1, 1)' },
+      { id: 'overshoot', label: 'Overshoot', value: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+      { id: 'bouncy', label: 'Bouncy', value: 'spring(1 260 12)' },
+    ],
+  },
+];`}
+/>
+
+Replace the built-in table with your own named curves so people start from the system's tokens. Each group becomes a section of tiles with thumbnails, and the tile matching the current curve stays pressed.
+
+### Spinner timing
+
+<Preview
+  code={`<tp-easing-editor label="Spinner" default-value="power(in-out 3)" default-duration="1.2" duration-max="4" duration-step="0.1" preview="rotation"></tp-easing-editor>`}
+/>
+
+The duration is the time the preview, the frames bar and the export use, and its range and step follow the motion at hand. Pick the preview that matches the property being animated, here a rotation. The frames bar draws its ticks at the eased positions, so they bunch where the motion is slow. Each of the duration row, the preview, the frames bar and the preset picker can be turned off for a curve that only needs tuning.
+
+### Export for code
+
+<Preview
+  code={`<tp-easing-editor id="easing-editor-adapters" label="Toast entrance" default-value="back(out 1.702)" default-duration="0.45"></tp-easing-editor>`}
+  script={`await customElements.whenDefined('tp-easing-editor');
+const ms = (seconds) => Math.round((seconds ?? 0) * 1000);
+document.getElementById('easing-editor-adapters').adapters = [
+  {
+    id: 'css',
+    label: 'CSS',
+    format: (curve, context) => \`transform \${ms(context.duration)}ms \${context.css}\`,
+  },
+  {
+    id: 'script',
+    label: 'Animation',
+    format: (curve, context) => \`{ duration: \${ms(context.duration)}, easing: '\${context.css}' }\`,
+  },
+];`}
+/>
+
+The footer shows the curve as text with a Copy button, so the result lands where it is used. Adapters decide that text: each formats the curve with the duration, the CSS timing function and a sampler at hand, and a Select chooses between them. The field is editable too: type any notation, with a leading time such as `500ms`, and press Enter.
+
+### Transition owned by the application
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:28rem">
+  <tp-easing-editor id="easing-editor-controlled" label="Drawer slide" layout="compact" value="cubic-bezier(0.32, 0.72, 0, 1)" duration="0.5"></tp-easing-editor>
+  <tp-code-block id="easing-editor-controlled-css" language="css" code="transition: translate 0.5s cubic-bezier(0.32, 0.72, 0, 1);"></tp-code-block>
+</div>`}
+  script={`const editor = document.getElementById('easing-editor-controlled');
+const css = document.getElementById('easing-editor-controlled-css');
+await customElements.whenDefined('tp-easing-editor');
+const state = { value: editor.value, duration: editor.duration };
+const show = () => {
+  css.code = \`transition: translate \${state.duration}s \${state.value};\`;
+};
+editor.addEventListener('tp-value-change', (event) => {
+  const curve = event.detail.metadata?.curve;
+  // Refuse control points that overshoot beyond 1.25 either way.
+  if (curve?.kind === 'bezier' && Math.max(Math.abs(curve.y1), Math.abs(curve.y2)) > 1.25) {
+    event.preventDefault();
+    return;
+  }
+  state.value = event.detail.value;
+  editor.value = state.value;
+  show();
+});
+editor.addEventListener('tp-duration-change', (event) => {
+  state.duration = event.detail.value;
+  editor.duration = state.duration;
+  show();
+});`}
+/>
+
+Set `value` and `duration` to own the curve and the time: every edit arrives as a proposal, and the editor shows only what is written back. The parsed curve travels with each proposal, so a handler can refuse one by its parameters; this one refuses Bézier handles that overshoot too far. Drags propose while moving and commit once on release, so expensive work such as saving belongs on `tp-value-commit`.
+
+### Setting in a form
+
+<Preview
+  code={`<tp-field label="Entrance easing" description="Applied to dialogs and sheets.">
+  <tp-easing-editor name="entrance" size="sm" layout="compact" default-value="ease-out" preview-controls="false" frames="false" style="inline-size:20rem"></tp-easing-editor>
+</tp-field>`}
+/>
+
+The canonical string submits under `name`, `required` validates, and a form reset restores the default. Inside a Field the label focuses the first graph handle. `readonly` keeps every handle and field focusable while ignoring edits.
+
+## Keyboard
+
+Every handle and point has a time and a progression slider; keys commit at once.
+
+| Key | Action |
+| --- | --- |
+| Arrow keys | Move the focused handle or point by 0.01 on its axis |
+| <Keys keys="shift" /> with an arrow, <Keys keys="PageUp" /> <Keys keys="PageDown" /> | Move by 0.1 |
+| <Keys keys="alt" /> with an arrow | Move by 0.001 |
+| <Keys keys="Home" /> <Keys keys="End" /> | Move to the bound of the focused axis |
+| <Keys keys="delete" /> <Keys keys="backspace" /> | Remove the focused point of a custom curve |
+| <Keys keys="escape" /> | During a drag, restore the curve from before the press; in the compact layout, close the presets and return focus to their Toggle |
+| <Keys keys="up" /> <Keys keys="down" /> | In the export field, step the number at the caret and commit |

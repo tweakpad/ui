@@ -195,7 +195,7 @@ export interface MediaPreviewSource extends HTMLElement {
  *
  * @fires tp-value-change - Re-emitted cancelable Slider proposal (`detail.value` in seconds).
  * @fires tp-value-commit - Re-emitted Slider commit.
- * @fires tp-media-preview-change - Preview time/state changed (not bubbling).
+ * @fires tp-media-preview-change - The preview changed: `detail.time` under the pointer and whether the user is `previewing`. Does not bubble.
  * @csspart slider - Forwarded Slider root; also `slider-track`, `slider-range`, `slider-buffer`,
  *   `slider-chapter` and `slider-thumb`.
  * @slot - A `tp-media-time-slider-preview`.
@@ -217,6 +217,7 @@ export class TpMediaTimeSlider extends MediaSliderElement implements MediaPrevie
     },
   };
 
+  /** @internal Marks the element as a preview source. */
   readonly [mediaPreviewSourceBrand] = true as const;
 
   /** Arrow-key step in seconds. */
@@ -261,26 +262,32 @@ export class TpMediaTimeSlider extends MediaSliderElement implements MediaPrevie
     () => (Number.isFinite(this.changeThrottle) ? this.changeThrottle : 100),
   );
 
+  /** The time slider whose preview this is. */
   get timeSlider(): TpMediaTimeSlider {
     return this;
   }
 
+  /** The time under the pointer or drag, kept after leaving; `null` before any. */
   get previewTime(): number | null {
     return this.#preview.time;
   }
 
+  /** Where `previewTime` sits along the timeline, from 0 to 1; `null` before any. */
   get previewRatio(): number | null {
     return this.#preview.ratio;
   }
 
+  /** Whether the pointer is over the track or a drag is in progress. */
   get previewing(): boolean {
     return this.#preview.previewing;
   }
 
+  /** Whether the slider has keyboard focus without pointing or dragging. */
   get keyboardInteraction(): boolean {
     return this.#preview.keyboard;
   }
 
+  /** The value the slider shows: the media time, or the drag value. */
   get sliderValue(): number {
     return this.#displayValue(timeSliderBounds(this.#time.value));
   }
@@ -421,8 +428,9 @@ export class TpMediaTimeSlider extends MediaSliderElement implements MediaPrevie
     )
       return;
     this.#preview = next;
+    // The literal name, so the element manifest lists the event by its name.
     this.dispatchEvent(
-      new CustomEvent<MediaPreviewDetail>(MEDIA_PREVIEW_CHANGE_EVENT, {
+      new CustomEvent<MediaPreviewDetail>('tp-media-preview-change', {
         detail: { time: next.time, previewing: next.previewing },
       }),
     );

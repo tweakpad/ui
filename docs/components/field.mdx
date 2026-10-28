@@ -1,0 +1,88 @@
+---
+title: Field
+description: A label, description, error and validation state for one form value, wired to the control inside it.
+tag: tp-field
+---
+
+<Preview
+  code={`<tp-field label="Work email" description="We send invoices and security alerts here.">
+  <tp-input name="email" type="email" placeholder="maya@acme.com" required></tp-input>
+</tp-field>`}
+/>
+
+## Usage
+
+A Field owns everything around one value: the visible name, help text, errors and the dirty, touched and invalid state. Put one control inside it, such as an Input, Text area, Select, Checkbox or Switch, and the Field names the control and connects its description and error for assistive technology. Use one Field per value; a separate Label is only for a control laid out without one.
+
+### Billing email
+
+<Preview
+  code={`<tp-field label="Billing email" validation-mode="on-blur">
+  <tp-input name="billing-email" type="email" required default-value="finance@acme"></tp-input>
+</tp-field>`}
+/>
+
+Native constraints on the control, such as `required`, `type`, `minlength` or `pattern`, validate through the Field and show its error. `validation-mode` decides when: on submit, which is the default without a Form, when the control loses focus, or on every change. Checking on blur, as here, waits until someone has finished typing before it complains; edit the address and leave the input to see the error.
+
+### Workspace URL
+
+<Preview
+  code={`<tp-field id="field-slug" label="Workspace URL" description="Lowercase letters, numbers and dashes." validation-mode="on-change">
+  <tp-input name="slug" default-value="Acme Design"></tp-input>
+</tp-field>`}
+  script={`await Promise.all(['tp-field', 'tp-input'].map((tag) => customElements.whenDefined(tag)));
+const field = document.getElementById('field-slug');
+field.validator = (value) =>
+  /^[a-z0-9-]+$/.test(value) ? null : 'Use only lowercase letters, numbers and dashes.';
+await field.updateComplete;
+field.validate();`}
+/>
+
+A rule native constraints cannot express goes in `validator`. It receives the value and every named value in the same form, so it can compare two fields, and it may return a promise for a server check, leaving the Field pending until it settles. For an error you already know, such as one returned by the server, set `error` instead.
+
+### Notification settings
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-6)">
+  <tp-field label="Marketing emails" description="Product news and tips, about once a month." orientation="horizontal">
+    <tp-switch name="marketing"></tp-switch>
+  </tp-field>
+  <tp-field label="Two-factor authentication" description="Required by your organization." orientation="horizontal" disabled>
+    <tp-switch name="mfa" default-checked></tp-switch>
+  </tp-field>
+</div>`}
+/>
+
+A horizontal Field puts the label beside the control. A compact control such as a Switch or Checkbox moves to the end of the row, with the label and description stacked beside it, which is the usual settings layout. `disabled` on the Field disables its control and dims the label and description with it, so the whole row reads as unavailable. `orientation="responsive"` switches between the stacked and horizontal layouts by the Field's own width.
+
+### API key
+
+<Preview
+  code={`<tp-field>
+  <span slot="label">API key <tp-badge variant="secondary">Optional</tp-badge></span>
+  <tp-input name="api-key" placeholder="sk_live_…" mono></tp-input>
+  <span slot="description">Find it in <a href="#api-key">Developer settings</a>.</span>
+</tp-field>`}
+/>
+
+The `label`, `description` and `error` slots take precedence over the attributes of the same name. Use them for a link or a Badge that plain text cannot carry.
+
+### Shipping address
+
+<Preview
+  code={`<tp-field legend="Shipping address">
+  <div slot="group" style="display:grid;gap:var(--tp-space-4)">
+    <tp-field label="Street address">
+      <tp-input name="street" autocomplete="street-address" default-value="221 Market Street"></tp-input>
+    </tp-field>
+    <tp-field label="City">
+      <tp-input name="city" autocomplete="address-level2" default-value="San Francisco"></tp-input>
+    </tp-field>
+    <tp-field label="Postal code">
+      <tp-input name="postal-code" autocomplete="postal-code" default-value="94105"></tp-input>
+    </tp-field>
+  </div>
+</tp-field>`}
+/>
+
+A Field with a `legend` renders a native fieldset that captions a section of a form. Put the peer Fields in its `group` slot, here inside one wrapper that sets their spacing; `legend-scale="field"` sizes the caption like a field label instead of a section heading. To join the editors of one value, such as width and height, into a single row, use a Field group instead.

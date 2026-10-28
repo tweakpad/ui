@@ -11,8 +11,7 @@ import type {
   SliderThumbAlignment,
 } from '../components/slider/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import { sliderExamples } from './slider.examples.js';
-import documentation from '../../docs/slider.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   value: SliderValue;
@@ -24,6 +23,7 @@ interface Args {
   thumbCollisionBehavior: SliderThumbCollisionBehavior;
   thumbAlignment: SliderThumbAlignment;
   orientation: 'horizontal' | 'vertical';
+  variant: TpSlider['variant'];
   disabled: boolean;
   readOnly: boolean;
   label: string;
@@ -33,17 +33,10 @@ interface Args {
   indeterminateText: string;
   formAssociatedValue: boolean;
 }
-const source = `<script type="module">\n  import '@tweakpad/ui/styles.css';\n  import '@tweakpad/ui/register';\n</script>\n<tp-slider label="Volume" name="volume" default-value="40"\n  minimum="0" maximum="100" step="1" thumb-alignment="edge">\n</tp-slider>`;
 const meta: Meta<Args> = {
   title: 'Components/Slider',
   component: 'tp-slider',
-  parameters: {
-    docs: {
-      examples: sliderExamples,
-      description: { component: documentation },
-      source: { code: source, language: 'html' },
-    },
-  },
+  parameters: { docs: libraryDocs('components/slider') },
   args: {
     value: 40,
     minimum: 0,
@@ -54,6 +47,7 @@ const meta: Meta<Args> = {
     thumbCollisionBehavior: 'push',
     thumbAlignment: 'edge',
     orientation: 'horizontal',
+    variant: 'default',
     disabled: false,
     readOnly: false,
     label: 'Volume',
@@ -64,10 +58,7 @@ const meta: Meta<Args> = {
     formAssociatedValue: true,
   },
   argTypes: {
-    value: {
-      control: 'object',
-      description: 'Controlled number or ordered number list; the example accepts proposals.',
-    },
+    value: { control: 'object' },
     minimum: { control: 'number' },
     maximum: { control: 'number' },
     step: { control: 'number' },
@@ -76,23 +67,14 @@ const meta: Meta<Args> = {
     thumbCollisionBehavior: { control: 'select', options: ['push', 'swap', 'none'] },
     thumbAlignment: { control: 'select', options: ['center', 'edge', 'delayed-edge'] },
     orientation: { control: 'select', options: ['horizontal', 'vertical'] },
+    variant: { control: 'select', options: ['default', 'bar'] },
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
     label: { control: 'text' },
     locale: { control: 'text' },
-    buffered: {
-      control: 'object',
-      description: 'Non-semantic [start, end] ranges in value units, e.g. [[0, 60]].',
-    },
-    segments: {
-      control: 'object',
-      description:
-        'Non-semantic chapter segments, e.g. [{"start": 0, "end": 50, "label": "Intro"}].',
-    },
-    indeterminateText: {
-      control: 'text',
-      description: 'aria-valuetext while minimum/maximum form an empty or non-finite domain.',
-    },
+    buffered: { control: 'object' },
+    segments: { control: 'object' },
+    indeterminateText: { control: 'text' },
     formAssociatedValue: { control: 'boolean' },
   },
   render: (args) => {
@@ -109,6 +91,7 @@ const meta: Meta<Args> = {
       .thumbCollisionBehavior=${args.thumbCollisionBehavior}
       .thumbAlignment=${args.thumbAlignment}
       .orientation=${args.orientation}
+      .variant=${args.variant}
       .disabled=${args.disabled}
       .readOnly=${args.readOnly}
       .label=${args.label}

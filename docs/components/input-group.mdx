@@ -1,0 +1,165 @@
+---
+title: Input group
+description: One Input or Text area joined with text, icons, shortcuts and actions inside a single shared border.
+tag: tp-input-group
+---
+
+<Preview
+  code={`<tp-field label="Search">
+  <tp-input-group>
+    <tp-input type="search" placeholder="Search docs, issues and people"></tp-input>
+    <tp-key-hint-group slot="inline-end" separator="none">
+      <tp-key-hint key="mod"></tp-key-hint>
+      <tp-key-hint>K</tp-key-hint>
+    </tp-key-hint-group>
+  </tp-input-group>
+</tp-field>`}
+/>
+
+## Usage
+
+An Input group draws one border, focus ring and invalid state around an editor and what sits beside it. The editor inside keeps its own editing, validation and form value, so put exactly one Input or Text area in the default slot and name it with a Field as usual. A press on a passive addon, such as a unit, focuses the editor, so the addon behaves like part of the field. Reach for it when the extra content describes or acts on this one value; to join several editors, use a Field group.
+
+### Prices and addresses
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-4)">
+  <tp-field label="Monthly budget">
+    <tp-input-group>
+      <span slot="inline-start">$</span>
+      <tp-input inputmode="decimal" default-value="2,400.00"></tp-input>
+      <span slot="inline-end">USD</span>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Subdomain" error="That subdomain is already taken." invalid>
+    <tp-input-group>
+      <span slot="inline-start">https://</span>
+      <tp-input default-value="acme"></tp-input>
+      <span slot="inline-end">.tweakpad.app</span>
+    </tp-input-group>
+  </tp-field>
+</div>`}
+/>
+
+Text in `inline-start` and `inline-end` frames the value with its currency, unit or address parts, so people type only the part that varies. The group shows the editor's invalid and disabled states on its border, while the error itself still comes from the Field.
+
+### Live status
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-4)">
+  <tp-field label="Search invoices">
+    <tp-input-group>
+      <tp-input type="search" default-value="northwind"></tp-input>
+      <span slot="inline-end">12 results</span>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Username" description="maya.chen is available.">
+    <tp-input-group>
+      <tp-input default-value="maya.chen"></tp-input>
+      <tp-icon id="input-group-available" slot="inline-end" style="color:var(--tp-success)"></tp-icon>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Custom domain">
+    <tp-input-group>
+      <tp-input disabled default-value="docs.northwind.co"></tp-input>
+      <tp-spinner slot="inline-end" size="sm" label="Verifying domain"></tp-spinner>
+    </tp-input-group>
+  </tp-field>
+</div>`}
+  script={`import { checkIcon } from '@tweakpad/ui/icons/check';
+
+document.getElementById('input-group-available').icon = checkIcon;`}
+/>
+
+An addon can also report on the value: a result count, a check for an accepted value, or a Spinner while the value is verified or saved. Say the same in text where it matters, as the description does here, because a colored Icon alone is easy to miss.
+
+### Invite link and coupon
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-4)">
+  <tp-field label="Invite link">
+    <tp-input-group>
+      <tp-input readonly mono default-value="https://tweakpad.app/join/8f2c41"></tp-input>
+      <tp-copy-button slot="action" value="https://tweakpad.app/join/8f2c41" label="Copy invite link"></tp-copy-button>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Coupon code" description="Codes are case-insensitive.">
+    <tp-input-group action-variant="secondary">
+      <tp-input placeholder="SPRING25"></tp-input>
+      <tp-button slot="action">Apply</tp-button>
+    </tp-input-group>
+  </tp-field>
+</div>`}
+/>
+
+Buttons in the `action` slot sit right after the editor and stay operable even while the editor is read-only or disabled. `action-variant` and `action-size` set how they look unless a Button sets its own.
+
+### Country code and format help
+
+<Preview
+  code={`<div id="input-group-addons" style="display:grid;gap:var(--tp-space-4)">
+  <tp-field label="Phone number">
+    <tp-input-group>
+      <tp-menu id="input-group-country" slot="inline-start" label="Country code">
+        <tp-button slot="trigger" variant="ghost" size="xs"><span id="input-group-country-label">+1</span><tp-icon id="input-group-country-icon" slot="icon-end"></tp-icon></tp-button>
+        <tp-menu-item value="+1">United States +1</tp-menu-item>
+        <tp-menu-item value="+44">United Kingdom +44</tp-menu-item>
+        <tp-menu-item value="+49">Germany +49</tp-menu-item>
+      </tp-menu>
+      <tp-input type="tel" name="phone" autocomplete="tel-national" placeholder="415 555 0132"></tp-input>
+    </tp-input-group>
+  </tp-field>
+  <tp-field label="Project identifier">
+    <tp-input-group>
+      <tp-input mono placeholder="checkout-service"></tp-input>
+      <tp-tooltip slot="inline-end" label="Lowercase letters, numbers and hyphens.">
+        <tp-button slot="trigger" variant="ghost" size="icon-xs" aria-label="Identifier format"><tp-icon id="input-group-help-icon" slot="icon-start"></tp-icon></tp-button>
+      </tp-tooltip>
+    </tp-input-group>
+  </tp-field>
+</div>`}
+  script={`import { chevronDownIcon } from '@tweakpad/ui/icons/chevron-down';
+import { circleHelpIcon } from '@tweakpad/ui/icons/circle-help';
+
+document.getElementById('input-group-country-icon').icon = chevronDownIcon;
+document.getElementById('input-group-help-icon').icon = circleHelpIcon;
+document.getElementById('input-group-country').addEventListener('tp-action', (event) => {
+  document.getElementById('input-group-country-label').textContent = event.detail.value;
+});`}
+/>
+
+Addons also take interactive components, such as a Menu that picks a country code or a Tooltip that explains the expected format. They keep their own focus and keyboard behavior; give an Icon-only trigger an `aria-label`.
+
+### Search with a button
+
+<Preview
+  code={`<tp-button-group label="Search the help center">
+  <tp-input-group>
+    <tp-input label="Search query" type="search" placeholder="How do I export invoices?"></tp-input>
+  </tp-input-group>
+  <tp-button variant="outline">Search</tp-button>
+</tp-button-group>`}
+/>
+
+An Input group can join a Button group as one member, so a search field and its submit Button share one seamed edge.
+
+### Reply composer
+
+<Preview
+  align="stretch"
+  code={`<tp-field label="Reply">
+  <tp-input-group>
+    <span slot="block-start">Replying to Jonas Weber</span>
+    <tp-text-area id="input-group-reply" maxlength="280" placeholder="Share an update with the team"></tp-text-area>
+    <span id="input-group-count" slot="block-end" style="margin-inline-end:auto">0/280</span>
+    <tp-button slot="block-end" variant="ghost" size="sm">Cancel</tp-button>
+    <tp-button slot="block-end" size="sm">Post reply</tp-button>
+  </tp-input-group>
+</tp-field>`}
+  script={`const reply = document.getElementById('input-group-reply');
+reply.addEventListener('input', () => {
+  document.getElementById('input-group-count').textContent = reply.value.length + '/280';
+});`}
+/>
+
+`block-start` and `block-end` span the group above and below the editor. With a Text area they make a composer: a context line on top, and a character count and the submit actions in the footer, all inside the one border.

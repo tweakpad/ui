@@ -1,0 +1,173 @@
+---
+title: Toast
+description: Transient notifications from one queue, stacked in a corner without taking focus from the current task.
+tag: tp-toast
+---
+
+<Preview
+  code={`<tp-button id="toast-meeting-trigger" variant="outline">Schedule meeting</tp-button>
+<tp-toast id="toast-meeting" label="Notifications"></tp-toast>`}
+  script={`const toaster = document.getElementById('toast-meeting');
+document.getElementById('toast-meeting-trigger').addEventListener('click', () => {
+  toaster.add({
+    title: 'Design review scheduled',
+    description: 'Thursday, October 15 at 10:00 AM',
+    type: 'success',
+  });
+});`}
+/>
+
+## Usage
+
+Place one Toast per queue, usually once in the app shell, and call `add()` on it with a title and a description. The notifications appear in a labelled landmark without taking focus from the task at hand; F6 reaches the landmark, and hovering, focusing or leaving the window pauses their timers. A swipe or the Close button dismisses one. Keep toasts for news about work that already happened; a message that needs an answer belongs in an Alert dialog, and a lasting problem on the page in an Alert.
+
+### Status of background work
+
+<Preview
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-2)">
+  <tp-button variant="outline" data-toast-type="success">Send invoice</tp-button>
+  <tp-button variant="outline" data-toast-type="info">Check for updates</tp-button>
+  <tp-button variant="outline" data-toast-type="warning">Upload photos</tp-button>
+  <tp-button variant="outline" data-toast-type="error">Charge card</tp-button>
+</div>
+<tp-toast id="toast-types"></tp-toast>`}
+  script={`const toaster = document.getElementById('toast-types');
+const messages = {
+  success: ['Invoice sent', 'INV-2041 was emailed to billing@northwind.io.'],
+  info: ['New version available', 'Reload to get the latest dashboard.'],
+  warning: ['Storage almost full', 'You have used 92 GB of 100 GB.'],
+  error: ['Payment failed', 'The card ending in 4242 was declined.'],
+};
+for (const button of document.querySelectorAll('[data-toast-type]')) {
+  button.addEventListener('click', () => {
+    const type = button.dataset.toastType;
+    const [title, description] = messages[type];
+    toaster.add({ title, description, type });
+  });
+}`}
+/>
+
+A notification's `type` gives it the icon of its outcome, `success`, `info`, `warning` or `error`, while the title says what happened. `loading` shows a Spinner and stays until the notification is updated.
+
+### Undoing a deletion
+
+<Preview
+  code={`<tp-button id="toast-undo-trigger" variant="destructive">Delete project</tp-button>
+<tp-toast id="toast-undo"></tp-toast>`}
+  script={`const toaster = document.getElementById('toast-undo');
+document.getElementById('toast-undo-trigger').addEventListener('click', () => {
+  const id = toaster.add({
+    title: 'Project deleted',
+    description: 'Marketing site was moved to the trash.',
+    actionProperties: {
+      label: 'Undo',
+      onClick() {
+        toaster.close(id, 'action');
+        toaster.add({ title: 'Project restored', type: 'success', timeout: 2500 });
+      },
+    },
+  });
+});`}
+/>
+
+`actionProperties` adds a Button to the notification. An action does not close the notification by itself: its handler does the work, then closes it with the `action` cause, as Undo does here.
+
+### Publishing changes
+
+<Preview
+  code={`<tp-button id="toast-promise-trigger" variant="outline">Publish changes</tp-button>
+<tp-toast id="toast-promise"></tp-toast>`}
+  script={`const toaster = document.getElementById('toast-promise');
+document.getElementById('toast-promise-trigger').addEventListener('click', () => {
+  const publish = new Promise((resolve) => setTimeout(() => resolve({ pages: 12 }), 1800));
+  toaster.manager.promise(publish, {
+    loading: 'Publishing changes…',
+    success: (result) => ({ title: 'Changes published', description: \`\${result.pages} pages are live.\` }),
+    error: 'Could not publish changes',
+  });
+});`}
+/>
+
+`manager.promise()` shows a loading notification while the work is pending, settles it into the success or error content, and returns the original result.
+
+### Copying an invite link
+
+<Preview
+  code={`<tp-button id="toast-anchor-trigger" variant="outline">Copy invite link</tp-button>
+<tp-toast id="toast-anchor"></tp-toast>`}
+  script={`const toaster = document.getElementById('toast-anchor');
+const button = document.getElementById('toast-anchor-trigger');
+button.addEventListener('click', () => {
+  toaster.add({
+    identifier: 'invite-link',
+    title: 'Invite link copied',
+    timeout: 1500,
+    positionerProperties: { anchor: button, side: 'top', sideOffset: 8, showArrow: true },
+  });
+});`}
+/>
+
+A short confirmation reads best next to the control that caused it: `positionerProperties` anchors the notification to an element instead of the stack. A fixed `identifier` updates the same notification on repeated presses instead of stacking copies. Anchored notifications that follow other rules than the stack get a Toast of their own.
+
+### A queue for the whole app
+
+<Preview
+  code={`<div style="display:flex;flex-wrap:wrap;gap:var(--tp-space-2)">
+  <tp-button id="toast-manager-sync" variant="outline">Sync calendar</tp-button>
+  <tp-button id="toast-manager-clear" variant="ghost">Dismiss all</tp-button>
+</div>
+<tp-toast id="toast-manager" label="Calendar notifications"></tp-toast>`}
+  script={`import { createToastManager } from '@tweakpad/ui';
+
+const notifications = createToastManager({ timeout: 4000 });
+document.getElementById('toast-manager').toastManager = notifications;
+
+// Elsewhere in the app, only the manager is needed.
+let synced = 0;
+document.getElementById('toast-manager-sync').addEventListener('click', () => {
+  synced += 3;
+  notifications.add({
+    title: 'Calendar synced',
+    description: \`\${synced} events imported from Google Calendar.\`,
+    type: 'success',
+  });
+});
+document.getElementById('toast-manager-clear').addEventListener('click', () => notifications.close());`}
+/>
+
+`createToastManager()` creates a queue on its own, so any module can raise notifications without a reference to the element; the app shell hands it to the Toast through `toastManager`. `close()` without an identifier dismisses every notification.
+
+### Saving a draft
+
+<Preview
+  code={`<tp-button id="toast-content-trigger" variant="outline">Save draft</tp-button>
+<tp-toast id="toast-content" duration="persistent" title="Draft saved">Your post will stay here until you publish it.</tp-toast>`}
+  script={`const toaster = document.getElementById('toast-content');
+document.getElementById('toast-content-trigger').addEventListener('click', () => toaster.setOpen(true));`}
+/>
+
+A Toast with `open` shows its own content as one notification, with `title` as the heading, which suits a fixed message written in markup. `setOpen()` shows or hides it from code, and `duration="persistent"` keeps it until it is dismissed.
+
+### Offline banner
+
+<Preview
+  code={`<tp-button id="toast-position-trigger" variant="outline">Go offline</tp-button>
+<tp-toast id="toast-position" position="block-start center" timeout="0" limit="1"></tp-toast>`}
+  script={`const toaster = document.getElementById('toast-position');
+document.getElementById('toast-position-trigger').addEventListener('click', () => {
+  toaster.add({
+    title: 'You are offline',
+    description: 'Changes are saved locally and will sync when you reconnect.',
+    type: 'warning',
+  });
+});`}
+/>
+
+A connection warning belongs at the top of the screen and stays until the connection returns: `position` places the stack, `timeout="0"` keeps notifications until they are dismissed, and `limit` caps how many show at once. `priority: 'high'` in `add()` announces a notification through the assertive channel, interrupting the screen reader, so keep it for urgent messages.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="F6" /> | Moves focus to the notifications while any are showing. |
+| <Keys keys="esc" /> | Dismisses the focused notification. |

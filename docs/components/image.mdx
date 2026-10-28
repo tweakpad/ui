@@ -1,0 +1,125 @@
+---
+title: Image
+description: A responsive image in an optional fixed-ratio frame, with a loading placeholder, a failure fallback, hover zoom, parallax and scroll reveal.
+tag: tp-image
+parts: [tp-image-group]
+---
+
+<Preview
+  code={`<tp-image
+  ratio="1.7777777778"
+  zoom="in"
+  style="inline-size:40rem;max-inline-size:100%;border-radius:var(--tp-radius-xl)"
+  src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&q=75&auto=format&fit=crop"
+  srcset="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=640&q=75&auto=format&fit=crop 640w, https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&q=75&auto=format&fit=crop 1200w"
+  alt="A bright open-plan office with long shared desks"
+></tp-image>`}
+/>
+
+## Usage
+
+Use Image for content photos that need a stable frame, a loading state or motion: cards, galleries, page heroes. The browser still picks and loads the file, since the request attributes and `<source>` children go to a native picture, so lazy loading and responsive candidates work as usual. `ratio` reserves the frame before the image loads, so nothing shifts, and `border-radius` on the element rounds it. For a person's picture, use Avatar.
+
+### Listing grids
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10rem,1fr));gap:var(--tp-space-3);max-inline-size:40rem">
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=480&q=75&auto=format&fit=crop" alt="Desks by a window"></tp-image>
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=480&q=75&auto=format&fit=crop" alt="A building facade"></tp-image>
+  <tp-image ratio="1" fit="contain" style="border-radius:var(--tp-radius-lg);background:var(--tp-muted)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=480&q=75&auto=format&fit=crop" alt="A rooftop terrace"></tp-image>
+</div>`}
+/>
+
+One `ratio` across a grid keeps the rows even whatever the photos' own shapes. The default fit crops to fill the frame; `fit="contain"` shows the whole picture on a background of your choosing, which suits product shots that must not lose their edges.
+
+### Missing covers
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:var(--tp-space-3);max-inline-size:32rem">
+  <tp-image ratio="1.5" style="border-radius:var(--tp-radius-lg)" alt="Project cover"></tp-image>
+  <tp-image ratio="1.5" style="border-radius:var(--tp-radius-lg)" alt="Project cover">
+    <span slot="fallback" style="display:grid;place-items:center;inline-size:100%;block-size:100%;background:var(--tp-muted);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">No cover yet</span>
+  </tp-image>
+</div>`}
+/>
+
+An image that fails or has no source shows a muted surface with a broken-image icon, or the `fallback` slot's content, which stays exposed to assistive technology.
+
+### Blurred previews while loading
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:var(--tp-space-3);max-inline-size:32rem">
+  <tp-image ratio="1.5" placeholder="spinner" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=640&q=75&auto=format&fit=crop" alt="A building facade"></tp-image>
+  <tp-image ratio="1.5" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=640&q=75&auto=format&fit=crop" alt="A rooftop terrace">
+    <img slot="placeholder" alt="" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=24&q=50&auto=format&fit=crop" style="inline-size:100%;block-size:100%;object-fit:cover;filter:blur(12px)">
+  </tp-image>
+</div>`}
+/>
+
+A pulsing skeleton fills the frame by default while the image loads. A tiny blurred version of the photo in the `placeholder` slot makes for a gentler load, and a spinner suits a slow, large file the user is waiting for.
+
+### Cards that zoom on hover
+
+<Preview
+  code={`<tp-card id="image-card-hover" style="max-inline-size:22rem">
+  <h3 slot="header" style="margin:0">Quiet floor</h3>
+  <p slot="description" style="margin:0">12 bookable desks with natural light.</p>
+  <tp-image ratio="1.7777777778" zoom="in" style="border-radius:var(--tp-radius-md)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=640&q=75&auto=format&fit=crop" alt="Desks by a window"></tp-image>
+</tp-card>`}
+  script={`const card = document.getElementById('image-card-hover');
+const image = card.querySelector('tp-image');
+card.addEventListener('pointerenter', () => (image.zoomed = true));
+card.addEventListener('pointerleave', () => (image.zoomed = false));`}
+/>
+
+Hover zoom scales the picture inside a frame that never changes size. Setting `zoomed` from the card lets the photo respond wherever the pointer enters the card, not only over the image.
+
+### A gallery that reveals together
+
+<Preview
+  align="stretch"
+  code={`<tp-image-group reveal="fade up" stagger="120" style="display:grid;grid-template-columns:repeat(4,1fr);gap:var(--tp-space-3);max-inline-size:40rem">
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
+</tp-image-group>`}
+/>
+
+`reveal` animates an image into place the first time it scrolls into view. On its own, each image reveals as it loads; an Image group waits until all its images have loaded, then reveals them in order, `stagger` milliseconds apart, so a gallery never appears with holes. The reveal's timing custom properties, set on a container, apply to every image inside, and a Scroll trigger sequences a group with the text around it. Under reduced motion, images appear already revealed and zoom is instant.
+
+### Parallax in a feature section
+
+<Preview
+  align="stretch"
+  code={`<div style="block-size:20rem;overflow-y:auto;display:grid;gap:var(--tp-space-4);padding:var(--tp-space-4);border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-xl);max-inline-size:36rem">
+  <tp-image loading="eager" ratio="1.7777777778" parallax="up" parallax-depth="0.4" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="1.7777777778" parallax="up zoom-in" parallax-depth="0.4" parallax-smoothing="0.6" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1494337480532-3725c85fd2ab?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+  <tp-image loading="eager" ratio="1.7777777778" parallax="down" parallax-depth="0.4" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=900&q=75&auto=format&fit=crop" alt=""></tp-image>
+</div>`}
+/>
+
+Parallax moves the picture inside its frame as the page, or the nearest scrolling container, scrolls past; scroll the box to see it. The picture is enlarged by `parallax-depth` so the frame's edges never show, and a scroll zoom can scale it as it travels. `parallax-smoothing` makes it trail the scroll and ease into place after it stops. In a container that scrolls only sideways, progress follows the inline axis.
+
+### A page hero
+
+<Preview
+  align="stretch"
+  code={`<tp-image
+  ratio="2.4"
+  loading="eager"
+  fetchpriority="high"
+  style="border-radius:var(--tp-radius-xl)"
+  src="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1600&q=75&auto=format&fit=crop"
+  srcset="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=900&q=75&auto=format&fit=crop 900w, https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1600&q=75&auto=format&fit=crop 1600w"
+  sizes="100vw"
+  alt="A bicycle leaning on a wall in a wet alley"
+>
+  <source media="(max-width: 600px)" srcset="https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=600&h=450&q=75&auto=format&fit=crop&crop=entropy 600w, https://images.unsplash.com/photo-1465869185982-5a1a7522cbcb?w=1000&h=750&q=75&auto=format&fit=crop&crop=entropy 1000w" sizes="100vw">
+</tp-image>`}
+/>
+
+A hero is the largest thing on first paint, so it loads eagerly with a high fetch priority instead of lazily. `<source>` children give the native picture other candidates, here a tighter crop for narrow screens.

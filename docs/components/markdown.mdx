@@ -1,0 +1,230 @@
+---
+title: Markdown
+description: A Markdown document rendered as native, themed content, with code blocks, tables, alerts and task items composed from library components.
+tag: tp-markdown
+---
+
+<Preview
+  align="stretch"
+  code={`<tp-markdown heading-offset="1" style="max-inline-size:40rem">
+  ## Release 2.4
+
+  Shared workspaces are here. Invite up to **50 teammates**, assign roles, and keep billing in one place. See the [migration notes](#usage) before you upgrade.
+
+  - [x] Workspace roles and permissions
+  - [x] Consolidated invoices
+  - [ ] Audit log export
+
+  | Plan | Seats | Price |
+  | :--- | ---: | ---: |
+  | Starter | 5 | $0 |
+  | Team | 50 | $12 / seat |
+</tp-markdown>`}
+/>
+
+## Usage
+
+Use Markdown for content written as Markdown: release notes, help articles, assistant replies. A built-in parser reads standard Markdown with tables, task lists, footnotes and alerts, and the result is rendered as real elements, never injected as HTML. The source is the element's text content, dedented, or the `source` property for content that changes.
+
+### Help articles with markup in the text
+
+<Preview
+  align="stretch"
+  code={`<tp-markdown style="max-inline-size:40rem">
+  <script type="text/markdown">
+    Embed the widget with a \`<script async>\` tag and set \`data-theme="dark" & data-compact\` on it.
+
+    Open the command palette with **Ctrl + K**, then:
+
+    3. Search for **Widgets**
+    4. Copy the *embed snippet*
+  </script>
+</tp-markdown>`}
+/>
+
+The browser parses plain text content before the element sees it, so a literal `<tag>` there would become an element. A `<script type="text/markdown">` child keeps `<` and `&` exactly as written.
+
+### Changelogs under a page heading
+
+<Preview
+  align="stretch"
+  code={`<tp-markdown heading-offset="2" id-prefix="changelog-" style="max-inline-size:40rem">
+  # Billing
+
+  Invoices now show usage per workspace.
+
+  ## Fixes
+
+  - Tax IDs are validated before checkout.
+  - Receipts use the account's locale.
+</tp-markdown>`}
+/>
+
+A document written with its own top-level headings fits under the page's outline with `heading-offset`: here `#` renders as `h3`. Headings get ids for links, and `id-prefix` keeps them apart when several documents share a page.
+
+### Setup guides with code and callouts
+
+<Preview
+  align="stretch"
+  code={`<tp-markdown style="max-inline-size:40rem">
+  Rotate your key from the dashboard, then update the client:
+
+  \`\`\`ts title="client.ts" {2}
+  const client = new Tweakpad({
+    apiKey: process.env.TWEAKPAD_KEY,
+  });
+  \`\`\`
+
+  > [!WARNING]
+  > The old key stops working 24 hours after rotation.
+</tp-markdown>`}
+/>
+
+Fenced code becomes a Code block, and the fence can set its title, highlighted lines and line numbers. A blockquote that starts with `[!NOTE]`, `[!TIP]`, `[!WARNING]` or a similar marker becomes an Alert.
+
+### Updates in a side panel
+
+<Preview
+  align="stretch"
+  code={`<tp-markdown size="sm" style="max-inline-size:24rem">
+  **Deploy finished** in 1m 12s.
+
+  1. Built 214 pages
+  2. Purged the CDN cache
+  3. Notified #releases
+
+  Preview it at \`northwind-pr-482.tweakpad.app\`.
+</tp-markdown>`}
+/>
+
+The small size steps body text and headings down one size for dense surfaces such as side panels and chat bubbles.
+
+### Streaming replies
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-4);justify-items:start;max-inline-size:40rem">
+  <tp-markdown id="markdown-stream" style="min-block-size:12rem;inline-size:100%"></tp-markdown>
+  <tp-button id="markdown-stream-replay" variant="outline" size="sm">Replay</tp-button>
+</div>`}
+  script={`const markdown = document.getElementById('markdown-stream');
+const reply = 'To **invite a teammate**, open *Settings* and choose \`Members\`:\\n\\n1. Enter their work email.\\n2. Pick a role, such as **Editor**.\\n3. Select [Send invite](#streaming-replies).\\n\\nThey get access as soon as they accept.';
+let timer;
+function play() {
+  clearInterval(timer);
+  markdown.source = '';
+  markdown.streaming = true;
+  let index = 0;
+  timer = setInterval(() => {
+    markdown.append(reply.slice(index, index + 5));
+    index += 5;
+    if (index >= reply.length) {
+      clearInterval(timer);
+      markdown.streaming = false;
+    }
+  }, 40);
+}
+document.getElementById('markdown-stream-replay').addEventListener('click', play);
+await customElements.whenDefined('tp-markdown');
+play();`}
+/>
+
+For a reply that arrives in chunks, set `streaming` while it lasts and `append()` each chunk. Unfinished emphasis, code and links in the last block are completed before parsing, so their markers never flash, and blocks that did not change keep their elements.
+
+### Allowing a few elements
+
+<Preview
+  align="stretch"
+  code={`<tp-markdown id="markdown-elements" style="max-inline-size:40rem"></tp-markdown>`}
+  script={`const markdown = document.getElementById('markdown-elements');
+markdown.elements = { 'tp-badge': ['variant'] };
+markdown.source = 'Workspace analytics <tp-badge variant="secondary">Beta</tp-badge>\\n\\nTrack active members and storage per project. Press <kbd>G</kbd> then <kbd>A</kbd> to open it.';`}
+/>
+
+Raw HTML is never inserted as markup. Tags the `elements` policy lists become real elements with only the attributes it names, here a Badge with its treatment; any other tag shows as literal text, which keeps content from users or a model safe to render.
+
+### Checklists and outbound links
+
+<Preview
+  align="stretch"
+  code={`<tp-markdown id="markdown-renderers" style="max-inline-size:40rem"></tp-markdown>`}
+  script={`import { html } from 'lit';
+
+const markdown = document.getElementById('markdown-renderers');
+markdown.renderers = {
+  code: (node) => {
+    if (node.lang !== 'checklist') return undefined;
+    return html\`<div style="display:grid;gap:var(--tp-space-2);margin-block:var(--tp-space-3)">
+      \${node.value.split('\\n').map((step) => html\`<tp-checkbox>\${step}</tp-checkbox>\`)}
+    </div>\`;
+  },
+  link: (node, { fallback }) =>
+    node.url.startsWith('http') ? html\`\${fallback()}<span aria-hidden="true"> ↗</span>\` : undefined,
+};
+markdown.source = [
+  'Before the launch call, read the [rollout plan](#checklists-and-outbound-links) and the [status page](https://status.example.com/).',
+  '',
+  '\`\`\`checklist',
+  'Freeze the release branch',
+  'Run the migration on staging',
+  'Post the changelog',
+  '\`\`\`',
+].join('\\n');`}
+/>
+
+A renderer replaces how one node type renders. It receives the parsed node and a context whose `children()` and `fallback()` give the default rendering, and returns elements or a template, or `undefined` to keep the default. Here a `checklist` fence becomes Checkboxes and links to other sites get an outbound mark, while every other node renders as usual.
+
+### A guide with a table of contents
+
+<Preview
+  align="stretch"
+  code={`<tp-scroll-area label="Onboarding guide" style="block-size:22rem">
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) 10rem;gap:var(--tp-space-8);padding:var(--tp-space-6);align-items:start">
+    <tp-markdown id="markdown-outline" id-prefix="onboarding-">
+      <script type="text/markdown">
+        ## Create your workspace
+
+        Pick a name and a URL. The URL can change later, but links shared before the change stop working, so choose one your team will keep.
+
+        Invite at least one other admin so the workspace never depends on a single account.
+
+        ## Connect your tools
+
+        ### Calendar
+
+        Connecting a calendar lets due dates appear next to meetings. Only events you create in the workspace are written back.
+
+        ### Chat
+
+        Choose which channels receive project updates. Mentions always reach the person directly, whatever the channel settings.
+
+        ## Invite your team
+
+        Send invites from Members, or share a join link limited to your company's email domain. Guests see only the projects they are added to.
+
+        Once everyone has joined, archive the sample project so new members start from a clean list.
+      </script>
+    </tp-markdown>
+    <aside style="position:sticky;top:0">
+      <tp-table-of-contents id="markdown-outline-toc" label="On this page" navigation="scroll"></tp-table-of-contents>
+    </aside>
+  </div>
+</tp-scroll-area>`}
+  script={`const markdown = document.getElementById('markdown-outline');
+const toc = document.getElementById('markdown-outline-toc');
+const update = () => {
+  toc.replaceChildren(...markdown.headings.map((heading) => {
+    const item = document.createElement('tp-table-of-contents-item');
+    item.target = heading.element;
+    item.depth = heading.depth - 1;
+    item.textContent = heading.label;
+    return item;
+  }));
+};
+await customElements.whenDefined('tp-markdown');
+await markdown.updateComplete;
+update();
+markdown.addEventListener('tp-markdown-render', update);`}
+/>
+
+`headings` lists the rendered headings and `tp-markdown-render` fires after every render, so a Table of contents can follow a document whose source changes, each item targeting its heading element.

@@ -97,11 +97,9 @@ const markupAccessors = (loaded: ReadonlySet<string>): TreeAccessors<TpTreeItem>
 });
 
 /**
- * A hierarchy of items that can be expanded, selected, activated, loaded on demand,
- * virtualized and reordered (`ucl20-tree-view`, Foundation §17.8 Tree).
- *
- * Supply records through `items` (records mode: virtualization and reordering available) or
- * author nested `tp-tree-item` elements (markup mode).
+ * A hierarchy to expand, collapse, select and activate, with children loaded on demand. Author
+ * nested `tp-tree-item` elements, or supply records through `items`, which also enables
+ * virtualization and reordering. The tree is one tab stop; arrow keys move between items.
  *
  * @slot - Markup mode: top-level `tp-tree-item` elements.
  * @slot empty - Content shown when there are no items.
@@ -212,34 +210,57 @@ export class TpTreeView<T = TreeViewItem>
   #providedValue: readonly string[] | undefined;
   #providedExpanded: readonly string[] | undefined;
   #providedItems: readonly T[] | undefined;
+  /** The ids selected at first render, when the tree owns its selection. */
   defaultValue: readonly string[] | undefined;
+  /** The ids expanded at first render, when the tree owns its expansion. */
   defaultExpanded: readonly string[] | undefined;
+  /** The records the tree starts from, when it owns them; reordering then changes its own copy. */
   defaultItems: readonly T[] | undefined;
 
+  /** How many items can be selected: none, one, or several with Shift and Ctrl or Cmd. */
   selectionMode: TreeSelectionMode = 'single';
+  /** Selecting a parent selects its descendants, and a parent shows checked or mixed from its children. */
   selectionPropagation = false;
+  /** Shows a checkbox on each item; a press on the box toggles it without changing the rest of the selection. */
   checkboxSelection = false;
+  /** What expands a parent: a press anywhere on its row, or only on the chevron, which leaves the row free to select or open. */
   expansionTrigger: TreeViewExpansionTrigger = 'item';
+  /** Loads the children of an item that declares children but has none yet, on its first expansion; failures show a retry. */
   loadChildren: TreeViewLoadChildren<T> | TreeViewLoadChildren<TpTreeItem> | null = null;
+  /** Renders only the rows near the viewport, for large trees built from records; give the tree a block size. */
   virtualized = false;
+  /** The row height, in pixels, a virtualized tree estimates before measuring. */
   itemSize: number | null = null;
+  /** How many rows a virtualized tree renders beyond each edge of the viewport. */
   overscan = 4;
+  /** Lets people drag items, or move them with the keyboard, to a new place; the tree proposes each move through `tp-items-change`. */
   reorderable = false;
+  /** Vetoes a move before it is proposed, for example into a read-only folder. */
   canDrop: ((move: TreeMove) => boolean) | null = null;
+  /** The row density. */
   size: TreeViewSize = 'default';
+  /** How nesting is drawn: a guide line per level, or indentation alone. */
   guides: TreeViewGuides = 'line';
+  /** The accessible name of the tree, such as "Project files". */
   label: string | null = null;
+  /** Replaces built-in text, such as the loading, retry and reorder announcements. */
   messages: TreeViewMessages = {};
+  /** The stable id of a record; defaults to its `id`. */
   getItemId: (item: T) => string = (item) => String((item as TreeViewItem).id ?? '');
+  /** The text label of a record, for typeahead and announcements; defaults to its `label`, else its id. */
   getItemLabel: (item: T) => string = (item) =>
     String((item as TreeViewItem).label ?? (item as TreeViewItem).id ?? '');
+  /** The children of a record; defaults to its `children`. */
   getItemChildren: (item: T) => readonly T[] | null | undefined = (item) =>
     (item as TreeViewItem).children as readonly T[] | null | undefined;
+  /** Whether a record is disabled; defaults to its `disabled`. */
   isItemDisabled: (item: T) => boolean = (item) => Boolean((item as TreeViewItem).disabled);
+  /** Whether a record has children to load on first expansion; defaults to its `hasChildren`. */
   itemHasChildren: (item: T) => boolean = (item) => Boolean((item as TreeViewItem).hasChildren);
   /** Produces a record with new children when a reorder changes them. */
   withItemChildren: (item: T, children: T[]) => T = (item, children) =>
     ({ ...(item as object), children }) as T;
+  /** Renders the content of a record's row (icon, label, badge or actions); without it the row shows the label. */
   renderItem: TreeViewRenderItem<T> | null = null;
 
   readonly #selection = new ControllableState<readonly string[]>({
@@ -349,6 +370,7 @@ export class TpTreeView<T = TreeViewItem>
 
   // ── Public lanes ───────────────────────────────────────────────────────────
 
+  /** The selected ids; set it to control the selection, then publish each accepted proposal back. */
   override get value(): readonly string[] {
     return this.#selection.value;
   }
@@ -359,6 +381,7 @@ export class TpTreeView<T = TreeViewItem>
     this.requestUpdate('value', previous);
   }
 
+  /** The expanded ids; set it to control expansion, then publish each accepted proposal back. */
   get expanded(): readonly string[] {
     return this.#expansion.value;
   }
@@ -369,6 +392,7 @@ export class TpTreeView<T = TreeViewItem>
     this.requestUpdate('expanded', previous);
   }
 
+  /** The records the tree shows; set it to control them, then publish each accepted reorder back. */
   get items(): readonly T[] | undefined {
     return this.#records ? this.#items.value : undefined;
   }
@@ -415,39 +439,47 @@ export class TpTreeView<T = TreeViewItem>
     }
   }
 
+  /** Collapses every item. */
   collapseAll(): void {
     this.#setExpanded([], 'imperative-action');
   }
 
+  /** Expands one item, loading its children first when needed. */
   expandItem(id: string): void {
     this.#toggle(id, true, 'imperative-action');
   }
 
+  /** Collapses one item. */
   collapseItem(id: string): void {
     this.#toggle(id, false, 'imperative-action');
   }
 
+  /** Expands a collapsed item or collapses an expanded one. */
   toggleItem(id: string): void {
     this.#toggle(id, !this.#expandedSet.has(id), 'imperative-action');
   }
 
+  /** Adds an item to the selection, or makes it the selection in single mode. */
   selectItem(id: string): void {
     if (!this.#model.has(id)) return;
     // Multiple mode adds to the selection; single mode replaces it.
     this.#select(id, this.selectionMode === 'multiple' ? 'add' : 'replace', 'imperative-action');
   }
 
+  /** Removes an item from the selection. */
   deselectItem(id: string): void {
     if (!this.#selected.has(id)) return;
     this.#select(id, 'toggle-off', 'imperative-action');
   }
 
+  /** Selects every enabled item, in multiple selection mode. */
   selectAll(): void {
     if (this.selectionMode !== 'multiple') return;
     const ids = [...this.#model.ids()].filter((id) => !this.#model.get(id)?.disabled);
     this.#setSelection(ids, 'imperative-action');
   }
 
+  /** Empties the selection. */
   clearSelection(): void {
     this.#setSelection([], 'imperative-action');
   }
@@ -520,11 +552,13 @@ export class TpTreeView<T = TreeViewItem>
 
   // ── Item owner ─────────────────────────────────────────────────────────────
 
+  /** @internal An authored item announces itself to its tree. */
   itemConnected(item: HTMLElement): void {
     if (this.#records || !(item instanceof TpTreeItem)) return;
     this.#scheduleRebuild();
   }
 
+  /** @internal An item reports a press on one of its regions. */
   itemPress(
     item: HTMLElement,
     region: 'row' | 'indicator' | 'checkbox' | 'retry',

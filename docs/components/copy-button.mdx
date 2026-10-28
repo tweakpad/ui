@@ -1,0 +1,95 @@
+---
+title: Copy button
+description: Writes a value to the clipboard and confirms the result in place with a check and an announcement.
+tag: tp-copy-button
+---
+
+<Preview
+  code={`<tp-field label="API key" description="Use this key from server code only.">
+  <tp-input-group>
+    <tp-input readonly mono default-value="tp_live_4f2c9e1b7a"></tp-input>
+    <tp-copy-button slot="action" value="tp_live_4f2c9e1b7a" label="Copy API key"></tp-copy-button>
+  </tp-input-group>
+</tp-field>`}
+/>
+
+## Usage
+
+Use a Copy button wherever people need a value somewhere else: a key, a link, an identifier or a command. Set `value` to the exact text to copy. After a press the Icon turns into a check, the button's name becomes the copied message for a moment, and the result is announced politely, so nobody has to wonder whether it worked. It composes a Button, so focus, disabled and keyboard behavior are the Button's. Icon-only is the default, with `label` as its accessible name; make it specific, such as "Copy invite link", so it makes sense out of context.
+
+### Invite link
+
+<Preview
+  code={`<tp-copy-button variant="outline" size="default" show-label value="https://tweakpad.app/invite/k7Qm2x" label="Copy invite link" copied-label="Link copied"></tp-copy-button>`}
+/>
+
+When copying is the main action, as in a share dialog, `show-label` puts the label beside the Icon, and the copied message replaces it while confirmed.
+
+### Record details
+
+<Preview
+  code={`<tp-description-list>
+  <tp-description-list-item label="Project ID">
+    <span style="display:inline-flex;align-items:center;gap:var(--tp-space-1);font-family:var(--tp-font-mono)">
+      prj_8f2c41 <tp-copy-button value="prj_8f2c41" label="Copy project ID" size="xs"></tp-copy-button>
+    </span>
+  </tp-description-list-item>
+  <tp-description-list-item label="Region">
+    <span style="display:inline-flex;align-items:center;gap:var(--tp-space-1);font-family:var(--tp-font-mono)">
+      eu-central-1 <tp-copy-button value="eu-central-1" label="Copy region" size="xs"></tp-copy-button>
+    </span>
+  </tp-description-list-item>
+</tp-description-list>`}
+/>
+
+Next to a short read-only value, an Icon-only Copy button keeps the row compact while staying a real, focusable button.
+
+### Map coordinates
+
+<Preview
+  code={`<tp-field-group label="Map center">
+  <tp-input-group>
+    <span slot="prefix">Lat</span>
+    <tp-input label="Latitude" default-value="38.7223"></tp-input>
+  </tp-input-group>
+  <tp-input-group>
+    <span slot="prefix">Lng</span>
+    <tp-input label="Longitude" default-value="-9.1393"></tp-input>
+  </tp-input-group>
+  <tp-copy-button variant="outline" size="default" value="38.7223, -9.1393" label="Copy coordinates"></tp-copy-button>
+</tp-field-group>`}
+/>
+
+In a Field group, as in an Input group's `action` slot, the Copy button joins the border of the editors beside it, and its `value` can combine their values into the text people paste elsewhere.
+
+### Install command
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-2);justify-items:start">
+  <tp-copy-button id="copy-button-install" variant="outline" size="default" show-label value="npm install @tweakpad/ui" label="Copy install command"></tp-copy-button>
+  <output id="copy-button-install-output" style="font-size:var(--tp-text-sm);color:var(--tp-muted-foreground)">Not copied yet</output>
+</div>`}
+  script={`const button = document.getElementById('copy-button-install');
+const output = document.getElementById('copy-button-install-output');
+button.addEventListener('tp-copied', (event) => {
+  output.textContent = 'Copied "' + event.detail.value + '"';
+});
+button.addEventListener('tp-copy-error', () => {
+  output.textContent = 'The browser blocked clipboard access';
+});`}
+/>
+
+`tp-copy` fires before the write and can be cancelled to skip it; `tp-copied` and `tp-copy-error` report the outcome only once the browser has answered. Both outcomes are already announced, so use the events for analytics or follow-up interface rather than a second message. `copy()` runs the same sequence from code and resolves to whether it worked.
+
+### Variants
+
+<Preview
+  code={`<tp-copy-button show-label size="default" variant="default" value="#6D5DFC" label="Default"></tp-copy-button>
+<tp-copy-button show-label size="default" variant="secondary" value="#6D5DFC" label="Secondary"></tp-copy-button>
+<tp-copy-button show-label size="default" variant="destructive" value="#6D5DFC" label="Destructive"></tp-copy-button>
+<tp-copy-button show-label size="default" variant="outline" value="#6D5DFC" label="Outline"></tp-copy-button>
+<tp-copy-button show-label size="default" value="#6D5DFC" label="Ghost"></tp-copy-button>
+<tp-copy-button show-label size="default" variant="link" value="#6D5DFC" label="Link"></tp-copy-button>`}
+/>
+
+`variant` follows the Button's. `ghost` is the default because a Copy button usually sits beside the value it copies and should not compete with it; `outline` or `secondary` suit a copy that is the main action.

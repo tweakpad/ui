@@ -1,0 +1,190 @@
+---
+title: Accordion
+description: A vertical stack of disclosures that opens one item at a time, or several.
+tag: tp-accordion
+parts: [tp-accordion-item]
+---
+
+<Preview
+  align="stretch"
+  code={`<tp-accordion variant="outline" default-value="plans">
+  <tp-accordion-item value="plans">
+    <span slot="label">Can I change plans later?</span>
+    <p>Yes. Upgrades take effect immediately and are prorated on your next invoice. Downgrades apply at the end of the current billing period.</p>
+  </tp-accordion-item>
+  <tp-accordion-item value="seats">
+    <span slot="label">How are seats counted?</span>
+    <p>Every member with access to at least one project uses a seat. Guests and viewers on public links are free.</p>
+  </tp-accordion-item>
+  <tp-accordion-item value="cancel">
+    <span slot="label">What happens to my data if I cancel?</span>
+    <p>Your workspace stays readable for 30 days, and you can export every project as a ZIP archive before it is deleted.</p>
+  </tp-accordion-item>
+</tp-accordion>`}
+/>
+
+## Usage
+
+Each Accordion Item is a heading with a native button trigger and the content it shows: the trigger text goes in `slot="label"` and everything else is the content. Give every item a stable, unique `value`, which is what the accordion's `value` and `default-value` list. Item headings are level 2 unless `heading-level` fits them to the page outline. Use Accordion when disclosures belong together, and Collapsible for one on its own.
+
+### Settings sections
+
+<Preview
+  align="stretch"
+  code={`<tp-accordion selection-mode="multiple" variant="outline" default-value="notifications privacy">
+  <tp-accordion-item value="notifications">
+    <span slot="label">Notifications</span>
+    <p>Email me when someone mentions me or assigns me a task.</p>
+  </tp-accordion-item>
+  <tp-accordion-item value="privacy">
+    <span slot="label">Privacy</span>
+    <p>Only workspace members can see your profile and activity.</p>
+  </tp-accordion-item>
+  <tp-accordion-item value="sessions">
+    <span slot="label">Active sessions</span>
+    <p>Signed in on MacBook Pro · Lisbon, and iPhone 15 · Lisbon.</p>
+  </tp-accordion-item>
+</tp-accordion>`}
+/>
+
+Readers compare settings side by side, so several sections stay open at once. With one item at a time, as in the questions above, the last open item stays open unless `collapsible` lets it close.
+
+### Onboarding checklist
+
+<Preview
+  align="stretch"
+  code={`<tp-accordion variant="separated" content-alignment="label" default-value="profile">
+  <tp-accordion-item value="profile">
+    <span slot="leading" aria-hidden="true">01</span>
+    <span slot="label">Complete your profile</span>
+    <tp-badge slot="trailing" variant="secondary">Done</tp-badge>
+    <p>Add a photo and job title so teammates recognize you.</p>
+  </tp-accordion-item>
+  <tp-accordion-item value="invite">
+    <span slot="leading" aria-hidden="true">02</span>
+    <span slot="label">Invite teammates</span>
+    <p>Send invites by email or share a link that expires in 7 days.</p>
+  </tp-accordion-item>
+  <tp-accordion-item value="connect" indicator-position="leading">
+    <span slot="label">Connect GitHub</span>
+    <tp-badge slot="trailing" variant="outline">Optional</tp-badge>
+    <p>Link pull requests to tasks and close them automatically on merge.</p>
+  </tp-accordion-item>
+</tp-accordion>`}
+/>
+
+The `leading` and `trailing` slots carry a step number or a status Badge beside the label. They live inside the trigger button, so they join its name and never hold anything interactive. Lining the content up with the label keeps it in one column whatever the width of the leading content; filling the side that draws the chevron replaces it.
+
+### Plan-gated sections
+
+<Preview
+  align="stretch"
+  code={`<tp-accordion variant="outline" default-value="team">
+  <tp-accordion-item value="team">
+    <span slot="label">Team settings</span>
+    <p>Manage roles, default permissions and project templates.</p>
+  </tp-accordion-item>
+  <tp-accordion-item value="sso" disabled>
+    <span slot="label">Single sign-on</span>
+    <tp-badge slot="trailing" variant="outline">Enterprise</tp-badge>
+    <p>Configure SAML with Okta, Azure AD or Google Workspace.</p>
+  </tp-accordion-item>
+</tp-accordion>`}
+/>
+
+`disabled` on one item locks only that item, and the Badge says why; on the accordion it locks every item.
+
+### Staggered content
+
+<Preview
+  align="stretch"
+  code={`<tp-accordion id="accordion-motion" variant="outline" collapsible>
+  <tp-accordion-item value="setup">
+    <span slot="label">Set up your workspace</span>
+    <p>Pick a name and URL. You can change both later in workspace settings.</p>
+    <p>Invite the people you work with most; they get an email with a link that expires in 7 days.</p>
+    <p>Import projects from Jira, Linear or a CSV export.</p>
+  </tp-accordion-item>
+  <tp-accordion-item value="integrations">
+    <span slot="label">Connect your tools</span>
+    <p>Link GitHub to attach pull requests to tasks.</p>
+    <p>Add Slack to get a digest of mentions and due dates every morning.</p>
+  </tp-accordion-item>
+</tp-accordion>`}
+  script={`const accordion = document.getElementById('accordion-motion');
+
+accordion.addEventListener('tp-motion-request', (event) => {
+  if (event.request.role !== 'content') return;
+  event.respondWith({
+    play(request) {
+      const entering = request.phase === 'enter';
+      const lines = [...request.owner.querySelectorAll('p')];
+      if (!entering) lines.reverse();
+      const animations = lines.map((line, index) =>
+        line.animate(
+          entering
+            ? [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }]
+            : [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-4px)' }],
+          { duration: 220, delay: index * 80, easing: 'ease-out', fill: 'both' },
+        ),
+      );
+      const finished = Promise.all(animations.map((animation) => animation.finished)).then(() =>
+        animations.forEach((animation) => animation.cancel()),
+      );
+      return { finished, cancel: () => animations.forEach((animation) => animation.cancel()) };
+    },
+  });
+});`}
+/>
+
+Each item asks for motion with a bubbling `tp-motion-request`. Claiming only the `content` role staggers the paragraphs while the accordion still measures the content, animates its height and decides which item is open. A listener on one item claims motion for that item; a listener on the accordion covers them all.
+
+### Variants
+
+<Preview
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--tp-space-6)">
+  <tp-accordion default-value="shipping">
+    <tp-accordion-item value="shipping">
+      <span slot="label">Shipping</span>
+      <p>Orders over $50 ship free within 3–5 business days.</p>
+    </tp-accordion-item>
+    <tp-accordion-item value="returns">
+      <span slot="label">Returns</span>
+      <p>Return unused items within 30 days for a full refund.</p>
+    </tp-accordion-item>
+  </tp-accordion>
+  <tp-accordion variant="line" default-value="shipping">
+    <tp-accordion-item value="shipping">
+      <span slot="label">Shipping</span>
+      <p>Orders over $50 ship free within 3–5 business days.</p>
+    </tp-accordion-item>
+    <tp-accordion-item value="returns">
+      <span slot="label">Returns</span>
+      <p>Return unused items within 30 days for a full refund.</p>
+    </tp-accordion-item>
+  </tp-accordion>
+  <tp-accordion variant="outline" default-value="shipping">
+    <tp-accordion-item value="shipping">
+      <span slot="label">Shipping</span>
+      <p>Orders over $50 ship free within 3–5 business days.</p>
+    </tp-accordion-item>
+    <tp-accordion-item value="returns">
+      <span slot="label">Returns</span>
+      <p>Return unused items within 30 days for a full refund.</p>
+    </tp-accordion-item>
+  </tp-accordion>
+  <tp-accordion variant="separated" default-value="shipping">
+    <tp-accordion-item value="shipping">
+      <span slot="label">Shipping</span>
+      <p>Orders over $50 ship free within 3–5 business days.</p>
+    </tp-accordion-item>
+    <tp-accordion-item value="returns">
+      <span slot="label">Returns</span>
+      <p>Return unused items within 30 days for a full refund.</p>
+    </tp-accordion-item>
+  </tp-accordion>
+</div>`}
+/>
+
+`variant` describes how the items relate visually: `plain` adds no chrome, `line` rules the items apart, `outline` holds them in one container and `separated` gives each its own surface. It never changes behavior.

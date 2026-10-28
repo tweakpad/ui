@@ -4,7 +4,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpInput } from '../components/input/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/input.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   value: string;
@@ -19,7 +19,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Input',
   component: 'tp-input',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/input') },
   args: {
     value: '',
     type: 'text',
@@ -31,7 +31,7 @@ const meta: Meta<Args> = {
     mono: false,
   },
   argTypes: {
-    value: { control: 'text', description: 'Controlled value; this example accepts proposals.' },
+    value: { control: 'text' },
     type: {
       control: 'select',
       options: [
@@ -53,10 +53,7 @@ const meta: Meta<Args> = {
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
     required: { control: 'boolean' },
-    mono: {
-      control: 'boolean',
-      description: 'Mono font, with spell checking, autocorrection and autocapitalization off.',
-    },
+    mono: { control: 'boolean' },
   },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();

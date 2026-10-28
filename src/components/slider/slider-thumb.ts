@@ -9,7 +9,13 @@ import { sliderThumbStyles } from './styles.js';
 import type { SliderThumbOwner, SliderThumbState, SliderVariant } from './types.js';
 import { sliderPresentation } from '../../presentation/families/slider.js';
 
-/** Native input/Field binding only. The containing Slider owns all value/form transactions. */
+/**
+ * One thumb of a Slider, authored when a thumb needs its own name, value text, disabled state or
+ * tab order. It holds the native range input; its value and form submission belong to the Slider.
+ *
+ * @attr tabindex - Tab order of the native input, moved from the host to the input.
+ * @csspart focusable - The native range input inside the thumb, which takes focus.
+ */
 export class TpSliderThumb extends TpFormElement<number | undefined> {
   static tagName = 'tp-slider-thumb';
   // Constituent of its group's family; presented with the group's definition.
@@ -43,12 +49,21 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
     }
     super.attributeChangedCallback(name, previous, value);
   }
+  /** Which value of the Slider this thumb controls, from 0; required on every thumb of a range. */
   index: number | undefined;
+  /** Announced text of the value, such as “20 to 40 euros”, in place of the formatted number. */
   valueText: string | undefined;
+  /** Accessible name of the thumb from its index; takes precedence over the Slider's. */
   getAccessibleLabel: ((index: number) => string) | undefined;
+  /**
+   * Announced text of the value from the formatted value, the number and the index; takes
+   * precedence over the Slider's.
+   */
   getAccessibleValueText: ((formatted: string, value: number, index: number) => string) | undefined;
+  /** ID of the native range input, for labels and outputs that reference it. */
   readonly inputId = createId('tp-slider-input');
   #tabIndex = 0;
+  /** Tab order of the native input. */
   override get tabIndex(): number {
     return this.#tabIndex;
   }
@@ -66,6 +81,7 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
     this.#visual = node;
     this.#owner?.registerThumb(this, node);
   };
+  /** The Slider that owns the thumb, set when the thumb is connected. */
   get slider(): SliderThumbOwner | null {
     return this.#owner;
   }
@@ -86,6 +102,7 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
   override set value(_value: number | undefined) {
     /* Root is the sole value owner. */
   }
+  /** The rendered thumb element around the native input. */
   get visualElement(): HTMLElement | null {
     return this.#visual;
   }

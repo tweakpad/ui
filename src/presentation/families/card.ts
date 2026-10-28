@@ -17,30 +17,37 @@ const definition: ComponentDefinition = {
   parts: [
     {
       name: 'card',
+      description: 'The surface: fill, outline, corners and elevation.',
       axes: ['size'],
     },
     {
       name: 'card-header',
+      description: 'The header section around the title, the description and the action.',
       axes: ['size'],
     },
     {
       name: 'card-title',
+      description: 'The wrapper of the `header` slot.',
       axes: ['size'],
     },
     {
       name: 'card-description',
+      description: 'The wrapper of the `description` slot, in muted text.',
       axes: ['size'],
     },
     {
       name: 'card-action',
+      description: 'The wrapper of the `action` slot, at the end of the header.',
       axes: ['size'],
     },
     {
       name: 'card-content',
+      description: 'The content section around the default slot.',
       axes: ['size'],
     },
     {
       name: 'card-footer',
+      description: 'The footer section around the `footer` slot.',
       axes: ['size'],
     },
   ],

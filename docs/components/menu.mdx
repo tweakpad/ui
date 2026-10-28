@@ -1,0 +1,165 @@
+---
+title: Menu
+description: A popup list of commands, checks, radio choices and nested submenus, opened from a trigger or a context target.
+tag: tp-menu
+parts: [tp-menu-item, tp-menu-checkbox-item, tp-menu-radio-group, tp-menu-radio-item]
+---
+
+<Preview
+  code={`<tp-menu label="Document actions">
+  <tp-button slot="trigger" variant="outline">Document actions</tp-button>
+  <tp-menu-item value="new">
+    New document
+    <tp-key-hint-group data-menu-shortcut separator="none" platform="mac">
+      <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="N"></tp-key-hint>
+    </tp-key-hint-group>
+  </tp-menu-item>
+  <tp-menu-item value="duplicate">
+    Duplicate
+    <tp-key-hint-group data-menu-shortcut separator="none" platform="mac">
+      <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="D"></tp-key-hint>
+    </tp-key-hint-group>
+  </tp-menu-item>
+  <tp-menu-item value="rename">Rename</tp-menu-item>
+  <tp-separator></tp-separator>
+  <tp-menu label="Share document">
+    <tp-button slot="trigger" variant="ghost">Share</tp-button>
+    <tp-menu-item value="link">Copy link</tp-menu-item>
+    <tp-menu-item value="email">Email invitation</tp-menu-item>
+  </tp-menu>
+  <tp-separator></tp-separator>
+  <tp-menu-item value="delete" variant="destructive">Delete</tp-menu-item>
+</tp-menu>`}
+/>
+
+## Usage
+
+A Menu holds commands, not navigation: site links belong in a Navigation menu, and a choice that fills a form field in a Select. Put a Button in the `trigger` slot and the items in the default slot. A Key Hint group at the end of an item shows its shortcut, a Separator divides the list, and a destructive command says so with `variant="destructive"`. Tab closes the menu and moves on rather than trapping focus.
+
+### Invoice actions
+
+<Preview
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:start">
+  <tp-menu id="menu-invoice" label="Invoice actions">
+    <tp-button slot="trigger" variant="outline">Invoice INV-2041</tp-button>
+    <tp-menu-item value="Download PDF">Download PDF</tp-menu-item>
+    <tp-menu-item value="Send reminder">Send reminder</tp-menu-item>
+    <tp-menu-item value="Mark as paid">Mark as paid</tp-menu-item>
+  </tp-menu>
+  <output id="menu-invoice-output" style="color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">No action yet</output>
+</div>`}
+  script={`const menu = document.getElementById('menu-invoice');
+const output = document.getElementById('menu-invoice-output');
+menu.addEventListener('tp-action', (event) => {
+  output.textContent = \`Last action: \${event.detail.value}\`;
+});`}
+/>
+
+Activating an item fires a cancelable `tp-action` with the item's `value`, then closes the menu. One listener on the Menu handles every command, instead of a handler on each item.
+
+### Aligned labels
+
+<Preview
+  code={`<tp-menu label="Document">
+  <tp-button slot="trigger" variant="outline">Document</tp-button>
+  <tp-menu-item value="duplicate"><tp-icon id="menu-duplicate-icon"></tp-icon>Duplicate</tp-menu-item>
+  <tp-menu-item value="share"><tp-icon id="menu-share-icon"></tp-icon>Share</tp-menu-item>
+  <tp-menu-item value="rename" inset>Rename</tp-menu-item>
+  <tp-menu-item value="move" inset>Move to…</tp-menu-item>
+</tp-menu>`}
+  script={`import { copyIcon } from '@tweakpad/ui/icons/copy';
+import { navigationIcons } from '@tweakpad/ui/icons/navigation';
+
+document.getElementById('menu-duplicate-icon').icon = copyIcon;
+document.getElementById('menu-share-icon').icon = navigationIcons.share;`}
+/>
+
+When only some commands have an icon, `inset` indents the others so every label starts in the same column.
+
+### View options
+
+<Preview
+  code={`<tp-menu label="View options">
+  <tp-button slot="trigger" variant="outline">View</tp-button>
+  <tp-menu-checkbox-item default-checked>Show sidebar</tp-menu-checkbox-item>
+  <tp-menu-checkbox-item default-checked>Show status bar</tp-menu-checkbox-item>
+  <tp-menu-checkbox-item>Word wrap</tp-menu-checkbox-item>
+  <tp-separator></tp-separator>
+  <tp-menu-radio-group default-value="comfortable">
+    <span data-menu-label>Density</span>
+    <tp-menu-radio-item value="compact">Compact</tp-menu-radio-item>
+    <tp-menu-radio-item value="comfortable">Comfortable</tp-menu-radio-item>
+    <tp-menu-radio-item value="spacious">Spacious</tp-menu-radio-item>
+  </tp-menu-radio-group>
+</tp-menu>`}
+/>
+
+Checkbox items turn settings on and off independently, and a radio group keeps exactly one choice, named by the label at its top. Both keep the menu open, so several settings can change in one visit.
+
+### Moving a project
+
+<Preview
+  code={`<tp-menu label="Project">
+  <tp-button slot="trigger" variant="outline">Project</tp-button>
+  <tp-menu-item value="settings">Settings</tp-menu-item>
+  <tp-menu label="Move to">
+    <tp-button slot="trigger" variant="ghost">Move to</tp-button>
+    <tp-menu-item value="marketing">Marketing</tp-menu-item>
+    <tp-menu-item value="design">Design</tp-menu-item>
+    <tp-menu label="Archive">
+      <tp-button slot="trigger" variant="ghost">Archive</tp-button>
+      <tp-menu-item value="2025">2025</tp-menu-item>
+      <tp-menu-item value="2024">2024</tp-menu-item>
+    </tp-menu>
+  </tp-menu>
+  <tp-menu-item value="archive" disabled>Archive project</tp-menu-item>
+</tp-menu>`}
+/>
+
+A Menu nested with its own trigger is a submenu, at any depth. It opens on hover or with the arrow toward the end of the line, and the arrow back returns to its item in the parent. An unavailable command stays in the list, disabled, so readers learn it exists.
+
+### File context menu
+
+<Preview
+  code={`<tp-menu invocation="context" label="File actions">
+  <div slot="trigger" tabindex="0" style="display:grid;place-items:center;inline-size:28rem;max-inline-size:100%;min-block-size:9rem;border:var(--tp-border-width) dashed var(--tp-border);border-radius:var(--tp-radius-lg);color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)">
+    Right-click or press Shift+F10
+  </div>
+  <tp-menu-item value="open">Open</tp-menu-item>
+  <tp-menu-item value="rename">Rename</tp-menu-item>
+  <tp-menu-item value="copy-path">Copy path</tp-menu-item>
+  <tp-separator></tp-separator>
+  <tp-menu-item value="trash" variant="destructive">Move to trash</tp-menu-item>
+</tp-menu>`}
+/>
+
+With `invocation="context"` the `trigger` slot holds a context target: a right-click, Shift+F10 or a long touch opens the menu at the pointer, while ordinary clicks keep the target's own behavior. Make the target focusable so keyboard users can reach it.
+
+### Workspace switcher
+
+<Preview
+  code={`<tp-menu open-on-hover open-delay="150" label="Workspace">
+  <tp-button slot="trigger" variant="ghost">Acme Inc.</tp-button>
+  <tp-menu-item value="profile">Profile</tp-menu-item>
+  <tp-menu-item value="billing">Billing</tp-menu-item>
+  <tp-menu-item value="team">Invite teammates</tp-menu-item>
+  <tp-separator></tp-separator>
+  <tp-menu-item value="sign-out">Sign out</tp-menu-item>
+</tp-menu>`}
+/>
+
+In a header, `open-on-hover` opens the menu once the pointer rests on its trigger; a press and the keyboard open it as well.
+
+## Keyboard
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="enter" /> <Keys keys="space" /> <Keys keys="down" /> | On the trigger, opens the menu with its first item highlighted. |
+| <Keys keys="up" /> | On the trigger, opens the menu with its last item highlighted. |
+| <Keys keys="down" /> <Keys keys="up" /> | Highlights the next or previous item, wrapping at the ends. |
+| <Keys keys="home" /> <Keys keys="end" /> | Highlights the first or the last item. |
+| <Keys keys="enter" /> <Keys keys="space" /> | Activates the highlighted item. |
+| <Keys keys="right" /> <Keys keys="left" /> | Opens the highlighted submenu, or closes the current one, following the writing direction. |
+| <Keys keys="esc" /> | Closes the menu, or only the current submenu, and returns focus to its trigger. |
+| <Keys keys="shift+F10" /> | On a context target, opens the menu. |
+| Letters | Highlight the next item whose label starts with the typed text. |

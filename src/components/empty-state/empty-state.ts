@@ -4,6 +4,19 @@ import { slotOccupied } from '../shared/slots.js';
 import { TpElement } from '../../foundation/element.js';
 import { emptyStatePresentation } from '../../presentation/families/empty-state.js';
 
+/**
+ * The message a view shows when it has nothing to show yet: an optional picture, a title, a
+ * description and the actions that fill the view. It paints no surface of its own, so it takes on
+ * the container it sits in.
+ *
+ * @slot media - An Icon, an illustration or an Avatar group above the title.
+ * @slot icon - The former name of `media`, used when `media` is empty.
+ * @slot title - A title with markup; it replaces `title`.
+ * @slot description - A description with markup, such as a link; it replaces `description`.
+ * @slot - Recovery that is more than a button, such as a search field, between the text and the actions.
+ * @slot content - Content placed with the default slot.
+ * @slot actions - The Buttons that fill the view; group several in one element.
+ */
 export class TpEmptyState extends TpElement {
   static tagName = 'tp-empty-state';
   static override presentation = emptyStatePresentation;
@@ -52,8 +65,11 @@ export class TpEmptyState extends TpElement {
       ${hiddenStyles}
     `,
   ];
-  title = 'Nothing here';
+  /** What is missing, as a heading, when the `title` slot is empty. */
+  override title = 'Nothing here';
+  /** Why the view is empty or what to do next, when the `description` slot is empty. */
   description = '';
+  /** `icon` sizes a single Icon in the media slot to the icon role; `plain` shows illustrations and avatars as authored. */
   mediaTreatment: 'plain' | 'icon' = 'plain';
   readonly #slotsChanged = (): void => {
     this.requestUpdate();

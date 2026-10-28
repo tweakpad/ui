@@ -8,11 +8,10 @@ import { TpListItem } from './list-item.js';
 import { TpListSeparator } from './separator.js';
 
 /**
- * List: a collection of List item rows. The host is the list, named by `aria-label`; each direct
- * `tp-list-item` becomes a list item unless it has its own role, and loses that role when it leaves.
+ * A named list of List item rows. The host is the list; each direct List item becomes a list item
+ * unless it has a role of its own. It adds no selection, focus management or keyboard handling.
  *
- * @slot - `tp-list-item` rows and `tp-list-separator` (or `tp-separator`) dividers.
- * @csspart list - The stack holding the rows.
+ * @slot - The List items, with List separators between them where rows need a divider.
  */
 export class TpList extends TpElement {
   static tagName = 'tp-list';
@@ -22,6 +21,7 @@ export class TpList extends TpElement {
     return [TpListItem, TpListSeparator];
   }
   static override properties = { ...TpElement.properties, ariaLabel: { attribute: 'aria-label' } };
+  /** The name of the list, which assistive technology reads before its rows. */
   override ariaLabel: string | null = null;
   static override styles = [TpElement.styles, stackGroupStyles];
   #ownRole = new OwnedAttributes(this);

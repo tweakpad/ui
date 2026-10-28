@@ -64,6 +64,21 @@ function questionnaireInteractionReason(event: Event): ChangeReason {
   return eventReason(event);
 }
 
+/**
+ * An ordered native form that asks one question at a time, with fixed choices, free text, skipping,
+ * validation and submission. Questions are data: set `questions` to their definitions, and the
+ * Questionnaire renders each as a native fieldset with its progress and navigation actions. It
+ * sends nothing itself; transport and persistence stay in your code.
+ *
+ * @fires tp-value-change - Cancelable proposal of new answers before they commit; `detail.value` is
+ * the whole answer record, with `detail.previousValue` and the `detail.reason`.
+ * @fires tp-item-change - Cancelable proposal to show another question; `detail.value` is the
+ * question's name.
+ * @fires tp-answer-change - Cancelable proposal of one answer when `value` is not owned by the
+ * page; `detail.question` names the question and `detail.choice` the choice, if any.
+ * @fires tp-submit - Cancelable, after every answer passes validation and before the native
+ * submission; `detail.answers` holds the answers, with the native `form` and its `data`.
+ */
 export class TpQuestionnaire extends TpElement {
   static tagName = 'tp-questionnaire';
   /** Library elements this element renders; defining it defines them too. */
@@ -90,12 +105,36 @@ export class TpQuestionnaire extends TpElement {
   };
   static override styles = [TpElement.styles, questionnaireStyles];
 
+  /**
+   * The ordered question definitions: each has a `name` and `title`, and optionally choices, a
+   * free-text input, a description, required and skip rules, and its own validation.
+   */
   questions: readonly QuestionnaireQuestion[] = [];
+  /**
+   * Overrides for the Previous, Skip, Next and Submit Buttons: each entry can set the label, size
+   * and paint, or disable or hide the Button.
+   */
   actions: QuestionnaireActions = {};
+  /**
+   * How people move between questions: `linear` lets them advance only from a valid or skipped
+   * question, `free` lets them visit any question.
+   */
   flow: QuestionnaireFlow = 'linear';
+  /**
+   * Whether a question with choices takes one answer or several, unless the question sets its own
+   * `kind`.
+   */
   choiceMode: QuestionnaireChoiceMode = 'single';
+  /**
+   * Lets people skip optional questions unless a question says otherwise; required questions are
+   * never skippable.
+   */
   skippable = false;
   #providedValue: QuestionnaireAnswers | undefined;
+  /**
+   * The answers, keyed by question name. Set it to own them: answers then arrive as proposals in
+   * `onValueChange`, and the Questionnaire shows only what you assign.
+   */
   get value(): QuestionnaireAnswers {
     return this.answers;
   }
@@ -104,8 +143,16 @@ export class TpQuestionnaire extends TpElement {
     if (this.#initialized) this.#state.syncValue();
     this.requestUpdate('value');
   }
+  /**
+   * Answers at first render and after a reset, when the page does not own `value`, such as answers
+   * restored from a saved draft.
+   */
   defaultValue: QuestionnaireAnswers = {};
   #providedItem: string | undefined;
+  /**
+   * The name of the question on screen. Set it to own navigation: moves then arrive as proposals in
+   * `onItemChange`.
+   */
   get item(): string {
     return this.#active;
   }
@@ -114,11 +161,29 @@ export class TpQuestionnaire extends TpElement {
     if (this.#initialized) this.#state.syncItem();
     this.requestUpdate('item');
   }
+  /**
+   * The question to start at, such as where a saved draft left off; otherwise the first enabled
+   * question.
+   */
   defaultItem = '';
+  /** Assigns letter or number key shortcuts to the choices, shown beside each one. */
   shortcutMode: QuestionnaireShortcutMode = 'none';
+  /**
+   * Whether the browser's own validation messages may show; invalid answers block progress either
+   * way.
+   */
   nativeValidation: 'enabled' | 'suppressed' = 'enabled';
+  /** The accessible name of the form. */
   label = 'Questionnaire';
+  /**
+   * Called with each proposed answer record before it commits; assign `value` to accept it or
+   * cancel the event to reject it.
+   */
   onValueChange: ((event: TpValueChangeEvent<QuestionnaireAnswers>) => void) | undefined;
+  /**
+   * Called with each proposed move to another question; assign `item` to accept it or cancel the
+   * event to reject it.
+   */
   onItemChange: ((event: TpValueChangeEvent<string>) => void) | undefined;
 
   #initialized = false;
@@ -153,36 +218,50 @@ export class TpQuestionnaire extends TpElement {
   #lastDiagnostic = '';
   readonly #questionnaireId = createId('tp-questionnaire');
 
+  /** A copy of the committed answers, keyed by question name. */
   get answers(): QuestionnaireAnswers {
     return cloneAnswers(this.#answers);
   }
 
+  /** The name of the question on screen. */
   get currentItem(): string {
     return this.#active;
   }
 
+  /**
+   * The position of the question on screen among the enabled questions, counting from one; `0` when
+   * there is none.
+   */
   get current(): number {
     const index = this.#logicalQuestions().findIndex((question) => question.name === this.#active);
     return index < 0 ? 0 : index + 1;
   }
 
+  /** The number of enabled questions. */
   get total(): number {
     return this.#logicalQuestions().length;
   }
 
+  /** Whether the question on screen is the first one. */
   get first(): boolean {
     return this.current > 0 && this.current === 1;
   }
 
+  /** Whether the question on screen is the last one. */
   get last(): boolean {
     return this.current > 0 && this.current === this.total;
   }
 
+  /** Whether the question on screen is unanswered, answered or skipped. */
   get status(): QuestionnaireStatus | undefined {
     const question = this.#activeQuestion();
     return question ? this.#questionStatus(question) : undefined;
   }
 
+  /**
+   * Proposes an answer to the named question as if the person had given it; returns whether it was
+   * accepted.
+   */
   setAnswer(name: string, answer: QuestionnaireAnswer, sourceEvent?: Event): boolean {
     const question = this.questions.find((candidate) => candidate.name === name);
     this.#state.initialize();
@@ -195,6 +274,10 @@ export class TpQuestionnaire extends TpElement {
     );
   }
 
+  /**
+   * Proposes moving to the named question under the `flow` rules; returns whether the move was
+   * accepted.
+   */
   setItem(name: string, sourceEvent?: Event): boolean {
     const questions = this.#logicalQuestions();
     const targetIndex = questions.findIndex((question) => question.name === name);
@@ -216,12 +299,14 @@ export class TpQuestionnaire extends TpElement {
     );
   }
 
+  /** Validates every question and submits, as the Submit Button does. */
   requestSubmit(): void {
     void this.updateComplete.then(() => {
       if (this.isConnected) this.#form()?.requestSubmit();
     });
   }
 
+  /** Restores the default answers and the starting question, as a native form reset does. */
   reset(): void {
     this.#form()?.reset();
   }

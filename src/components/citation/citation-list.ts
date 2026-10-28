@@ -12,11 +12,10 @@ export interface CitationListMessages {
 }
 
 /**
- * Citation list: the numbered sources that in-text citations refer to. Child
- * `tp-citation` elements become list items numbered from `start` in document order, unless they
- * set their own `index`.
+ * The numbered sources that in-text citations refer to. Child Citations become list items
+ * numbered from `start` in document order, unless they set their own `index`.
  *
- * @slot - The `tp-citation` entries.
+ * @slot - The Citation entries.
  * @csspart citation-list - The list.
  */
 export class TpCitationList extends TpElement {
@@ -52,8 +51,11 @@ export class TpCitationList extends TpElement {
     `,
   ];
   override orientation: 'horizontal' | 'vertical' = 'vertical';
+  /** The list's accessible name, "Sources" by default. */
   label = '';
+  /** The number of the first entry. */
   start = 1;
+  /** Replacements for the built-in text; missing entries keep the defaults. */
   messages: CitationListMessages = {};
   #entries = new Map<TpCitation, OwnedAttributes>();
 

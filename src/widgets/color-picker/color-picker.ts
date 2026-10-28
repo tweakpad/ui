@@ -199,10 +199,25 @@ const isHarmony = (value: unknown): value is HarmonyRule =>
 const stop = (event: Event): void => event.stopPropagation();
 
 /**
- * Color picker widget (UI Widgets Specification 6.1): one CSS color edited through a
- * saturation/brightness area, hue and alpha Sliders, format Select and numeric fields, with
- * further views (sliders, wheel, triangle, swatches, schemes) and an inline or popup picker.
- * Every constituent is a library component; only the render surfaces are widget-owned.
+ * Edits one CSS color through a saturation and brightness area with hue and alpha Sliders, a
+ * format Select and numeric fields, with further views (channel sliders, a harmony wheel, a hue
+ * ring with a triangle, swatches, schemes), inline or in a popup. The value is serialized in the
+ * active format while a floating-point color is kept internally, so switching formats or dragging
+ * never accumulates rounding. Form-associated: `name` submits the color string.
+ *
+ * @slot footer - Content below the panel, such as an action row; hidden while empty.
+ * @slot trigger - Replaces the popup picker's default swatch trigger.
+ *
+ * @fires tp-value-change - Cancelable color proposal; `detail.metadata` carries the floating-point
+ * `color` and, when known, the edited `channel` and `surface`. A refused proposal changes nothing.
+ * @fires tp-value-commit - A settled color: once per drag on release, and at once for keys,
+ * swatches, the eyedropper and field commits.
+ * @fires tp-format-change - Cancelable format proposal from the format Select.
+ * @fires tp-view-change - Cancelable view proposal from the view tabs.
+ * @fires tp-harmony-change - Cancelable harmony rule proposal from the Harmony Select.
+ * @fires tp-open-change - Cancelable proposal to open or close the popup.
+ * @fires tp-open-change-complete - After the popup finishes opening or closing; `detail.open`.
+ * @fires tp-field-value - Each committed value, for a surrounding Field's validation state.
  */
 export class TpColorPicker extends TpFormElement<string> {
   static tagName = 'tp-color-picker';
@@ -265,30 +280,82 @@ export class TpColorPicker extends TpFormElement<string> {
   };
   static override styles = [TpElement.styles, colorPickerStyles];
 
+  /**
+   * Starting color of an uncontrolled picker, in any CSS color notation; form reset returns to it.
+   */
   defaultValue: string | undefined;
+  /** Starting format of an uncontrolled format choice; the value is serialized in it. */
   defaultFormat: ColorFormat | undefined;
+  /** The formats the format Select offers, in order (a space-separated list as an attribute). */
   formats: readonly ColorFormat[] = COLOR_FORMATS;
+  /**
+   * Whether the color carries alpha: an alpha Slider and field, and transparency in the value. Turn
+   * it off to keep every published value opaque.
+   */
   alpha = true;
+  /**
+   * Renders the panel in place, or inside a Popover opened from a swatch trigger with a header that
+   * compares, copies and picks from the screen.
+   */
   picker: ColorPickerPicker = 'inline';
+  /**
+   * The views on offer, in tab order (a space-separated list as an attribute); more than one adds a
+   * tab strip.
+   */
   views: readonly ColorPickerView[] = ['area'];
+  /** Starting view of an uncontrolled view choice; without it the first of `views` opens. */
   defaultView: ColorPickerView | undefined;
+  /** Shows the row of numeric fields for the channels of the active format. */
   fields = true;
+  /** Shows the Select that switches the active format. */
   formatSelect = true;
+  /** Shows the swatch of the current color. */
   preview = true;
+  /** Offers the screen color picker where the browser supports it. */
   eyedropper = true;
+  /** Scales the surfaces, tracks, thumbs and swatches together. */
   size: ColorPickerSize = 'default';
+  /** Shapes the preview and the swatches as squares or circles. */
   shape: ColorPickerShape = 'square';
+  /**
+   * Starting rule of an uncontrolled harmony choice on the wheel. Prefer it in markup: a `harmony`
+   * attribute makes the rule controlled.
+   */
   defaultHarmony: HarmonyRule | undefined;
+  /** Saved colors for the swatches view: a flat list of CSS colors or labeled groups of them. */
   swatches: readonly ColorSwatchInput[] = [];
   /** Recent colors supplied by the application; the widget keeps no history of its own. */
   recent: readonly string[] = [];
+  /**
+   * Palette templates for the schemes view, chosen through a template Select; when empty, the view
+   * generates tints, shades and related strips from the current color.
+   */
   schemes: readonly ColorScheme[] = [];
+  /**
+   * Lets the mouse wheel step the hovered surface or Slider; off so that scrolling the page never
+   * edits the color.
+   */
   allowWheelScrub = false;
+  /**
+   * Accessible name of the picker's group and the prefix of every dimension's name; a surrounding
+   * Field supplies it otherwise.
+   */
   label = '';
+  /** Locale used to format the numbers in the fields. */
   locale = '';
+  /**
+   * Replaces built-in names and messages (channel names, view tabs, harmony rules, scheme rows) for
+   * localization.
+   */
   strings: Partial<ColorPickerStrings> = {};
+  /** Opens the popup on first render, for an uncontrolled popup picker. */
   defaultOpen = false;
+  /**
+   * Called synchronously with each `tp-value-change` proposal, before listeners; a controlled owner
+   * writes `value` back here to accept it.
+   */
   onValueChange: ColorPickerValueChangeCallback | undefined;
+  /** Called with each settled value, once per drag, keystroke, swatch press or field commit. */
   onValueCommitted: ColorPickerValueCommitCallback | undefined;
 
   #provided: string | undefined;
@@ -387,6 +454,10 @@ export class TpColorPicker extends TpFormElement<string> {
     if (this.hasUpdated) this.#state.sync();
     this.requestUpdate('value', previous);
   }
+  /**
+   * The active format the value is serialized in; setting it makes the format choice controlled.
+   * Any CSS color goes in, and `value` reads back in this format.
+   */
   get format(): ColorFormat {
     return this.#formatState.value;
   }
@@ -401,6 +472,7 @@ export class TpColorPicker extends TpFormElement<string> {
     } else if (next) this.#formatState.set(next, 'programmatic');
     this.requestUpdate('format', previous);
   }
+  /** The active view among `views`; setting it makes the view choice controlled. */
   get view(): ColorPickerView {
     return this.#viewState.value;
   }
@@ -413,6 +485,10 @@ export class TpColorPicker extends TpFormElement<string> {
     } else if (next) this.#viewState.set(next, 'programmatic');
     this.requestUpdate('view', previous);
   }
+  /**
+   * The harmony rule that derives extra handles on the wheel; setting it makes the rule controlled,
+   * so the Harmony Select only proposes.
+   */
   get harmony(): HarmonyRule {
     return this.#harmonyState.value;
   }
@@ -439,12 +515,15 @@ export class TpColorPicker extends TpFormElement<string> {
   get color(): ColorValue | null {
     return this.#model;
   }
+  /** Whether the value is owned by the application through `value`. */
   get controlled(): boolean {
     return this.#state.controlled;
   }
+  /** Whether a pointer drag on a surface or Slider is in progress. */
   get dragging(): boolean {
     return this.#dragging;
   }
+  /** Whether the browser offers a screen color picker, so `pickFromScreen()` can work. */
   get supportsEyeDropper(): boolean {
     return this.#eyedropperSupported;
   }
@@ -502,6 +581,7 @@ export class TpColorPicker extends TpFormElement<string> {
     if (!popover) return false;
     return popover.setOpen(open, reason, event);
   }
+  /** Closes the popup picker. */
   close(): void {
     this.setOpen(false, 'imperative-action');
   }

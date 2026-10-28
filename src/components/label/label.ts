@@ -5,6 +5,15 @@ import { createId } from '../../foundation/id.js';
 import { activateLabeledControl } from '../shared/events.js';
 import { labelPresentation } from '../../presentation/families/label.js';
 
+/**
+ * Visible text that names one control: it becomes the control's accessible name, a click on it
+ * focuses or activates the control, and it can mark the control as optional.
+ *
+ * @slot - The label text, and optionally the control itself when it is nested instead of
+ * referenced by `for`.
+ * @csspart root - The native label that holds the text and the optional hint.
+ * @csspart optional-indicator - The "Optional" hint after the text.
+ */
 export class TpLabel extends TpElement {
   static tagName = 'tp-label';
   static override presentation = labelPresentation;
@@ -25,7 +34,9 @@ export class TpLabel extends TpElement {
       }
     `,
   ];
+  /** The id of the control this Label names, in the same document or shadow root. */
   for = '';
+  /** Adds an "Optional" hint after the text; it stays hidden while the control is `required`. */
   optional = false;
   #control: HTMLElement | null = null;
   #controlRequired = false;

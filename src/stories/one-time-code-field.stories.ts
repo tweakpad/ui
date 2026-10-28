@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import { codeExamples } from './one-time-code-field.examples.js';
 import { html } from 'lit';
 import { useArgs } from 'storybook/preview-api';
 import type {
@@ -7,7 +6,7 @@ import type {
   CodeValidation,
 } from '../components/one-time-code-field/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/one-time-code-field.md?raw';
+import { libraryDocs } from './library-docs.js';
 interface Args {
   length: number;
   value: string;
@@ -22,23 +21,10 @@ interface Args {
   autocomplete: string;
   autoSubmit: boolean;
 }
-const source = `<script type="module">
-  import '@tweakpad/ui/register';
-  import '@tweakpad/ui/styles.css';
-</script>
-<tp-field label="Verification code" description="Enter the six-character code.">
-  <tp-one-time-code-field length="6" name="code" group-lengths="[3,3]"></tp-one-time-code-field>
-</tp-field>`;
 const meta = {
   title: 'Components/One-time code field',
   component: 'tp-one-time-code-field',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      source: { code: source },
-      examples: codeExamples,
-    },
-  },
+  parameters: { docs: libraryDocs('components/one-time-code-field') },
   args: {
     length: 6,
     value: '',

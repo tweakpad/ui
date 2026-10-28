@@ -3,9 +3,12 @@ import { TpJoinedGroup, type JoinedGroupParts } from '../shared/joined-group.js'
 import { fieldGroupPresentation } from '../../presentation/families/field-group.js';
 
 /**
- * Joins value editors as one related tuple (width and height, X/Y/Z, color channels). Each
- * editor keeps its own value, name, label, form participation and validation; the group owns
- * only the layout, the seams and the group name (Component Library §22 Field group).
+ * Joins the editors of one compound value, such as width and height or color channels, into a
+ * single seamed row. Each editor keeps its own value, name, label, form participation and
+ * validation; the group owns only the layout, the seams and the group name.
+ *
+ * @slot - The editors, such as Inputs, Input groups and Selects, with Toggles, Buttons or a
+ * Separator between them.
  */
 export class TpFieldGroup extends TpJoinedGroup {
   static tagName = 'tp-field-group';
@@ -32,6 +35,10 @@ export class TpFieldGroup extends TpJoinedGroup {
     control: 'field-group-control',
     separator: 'field-group-separator',
   };
+  /**
+   * The accessible name of the compound value, such as "Canvas size"; each editor still needs
+   * its own label.
+   */
   override label = 'Values';
 }
 

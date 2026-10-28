@@ -4,7 +4,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpTextArea } from '../components/text-area/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
-import documentation from '../../docs/text-area.md?raw';
+import { libraryDocs } from './library-docs.js';
 interface Args {
   value: string;
   label: string;
@@ -19,7 +19,7 @@ interface Args {
 const meta: Meta<Args> = {
   title: 'Components/Text area',
   component: 'tp-text-area',
-  parameters: { docs: { description: { component: documentation } } },
+  parameters: { docs: libraryDocs('components/text-area') },
   args: {
     value: '',
     label: 'Message',
@@ -32,7 +32,7 @@ const meta: Meta<Args> = {
     mono: false,
   },
   argTypes: {
-    value: { control: 'text', description: 'Controlled text; this example accepts proposals.' },
+    value: { control: 'text' },
     label: { control: 'text' },
     placeholder: { control: 'text' },
     rows: { control: { type: 'number', min: 1 } },
@@ -40,10 +40,7 @@ const meta: Meta<Args> = {
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
     required: { control: 'boolean' },
-    mono: {
-      control: 'boolean',
-      description: 'Mono font, with spell checking, autocorrection and autocapitalization off.',
-    },
+    mono: { control: 'boolean' },
   },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();

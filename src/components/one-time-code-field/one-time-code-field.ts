@@ -23,7 +23,20 @@ export interface CodeInvalidDetail {
   sourceEvent: Event;
 }
 
-/** One native editor, one common value owner; visible positions never own editing state. */
+/**
+ * A fixed-length verification code shown as character slots. The slots are drawn over one native
+ * input, so typing, deletion, selection, paste and SMS autofill behave as in one field, assistive
+ * technology hears one field, and the form receives one value.
+ *
+ * @fires tp-value-change - Cancelable proposal of a new code before it commits; `detail.value`,
+ * `detail.previousValue` and the `detail.reason` for the change.
+ * @fires tp-field-value - After the code commits, with the same `value`, `previousValue` and
+ * `reason`; the enclosing Field listens for it.
+ * @fires tp-invalid-input - When typed or pasted text contained characters the code does not
+ * accept; `detail.attemptedValue` is the text before filtering and `detail.reason` says how it
+ * arrived.
+ * @fires tp-complete - When the last slot is filled; `detail.value` is the complete code.
+ */
 export class TpOneTimeCodeField extends TpFormElement {
   static tagName = 'tp-one-time-code-field';
   /** Library elements this element renders; defining it defines them too. */
@@ -103,24 +116,56 @@ export class TpOneTimeCodeField extends TpFormElement {
       }
     `,
   ];
+  /** The number of characters in the code, and so the number of slots. */
   length: number | undefined;
+  /** The code at first render and after a form reset, when the page does not own `value`. */
   defaultValue: string | undefined;
+  /**
+   * Which characters the code accepts: digits, letters, both, or whatever `characterPredicate`
+   * allows. Others are filtered out as they are typed or pasted.
+   */
   validationType: CodeValidation = 'alphanumeric';
+  /** Decides whether one character is accepted when `validationType` is `predicate`. */
   characterPredicate: ((character: string) => boolean) | undefined;
+  /**
+   * Rewrites typed or pasted text before filtering, for example to uppercase or to strip dashes.
+   */
   normalizeValue: ((value: string) => string) | undefined;
+  /**
+   * Splits the slots into visual groups with a separator between them, as a JSON array of group
+   * sizes that add up to `length`; the separator never enters the value.
+   */
   groupLengths: readonly number[] = [];
+  /**
+   * Hides the entered characters on screen, for a PIN entered where others can see; the value stays
+   * intact.
+   */
   mask = false;
+  /**
+   * The autofill hint of the native input; the default lets phones offer a code from a text
+   * message.
+   */
   autocomplete = 'one-time-code';
   /** Opts the code editor out of host and extension autofill. */
   noAutofill = false;
+  /** Whether autofill is off, by the field itself or by the Field or Form around it. */
   get effectiveNoAutofill(): boolean {
     return this.noAutofill || this.inheritedNoAutofill;
   }
+  /** Submits the owning form as soon as the last slot is filled. */
   autoSubmit = false;
+  /** The accessible name of the code when no Field or Label names it. */
   label = 'One-time code';
+  /** A character shown in each empty slot. */
   placeholder = '';
+  /**
+   * Called with each proposed code before it commits; assign `value` to accept it or cancel the
+   * event to reject it.
+   */
   onValueChange: ((event: TpValueChangeEvent<string>) => void) | undefined;
+  /** Called with the complete code when the last slot is filled. */
   onValueComplete: ((detail: CodeCompleteDetail) => void) | undefined;
+  /** Called when typed or pasted text contained characters the code does not accept. */
   onValueInvalid: ((detail: CodeInvalidDetail) => void) | undefined;
   #providedValue: string | undefined;
   #inputMode: string | undefined;
@@ -154,6 +199,7 @@ export class TpOneTimeCodeField extends TpFormElement {
     this.requestUpdate('value', previous);
     if (this.hasUpdated) this.#state.sync();
   }
+  /** The on-screen keyboard to show; a numeric code brings up the number pad by default. */
   get inputMode(): string {
     return this.#inputMode ?? (this.validationType === 'numeric' ? 'numeric' : 'text');
   }
@@ -162,6 +208,7 @@ export class TpOneTimeCodeField extends TpFormElement {
     this.#inputMode = value || undefined;
     this.requestUpdate('inputMode', previous);
   }
+  /** Whether every slot is filled. */
   get complete(): boolean {
     return this.#validComposition && [...this.value].length === this.#capacity;
   }

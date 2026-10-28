@@ -1,6 +1,5 @@
 import { html } from 'lit';
-import documentation from '../../docs/drag-drop.md?raw';
-import { dragDropListExamples } from './drag-drop-list.examples.js';
+import { libraryDocs } from './library-docs.js';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 const items = Object.freeze([
   { id: 'research', label: 'Research' },
@@ -10,20 +9,7 @@ const items = Object.freeze([
 const meta = {
   title: 'Components/Drag Drop List',
   component: 'tp-drag-drop-list',
-  parameters: {
-    layout: 'centered',
-    docs: {
-      description: { component: documentation },
-      examples: dragDropListExamples,
-      source: {
-        code: `import '@tweakpad/ui/register';
-import '@tweakpad/ui/styles.css';
-const list = document.createElement('tp-drag-drop-list');
-list.defaultValue = ['Research', 'Design', 'Review'];
-document.body.append(list);`,
-      },
-    },
-  },
+  parameters: { layout: 'centered', docs: libraryDocs('components/drag-drop-list') },
   args: {
     orientation: 'vertical',
     variant: 'outline',

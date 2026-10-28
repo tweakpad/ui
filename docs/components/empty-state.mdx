@@ -1,0 +1,93 @@
+---
+title: Empty state
+description: A title, description and recovery actions for a view with nothing to show yet.
+tag: tp-empty-state
+---
+
+<Preview
+  align="stretch"
+  code={`<tp-empty-state title="No projects yet" description="Projects group your documents, tasks and teammates. Create your first one to get started." media-treatment="icon">
+  <tp-icon id="empty-state-folder" slot="media"></tp-icon>
+  <div slot="actions" style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--tp-space-2)">
+    <tp-button>Create project</tp-button>
+    <tp-button variant="outline">Import from CSV</tp-button>
+  </div>
+</tp-empty-state>`}
+  script={`import { folderIcon } from '@tweakpad/ui/icons/folder';
+
+document.getElementById('empty-state-folder').icon = folderIcon;`}
+/>
+
+## Usage
+
+An Empty state takes the place of a list, a table or a search result that would otherwise render nothing. Its title says what is missing, its description why or what to do next, and its actions fill the view. It is presentational and holds no value or events; omit the actions when nothing the person does can change the state.
+
+### Inviting a team
+
+<Preview
+  align="stretch"
+  code={`<tp-empty-state title="No teammates yet" description="Maya, Jordan and Ana are waiting for an invite to this workspace.">
+  <tp-avatar-group slot="media">
+    <tp-avatar alt="Maya Patel" fallback="MP"></tp-avatar>
+    <tp-avatar alt="Jordan Lee" fallback="JL"></tp-avatar>
+    <tp-avatar alt="Ana Ruiz" fallback="AR"></tp-avatar>
+  </tp-avatar-group>
+  <tp-button slot="actions" variant="outline">Invite teammates</tp-button>
+</tp-empty-state>`}
+/>
+
+The media slot holds an Icon, an illustration or an Avatar group. The icon treatment sizes a single Icon to the icon role; the plain treatment shows the media as authored, which suits illustrations and avatars.
+
+### Search with no results
+
+<Preview
+  align="stretch"
+  code={`<tp-empty-state title="No results for “quarterly invoice”" description="Check the spelling or search all workspaces instead.">
+  <tp-input type="search" label="Search documents" default-value="quarterly invoice" style="inline-size:100%;max-inline-size:22rem"></tp-input>
+  <div slot="actions" style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--tp-space-2)">
+    <tp-button variant="outline">Clear filters</tp-button>
+    <tp-button variant="ghost" href="#search-with-no-results">Search all workspaces</tp-button>
+  </div>
+</tp-empty-state>`}
+/>
+
+The default slot sits between the description and the actions, for recovery that is more than a button: here a new search, so the person stays on the page instead of starting over.
+
+### Card with nothing archived
+
+<Preview
+  code={`<tp-card style="max-inline-size:28rem">
+  <h2 slot="header">Archived invoices</h2>
+  <tp-empty-state title="Nothing archived" description="Invoices move here 90 days after they are paid." media-treatment="icon">
+    <tp-icon id="empty-state-archive" slot="media"></tp-icon>
+  </tp-empty-state>
+</tp-card>`}
+  script={`import { emptyStateIcons } from '@tweakpad/ui/icons/empty-state';
+
+document.getElementById('empty-state-archive').icon = emptyStateIcons.inbox;`}
+/>
+
+An Empty state paints no surface, so it takes on the background of the Card or table body it sits in. Invoices arrive here on their own, so this one offers no action.
+
+### Upload drop zone
+
+<Preview
+  align="stretch"
+  code={`<tp-empty-state id="empty-state-drop" title="No files uploaded" media-treatment="icon" style="max-inline-size:28rem">
+  <tp-icon id="empty-state-cloud" slot="media"></tp-icon>
+  <span slot="description">Drop contracts here or <a href="#upload-drop-zone">browse your computer</a>.</span>
+</tp-empty-state>`}
+  script={`import { uploadCloudIcon } from '@tweakpad/ui/icons/upload-cloud';
+
+document.getElementById('empty-state-cloud').icon = uploadCloudIcon;
+document.getElementById('empty-state-drop').partPresentation = {
+  'empty-state': {
+    styleHook: {
+      border: 'var(--tp-border-width) dashed var(--tp-border)',
+      'border-radius': 'var(--tp-radius-xl)',
+    },
+  },
+};`}
+/>
+
+A dashed outline on the `empty-state` part draws the area where files go; receiving them stays with the application or a File upload. The `description` slot takes over from the plain-text description when it needs a link.

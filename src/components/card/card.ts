@@ -3,6 +3,16 @@ import { TpElement } from '../../foundation/element.js';
 import { elevatedProperty } from '../shared/elevation.js';
 import { cardPresentation } from '../../presentation/families/card.js';
 
+/**
+ * A surface that groups related content under one header, with an optional footer for actions or
+ * metadata. Empty sections take no space.
+ *
+ * @slot header - The title, ideally a heading element so the card joins the document outline.
+ * @slot description - Supporting text under the title.
+ * @slot action - A control at the end of the header, such as a Button that manages the card's subject.
+ * @slot - The content.
+ * @slot footer - Actions or metadata after the content, in reading order from the start.
+ */
 export class TpCard extends TpElement {
   static tagName = 'tp-card';
   static override presentation = cardPresentation;
@@ -79,9 +89,13 @@ export class TpCard extends TpElement {
       }
     `,
   ];
+  /** Adds a shadow, and changes nothing else, for a card that floats above the page. */
   elevated = false;
+  /** Shows or removes the outline and the section dividers together. */
   borders: 'on' | 'off' = 'on';
+  /** Gives the header, content and footer their own fills, or one shared fill when `off`. */
   sectionColors: 'on' | 'off' = 'on';
+  /** The section padding; `sm` suits sidebars, dashboards and nested cards. */
   size: 'sm' | 'default' = 'default';
   #syncSection = (event: Event): void => {
     const slot = event.currentTarget as HTMLSlotElement;

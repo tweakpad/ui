@@ -15,10 +15,21 @@ const definition: ComponentDefinition = {
     { name: 'size', values: ['xs', 'sm', 'default', 'lg'], default: 'sm' },
   ],
   parts: [
-    { name: 'copy-button', axes: ['variant', 'size'] },
-    { name: 'copy-button-button' },
-    { name: 'copy-button-icon' },
-    { name: 'copy-button-label' },
+    {
+      name: 'copy-button',
+      description: 'The host, which holds the composed Button.',
+      axes: ['variant', 'size'],
+    },
+    { name: 'copy-button-button', description: 'The composed Button that copies on press.' },
+    {
+      name: 'copy-button-icon',
+      description: 'The copy Icon, replaced by a check while the copy is confirmed.',
+    },
+    {
+      name: 'copy-button-label',
+      description:
+        'The visible label with `show-label`, replaced by the copied message while confirmed.',
+    },
   ],
 };
 

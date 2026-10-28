@@ -10,9 +10,9 @@ the tests check; the rest is direction for writing a page a developer can use.
   package. Storybook renders it through the story (`parameters: { docs:
 libraryDocs('components/<slug>') }`); the website reads the same file from the package.
 - API and Related are generated from the Custom Elements Manifest (JSDoc on the element, part
-  descriptions in the family) and from `elementDependencies`. `npm run build` fails on an
-  undescribed API row of a documented element; `scripts/docs/pending.json` lists the tags
-  whose pages are not written yet.
+  descriptions in the family) and from `elementDependencies`. A table lists only what the
+  element declares itself, never inherited members. `npm run build` fails on a catalog entry
+  without a page or an undescribed API row.
 
 | Section                                         | Storybook                                | Website           |
 | ----------------------------------------------- | ---------------------------------------- | ----------------- |

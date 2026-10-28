@@ -61,7 +61,14 @@ function durationOption(text: string, fallback: number): number {
     : fallback;
 }
 
-/** A native time element presenting one date, time, or duration with optional full description. */
+/**
+ * One date, time or duration on a native time element, as relative ("5 minutes ago"), calendar
+ * ("Yesterday at 16:20"), absolute or duration text. Relative text refreshes on one shared timer
+ * when it can next change, and a tooltip shows the full date and time.
+ *
+ * @slot - The value as text, read when `datetime` is unset, so server-rendered dates upgrade in place; text it cannot read is shown unchanged.
+ * @fires tp-time-update - The presented text changed after the first render; `detail` holds `text`, `previousText` and the resolved `value`.
+ */
 export class TpTime extends TpElement implements TimeRefreshTarget {
   static tagName = 'tp-time';
   /** Library elements this element renders; defining it defines them too. */
@@ -121,30 +128,51 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
     `,
   ];
 
-  /** Instant object, epoch number, or text; light-DOM text is read when unset. */
+  /** The value: a `Date`, an epoch number, or ISO or duration text; the element's text is read when it is unset. */
   datetime: TimeInput = undefined;
+  /** Rejects text that only the browser's lenient date parser can read. */
   strict = false;
+  /** How the value is presented: `auto` is relative within `threshold` and absolute beyond it. */
   mode: TimeMode = 'auto';
+  /** How far from now, as an ISO duration, `auto` stays relative. */
   threshold = 'P30D';
+  /** A named, locale-aware absolute format. */
   preset: TimePreset = 'datetime';
+  /** An exact absolute layout in Unicode date-field symbols, such as `yyyy-MM-dd`; quote literal words. */
   pattern = '';
+  /** Date and time format options for absolute text, used when there is no `pattern`. */
   format: Intl.DateTimeFormatOptions | undefined;
+  /** Returns the absolute text itself, ahead of `pattern`, `format` and `preset`. */
   formatter: ((context: TimeFormatContext) => string) | undefined;
+  /** The length of relative and duration text; shorter forms keep the long one for assistive technology. */
   relativeStyle: TimeStyle = 'long';
+  /** `always` writes counts ("1 day ago") where the locale would say "yesterday". */
   numeric: 'auto' | 'always' = 'auto';
+  /** Clamps values on the other side of now to "now", such as a server clock running slightly ahead. */
   tense: TimeTense = 'auto';
+  /** The smallest unit relative and duration text shows, which also sets how often it refreshes. */
   precision: TimeUnit = 'second';
+  /** Whether relative counts round down or to the nearest unit. */
   rounding: TimeRounding = 'floor';
+  /** How close to now, as an ISO duration, a value reads as "now". */
   nowThreshold = 'PT10S';
+  /** The formatting locale, in place of the nearest `lang`. */
   locale = '';
+  /** The time zone, such as `Europe/Berlin`, for instants and calendar days; the browser's zone by default. */
   timeZone = '';
+  /** Forces a 12- or 24-hour clock in place of the locale's. */
   hourCycle: TimeHourCycle | '' = '';
+  /** When the text refreshes: `auto` when it can next change, `none` never, or every given number of milliseconds. */
   updateInterval: TimeUpdateInterval = 'auto';
-  /** Fixed reference instant; disables automatic refresh. */
+  /** A fixed reference instant in place of the current time, which stops the refresh. */
   now: TimeInput = undefined;
+  /** Calendar and week phrases, such as `today: 'Hoy a las {time}'`; missing entries keep the defaults. */
   messages: Partial<TimeMessages> = {};
+  /** Shows the full date and time in a tooltip and makes the value focusable; `tooltip="false"` removes both. */
   tooltip = true;
+  /** The tooltip's layout in Unicode date-field symbols. */
   tooltipPattern = defaultDescription;
+  /** Returns the tooltip's text itself. */
   tooltipFormatter: ((context: TimeFormatContext) => string) | undefined;
 
   #scheduler: TimeRefreshScheduler | undefined;
@@ -194,7 +222,7 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
     super.disconnectedCallback();
   }
 
-  /** Re-render against the current reference time. */
+  /** Updates the text against the current time now, outside the shared refresh. */
   refreshTime(): void {
     this.requestUpdate();
   }

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import type { TpThemeSwitcher, ThemeSwitcherVariant } from '../components/theme-switcher/index.js';
-import documentation from '../../docs/theme-switcher.md?raw';
+import { libraryDocs } from './library-docs.js';
 
 interface Args {
   variant: ThemeSwitcherVariant;
@@ -20,22 +20,7 @@ const scopeTo = (surface: Element | undefined) => {
 const meta: Meta<Args> = {
   title: 'Components/Theme switcher',
   component: 'tp-theme-switcher',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      source: {
-        transform: (_source: string, { args }: { args: Args }) => `import '@tweakpad/ui/styles.css';
-import '@tweakpad/ui/register';
-import { TpThemeSwitcher } from '@tweakpad/ui';
-
-const switcher = new TpThemeSwitcher();
-switcher.variant = ${JSON.stringify(args.variant)};
-switcher.size = ${JSON.stringify(args.size)};
-switcher.disabled = ${args.disabled};
-document.body.append(switcher);`,
-      },
-    },
-  },
+  parameters: { docs: libraryDocs('components/theme-switcher') },
   args: { variant: 'switch', size: 'default', disabled: false },
   argTypes: {
     variant: { control: 'inline-radio', options: ['switch', 'button', 'group'] },

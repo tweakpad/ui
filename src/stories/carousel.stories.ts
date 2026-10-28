@@ -1,8 +1,6 @@
 import { html } from 'lit';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import documentation from '../../docs/carousel.md?raw';
-import { carouselExamples, carouselDemoSource } from './carousel.examples.js';
-import { carouselEffectExamples } from './carousel-effects.examples.js';
+import { libraryDocs } from './library-docs.js';
 import './carousel.stories.css';
 
 interface CarouselStoryArgs {
@@ -26,13 +24,7 @@ interface CarouselStoryArgs {
 const meta: Meta<CarouselStoryArgs> = {
   title: 'Components/Carousel',
   component: 'tp-carousel',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: carouselExamples,
-      source: { code: carouselDemoSource() },
-    },
-  },
+  parameters: { docs: libraryDocs('components/carousel') },
   args: {
     orientation: 'horizontal',
     loop: false,
@@ -118,34 +110,3 @@ const meta: Meta<CarouselStoryArgs> = {
 export default meta;
 type Story = StoryObj<CarouselStoryArgs>;
 export const Default: Story = { name: 'Horizontal' };
-
-export const Vertical: Story = {
-  args: { orientation: 'vertical', itemsPerView: 2 },
-  parameters: {
-    docs: {
-      description: { story: 'Two numbered Cards at a time in a vertical track.' },
-      source: { code: carouselDemoSource(true) },
-    },
-  },
-};
-
-/** Effect demos are stories so each gets the canvas toolbar and an isolated view. */
-const effectStory = (index: number): Story => {
-  const example = carouselEffectExamples[index]!;
-  return {
-    name: example.title,
-    render: example.render,
-    parameters: {
-      controls: { disable: true },
-      docs: {
-        description: { story: example.description },
-        source: { code: example.code, language: 'html' },
-      },
-    },
-  };
-};
-export const ShaderTransition = effectStory(0);
-export const Crossfade = effectStory(1);
-export const Layered = effectStory(2);
-export const Parallax = effectStory(3);
-export const Focus = effectStory(4);

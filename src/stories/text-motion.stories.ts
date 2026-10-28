@@ -1,12 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import documentation from '../../docs/text-motion.md?raw';
-import {
-  textMotionDefaults,
-  textMotionDefaultSource,
-  textMotionExamples,
-} from './text-motion.examples.js';
+import { libraryDocs } from './library-docs.js';
+
+const text = 'Quiet spaces, open light, and rooms that breathe';
 
 interface Args {
   split: string;
@@ -21,13 +18,7 @@ interface Args {
 const meta = {
   title: 'Components/Text motion',
   component: 'tp-text-motion',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: textMotionExamples,
-      source: { code: textMotionDefaultSource },
-    },
-  },
+  parameters: { docs: libraryDocs('components/text-motion') },
   args: {
     split: 'words lines',
     mask: 'lines',
@@ -41,40 +32,32 @@ const meta = {
     split: {
       control: 'select',
       options: ['words', 'chars', 'lines', 'words lines', 'chars lines'],
-      description: 'Units to create; the finest unit animates.',
       table: { defaultValue: { summary: 'words' } },
     },
     mask: {
       control: 'inline-radio',
       options: ['none', 'lines', 'words', 'chars'],
-      description: 'The unit clipped so pieces emerge from behind it (must be a split unit).',
       table: { defaultValue: { summary: 'none' } },
     },
     reveal: {
       control: 'text',
-      description:
-        'Effect tokens: any of `fade up down left right zoom-in zoom-out blur`; empty disables.',
       table: { defaultValue: { summary: 'coordinator default, or fade up' } },
     },
     stagger: {
       control: { type: 'range', min: 0, max: 200, step: 5 },
-      description: 'Milliseconds between consecutive pieces.',
       table: { defaultValue: { summary: '30' } },
     },
     staggerFrom: {
       control: 'inline-radio',
       options: ['first', 'last', 'center'],
-      description: '`stagger-from`: the piece the stagger starts from.',
       table: { defaultValue: { summary: 'first' } },
     },
     revealRepeat: {
       control: 'boolean',
-      description: '`reveal-repeat`: reveal again on every viewport entry.',
       table: { defaultValue: { summary: 'false' } },
     },
     revealHold: {
       control: 'boolean',
-      description: '`reveal-hold`: a ready reveal waits until this is cleared.',
       table: { defaultValue: { summary: 'false' } },
     },
   },
@@ -88,7 +71,7 @@ const meta = {
         stagger-from=${args.staggerFrom}
         .revealRepeat=${args.revealRepeat}
         .revealHold=${args.revealHold}
-        >${textMotionDefaults.text}</tp-text-motion
+        >${text}</tp-text-motion
       >
     </h2>`,
 } satisfies Meta<Args>;

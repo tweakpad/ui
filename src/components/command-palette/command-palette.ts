@@ -23,7 +23,18 @@ import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
 import { TpKeyHint } from '../key-hint/key-hint.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-/** Command query/highlight policy with Dialog as the only optional modal owner. */
+/**
+ * A searchable list of commands with groups, icons and shortcuts, shown inline or in a dialog.
+ * Typing filters and ranks the list, the arrow keys move the active command and Enter runs it; the
+ * palette never selects, remembers or closes anything on its own, so the `tp-execute` handler
+ * decides what happens next.
+ *
+ * @slot - Native `option` elements, as a quick list in place of `items`.
+ * @slot empty - Shown when no command matches the query.
+ * @fires tp-execute - Cancelable, when a command is run; `detail.commandId` is its value.
+ * @fires tp-query-change - Cancelable proposal of the search text; `detail.value`.
+ * @fires tp-value-change - Proposal of the active command's value as the highlight moves.
+ */
 export class TpCommandPalette extends TpDialog {
   static override tagName = 'tp-command-palette';
   /** Library elements this element renders; defining it defines them too. */
@@ -85,19 +96,30 @@ export class TpCommandPalette extends TpDialog {
       }
     `,
   ];
+  /** Shows the palette in the page instead of in a dialog opened by its trigger. */
   inline = false;
+  /** The commands: items with a `value`, `label` and optional `description`, `icon`, `shortcut` and `keywords`, groups of items and separators. */
   items: readonly CommandEntry[] | undefined;
+  /** The search text at first, when `query` is not set. */
   defaultQuery: string | undefined;
+  /** The command active at first, when `value` is not set. */
   defaultValue: unknown;
+  /** Ranks the items for a query: return `false` to hide an item, or a number to sort by, lowest first. */
   filter: CommandFilter | null | undefined;
+  /** Whether the palette filters and ranks the items itself; set the property to `false` when a server returns the matches. */
   shouldFilter = true;
+  /** Whether the arrow keys wrap from the last command to the first. */
   loopNavigation = false;
+  /** Placeholder text of the search field. */
   placeholder = 'Type a command or search…';
   override label = 'Command Palette';
   override description = 'Search for a command to run.';
   override showCloseControl = false;
+  /** Called with each search-text proposal before `tp-query-change` is dispatched. */
   onQueryChange: ((event: TpValueChangeEvent<string>) => void) | undefined;
+  /** Called with each active-command proposal before `tp-value-change` is dispatched. */
   onValueChange: ((event: TpValueChangeEvent<unknown>) => void) | undefined;
+  /** Called when a command is run, before `tp-execute` is dispatched. */
   onExecute: ((event: CustomEvent<{ commandId: unknown; sourceEvent: Event }>) => void) | undefined;
   #providedQuery: string | undefined;
   #providedValue: unknown;
@@ -130,6 +152,7 @@ export class TpCommandPalette extends TpDialog {
   #observer: MutationObserver | undefined;
   #noExecutableMatch = false;
   #wasOpen = false;
+  /** The search text; set it from the start to own it, writing back each accepted proposal. */
   get query(): string {
     return this.#query.value;
   }
@@ -139,6 +162,7 @@ export class TpCommandPalette extends TpDialog {
     if (this.hasUpdated) this.#query.sync();
     this.requestUpdate('query', previous);
   }
+  /** The value of the active command; set it from the start to own it. */
   get value(): unknown {
     return this.#value.value;
   }
@@ -148,9 +172,11 @@ export class TpCommandPalette extends TpDialog {
     if (this.hasUpdated) this.#value.sync();
     this.requestUpdate('value', previous);
   }
+  /** The search field, for focusing it from code. */
   get inputElement(): HTMLInputElement | null {
     return this.#list?.inputElement ?? null;
   }
+  /** Whether the query matches no command that can run. */
   get noExecutableMatch(): boolean {
     return this.#noExecutableMatch;
   }

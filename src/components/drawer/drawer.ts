@@ -40,8 +40,18 @@ const directions: Record<string, DrawerDirection> = {
   left: 'left',
   right: 'right',
 };
+/**
+ * A dialog attached to a screen edge, with swipe-to-dismiss, snap points and side-panel layouts. It
+ * shares Dialog's slots, focus management and dismissal; swiping toward its edge closes it, and the
+ * trigger and close action keep working without gestures.
+ *
+ * @slot swipe-area - A Drawer Swipe Area that opens this drawer with a swipe from the edge.
+ * @fires tp-snap-point-change - Cancelable proposal of the snap point to rest at, from a swipe, the
+ *   handle's keys or `setSnapPoint()`; `detail.value` is a member of `snapPoints`.
+ */
 export class TpDrawer extends TpDialog {
   static override tagName = 'tp-drawer';
+  /** @internal Brand that drawer services recognize. */
   readonly [DRAWER_HOST] = true as const;
   static override presentation = drawerPresentation;
   static override properties = {
@@ -63,13 +73,21 @@ export class TpDrawer extends TpDialog {
     },
   };
   static override styles = [TpDialog.styles, drawerStyles];
+  /** The viewport edge the drawer attaches to, in writing direction: `inline-end` is the right side of a left-to-right page. */
   edge: DrawerEdge = 'block-end';
+  /** Heights a sheet can rest at: numbers up to `1` are fractions of the viewport, larger numbers pixels, strings CSS lengths. */
   snapPoints: readonly DrawerSnapPoint[] = [];
+  /** The snap point a sheet opens at when `snapPoint` is not set; by default the first of `snapPoints`. */
   defaultSnapPoint: DrawerSnapPoint | null | undefined;
+  /** Makes a fast swipe stop at the next snap point instead of skipping past it. */
   snapToSequentialPoints = false;
+  /** Whether Escape, an outside press and a swipe close the drawer; set the property to `false` for a required acknowledgement, which the close action still ends. */
   dismissible = true;
+  /** Shows a handle on the closing edge; with several snap points it is also a slider the arrow keys move. */
   showSwipeHandle = false;
+  /** Whether drags move and dismiss the drawer; `false` suits a desktop side panel. */
   swipeEnabled = true;
+  /** Called with each snap point proposal before `tp-snap-point-change` is dispatched. */
   onSnapPointChange: ((event: TpValueChangeEvent<DrawerSnapPoint | null>) => void) | undefined;
   #providedSnap: DrawerSnapPoint | null | undefined;
   #physicalDirection: DrawerDirection | undefined;
@@ -85,6 +103,7 @@ export class TpDrawer extends TpDialog {
     onCommit: () => this.#measure(),
     diagnostic: (message) => this.diagnose('drawer-snap-mode', message),
   });
+  /** The snap point the sheet rests at; set it from the start to own it, writing back each accepted proposal. */
   get snapPoint(): DrawerSnapPoint | null {
     return this.#snap.value;
   }
@@ -93,12 +112,14 @@ export class TpDrawer extends TpDialog {
     this.#snap.sync();
     this.requestUpdate('snapPoint');
   }
+  /** Alias of `snapPoint`. */
   get activeSnapPoint(): DrawerSnapPoint | null {
     return this.snapPoint;
   }
   set activeSnapPoint(value: DrawerSnapPoint | null | undefined) {
     this.snapPoint = value;
   }
+  /** The physical direction a swipe closes the drawer in; setting it picks the matching `edge`. */
   get swipeDirection(): DrawerDirection {
     return directions[resolveSide(edges.includes(this.edge) ? this.edge : 'block-end', this)]!;
   }
@@ -108,6 +129,7 @@ export class TpDrawer extends TpDialog {
     this.#normalizeEdge();
     this.requestUpdate('swipeDirection');
   }
+  /** The physical side the drawer is attached to; setting it picks the matching `edge`. */
   get side(): 'left' | 'right' | 'top' | 'bottom' {
     return resolveSide(this.edge, this);
   }
@@ -201,6 +223,7 @@ export class TpDrawer extends TpDialog {
       ? value
       : (this.snapPoints[0] ?? null);
   }
+  /** Proposes a snap point from code, as a swipe would; returns whether it was accepted. */
   setSnapPoint(
     value: DrawerSnapPoint,
     reason: ChangeReason = 'programmatic',
@@ -231,6 +254,7 @@ export class TpDrawer extends TpDialog {
   #output: DrawerGestureOutput = { movement: 0, velocity: 0, swiping: false, opening: false };
   #swipeDismissed = false;
   #openingRelease = false;
+  /** @internal Swipe progress and geometry for the drawer services. */
   readonly visualState = new ObservableStore<DrawerVisualState>(inactiveDrawerState());
   #releaseResize: (() => void) | undefined;
   #observed: HTMLElement | null = null;
@@ -244,6 +268,7 @@ export class TpDrawer extends TpDialog {
     this.requestUpdate();
     this.#measure();
   });
+  /** @internal The swipe gesture, shared with Drawer Swipe Area. */
   readonly gesture = new DrawerGesture({
     enabled: () =>
       this.isConnected &&
@@ -260,6 +285,7 @@ export class TpDrawer extends TpDialog {
     },
     release: (output) => this.#releaseGesture(output),
   });
+  /** @internal Starts a swipe from a Drawer Swipe Area. */
   startSwipe(
     event: PointerEvent | TouchEvent,
     element: HTMLElement,

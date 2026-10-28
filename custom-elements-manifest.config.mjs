@@ -55,19 +55,43 @@ function scanEventSources(...directories) {
   }
   for (const [child, parent] of parents)
     if (eventClasses.has(parent)) eventClasses.set(child, eventClasses.get(parent));
-  const controllers = new Map();
-  for (const source of sources) {
-    const fired = new Set([
-      ...[...source.matchAll(/new (Tp\w+Event)\b/gu)]
+  // A shared controller fires what its own class body dispatches (plus module-level helpers it
+  // calls by name), not everything its module fires: a module can hold several controllers.
+  const firedIn = (text) =>
+    new Set([
+      ...[...text.matchAll(/new (Tp\w+Event)\b/gu)]
         .map((match) => eventClasses.get(match[1]))
         .filter(Boolean),
-      ...[...source.matchAll(/(?:\.emit|new CustomEvent)\(\s*'(tp-[a-z-]+)'/gu)].map(
+      ...[...text.matchAll(/(?:\.emit|new CustomEvent)\(\s*'(tp-[a-z-]+)'/gu)].map(
         (match) => match[1],
       ),
     ]);
-    if (!fired.size) continue;
-    for (const [, name] of source.matchAll(/export class (\w+)/gu))
-      if (!eventClasses.has(name)) controllers.set(name, fired);
+  const controllers = new Map();
+  for (const source of sources) {
+    const classes = [...source.matchAll(/export class (\w+)/gu)];
+    if (!classes.length) continue;
+    // Module-level functions, each with the events its body fires.
+    const helpers = new Map();
+    const functions = [...source.matchAll(/^(?:export )?function (\w+)/gmu)];
+    functions.forEach((match, index) => {
+      const end = Math.min(
+        ...[functions[index + 1]?.index, ...classes.map((entry) => entry.index)].filter(
+          (position) => position !== undefined && position > match.index,
+        ),
+        source.length,
+      );
+      helpers.set(match[1], firedIn(source.slice(match.index, end)));
+    });
+    classes.forEach((match, index) => {
+      const name = match[1];
+      if (eventClasses.has(name)) return;
+      const body = source.slice(match.index, classes[index + 1]?.index ?? source.length);
+      const fired = firedIn(body);
+      for (const [helper, events] of helpers)
+        if (new RegExp(`\\b${helper}\\(`, 'u').test(body))
+          for (const event of events) fired.add(event);
+      if (fired.size) controllers.set(name, fired);
+    });
   }
   return { eventClasses, controllers };
 }
@@ -138,8 +162,16 @@ const tweakpadEvents = ({ eventClasses, controllers }) => ({
           ? (named?.text ?? eventClasses.get(constructed))
           : undefined;
         if (name) found.set(name, constructed);
-        for (const fired of controllers.get(constructed) ?? [])
-          if (!found.has(fired)) found.set(fired, 'CustomEvent');
+        // A controller given its own `eventFactory` dispatches the factory's events instead of
+        // its defaults (a Drawer's controllable snap point fires `tp-snap-point-change`).
+        const ownFactory = (child.arguments ?? []).some(
+          (argument) =>
+            ts.isObjectLiteralExpression(argument) &&
+            argument.properties.some((property) => property.name?.getText() === 'eventFactory'),
+        );
+        if (!ownFactory)
+          for (const fired of controllers.get(constructed) ?? [])
+            if (!found.has(fired)) found.set(fired, 'CustomEvent');
       }
       ts.forEachChild(child, visit);
     };
@@ -431,8 +463,9 @@ function scanFamilies(folder) {
   const families = [];
   const text = (node) => (ts.isStringLiteralLike(node) ? node.text : undefined);
   const property = (object, name) =>
-    object.properties.find((entry) => ts.isPropertyAssignment(entry) && entry.name.getText() === name)
-      ?.initializer;
+    object.properties.find(
+      (entry) => ts.isPropertyAssignment(entry) && entry.name.getText() === name,
+    )?.initializer;
   for (const entry of readdirSync(folder)) {
     if (!entry.endsWith('.ts') || entry === 'index.ts' || entry === 'widgets.ts') continue;
     const source = ts.createSourceFile(
@@ -444,7 +477,11 @@ function scanFamilies(folder) {
     let definition;
     const bindings = new Set();
     const visit = (node) => {
-      if (ts.isVariableDeclaration(node) && node.name.getText() === 'definition' && node.initializer)
+      if (
+        ts.isVariableDeclaration(node) &&
+        node.name.getText() === 'definition' &&
+        node.initializer
+      )
         if (ts.isObjectLiteralExpression(node.initializer)) definition = node.initializer;
       if (ts.isPropertyAssignment(node) && node.name.getText() === 'bindings')
         if (ts.isObjectLiteralExpression(node.initializer))
@@ -495,9 +532,21 @@ const tweakpadParts = (families) => {
     analyzePhase({ ts, node }) {
       if (!ts.isClassDeclaration(node) || !node.name) return;
       const source = node.getText();
-      const names = new Set();
-      for (const match of source.matchAll(/\bpart(?:="|: ')([\w-]+)['"]/gu)) names.add(match[1]);
-      if (names.size) exposed.set(node.name.text, [...names]);
+      // Parts the class sets directly: a `part` attribute or property literal (not a `data-*-part`
+      // marker) and `renderPart('<name>', …)`, which sets `part` to its first argument.
+      const direct = new Set([
+        ...[...source.matchAll(/(?<![\w-])part(?:="|: ')([\w-]+)['"]/gu)].map((match) => match[1]),
+        ...[...source.matchAll(/renderPart\(\s*['"]([\w-]+)['"]/gu)].map((match) => match[1]),
+      ]);
+      // A part name passed through a variable (`renderPart(name, …)`) is still a string literal
+      // somewhere in the class; it counts only in a class that renders parts that way and only
+      // when the element's family declares that part. A bare word (`map`, `label`) is too common
+      // to trust: it counts only as the element's own root (`checkbox` on `tp-checkbox`), and not
+      // where the template names its root part `root` (Label, Separator).
+      const literals = /renderPart\(\s*(?!['"`])/u.test(source)
+        ? new Set([...source.matchAll(/['"`]([a-z][\w-]*)['"`]/gu)].map((match) => match[1]))
+        : new Set();
+      exposed.set(node.name.text, { direct, literals });
     },
     packageLinkPhase({ customElementsManifest }) {
       const declarations = new Map();
@@ -515,7 +564,14 @@ const tweakpadParts = (families) => {
           current = declarations.get(current.superclass?.name)
         ) {
           visited.add(current.name);
-          for (const name of exposed.get(current.name) ?? []) names.add(name);
+          const found = exposed.get(current.name);
+          for (const name of found?.direct ?? []) names.add(name);
+          for (const name of found?.literals ?? []) {
+            if (!family?.parts.has(name)) continue;
+            const compound = name.includes('-');
+            if (compound || (declaration.tagName === `tp-${name}` && !found.direct.has('root')))
+              names.add(name);
+          }
         }
         if (names.size) {
           declaration.cssParts ??= [];

@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
-import { attachmentExamples } from './attachment.examples.js';
 import { html } from 'lit';
-import documentation from '../../docs/attachment.md?raw';
+import { libraryDocs } from './library-docs.js';
 import { navigationIcons } from '../icons/navigation.js';
 import type { AttachmentStatus } from '../components/attachment/index.js';
 interface Args {
@@ -13,30 +12,10 @@ interface Args {
   removable: boolean;
   disabled: boolean;
 }
-const source = `import '@tweakpad/ui/register';
-import '@tweakpad/ui/styles.css';
-import { navigationIcons } from '@tweakpad/ui/icons/navigation';
-const attachment = document.createElement('tp-attachment');
-attachment.filename = 'annual-report.pdf';
-attachment.description = 'PDF · 2.4 MB';
-attachment.status = 'complete';
-attachment.removable = true;
-const icon = document.createElement('tp-icon');
-icon.slot = 'media';
-icon.icon = navigationIcons.folder;
-icon.setAttribute('aria-hidden', 'true');
-attachment.append(icon);
-document.body.append(attachment);`;
 const meta = {
   title: 'Components/Attachment',
   component: 'tp-attachment',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      source: { code: source, language: 'javascript' },
-      examples: attachmentExamples,
-    },
-  },
+  parameters: { docs: libraryDocs('components/attachment') },
   args: {
     filename: 'annual-report.pdf',
     description: 'PDF · 2.4 MB',
