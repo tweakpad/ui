@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { catalogEntries } from '../catalog.js';
 import { widgetEntries } from '../widgets/catalog.js';
@@ -79,12 +79,14 @@ describe('Storybook catalog entries', () => {
     expect(docsPage.indexOf('<Primary />')).toBeLessThan(docsPage.indexOf('<Controls />'));
     expect(docsPage).toContain('## Public properties');
     expect(docsPage).toContain('example setup is not a component property');
-    expect(docsPage.indexOf('<Controls />')).toBeLessThan(
-      docsPage.indexOf('<Stories title="Examples"'),
-    );
-    expect(docsPage.indexOf('<Stories title="Examples"')).toBeLessThan(
-      docsPage.indexOf('<Description />'),
-    );
+    // After the controls, a component's library documentation page, then its generated API and
+    // Related sections; a component without a page keeps its stories, reference and examples.
+    expect(docsPage.indexOf('<Controls />')).toBeLessThan(docsPage.indexOf('<Body />'));
+    const body = docsPage.slice(docsPage.indexOf('export function Body'));
+    expect(body.indexOf('<LibraryDoc />')).toBeLessThan(body.indexOf('<Api />'));
+    expect(body.indexOf('<Api />')).toBeLessThan(body.indexOf('<Related />'));
+    expect(body.indexOf('<Stories title="Examples"')).toBeLessThan(body.indexOf('<Description />'));
+    expect(body.indexOf('<Description />')).toBeLessThan(body.indexOf('<Examples />'));
 
     for (const source of elementStories) {
       expect(source.match(/export const \w+: Story/u)?.[0]).toBe('export const Default: Story');
@@ -107,6 +109,43 @@ describe('Storybook catalog entries', () => {
       expect(examplesSource).not.toMatch(/\sstyle=/u);
       expect(examplesSource).not.toContain('::part(');
     }
+  });
+
+  it('renders each library documentation page from its own story, and nothing else from it', () => {
+    const pages = new Set(
+      ['components', 'widgets'].flatMap((section) =>
+        (existsSync(new URL(`../../docs/${section}/`, import.meta.url))
+          ? readdirSync(new URL(`../../docs/${section}/`, import.meta.url))
+          : []
+        )
+          .filter((file) => file.endsWith('.mdx'))
+          .map((file) => `${section}/${file.slice(0, -'.mdx'.length)}`),
+      ),
+    );
+    const declared = new Map<string, string>();
+    for (const [file, source] of [...stories, ...widgetStories]) {
+      const section = file.startsWith('widgets/') ? 'widgets' : 'components';
+      const slug = file.replace(/^widgets\//u, '').replace(/\.stories\.ts$/u, '');
+      const id = `${section}/${slug}`;
+      const uses = /libraryDocs\('([^']+)'\)/u.exec(source)?.[1];
+      if (uses) declared.set(uses, file);
+      if (pages.has(id)) {
+        // The page is the documentation: no reference markdown, no curated example modules, and
+        // any story beyond Default is a canvas fixture hidden from the Docs page.
+        expect(uses, `${file} must render docs/${id}.mdx through libraryDocs()`).toBe(id);
+        expect(source).not.toContain('?raw');
+        expect(source).not.toMatch(/examples:|description: \{ component/u);
+        for (const [, name] of source.matchAll(/export const (\w+): Story = \{/gu))
+          if (name !== 'Default')
+            expect(
+              source,
+              `${file}: story ${name} needs tags: ['!autodocs'] (the page is the documentation)`,
+            ).toMatch(
+              new RegExp(`export const ${name}: Story = \\{[^}]*tags: \\['!autodocs'\\]`, 'u'),
+            );
+      } else expect(uses, `${file} renders a page that does not exist`).toBeUndefined();
+    }
+    for (const id of pages) expect(declared.has(id), `no story renders docs/${id}.mdx`).toBe(true);
   });
 
   it('keeps Collapsible controls limited to its public properties', () => {

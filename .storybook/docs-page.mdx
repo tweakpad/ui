@@ -1,7 +1,36 @@
 import { Examples } from './docs-examples.mdx';
+import { Api, LibraryDoc, Related, useLibraryDoc } from './docs-library.mdx';
 import { Controls, Description, Primary, Stories, Title } from '@storybook/addon-docs/blocks';
 
+export function Intro() {
+  // One Docs template for every story file. A component whose story declares
+  // `parameters: { docs: libraryDocs('components/<slug>') }` renders its library documentation
+  // page (`docs/components/<slug>.mdx`): the page's own sections after the Default story and its
+  // controls, then the generated API and Related sections. Until a component has a page, its
+  // Docs keep the former layout: extra stories as examples, the reference markdown, and the
+  // curated `parameters.docs.examples`.
+  return useLibraryDoc() ? <Description /> : null;
+}
+
+export function Body() {
+  return useLibraryDoc() ? (
+    <>
+      <LibraryDoc />
+      <Api />
+      <Related />
+    </>
+  ) : (
+    <>
+      <Stories title="Examples" includePrimary={false} />
+      <Description />
+      <Examples />
+    </>
+  );
+}
+
 <Title />
+
+<Intro />
 
 ## Default
 
@@ -13,8 +42,4 @@ These controls map directly to the component's public API. Usage examples compos
 
 <Controls />
 
-<Stories title="Examples" includePrimary={false} />
-
-<Description />
-
-<Examples />
+<Body />

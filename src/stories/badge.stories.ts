@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
-import documentation from '../../docs/badge.md?raw';
-import { badgeExamples } from './badge.examples.js';
+import { libraryDocs } from './library-docs.js';
 import type { PartRenderContext } from '../foundation/part.js';
 import type { TpBadge } from '../components/badge/badge.js';
 
@@ -13,13 +12,7 @@ interface Args {
 const meta = {
   title: 'Components/Badge',
   component: 'tp-badge',
-  parameters: {
-    docs: {
-      description: { component: documentation },
-      examples: badgeExamples,
-      source: { code: '<tp-badge>New</tp-badge>' },
-    },
-  },
+  parameters: { docs: libraryDocs('components/badge') },
   args: { variant: 'default', interactive: false },
   argTypes: {
     variant: {

@@ -8,7 +8,36 @@
   margin-block: var(--tp-space-8);
 }
 
+/* A documentation page's preview: the canvas, aligned as the example asks, and its source. */
+.tp-docs-example > figcaption {
+  margin-block-end: var(--tp-space-2);
+  font-weight: var(--tp-font-medium);
+}
+
 .tp-docs-example-preview {
   background: var(--tp-background);
   color: var(--tp-foreground);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tp-space-4);
+}
+
+.tp-docs-example-preview[data-align='center'] {
+  justify-content: center;
+}
+
+.tp-docs-example-preview[data-align='stretch'] > * {
+  flex: 1 1 100%;
+}
+
+.tp-docs-api {
+  margin-block: var(--tp-space-6);
+}
+
+.tp-docs-api caption {
+  caption-side: top;
+  text-align: start;
+  font-weight: var(--tp-font-medium);
+  padding-block-end: var(--tp-space-2);
 }

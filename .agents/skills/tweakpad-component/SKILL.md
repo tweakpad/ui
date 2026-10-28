@@ -261,24 +261,26 @@ scenarios rerun. An accessibility pass does not satisfy this gate.
 
 ### 7. Complete documentation and its compositions
 
-Default to one canonical base example plus the complete public API reference,
-including constituent APIs where public. Controls expose real APIs, with fixture
-setup kept separate. Document properties/attributes, types/defaults, methods,
-events/details, slots/parts, state hooks, customization, and usage constraints.
-Docs read as standalone consumer documentation: state behavior directly, without
-third-party library names, specification citations, internal records or design rationale.
-Code, comments, tests, samples and docs never name third-party libraries the
-implementation draws on; the only exception is the license notice files that ship
-with the package.
+Every published component has one documentation page, `docs/components/<slug>.mdx`
+(widgets: `docs/widgets/<slug>.mdx`), written once in the library and rendered by both
+Storybook (through the story's `libraryDocs()`) and the website. Follow
+[documentation.md](references/documentation.md): the hero preview, Usage, one section per
+major use case shown in a typical scenario, Variants only for a `variant` axis, Keyboard
+only beyond native behavior. The API and Related sections are generated from the Custom
+Elements Manifest and `elementDependencies`, so the element's JSDoc (summary, slots, events,
+CSS properties, every public field and method) and the family's part descriptions are the
+API reference; prose never restates it. Controls expose real APIs, with fixture setup kept
+separate.
 
-Do not create documentation stories merely to enumerate attribute combinations.
-Keep exhaustive verification fixtures outside curated Docs. Add further published
-examples only for distinct use cases warranted by the task. Audit both rendered
-examples and copyable source for library-component reuse. Update docs, generator
-handling, and relevant tests with API additions, removals, and behavior changes.
+Do not create documentation stories or use cases merely to enumerate attribute combinations.
+Keep exhaustive verification fixtures outside the page and hidden from Docs. Audit both
+rendered previews and copyable code for library-component reuse. Code, comments, tests,
+samples and docs never name third-party libraries the implementation draws on; the only
+exception is the license notice files that ship with the package.
 
-**Exit:** documented and implemented APIs reconcile, the base example works, and
-compositions demonstrate the real library without local substitutes.
+**Exit:** the page exists and `npm test` and `npm run build` pass for it (skeleton, story
+pairing, manifest completeness), the hero renders as the Default story, and every preview
+runs in Storybook with the real library and no local substitutes.
 
 ### 8. Regress and reconcile the delivery
 

@@ -2,7 +2,7 @@ import {
   TOKEN_FAMILIES,
   type RequiredTokenRole,
   type TokenFamily,
-} from '../../presentation/tokens.js';
+} from '../presentation/tokens.js';
 
 /** How a role's value is read from the page. */
 export type ValueKind = 'color' | 'length' | 'raw' | 'shadow' | 'time';
@@ -421,4 +421,22 @@ export function bezierPoints(easing: string): readonly [number, number, number, 
   return points?.length === 4 && points.every(Number.isFinite)
     ? (points as unknown as readonly [number, number, number, number])
     : null;
+}
+
+export interface TokenCatalogRole {
+  readonly role: RequiredTokenRole;
+  readonly description: string;
+}
+export interface TokenCatalogFamily extends FamilyInfo {
+  readonly family: TokenFamily;
+  readonly roles: readonly TokenCatalogRole[];
+}
+
+/** Every token family with its roles and their descriptions, in `TOKEN_FAMILIES` order: the Tokens pages. */
+export function tokenCatalog(): TokenCatalogFamily[] {
+  return (Object.keys(TOKEN_FAMILIES) as TokenFamily[]).map((family) => ({
+    family,
+    ...FAMILIES[family],
+    roles: TOKEN_FAMILIES[family].map((role) => ({ role, description: DESCRIPTIONS[role] })),
+  }));
 }

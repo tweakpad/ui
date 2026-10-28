@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import ts from 'typescript';
 
 /**
  * Custom elements manifest for consumers' editors and tooling (`customElements` in package.json).
@@ -356,6 +357,189 @@ const tweakpadRedeclaredAttributes = () => {
   };
 };
 
+/**
+ * The library elements an element renders, for the documentation's Related sections: each class's
+ * `static get elementDependencies()` lists the element classes its own templates render, and
+ * `defineElement` walks the whole class chain, so an element renders what every class above it
+ * declares too. The plugin reads the identifiers of each getter's array literal, resolves them to
+ * tags once every module is analyzed, unions them up the superclass chain and writes the tags as
+ * the declaration's `renders` field.
+ */
+const tweakpadRenders = () => {
+  /** Class name → identifiers its own getter returns. */
+  const declared = new Map();
+  return {
+    name: 'tweakpad-renders',
+    initialize() {
+      declared.clear();
+    },
+    analyzePhase({ ts, node }) {
+      if (!ts.isClassDeclaration(node) || !node.name) return;
+      const getter = node.members.find(
+        (member) =>
+          ts.isGetAccessor(member) &&
+          member.name?.getText() === 'elementDependencies' &&
+          member.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.StaticKeyword),
+      );
+      if (!getter) return;
+      const identifiers = [];
+      const visit = (child) => {
+        if (ts.isArrayLiteralExpression(child))
+          for (const element of child.elements)
+            if (ts.isIdentifier(element)) identifiers.push(element.text);
+        ts.forEachChild(child, visit);
+      };
+      ts.forEachChild(getter, visit);
+      declared.set(node.name.text, identifiers);
+    },
+    packageLinkPhase({ customElementsManifest }) {
+      const declarations = new Map();
+      for (const module of customElementsManifest.modules)
+        for (const declaration of module.declarations ?? [])
+          if (declaration.kind === 'class') declarations.set(declaration.name, declaration);
+      const tagOf = (name) => declarations.get(name)?.tagName;
+      for (const declaration of declarations.values()) {
+        if (!declaration.tagName) continue;
+        const tags = new Set();
+        const visited = new Set();
+        for (
+          let current = declaration;
+          current && !visited.has(current.name);
+          current = declarations.get(current.superclass?.name)
+        ) {
+          visited.add(current.name);
+          for (const identifier of declared.get(current.name) ?? []) {
+            const tag = tagOf(identifier);
+            if (tag && tag !== declaration.tagName) tags.add(tag);
+          }
+        }
+        declaration.renders = [...tags].sort();
+      }
+    },
+  };
+};
+
+/**
+ * Shadow parts and presentation axes, from the presentation families (`src/presentation/
+ * families/*.ts`), which declare each component's parts with their descriptions and each axis
+ * with its values. A class exposes a part when its templates set `part="<name>"` (or
+ * `part: '<name>'` through `renderPart`); the plugin lists those parts under `cssParts` with the
+ * family's description, keeping any `@csspart` JSDoc entry already there. An attribute that is
+ * one of the family's axes shows the axis values as its type when the field is typed `string`.
+ */
+function scanFamilies(folder) {
+  const families = [];
+  const text = (node) => (ts.isStringLiteralLike(node) ? node.text : undefined);
+  const property = (object, name) =>
+    object.properties.find((entry) => ts.isPropertyAssignment(entry) && entry.name.getText() === name)
+      ?.initializer;
+  for (const entry of readdirSync(folder)) {
+    if (!entry.endsWith('.ts') || entry === 'index.ts' || entry === 'widgets.ts') continue;
+    const source = ts.createSourceFile(
+      entry,
+      readFileSync(join(folder, entry), 'utf8'),
+      ts.ScriptTarget.Latest,
+      true,
+    );
+    let definition;
+    const bindings = new Set();
+    const visit = (node) => {
+      if (ts.isVariableDeclaration(node) && node.name.getText() === 'definition' && node.initializer)
+        if (ts.isObjectLiteralExpression(node.initializer)) definition = node.initializer;
+      if (ts.isPropertyAssignment(node) && node.name.getText() === 'bindings')
+        if (ts.isObjectLiteralExpression(node.initializer))
+          for (const binding of node.initializer.properties) {
+            const tag = binding.name && text(binding.name);
+            if (tag) bindings.add(tag);
+          }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    if (!definition) continue;
+    const tagName = text(property(definition, 'tagName') ?? ts.factory.createNull());
+    const parts = new Map();
+    const partsNode = property(definition, 'parts');
+    if (partsNode && ts.isArrayLiteralExpression(partsNode))
+      for (const part of partsNode.elements)
+        if (ts.isObjectLiteralExpression(part)) {
+          const name = text(property(part, 'name') ?? ts.factory.createNull());
+          const description = property(part, 'description');
+          if (name) parts.set(name, description ? text(description) : undefined);
+        }
+    const axes = new Map();
+    const axesNode = property(definition, 'axes');
+    if (axesNode && ts.isArrayLiteralExpression(axesNode))
+      for (const axis of axesNode.elements)
+        if (ts.isObjectLiteralExpression(axis)) {
+          const name = text(property(axis, 'name') ?? ts.factory.createNull());
+          const values = property(axis, 'values');
+          if (name && values && ts.isArrayLiteralExpression(values))
+            axes.set(name, values.elements.map(text).filter(Boolean));
+        }
+    families.push({ tagName, bindings, parts, axes });
+  }
+  return families;
+}
+
+const tweakpadParts = (families) => {
+  /** Class name → part names its own source exposes. */
+  const exposed = new Map();
+  const familyOf = (tagName) =>
+    families.find((family) => family.tagName === tagName) ??
+    families.find((family) => family.bindings.has(tagName));
+  return {
+    name: 'tweakpad-parts',
+    initialize() {
+      exposed.clear();
+    },
+    analyzePhase({ ts, node }) {
+      if (!ts.isClassDeclaration(node) || !node.name) return;
+      const source = node.getText();
+      const names = new Set();
+      for (const match of source.matchAll(/\bpart(?:="|: ')([\w-]+)['"]/gu)) names.add(match[1]);
+      if (names.size) exposed.set(node.name.text, [...names]);
+    },
+    packageLinkPhase({ customElementsManifest }) {
+      const declarations = new Map();
+      for (const module of customElementsManifest.modules)
+        for (const declaration of module.declarations ?? [])
+          if (declaration.kind === 'class') declarations.set(declaration.name, declaration);
+      for (const declaration of declarations.values()) {
+        if (!declaration.tagName) continue;
+        const family = familyOf(declaration.tagName);
+        const names = new Set();
+        const visited = new Set();
+        for (
+          let current = declaration;
+          current && !visited.has(current.name);
+          current = declarations.get(current.superclass?.name)
+        ) {
+          visited.add(current.name);
+          for (const name of exposed.get(current.name) ?? []) names.add(name);
+        }
+        if (names.size) {
+          declaration.cssParts ??= [];
+          for (const name of [...names].sort()) {
+            const existing = declaration.cssParts.find((part) => part.name === name);
+            const description =
+              family?.parts.get(name) ??
+              families.find((other) => other.parts.get(name))?.parts.get(name);
+            if (existing) {
+              if (!existing.description && description) existing.description = description;
+            } else declaration.cssParts.push({ name, ...(description ? { description } : {}) });
+          }
+        }
+        if (!family) continue;
+        for (const attribute of declaration.attributes ?? []) {
+          const values = attribute.fieldName && family.axes.get(attribute.fieldName);
+          if (values?.length && (!attribute.type?.text || attribute.type.text === 'string'))
+            attribute.type = { text: values.map((value) => `'${value}'`).join(' | ') };
+        }
+      }
+    },
+  };
+};
+
 export default {
   // Components plus the element bases they inherit attributes and members from.
   globs: [
@@ -374,5 +558,7 @@ export default {
     tweakpadPublicMembers(),
     tweakpadRedeclaredAttributes(),
     tweakpadAttributeDefaults(),
+    tweakpadRenders(),
+    tweakpadParts(scanFamilies('src/presentation/families')),
   ],
 };

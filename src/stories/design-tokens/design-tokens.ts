@@ -24,7 +24,7 @@ import {
   previewKind,
   valueKind,
   type Rgba,
-} from './token-catalog.js';
+} from '../../docs/token-catalog.js';
 import './design-tokens.css';
 
 interface Measured {

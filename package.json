@@ -35,7 +35,9 @@
   "files": [
     "dist",
     "!dist/stylesheet.js",
-    "!dist/stylesheet.js.map"
+    "!dist/stylesheet.js.map",
+    "docs/components/*.mdx",
+    "docs/widgets/*.mdx"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -126,6 +128,17 @@
       "import": "./dist/register/widgets.js",
       "default": "./dist/register/widgets.js"
     },
+    "./docs": {
+      "types": "./dist/docs/index.d.ts",
+      "import": "./dist/docs/index.js",
+      "default": "./dist/docs/index.js"
+    },
+    "./docs/vite": {
+      "types": "./dist/docs/vite.d.ts",
+      "import": "./dist/docs/vite.js",
+      "default": "./dist/docs/vite.js"
+    },
+    "./docs.json": "./dist/docs.json",
     "./icons/*": {
       "types": "./dist/icons/*.d.ts",
       "import": "./dist/icons/*.js",
@@ -136,7 +149,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run clean && tsc -p tsconfig.build.json && vite build && npm run cem",
+    "build": "npm run clean && tsc -p tsconfig.build.json && vite build && npm run cem && npm run docs:build",
     "clean": "node scripts/clean.mjs",
     "format": "prettier --write \"src/**/*.{ts,css}\" \".storybook/**/*.{ts,css,mdx}\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,css}\" \".storybook/**/*.{ts,css,mdx}\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
@@ -147,12 +160,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:package": "npm run build && node scripts/pack-smoke.mjs",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "storybook": "npm run cem && storybook dev -p 6006",
+    "build-storybook": "npm run cem && storybook build",
     "cem": "cem analyze && node scripts/minify-manifest.mjs",
     "changeset": "changeset",
     "release": "changeset publish",
-    "size:report": "npm run build && node scripts/size-report.mjs"
+    "size:report": "npm run build && node scripts/size-report.mjs",
+    "docs:build": "node scripts/docs/build.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",
@@ -188,6 +202,7 @@
     "maplibre-gl": "^6.13.0",
     "postcss-lit": "^1.4.1",
     "prettier": "^3.9.6",
+    "remark-gfm": "^4.0.1",
     "rolldown": "^1.2.8",
     "shiki": "^4.5.0",
     "storybook": "^10.6.0",
