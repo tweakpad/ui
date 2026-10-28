@@ -1,0 +1,50 @@
+/* tp-questionnaire appearance */
+/* questionnaire */
+&{gap:var(--tp-space-4)}
+/* questionnaire-progress */
+&{gap:var(--tp-space-2);color:var(--tp-muted-foreground);font-size:var(--tp-text-xs);font-weight:var(--tp-font-medium);font-variant-numeric:tabular-nums}
+/* questionnaire-question */
+&{gap:var(--tp-space-4);padding:0;border:0}
+/* questionnaire-title */
+&:is(legend){margin-block-end:var(--tp-space-4)}
+&{padding:0;font-size:var(--tp-text-base);font-weight:var(--tp-font-medium);line-height:var(--tp-leading-normal)}
+/* questionnaire-description */
+&{color:var(--tp-muted-foreground);font-size:var(--tp-text-sm)}
+/* questionnaire-choices */
+&{gap:var(--tp-space-2)}
+/* questionnaire-choice */
+&[data-type="radio"] > .box{border:var(--tp-border-width) var(--tp-border-style) var(--tp-input);background:light-dark(transparent, color-mix(in oklab, var(--tp-input) 30%, transparent));box-shadow:var(--tp-shadow-sm)}
+&[data-type="radio"]:has(> input:focus-visible) > .box{border-color:var(--tp-ring);outline:var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab, var(--tp-ring) 50%, transparent);outline-offset:0}
+&[data-type="radio"][data-invalid] > .box{border-color:var(--tp-destructive)}
+&[data-type="radio"][data-invalid]:has(> input:focus-visible) > .box{outline-color:color-mix(in oklab, var(--tp-destructive) 20%, transparent)}
+&[data-type="radio"][data-disabled]{opacity:.5;cursor:not-allowed}
+&[data-type="radio"] > .box{border-radius:var(--tp-radius-full)}
+&[data-type="radio"][data-checked] > .box{border-color:var(--tp-primary);color:var(--tp-primary)}
+&[data-type="checkbox"] > .box{border:var(--tp-border-width) var(--tp-border-style) var(--tp-input);background:light-dark(transparent, color-mix(in oklab, var(--tp-input) 30%, transparent));box-shadow:var(--tp-shadow-sm)}
+&[data-type="checkbox"]:has(> input:focus-visible) > .box{border-color:var(--tp-ring);outline:var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab, var(--tp-ring) 50%, transparent);outline-offset:0}
+&[data-type="checkbox"][data-invalid] > .box{border-color:var(--tp-destructive)}
+&[data-type="checkbox"][data-invalid]:has(> input:focus-visible) > .box{outline-color:color-mix(in oklab, var(--tp-destructive) 20%, transparent)}
+&[data-type="checkbox"][data-disabled]{opacity:.5;cursor:not-allowed}
+&[data-type="checkbox"] > .box{border-radius:min(var(--tp-radius-sm), var(--tp-space-1))}
+&[data-type="checkbox"][data-checked] > .box, &[data-type="checkbox"][data-indeterminate] > .box{background:var(--tp-primary);color:var(--tp-primary-foreground);border-color:var(--tp-primary)}
+&{gap:var(--tp-space-2-5);padding:var(--tp-space-2-5) var(--tp-space-3);border:var(--tp-border-width) var(--tp-border-style) var(--tp-input);border-radius:var(--tp-radius-lg);font-size:var(--tp-text-sm);background:light-dark(transparent,color-mix(in oklab,var(--tp-input) 20%,transparent))}
+&::before{background-color:color-mix(in oklab,var(--tp-muted) 50%,transparent)}
+&:not([data-disabled], [data-checked]):hover::before{opacity:1}
+&[data-checked]{background:var(--tp-muted);border-color:color-mix(in oklab,var(--tp-primary) 40%,transparent)}
+&:has(>input:focus-visible){border-color:var(--tp-ring);outline:var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab,var(--tp-ring) 50%,transparent)}
+&[data-invalid]{border-color:var(--tp-destructive)}
+& .choice-copy{gap:var(--tp-space-0-5);line-height:var(--tp-leading-normal)}
+& .choice-description{color:var(--tp-muted-foreground)}
+/* questionnaire-input-region */
+& > input{min-height:var(--tp-control-height-md);padding:var(--tp-space-1) var(--tp-space-2-5);border:var(--tp-border-width) var(--tp-border-style) var(--tp-input);border-radius:var(--tp-radius-lg);color:var(--tp-foreground);background:light-dark(transparent, color-mix(in oklab, var(--tp-input) 30%, transparent));font:inherit;font-size:var(--tp-text-sm);line-height:var(--tp-leading-normal)}
+& > input::placeholder{color:var(--tp-muted-foreground)}
+& > input[data-mono]{font-family:var(--tp-font-mono)}
+& > input:focus-visible{border-color:var(--tp-ring);outline:var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab, var(--tp-ring) 50%, transparent);outline-offset:0}
+& > input[aria-invalid="true"]{border-color:var(--tp-destructive);outline:var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab, var(--tp-destructive) 20%, transparent);outline-offset:0}
+& > input:disabled{background:color-mix(in oklab, var(--tp-input) 50%, transparent);cursor:not-allowed}
+/* questionnaire-error */
+&{color:var(--tp-destructive);font-size:var(--tp-text-sm)}
+/* questionnaire-actions */
+&{gap:var(--tp-space-2)}
+
+/* tp-questionnaire structure */

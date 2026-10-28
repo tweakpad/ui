@@ -35,21 +35,38 @@ Optional `icon-start` and `icon-end` slots remain available for custom marks. Ma
 
 In an icon size only the marks are visible: the label content is hidden visually and stays the accessible name, so write the action as the label (or set `aria-label`). The icon itself is never used as the accessible name. An unnamed Button emits a `tp-diagnostic` warning.
 
+In a text size (`xs`, `sm`, `default`, `lg`), a label with no text, no element and no `content` contract takes no space: the Button sets `hidden` on the `button-label` part, as it does on an empty mark. A trigger that shows only an `icon-start` icon and an `icon-end` chevron then has one gap between the marks and the icon padding at both edges. Name it with `aria-label`. Content added to the label later shows again.
+
+```js
+import { html } from 'lit';
+import { chevronDownIcon } from '@tweakpad/ui/icons/chevron-down';
+import { plusIcon } from '@tweakpad/ui/icons/plus';
+
+html`<tp-button variant="ghost" aria-label="Add a section">
+  <tp-icon slot="icon-start" .icon=${plusIcon}></tp-icon>
+  <tp-icon slot="icon-end" .icon=${chevronDownIcon}></tp-icon>
+</tp-button>`;
+```
+
 The public shadow parts are `button`, `button-leading-mark`, `button-label`, and `button-trailing-mark`. Each part also receives its `-variant-*` and `-size-*` presentation keys. The host publishes `data-disabled` and `data-focus-visible` state markers.
 
 ## Hover colors
 
 Enabled Buttons derive hover color from existing roles, without hover-specific tokens. For filled variants, `light-dark(var(--tp-foreground), var(--tp-background))` is the mode-aware second operand; the variant keeps its paired foreground and boundary role.
 
-| Variant       | OKLab hover mix                                           |
-| ------------- | --------------------------------------------------------- |
-| `default`     | `primary` 80% with the mode-aware operand                 |
-| `secondary`   | `secondary` 80% with the mode-aware operand               |
-| `destructive` | `destructive` 85% with the mode-aware operand             |
-| `outline`     | `input` 50% with `transparent`, layered over `background` |
-| `ghost`       | `input` 50% with `transparent`, layered over `background` |
+| Variant       | OKLab hover mix                                                    |
+| ------------- | ------------------------------------------------------------------ |
+| `default`     | `primary` 80% with the mode-aware operand                          |
+| `secondary`   | `secondary` 80% with the mode-aware operand                        |
+| `destructive` | `destructive` 85% with the mode-aware operand                      |
+| `outline`     | `input` 50% with `transparent`, over the outline fill              |
+| `ghost`       | `input` 50% with `transparent`, over the surface behind the Button |
 
-Outline and ghost share the same hovered background and `--tp-foreground` content color; only outline paints the `--tp-border` boundary. Hover colors transition with the library's fast motion role and become instant under reduced motion. `link` has no painted background at rest or on hover, and disabled Buttons receive no hover mix.
+Each hover mix is a layer between the Button's own fill and its content, so a translucent mix lets that fill show through. Outline and ghost share the layer color and the `--tp-foreground` content color, but their layers sit on different fills. A ghost Button has no fill and no painted boundary, so its layer sits on the surface behind it.
+
+An outline Button's layer sits on the outline fill, which depends on the color scheme. In the light scheme the fill is `--tp-background` inside a `--tp-border` boundary, so on the page background a hovered outline Button and a hovered ghost Button show the same color. In the dark scheme the outline takes the fill and boundary of Input and Select: `input` 30% with `transparent` inside an `--tp-input` boundary. The hover layer then adds to that fill, so a hovered outline Button carries more of the `input` color than a hovered ghost Button on the same surface.
+
+Hover colors transition with the library's fast motion role and become instant under reduced motion. `link` has no painted background at rest or on hover, and disabled Buttons receive no hover mix.
 
 ## Actions and forms
 
@@ -77,7 +94,7 @@ Set `href` to make the Button render a native `<a>` while retaining any visual `
 
 `partContracts` configures each of `button`, `button-label`, `button-leading-mark`, and `button-trailing-mark`. Contracts accept `hostProperties`, `classHook`, `styleHook`, `content`, `elementReference`, and `renderDelegate`. The reference receives the actual rendered element and becomes `null` when it is replaced or disconnected. `focus()`, `blur()`, and `click()` follow the actual control.
 
-A delegate must apply its supplied `bind` to the semantic host. A substituted action host retains Button semantics and receives synthesized Enter/Space activation. A Button with `href` requires an actual anchor; a non-anchor delegate emits a diagnostic and falls back to the native anchor. Owned action type, disabled/focus policy, ARIA, state and part markers survive neutral property and appearance overrides.
+A delegate must apply its supplied `bind` to the semantic host. A substituted action host retains Button semantics and receives synthesized Enter/Space activation. A Button with `href` requires an actual anchor; a non-anchor delegate emits a diagnostic and falls back to the native anchor. Owned action type, disabled/focus policy, ARIA, state and part markers, and the `hidden` state of the label and the marks survive neutral property and appearance overrides.
 
 ```js
 import { html } from 'lit';

@@ -14,6 +14,7 @@ import type {
 import { TpMediaElement, type MediaPlayerApi } from './context.js';
 import { TpButton } from '../button/button.js';
 import { TpIcon } from '../icon/icon.js';
+import { shortcutAria } from '../key-hint/shortcut-hint.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type MediaButtonVariant = TpButton['variant'];
@@ -185,16 +186,16 @@ export abstract class TpMediaButtonElement extends TpMediaElement {
   protected override render() {
     const view = this.#view;
     const availability = this.availability;
-    const shortcut = view?.shortcut
-      ? this.shortcut(view.shortcut.action, view.shortcut.value)?.aria
-      : undefined;
+    const shortcut = shortcutAria(
+      view?.shortcut ? this.shortcut(view.shortcut.action, view.shortcut.value) : undefined,
+    );
     const contracts = {
       ...this.partContracts,
       button: {
         ...this.partContracts['button'],
         hostProperties: {
           ...this.partContracts['button']?.hostProperties,
-          'aria-keyshortcuts': shortcut || null,
+          'aria-keyshortcuts': shortcut,
         },
       },
     };

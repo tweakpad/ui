@@ -3,6 +3,7 @@ import { TpElement } from '../../../foundation/element.js';
 import { CleanupScope } from '../../../foundation/services.js';
 import { focusableElements } from '../../../foundation/focus.js';
 import { PresenceController } from '../../../foundation/presence.js';
+import { containNestedEvents } from '../../../foundation/nested-events.js';
 import {
   NumberFieldController,
   type NumberFieldOptions,
@@ -40,7 +41,11 @@ import { TpCheckbox } from '../../../components/checkbox/checkbox.js';
 import { TpColorPicker } from '../../color-picker/color-picker.js';
 import { TpEasingEditor } from '../../easing-editor/easing-editor.js';
 import { resolveStrings } from '../strings.js';
-import { controlEventValue, defaultPropertyControls } from '../node/property-controls.js';
+import {
+  acceptControlValue,
+  controlEventValue,
+  defaultPropertyControls,
+} from '../node/property-controls.js';
 import type { FlowPropertyControlContext, FlowPropertyControls, FlowStrings } from '../types.js';
 
 export const INSPECTOR_CHANGE = 'flow-inspector-change';
@@ -304,6 +309,18 @@ export class TpFlowInspector extends TpElement {
       ),
   });
 
+  constructor() {
+    super();
+    // On the shadow root, where the target is the control itself; the host sees it retargeted
+    // (uwg-fl-req-evt-3).
+    containNestedEvents(this, {
+      types: NESTED_EVENT_TYPES,
+      on: 'root',
+      passes: (_event, origin) => origin.getRootNode() !== this.renderRoot,
+      contained: (event, origin) => this.#nestedEdit(event, origin as HTMLElement),
+    });
+  }
+
   get presentationOwner(): HTMLElement | null {
     const root = this.getRootNode();
     return root instanceof ShadowRoot ? (root.host as HTMLElement) : null;
@@ -335,9 +352,6 @@ export class TpFlowInspector extends TpElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    // On the shadow root, where the target is the control itself (the host retargets it).
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.addEventListener(type, this.#containNested);
     this.renderRoot.addEventListener('focusout', this.#numberBlur as EventListener);
   }
 
@@ -358,8 +372,6 @@ export class TpFlowInspector extends TpElement {
   };
 
   override disconnectedCallback(): void {
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.removeEventListener(type, this.#containNested);
     for (const binding of this.#numberFields.values()) this.#disposeNumber(binding);
     this.#numberFields.clear();
     super.disconnectedCallback();
@@ -392,10 +404,8 @@ export class TpFlowInspector extends TpElement {
 
   // ---- edits -----------------------------------------------------------------------------------
 
-  #containNested = (event: Event): void => {
-    const target = event.target as HTMLElement;
-    if (target === this || target.getRootNode() !== this.renderRoot) return;
-    event.stopPropagation();
+  /** A contained constituent event from the shadow root: the Tabs value and the field edits. */
+  #nestedEdit(event: Event, target: HTMLElement): void {
     if (event.type === 'tp-value-change' && target.localName === 'tp-tabs') {
       const value = (event as TpValueChangeEvent<unknown>).detail.value;
       if (value === 'settings' || value === 'wiring' || value === 'run') this.tab = value;
@@ -413,18 +423,16 @@ export class TpFlowInspector extends TpElement {
       // A NumberField re-proposes its Input's text as the parsed number; a cleared field is
       // pending until a number is typed.
       if (numberRoot && detail.reason === 'input-clear') return;
-      this.#edit(
-        key,
-        numberRoot ? detail.value : controlEventValue(bound, detail.value),
-        detail.reason,
-        event,
-      );
+      const value = numberRoot ? detail.value : controlEventValue(bound, detail.value);
+      this.#edit(key, value, detail.reason, event);
+      // The inspector owns the bound control's value: the edit is written back at once.
+      acceptControlValue(bound, value);
       // NumberField publishes no commit: its blur and step reasons settle the edit.
       if (numberRoot && NUMBER_SETTLE_REASONS.has(detail.reason)) this.#settle(key, event);
     } else if (event.type === 'tp-value-commit') {
       this.#settle(key, event);
     }
-  };
+  }
 
   #edit(key: string, value: unknown, reason: ChangeReason, sourceEvent: Event): void {
     if (!this.node) return;

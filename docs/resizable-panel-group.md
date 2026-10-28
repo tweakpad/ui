@@ -68,6 +68,31 @@ The target selects the panel described by accessible values, keyboard commands a
 
 Axis arrows adjust by `keyboardStep`; Home/End reach allowed extremes; Enter toggles a collapsible target. F6 and Shift+F6 cycle enabled handles. Double-click restores the target's declared default size when available. Pointer capture, temporary text-selection prevention and the drag cursor are released on completion, cancellation, disabling or removal.
 
+## Standalone separator
+
+`ResizeSeparatorController` is the Handle's separator behavior for one extent that its owner controls outside a group, such as a table column. The owner supplies the current value, its limits and the key steps, and applies the proposals it receives:
+
+```js
+import { ResizeSeparatorController, resizeSeparatorTargetCss } from '@tweakpad/ui';
+
+const separator = new ResizeSeparatorController({
+  host: element,
+  axis: () => 'horizontal',
+  direction: () => 'ltr',
+  value: () => width,
+  min: () => 48,
+  max: () => 600,
+  steps: () => ({ step: 8, shift: 32, alt: 1 }),
+  propose: ({ value, phase }) => {
+    if (phase === 'settled') width = value; // `live` previews a drag, `cancelled` restores
+  },
+});
+separator.connect(line);
+for (const [name, value] of Object.entries(separator.attributes())) line.setAttribute(name, value);
+```
+
+The arrow pointing to the end of the axis grows the extent and the opposite arrow shrinks it, mirrored in right-to-left content; Shift and Alt use their own steps, and Home and End reach the limits. A drag captures the pointer, blocks text selection and shows the resize cursor; Escape and pointer cancellation restore the start value. `resizeSeparatorTargetCss(selector, axis)` returns the structural rule of the enlarged pointer target, which reads `--tp-resize-target-fine` and `--tp-resize-target-coarse` with 10 and 20 pixel fallbacks.
+
 ## Presentation
 
 Group, Panel and Handle expose their own standard `partContracts` and `partPresentation`. Public parts are `resizable-panel-group`, `resizable-panel-group-panel`, `resizable-panel-group-separator`, and `resizable-panel-group-handle-decoration`. Generated handles consume the group’s `withHandle`; authored constituents retain independent customization. Ordinary direct-child panels are registered with the group’s panel presentation part.

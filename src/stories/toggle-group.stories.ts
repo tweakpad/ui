@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
+import type { ToggleSize } from '../components/toggle/toggle.js';
 import type { TpToggleGroup } from '../components/toggle-group/index.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpValueChangeEvent } from '../foundation/events.js';
@@ -17,7 +18,7 @@ interface Args {
   multiple: boolean;
   orientation: 'horizontal' | 'vertical';
   variant: 'ghost' | 'outline';
-  size: 'sm' | 'default' | 'lg';
+  size: ToggleSize;
   spacing: number;
   disabled: boolean;
   readOnly: boolean;
@@ -71,7 +72,7 @@ const iconGroupSource = (labels: boolean) =>
     ],
     null,
     2,
-  )};\nrender(html\`<tp-toggle-group label="Text formatting" multiple variant="outline">\${items.map(item => html\`<tp-toggle .value=\${item.value} .ariaLabel=\${${labels ? "''" : 'item.label'}}><tp-icon .icon=\${item.icon}></tp-icon>${labels ? ' ${item.label}' : ''}</tp-toggle>\`)}</tp-toggle-group>\`, document.querySelector('#app'));`;
+  )};\nrender(html\`<tp-toggle-group label="Text formatting" multiple variant="outline"${labels ? '' : ' size="icon"'}>\${items.map(item => html\`<tp-toggle .value=\${item.value} .ariaLabel=\${${labels ? "''" : 'item.label'}}><tp-icon .icon=\${item.icon}></tp-icon>${labels ? ' ${item.label}' : ''}</tp-toggle>\`)}</tp-toggle-group>\`, document.querySelector('#app'));`;
 const meta: Meta<Args> = {
   title: 'Components/Toggle group',
   component: 'tp-toggle-group',
@@ -104,7 +105,11 @@ const meta: Meta<Args> = {
     multiple: { control: 'boolean' },
     orientation: { control: 'select', options: ['horizontal', 'vertical'] },
     variant: { control: 'select', options: ['ghost', 'outline'] },
-    size: { control: 'select', options: ['sm', 'default', 'lg'] },
+    size: {
+      control: 'select',
+      options: ['xs', 'sm', 'default', 'lg', 'icon-xs', 'icon-sm', 'icon', 'icon-lg'],
+      description: 'Item extent; icon-only items use a square icon size.',
+    },
     spacing: { control: { type: 'number', min: 0 } },
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
@@ -117,7 +122,7 @@ export default meta;
 type Story = StoryObj<Args>;
 export const Default: Story = {};
 export const IconOnly: Story = {
-  args: { label: 'Text formatting', multiple: true, variant: 'outline' },
+  args: { label: 'Text formatting', multiple: true, variant: 'outline', size: 'icon' },
   render: (args) => renderGroup(args, true),
   parameters: { docs: { source: { code: iconGroupSource(false) } } },
 };

@@ -22,7 +22,7 @@
 | `loopFocus` / `loop-focus`          | Boolean                | true                    | Wrap arrow navigation. Bind the property to false to disable wrapping.                  |
 | `orientation`                       | horizontal or vertical | horizontal              | Layout and keyboard axis.                                                               |
 | `variant`                           | ghost or outline       | ghost                   | Overrides grouped Toggle appearance.                                                    |
-| `size`                              | sm, default or lg      | default                 | Overrides grouped Toggle size.                                                          |
+| `size`                              | `ToggleSize`           | default                 | Overrides grouped Toggle size; icon-only items use an `icon-*` size.                    |
 | `spacing`                           | nonnegative number     | 2                       | Gap in shared spacing units. Zero reuses ButtonGroup logical seams.                     |
 | `label`                             | string                 | empty                   | Accessible group name.                                                                  |
 | `disabled`, `readOnly` / `readonly` | Boolean                | false                   | Interaction constraints; authored child flags remain intact.                            |
@@ -40,9 +40,35 @@ Standalone Toggle has optional controlled `pressed`, `defaultPressed` / `default
 
 Click, Enter and Space propose `trigger-press`. In single mode, pressing the selected Toggle clears selection. In multiple mode, membership is ordered by registered items and retains unmatched selected values. Missing or duplicate identities emit diagnostics and later invalid items are excluded. Single mode derives only the first controlled value and diagnoses larger cardinality.
 
-Arrow keys follow orientation/direction and skip disabled members; Home/End move to boundary items. Consumed keys and keys carrying Alt, Ctrl or Meta are left to the browser. Navigation changes focus without selecting. Group is one tab stop and exposes group semantics, while items remain buttons with `aria-pressed`. Nested groups isolate members. Removal preserves stored values for matching remount. Action controls never submit a value or reset on native form reset; consumer-owned form participation must be explicit.
+In a standalone Group, arrow keys follow orientation/direction and skip disabled members; Home/End move to boundary items. Consumed keys and keys carrying Alt, Ctrl or Meta are left to the browser. Navigation changes focus without selecting. A standalone Group is one tab stop and exposes group semantics, while items remain buttons with `aria-pressed`. Nested groups isolate members. Removal preserves stored values for matching remount. Action controls never submit a value or reset on native form reset; consumer-owned form participation must be explicit.
 
 Public methods include `setValue`, `focus(options?)`, `blur()` and shared Field association/context. Toggle exposes `controlElement`, `toggleDisabled` and label activation. The group forwards focus to its current tab stop.
+
+## Inside a Toolbar
+
+A Toggle group placed inside a `ToolbarController` root becomes one of its groups by itself; it needs no registration call. Its `toggle-group` part is registered as the toolbar group and keeps `role="group"` and the group's label, and its Toggles join the toolbar's single arrow-key sequence in order. The group then has no tab stop or arrow-key handling of its own: the toolbar's orientation, `loopFocus` and Home/End apply, while the group's `orientation` still lays out its Toggles. Selection mode, values and `tp-value-change` are unchanged. A disabled Toggle, or every Toggle of a disabled group, stays a focusable toolbar stop that does not activate; a Toggle excluded for a missing or duplicate value is skipped.
+
+Do not register the group's host, its part or its Toggles with the toolbar yourself; a Toggle that is already registered keeps that registration, and the group reports a `tp-diagnostic`. A group added to the toolbar later, or present before the toolbar is created, joins it once; a group removed from the toolbar, or a disposed toolbar, restores the standalone tab stop and arrow keys. A Toggle group inside a popup or dialog placed within the toolbar stays independent.
+
+```html
+<div id="view-tools" aria-label="View">
+  <tp-button id="fit">Fit</tp-button>
+  <tp-toggle-group label="Layout" default-value='["single"]'>
+    <tp-toggle value="single">Single</tp-toggle>
+    <tp-toggle value="spread">Spread</tp-toggle>
+  </tp-toggle-group>
+</div>
+```
+
+```ts
+import { ToolbarController } from '@tweakpad/ui';
+import '@tweakpad/ui/register';
+
+await customElements.whenDefined('tp-button');
+const toolbar = new ToolbarController(document.getElementById('view-tools')!);
+toolbar.registerItem(document.getElementById('fit')!, { kind: 'button' });
+// The Layout group registers itself and its Toggles.
+```
 
 ## Anatomy and customization
 
@@ -73,6 +99,6 @@ import '@tweakpad/ui/styles.css';
 
 ## Icon compositions
 
-Group items are actual `tp-toggle` controls. Put decorative `tp-icon` components in their default content and give icon-only items an `aria-label`; icon-with-label items use visible text. The Icon Only, Icon With Label and Stateful Artwork stories include complete copyable Lit artwork setup. Group size and appearance still take precedence over each item's authored values, and the same orientation, spacing, multiple, disabled and loopFocus APIs apply. Zero-spacing groups keep joined seams; there is no icon-size axis. An explicitly supplied Icon size remains authoritative.
+Group items are actual `tp-toggle` controls. Put decorative `tp-icon` components in their default content and give icon-only items an `aria-label`; icon-with-label items use visible text. The Icon Only, Icon With Label and Stateful Artwork stories include complete copyable Lit artwork setup. Group size and appearance still take precedence over each item's authored values, and the same orientation, spacing, multiple, disabled and loopFocus APIs apply. Icon-only items take an icon size from the group: `icon-xs`, `icon-sm`, `icon` and `icon-lg` match the height of `xs`, `sm`, `default` and `lg` and draw square items with no inline padding, also when zero spacing joins them. Zero-spacing groups keep joined seams. An explicitly supplied Icon size remains authoritative.
 
 The Font Weight Selector composes a real Field label and description, rich Toggle content through public part hooks, and a Badge showing the committed selection. Stateful Artwork uses each member's committed Content state to choose outline or filled Icon data.

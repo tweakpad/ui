@@ -1,5 +1,3 @@
-import { html, type TemplateResult } from 'lit';
-
 // One chord per command, shared by the key bindings and the menu hints so the two never drift.
 // Shift+digit chords match the physical digit key (Foundation key bindings).
 export const ZOOM_IN_KEYS = '+';
@@ -16,16 +14,3 @@ export const PASTE_KEYS = 'Mod+V';
 export const RUN_KEYS = 'Mod+Enter';
 /** The first chord is the hint: the Backspace key is the Mac keyboard's Delete. */
 export const DELETE_KEYS = ['Backspace', 'Delete'] as const;
-
-const MODIFIERS = new Set(['mod', 'shift', 'alt', 'control', 'command']);
-
-/** A Menu item's shortcut (`menu-shortcut`): one Key hint per part of the chord. */
-export function renderShortcut(chord: string): TemplateResult {
-  const parts = chord === '+' ? ['+'] : chord.split('+');
-  return html`<tp-key-hint-group data-menu-shortcut separator="none"
-    >${parts.map((part) => {
-      const key = MODIFIERS.has(part.toLowerCase()) ? part.toLowerCase() : part;
-      return html`<tp-key-hint key=${key}></tp-key-hint>`;
-    })}</tp-key-hint-group
-  >`;
-}

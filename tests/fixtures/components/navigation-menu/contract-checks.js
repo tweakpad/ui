@@ -2,7 +2,16 @@
 // The trigger click and the Escape key are tool-driven; these helpers only read state.
 const navigation = () => document.querySelector('#navigation');
 const trigger = () => document.querySelector('#products-trigger');
-const content = () => document.querySelector('#products-content');
+/** The panel is projected into the surface's portal, so it is found through the composed tree. */
+const composed = (root, selector) => {
+  for (const element of root.querySelectorAll('*')) {
+    if (element.matches(selector)) return element;
+    const inner = element.shadowRoot && composed(element.shadowRoot, selector);
+    if (inner) return inner;
+  }
+  return null;
+};
+const content = () => composed(document, '#products-content');
 const expanded = () => {
   const host = trigger();
   const inner = host.shadowRoot?.querySelector('[aria-expanded]');
@@ -19,7 +28,8 @@ const activeIsTrigger = () => {
 /** Current disclosure state: read after clicking the trigger and after Escape. */
 export const state = () => ({
   value: navigation().value,
-  contentHidden: content().hidden,
+  // A closed panel is not rendered: its content returns to the Item without a `hidden` marker.
+  contentHidden: !content() || content().getClientRects().length === 0,
   triggerExpanded: expanded(),
   activeIsTrigger: activeIsTrigger(),
 });
@@ -34,7 +44,10 @@ export function disclosure() {
 
 /** Links stay native anchors in the tab order without an injected role. */
 export function nativeLinks() {
-  const links = [...navigation().querySelectorAll('a')];
+  const links = [
+    ...navigation().querySelectorAll('a'),
+    ...(content()?.querySelectorAll('a') ?? []),
+  ];
   const native = links.every((link) => !link.hasAttribute('role') && link.tabIndex === 0);
   if (!native) throw new Error('navigation links lost native semantics');
   return { links: links.length, native };

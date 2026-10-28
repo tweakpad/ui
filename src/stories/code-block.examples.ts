@@ -1,4 +1,8 @@
-import { interactiveMarkupExample, markupExample } from './documentation-examples.js';
+import {
+  interactiveMarkupExample,
+  markupExample,
+  publishedSource,
+} from './documentation-examples.js';
 import { setupCodeBlockExample } from './code-block-example.js';
 import setupSource from './code-block-example.js?raw';
 
@@ -118,7 +122,7 @@ export const codeBlockExamples = [
       typescriptSample,
     )}\n</div>`,
     setupCodeBlockExample,
-    `${setupSource.replaceAll("'../foundation/code/index.js'", "'@tweakpad/ui/code'")}\nsetupCodeBlockExample(document.getElementById('code-block-shiki'));`,
+    `${publishedSource(setupSource)}\nsetupCodeBlockExample(document.getElementById('code-block-shiki'));`,
     'createShikiHighlighter adapts a Shiki highlighter you create; its GitHub light and dark themes follow the page color scheme. The block shows plain text until Shiki loads.',
   ),
 ];

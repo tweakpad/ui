@@ -19,6 +19,7 @@ import {
   authoredTokens,
   bezierPoints,
   contrastRatio,
+  contrastSurfaces,
   hex,
   previewKind,
   valueKind,
@@ -339,19 +340,23 @@ export class DesignTokensView extends LitElement {
           definition ? this.#definition(definition) : nothing
         }`;
     }
-    const surface = PAIRED_SURFACE[role];
-    const base = surface && this.values.get(surface)?.color;
-    const ratio = base ? contrastRatio(color, base) : null;
+    // One badge per measured surface; with more than one, each names the surface it measures.
+    const surfaces = contrastSurfaces(role);
+    const ratios = surfaces.flatMap((surface) => {
+      const base = this.values.get(surface)?.color;
+      return base ? [{ surface, ratio: contrastRatio(color, base) }] : [];
+    });
+    const named = (surface: RequiredTokenRole) =>
+      surfaces.length > 1 ? ` on ${surface === 'background' ? 'background' : 'surface'}` : '';
     // A literal color repeats the hex value; aliases and mixes are worth showing.
     return html`<span class="design-tokens-color">
         <code>${measured.text}</code>
-        ${
-          ratio === null
-            ? nothing
-            : html`<tp-badge variant=${ratio < MINIMUM_CONTRAST ? 'destructive' : 'outline'}
-                >${ratio.toFixed(2)}:1</tp-badge
-              >`
-        }
+        ${ratios.map(
+          ({ surface, ratio }) =>
+            html`<tp-badge variant=${ratio < MINIMUM_CONTRAST ? 'destructive' : 'outline'}
+              >${ratio.toFixed(2)}:1${named(surface)}</tp-badge
+            >`,
+        )}
       </span>
       ${definition?.includes('var(') ? this.#definition(definition) : nothing}`;
   }
@@ -378,6 +383,18 @@ export class DesignTokensView extends LitElement {
             style="${token}; --_surface: var(--tp-${PAIRED_SURFACE[role]})"
             ><span class="design-tokens-pair-text">Aa</span></span
           ></span
+        >`;
+      case 'content':
+        return html`<span class="design-tokens-specimen" data-preview="content" aria-hidden="true"
+          >${contrastSurfaces(role).map(
+            (surface) =>
+              html`<span
+                class="design-tokens-tile"
+                data-preview="foreground"
+                style="${token}; --_surface: var(--tp-${surface})"
+                ><span class="design-tokens-pair-text">Aa</span></span
+              >`,
+          )}</span
         >`;
       case 'syntax':
         return html`<span class="design-tokens-specimen" aria-hidden="true"

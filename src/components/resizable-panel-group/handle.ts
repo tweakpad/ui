@@ -1,7 +1,9 @@
-import { css, type PropertyValues } from 'lit';
+import { css, unsafeCSS, type PropertyValues } from 'lit';
+import { resizeSeparatorTargetCss } from '../../foundation/resize-separator.js';
 import { TpElement } from '../../foundation/element.js';
 import { createId } from '../../foundation/id.js';
 import type { TpResizablePanelGroup } from './group.js';
+import { separatorValue } from './layout.js';
 import { resizablePanelGroupPresentation } from '../../presentation/families/resizable-panel-group.js';
 export interface ResizeHandleState {
   orientation: 'horizontal' | 'vertical';
@@ -56,37 +58,13 @@ export class TpResizableHandle extends TpElement {
         cursor: col-resize;
       }
 
-      .separator::before {
-        content: '';
-        position: absolute;
-        inset-block: 0;
-        inset-inline-start: 50%;
-        translate: -50% 0;
-        inline-size: var(--tp-resize-target-fine);
-      }
-
       :host([orientation='vertical']) .separator {
         cursor: row-resize;
       }
 
-      :host([orientation='vertical']) .separator::before {
-        inset-inline: 0;
-        inset-block-start: 50%;
-        translate: 0 -50%;
-        inline-size: auto;
-        block-size: var(--tp-resize-target-fine);
-      }
+      ${unsafeCSS(resizeSeparatorTargetCss('.separator', 'horizontal'))}
 
-      @media (any-pointer: coarse) {
-        .separator::before {
-          inline-size: var(--tp-resize-target-coarse);
-        }
-
-        :host([orientation='vertical']) .separator::before {
-          inline-size: auto;
-          block-size: var(--tp-resize-target-coarse);
-        }
-      }
+      ${unsafeCSS(resizeSeparatorTargetCss(":host([orientation='vertical']) .separator", 'vertical'))}
 
       .decoration {
         position: relative;
@@ -157,9 +135,9 @@ export class TpResizableHandle extends TpElement {
         '.ariaControlsElements': this.group?.getPanelElement(state.controls)
           ? [this.group.getPanelElement(state.controls)]
           : [],
-        'aria-valuemin': state.min,
-        'aria-valuemax': state.max,
-        'aria-valuenow': state.now,
+        'aria-valuemin': separatorValue(state.min),
+        'aria-valuemax': separatorValue(state.max),
+        'aria-valuenow': separatorValue(state.now),
         'aria-disabled': String(state.disabled),
         'data-disabled': state.disabled,
         'data-dragging': state.dragging,

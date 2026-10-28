@@ -88,17 +88,30 @@ export class FrameLoop {
   };
 }
 
+const sources = new WeakMap<Window, FrameSource>();
+
+/** The animation frames of a window as a frame source: one frozen object per window. */
+export function windowFrames(view: Window): FrameSource {
+  let source = sources.get(view);
+  if (!source) {
+    source = Object.freeze({
+      requestAnimationFrame: (callback: (time: number) => void) =>
+        view.requestAnimationFrame(callback),
+      cancelAnimationFrame: (handle: number) => view.cancelAnimationFrame(handle),
+      now: () => view.performance.now(),
+    });
+    sources.set(view, source);
+  }
+  return source;
+}
+
 const loops = new WeakMap<Window, FrameLoop>();
 
 /** The shared frame loop of a window. */
 export function frameLoopFor(view: Window): FrameLoop {
   let loop = loops.get(view);
   if (!loop) {
-    loop = new FrameLoop({
-      requestAnimationFrame: (callback) => view.requestAnimationFrame(callback),
-      cancelAnimationFrame: (handle) => view.cancelAnimationFrame(handle),
-      now: () => view.performance.now(),
-    });
+    loop = new FrameLoop(windowFrames(view));
     loops.set(view, loop);
   }
   return loop;

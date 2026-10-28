@@ -11,7 +11,9 @@ import type { ChangeReason } from '../../foundation/types.js';
 import { defaultTrue } from '../../foundation/converters.js';
 import { resolveLocale } from '../../foundation/services.js';
 import { LiveAnnouncer } from '../../foundation/announcer.js';
+import { containNestedEvents } from '../../foundation/nested-events.js';
 import type { TpSurfaceOpenChangeEvent } from '../../foundation/surface-state.js';
+import { fillTemplate } from '../../foundation/template.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { builtinEmojiData } from '../../foundation/emoji/builtin.js';
 import { SKIN_TONE_NAMES, toneEmoji } from '../../foundation/emoji/skin-tones.js';
@@ -236,13 +238,20 @@ export class TpEmojiPicker extends TpFormElement<string> {
     onCommit: (tone, previous) => {
       if (tone !== previous)
         this.#announcer?.announce(
-          this.#strings.skinToneChanged.replace('{tone}', this.#toneName(tone)),
+          fillTemplate(this.#strings.skinToneChanged, { tone: this.#toneName(tone) }),
           { key: 'skin-tone' },
         );
       this.requestUpdate();
     },
     diagnostic: (message) => this.diagnose('emoji-picker-skin-tone', message),
   });
+
+  constructor() {
+    super();
+    // Nested constituent events stop at this shadow root; the widget republishes its own lanes
+    // (uwg-em-req-evt-3).
+    containNestedEvents(this, { types: NESTED_EVENT_TYPES, on: 'root' });
+  }
 
   // ---- lanes -------------------------------------------------------------------------------
 
@@ -364,8 +373,6 @@ export class TpEmojiPicker extends TpFormElement<string> {
     super.connectedCallback();
     // Field discovers its control through this marker (Field's selector list is closed).
     this.setAttribute('data-field-control', '');
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.addEventListener(type, this.#containNested);
     this.#announcer = new LiveAnnouncer({
       root: () => (this.renderRoot instanceof ShadowRoot ? this.renderRoot : this),
     });
@@ -378,8 +385,6 @@ export class TpEmojiPicker extends TpFormElement<string> {
   }
 
   override disconnectedCallback(): void {
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.removeEventListener(type, this.#containNested);
     this.#lightObserver?.disconnect();
     this.#lightObserver = undefined;
     this.#announcer?.dispose();
@@ -670,11 +675,6 @@ export class TpEmojiPicker extends TpFormElement<string> {
     );
   }
 
-  /** Nested constituent events stop at this shadow root; the widget republishes its own lanes. */
-  #containNested = (event: Event): void => {
-    if (event.target !== this) event.stopPropagation();
-  };
-
   #queryChange = (event: TpValueChangeEvent<string>): void => {
     const { value, reason, sourceEvent } = event.detail;
     this.#releaseJump();
@@ -864,8 +864,6 @@ export class TpEmojiPicker extends TpFormElement<string> {
       : chosen
         ? { ...pickerItem(chosen, this.skinTone), value: this.value, emoji: this.value }
         : null;
-    const listeners: Record<string, unknown> = {};
-    for (const type of NESTED_EVENT_TYPES) listeners[`@${type}`] = this.#containNested;
     // A failed load replaces the list's empty state with the error and a Retry Button.
     const failed = this.#status === 'error';
     const retry = failed
@@ -921,7 +919,7 @@ export class TpEmojiPicker extends TpFormElement<string> {
               ? strings.error
               : count === 1
                 ? strings.resultsOne
-                : strings.results.replace('{count}', String(count)),
+                : fillTemplate(strings.results, { count }),
         }}
         .busy=${this.#status === 'loading' && !this.#dataset}
         .locale=${this.#locale()}

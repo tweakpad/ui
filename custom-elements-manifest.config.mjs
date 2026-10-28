@@ -183,6 +183,41 @@ const tweakpadPublicMembers = () => ({
 });
 
 /**
+ * A class that redeclares an inherited member keeps its own visibility. The analyzer's
+ * inheritance step gives the redeclared member the base's privacy, so a protected base property
+ * that an element makes public (`override queryOwner = null`) was dropped with the protected
+ * members. Runs before `tweakpadPublicMembers`.
+ */
+const tweakpadRedeclaredPrivacy = () => {
+  /** Class name, static flag and member name → the privacy the class declares (none: public). */
+  const own = new Map();
+  const key = (declaration, member) =>
+    `${declaration.name}\0${member.static ? 'static' : ''}\0${member.name}`;
+  return {
+    name: 'tweakpad-redeclared-privacy',
+    initialize() {
+      own.clear();
+    },
+    moduleLinkPhase({ moduleDoc }) {
+      // The module's own members, before the package link phase applies inheritance.
+      for (const declaration of moduleDoc.declarations ?? [])
+        for (const member of declaration.members ?? [])
+          own.set(key(declaration, member), member.privacy);
+    },
+    packageLinkPhase({ customElementsManifest }) {
+      for (const module of customElementsManifest.modules)
+        for (const declaration of module.declarations ?? [])
+          for (const member of declaration.members ?? []) {
+            if (!member.inheritedFrom || !own.has(key(declaration, member))) continue;
+            const privacy = own.get(key(declaration, member));
+            if (privacy === undefined) delete member.privacy;
+            else member.privacy = privacy;
+          }
+    },
+  };
+};
+
+/**
  * Attributes inherited from a base element keep the base default even when the element
  * overrides the field (`override orientation = 'vertical'`), and an attribute initialized from
  * a constant shows the constant's name. The member entry carries the element's own resolved
@@ -202,6 +237,125 @@ const tweakpadAttributeDefaults = () => ({
   },
 });
 
+/**
+ * The object literal of a class's own `static properties` (a field initializer or a getter's
+ * return), read as the analyzer's Lit plugin reads it; undefined for any other member.
+ */
+function staticPropertiesObject(ts, member) {
+  if (member.name?.getText() !== 'properties') return undefined;
+  if (!member.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.StaticKeyword))
+    return undefined;
+  const expression = ts.isGetAccessor(member)
+    ? member.body?.statements.find(ts.isReturnStatement)?.expression
+    : member.initializer;
+  return expression && ts.isObjectLiteralExpression(expression) ? expression : undefined;
+}
+
+/**
+ * Each reactive property a class declares itself (spreads skipped) → whether that declaration
+ * creates an attribute, which only a literal `attribute: false` prevents.
+ */
+function declaredAttributes(ts, node) {
+  const declared = new Map();
+  for (const member of node.members)
+    for (const property of staticPropertiesObject(ts, member)?.properties ?? []) {
+      if (!ts.isPropertyAssignment(property)) continue;
+      const options = ts.isObjectLiteralExpression(property.initializer)
+        ? property.initializer.properties
+        : [];
+      const attribute = options.find(
+        (option) => ts.isPropertyAssignment(option) && option.name.text === 'attribute',
+      );
+      declared.set(
+        property.name.getText(),
+        attribute?.initializer.kind !== ts.SyntaxKind.FalseKeyword,
+      );
+    }
+  return declared;
+}
+
+/**
+ * An element that redeclares an inherited reactive property with `attribute: false` has no
+ * attribute for it, but the analyzer's inheritance step adds the base attribute back and gives the
+ * member the base attribute and type. The nearest declaration of the property up the class chain
+ * decides: without an attribute, the inherited attribute is dropped, the member loses its
+ * attribute and reflection, and it keeps the type of that class's own member.
+ */
+const tweakpadRedeclaredAttributes = () => {
+  /**
+   * Class name → its superclass name, the properties it declares itself and the own member types
+   * of those declared without an attribute. Classes are looked up by name, as the analyzer's
+   * inheritance chain finds them.
+   */
+  const classes = new Map();
+  return {
+    name: 'tweakpad-redeclared-attributes',
+    initialize() {
+      classes.clear();
+    },
+    analyzePhase({ ts, node }) {
+      if (!ts.isClassDeclaration(node) || !node.name) return;
+      const heritage = node.heritageClauses?.find(
+        (clause) => clause.token === ts.SyntaxKind.ExtendsKeyword,
+      )?.types[0]?.expression;
+      classes.set(node.name.text, {
+        superclass: heritage && ts.isIdentifier(heritage) ? heritage.text : undefined,
+        declared: declaredAttributes(ts, node),
+        types: new Map(),
+      });
+    },
+    moduleLinkPhase({ moduleDoc }) {
+      // The module's own member types, before the package link phase applies inheritance.
+      for (const declaration of moduleDoc.declarations ?? []) {
+        const own = classes.get(declaration.name);
+        for (const [field, attribute] of own?.declared ?? []) {
+          if (attribute) continue;
+          const member = declaration.members?.find(
+            (entry) => entry.kind === 'field' && !entry.static && entry.name === field,
+          );
+          if (member?.type) own.types.set(field, member.type);
+        }
+      }
+    },
+    packageLinkPhase({ customElementsManifest }) {
+      /** The nearest class from `name` up its chain that declares `field`, if it has no attribute. */
+      const propertyOnly = (name, field) => {
+        const visited = new Set();
+        for (let current = classes.get(name); current && !visited.has(current);) {
+          visited.add(current);
+          const attribute = current.declared.get(field);
+          if (attribute !== undefined) return attribute ? undefined : current;
+          current = current.superclass === undefined ? undefined : classes.get(current.superclass);
+        }
+        return undefined;
+      };
+      for (const module of customElementsManifest.modules)
+        for (const declaration of module.declarations ?? []) {
+          if (declaration.kind !== 'class' || !declaration.attributes) continue;
+          const dropped = new Map();
+          for (const attribute of declaration.attributes) {
+            if (!attribute.inheritedFrom || !attribute.fieldName) continue;
+            const owner = propertyOnly(declaration.name, attribute.fieldName);
+            if (owner) dropped.set(attribute.fieldName, owner);
+          }
+          if (!dropped.size) continue;
+          declaration.attributes = declaration.attributes.filter(
+            (attribute) => !attribute.inheritedFrom || !dropped.has(attribute.fieldName),
+          );
+          for (const member of declaration.members ?? []) {
+            const owner =
+              member.kind === 'field' && !member.static ? dropped.get(member.name) : undefined;
+            if (!owner) continue;
+            delete member.attribute;
+            delete member.reflects;
+            const type = owner.types.get(member.name);
+            if (type) member.type = type;
+          }
+        }
+    },
+  };
+};
+
 export default {
   // Components plus the element bases they inherit attributes and members from.
   globs: [
@@ -216,7 +370,9 @@ export default {
   plugins: [
     tweakpadTagNames(),
     tweakpadEvents(scanEventSources('src/components', 'src/widgets', 'src/foundation')),
+    tweakpadRedeclaredPrivacy(),
     tweakpadPublicMembers(),
+    tweakpadRedeclaredAttributes(),
     tweakpadAttributeDefaults(),
   ],
 };

@@ -6,6 +6,7 @@ import { TpValueChangeEvent, TpValueCommitEvent } from '../../foundation/events.
 import type { ChangeReason, ValueChangeDetail } from '../../foundation/types.js';
 import { defaultTrue } from '../../foundation/converters.js';
 import { CleanupScope } from '../../foundation/services.js';
+import { containNestedEvents } from '../../foundation/nested-events.js';
 import { surfaceInteraction } from '../../foundation/surface-focus.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { NumberFieldController } from '../../foundation/number-field/controller.js';
@@ -130,7 +131,7 @@ const DEFAULT_CURVES: Readonly<Record<EasingCategory, string>> = {
   ease: 'ease',
   spring: 'spring(1 100 10)',
 };
-/** The shown range eases to the re-quantized range once a drag settles (Widgets 6.2 Presentation). */
+/** The shown range eases to the curve's range when the value settles (Widgets 6.2 Presentation). */
 const RANGE_ROLE = stateRole('range');
 const sameRange = (a: ProgressionRange, b: ProgressionRange): boolean =>
   a.min === b.min && a.max === b.max;
@@ -248,7 +249,11 @@ export class TpEasingEditor extends TpFormElement<string> {
   #pending: { curve: EasingCurve; text: string } | null = null;
   #immediate: ImmediateCommit | undefined;
   #dragSnapshot: DragSnapshot | undefined;
-  #frozenRange: ProgressionRange | undefined;
+  /**
+   * No constituent lane event leaves this shadow root (uwg-ee-req-evt-2); the root part binds
+   * these listeners too.
+   */
+  readonly #nestedListeners = containNestedEvents(this, { types: NESTED_EVENT_TYPES, on: 'root' });
   #displayRange: ProgressionRange | undefined;
   #rangeTarget: ProgressionRange | undefined;
   #rangeMotion: MotionHandle | undefined;
@@ -439,14 +444,9 @@ export class TpEasingEditor extends TpFormElement<string> {
     super.connectedCallback();
     // Field discovers its control through this marker (Field's selector list is closed).
     this.setAttribute('data-field-control', '');
-    // Safety net: no constituent lane event leaves this shadow root (Widgets 6.2 Events).
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.addEventListener(type, this.#containNested);
   }
 
   override disconnectedCallback(): void {
-    for (const type of NESTED_EVENT_TYPES)
-      this.renderRoot.removeEventListener(type, this.#containNested);
     this.#dragSnapshot = undefined;
     this.#suppressedSlider = null;
     for (const binding of this.#numberFields.values()) this.#disposeField(binding);
@@ -474,6 +474,7 @@ export class TpEasingEditor extends TpFormElement<string> {
       const clamped = this.#clampDuration(this.duration);
       if (clamped !== this.duration) this.#durationState.reconcile(clamped);
     }
+    if (this.#dragging) this.#displayRange = curveRange(this.#curve);
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -621,6 +622,11 @@ export class TpEasingEditor extends TpFormElement<string> {
     // Every settled adjustment replays the preview (Widgets 6.2 Anatomy, preview layer). The
     // commit can arrive before the value lane requests its render, so request it here: the
     // replay must follow the render that hands the committed curve to the graph.
+    this.#replayPreview();
+  }
+
+  /** Replays the preview after the render that hands the current curve and duration to the graph. */
+  #replayPreview(): void {
     this.requestUpdate();
     void this.updateComplete.then(() => this.#graph?.play());
   }
@@ -628,11 +634,10 @@ export class TpEasingEditor extends TpFormElement<string> {
   #beginDrag(): void {
     if (this.#dragSnapshot) return;
     this.#dragSnapshot = { value: this.value };
-    // The drag holds whatever range is shown, mid-ease included.
+    // The drag takes over the range: it follows the value in the same frame from here on.
     this.#rangeMotion?.cancel();
     this.#rangeMotion = undefined;
     this.#rangeTarget = undefined;
-    this.#frozenRange = this.#shownRange();
     this.#dragging = true;
     this.requestUpdate();
   }
@@ -645,8 +650,6 @@ export class TpEasingEditor extends TpFormElement<string> {
     const snapshot = this.#dragSnapshot;
     this.#dragSnapshot = undefined;
     this.#dragging = false;
-    this.#displayRange = this.#frozenRange ?? this.#displayRange;
-    this.#frozenRange = undefined;
     this.#sliderReason = undefined;
     if (snapshot)
       this.#emitCommit(this.value, snapshot.value, reason, sourceEvent, this.#metadata(extra));
@@ -657,8 +660,6 @@ export class TpEasingEditor extends TpFormElement<string> {
     const snapshot = this.#dragSnapshot;
     this.#dragSnapshot = undefined;
     this.#dragging = false;
-    this.#displayRange = this.#frozenRange ?? this.#displayRange;
-    this.#frozenRange = undefined;
     this.#sliderReason = undefined;
     if (!snapshot) return;
     this.#pending = null;
@@ -670,11 +671,6 @@ export class TpEasingEditor extends TpFormElement<string> {
       });
     this.requestUpdate();
   }
-
-  /** Nested constituent events stop at this shadow root; the widget republishes its own lanes. */
-  #containNested = (event: Event): void => {
-    if (event.target !== this) event.stopPropagation();
-  };
 
   #activeAdapter(): EasingAdapter | undefined {
     const adapters = this.adapters.length ? this.adapters : DEFAULT_ADAPTERS;
@@ -703,9 +699,12 @@ export class TpEasingEditor extends TpFormElement<string> {
     return undefined;
   }
 
-  /** The graph's progression range: held while a drag is in progress, eased otherwise. */
+  /**
+   * The graph's range. During a drag it fits the curve in the same render as each value (set in
+   * `willUpdate`), so the graph zooms out and back in as a handle leaves and re-enters the box;
+   * otherwise it eases toward the fit.
+   */
   #shownRange(): ProgressionRange {
-    if (this.#dragging && this.#frozenRange) return this.#frozenRange;
     return this.#displayRange ?? curveRange(this.#curve);
   }
 
@@ -823,8 +822,11 @@ export class TpEasingEditor extends TpFormElement<string> {
       event.preventDefault();
       return;
     }
-    if (parsed.duration !== undefined && this.timing)
+    if (parsed.duration !== undefined && this.timing) {
+      const before = this.duration;
       this.#durationState.set(this.#clampDuration(parsed.duration), reason, sourceEvent);
+      if (this.duration !== before) this.#replayPreview();
+    }
     const accepted = this.#proposeCurve(parsed.curve, reason, sourceEvent, {
       immediate: true,
       surface: 'expression',
@@ -930,6 +932,17 @@ export class TpEasingEditor extends TpFormElement<string> {
     const accepted = this.#durationState.set(next, reason, sourceEvent);
     if (!accepted && this.duration !== next) event.preventDefault();
     else (event.currentTarget as TpSlider).value = this.duration;
+    // While the thumb moves the preview runs: a running one takes each new duration in place,
+    // and a finished one starts again.
+    if ((reason === 'drag' || reason === 'track-press') && !this.#graph?.playing)
+      this.#replayPreview();
+  };
+
+  /** A settled duration (release, key step) replays the preview from the start. */
+  #durationSliderCommit = (event: TpValueCommitEvent<SliderValue | undefined>): void => {
+    if (event.target !== event.currentTarget) return;
+    event.stopPropagation();
+    this.#replayPreview();
   };
 
   // ---- fields --------------------------------------------------------------------------------
@@ -970,7 +983,11 @@ export class TpEasingEditor extends TpFormElement<string> {
   #fieldCommit(binding: NumberFieldBinding, event: TpValueCommitEvent<number | null>): void {
     if (event.target !== binding.input) return;
     event.stopPropagation();
-    if (binding.key === 'duration') return;
+    if (binding.key === 'duration') {
+      // A committed duration replays the preview, as a committed curve does.
+      this.#replayPreview();
+      return;
+    }
     const previous = binding.previous ?? this.value;
     binding.previous = null;
     this.#emitCommit(
@@ -1374,7 +1391,7 @@ export class TpEasingEditor extends TpFormElement<string> {
         'data-presets-open': state.presetsOpen,
         'data-disabled': this.effectiveDisabled,
         'data-readonly': this.readOnly,
-        ...this.#panelListeners(),
+        ...this.#nestedListeners,
       },
       content: html`${label}${this.#renderHeader()}${body}${this.renderPart(
         'easing-editor-footer',
@@ -1386,13 +1403,6 @@ export class TpEasingEditor extends TpFormElement<string> {
         },
       )}`,
     });
-  }
-
-  /** Listeners that keep every nested lane event inside the widget. */
-  #panelListeners(): Record<string, unknown> {
-    const listeners: Record<string, unknown> = {};
-    for (const type of NESTED_EVENT_TYPES) listeners[`@${type}`] = this.#containNested;
-    return listeners;
   }
 
   #title(): string {
@@ -1469,7 +1479,7 @@ export class TpEasingEditor extends TpFormElement<string> {
             class="presets-toggle"
             part="easing-editor-presets-toggle"
             variant="outline"
-            size="sm"
+            size="icon-sm"
             aria-label=${this.#dimensionLabel(strings.showPresets)}
             .pressed=${this.presetsOpen}
             ?disabled=${this.effectiveDisabled}
@@ -1527,7 +1537,7 @@ export class TpEasingEditor extends TpFormElement<string> {
       .label=${this.label}
       .strings=${this.#strings}
       .preview=${this.preview}
-      .heldRange=${this.#shownRange()}
+      .shownRange=${this.#shownRange()}
       .duration=${this.duration}
       ?disabled=${this.effectiveDisabled}
       ?readonly=${this.readOnly}
@@ -1670,7 +1680,7 @@ export class TpEasingEditor extends TpFormElement<string> {
           strings.duration,
           this.#durationSliderChange,
           {
-            '@tp-value-commit': stop,
+            '@tp-value-commit': this.#durationSliderCommit,
           },
         )}${this.#renderField('duration', strings.duration, strings.seconds)}`,
       },
@@ -1682,7 +1692,7 @@ export class TpEasingEditor extends TpFormElement<string> {
     return html`<tp-easing-editor-frames
       exportparts="easing-editor-frames, easing-editor-frames-tick"
       .curve=${this.#curve}
-      .heldRange=${this.#shownRange()}
+      .shownRange=${this.#shownRange()}
       .label=${this.label}
       .strings=${this.#strings}
       ?disabled=${this.effectiveDisabled}

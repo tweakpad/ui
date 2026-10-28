@@ -22,32 +22,55 @@ import type {
   MarkdownUrlPolicy,
 } from './types.js';
 
-/** Default element policy: inline formatting and disclosure, with `title`, `lang` and `dir`. */
-export const DEFAULT_MARKDOWN_ELEMENTS: MarkdownElementPolicy = {
-  '*': ['title', 'lang', 'dir'],
-  abbr: [],
-  b: [],
-  br: [],
-  del: [],
-  details: ['open'],
-  em: [],
-  i: [],
-  ins: [],
-  kbd: [],
-  mark: [],
-  s: [],
-  small: [],
-  strong: [],
-  sub: [],
-  summary: [],
-  sup: [],
-  u: [],
-};
+/**
+ * Default element policy: inline formatting and disclosure, with `title`, `lang` and `dir`. It is
+ * frozen, like the other shared policies below, so that no consumer can change what it admits.
+ */
+export const DEFAULT_MARKDOWN_ELEMENTS: MarkdownElementPolicy = Object.freeze({
+  '*': Object.freeze(['title', 'lang', 'dir']),
+  abbr: Object.freeze([]),
+  b: Object.freeze([]),
+  br: Object.freeze([]),
+  del: Object.freeze([]),
+  details: Object.freeze(['open']),
+  em: Object.freeze([]),
+  i: Object.freeze([]),
+  ins: Object.freeze([]),
+  kbd: Object.freeze([]),
+  mark: Object.freeze([]),
+  s: Object.freeze([]),
+  small: Object.freeze([]),
+  strong: Object.freeze([]),
+  sub: Object.freeze([]),
+  summary: Object.freeze([]),
+  sup: Object.freeze([]),
+  u: Object.freeze([]),
+});
+
+/** Attributes whose value is a link destination; it must pass the link protocols. */
+export const LINK_URL_ATTRIBUTES: readonly string[] = Object.freeze([
+  'href',
+  'action',
+  'formaction',
+  'cite',
+  'xlink:href',
+  'data',
+]);
+/** Attributes whose value is an image source; it must pass the image protocols. */
+export const IMAGE_URL_ATTRIBUTES: readonly string[] = Object.freeze(['src', 'poster', 'srcset']);
 
 const ALWAYS_REMOVED = /^(?:on|style$|srcdoc$)/;
-const LINK_ATTRIBUTES = new Set(['href', 'action', 'formaction', 'cite', 'xlink:href', 'data']);
-const IMAGE_ATTRIBUTES = new Set(['src', 'poster', 'srcset']);
+const LINK_ATTRIBUTES: ReadonlySet<string> = new Set(LINK_URL_ATTRIBUTES);
+const IMAGE_ATTRIBUTES: ReadonlySet<string> = new Set(IMAGE_URL_ATTRIBUTES);
 const ALERT = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\][ \t]*(?:\n|$)/i;
+
+/**
+ * Whether an attribute is always removed, whatever the element policy lists: event handlers
+ * (`on…`), `style` and `srcdoc`. Names compare case-insensitively, as HTML attribute names do.
+ */
+export function isAlwaysRemovedAttribute(name: string): boolean {
+  return ALWAYS_REMOVED.test(name.toLowerCase());
+}
 
 export interface ResolveOptions {
   readonly elements?: MarkdownElementPolicy | null;
@@ -367,7 +390,7 @@ class Resolver {
     ]);
     const attributes: Record<string, string> = {};
     for (const [name, value] of token.attributes) {
-      if (ALWAYS_REMOVED.test(name) || !allowed.has(name)) continue;
+      if (isAlwaysRemovedAttribute(name) || !allowed.has(name)) continue;
       const protocols = LINK_ATTRIBUTES.has(name)
         ? this.#links
         : IMAGE_ATTRIBUTES.has(name)

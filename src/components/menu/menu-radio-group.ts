@@ -15,6 +15,7 @@ export class TpMenuRadioGroup extends TpElement {
     ...TpElement.properties,
     value: { attribute: false, noAccessor: true },
     defaultValue: { attribute: 'default-value' },
+    label: { type: String },
     onValueChange: { attribute: false },
   };
   static override styles = [
@@ -26,6 +27,11 @@ export class TpMenuRadioGroup extends TpElement {
     `,
   ];
   defaultValue: unknown;
+  /**
+   * The group's accessible name. Without it, a child carrying `data-menu-label` names the group.
+   * The name goes to the semantic group, so the host carries no ARIA of its own.
+   */
+  label = '';
   onValueChange: ((event: TpValueChangeEvent<unknown>) => void) | undefined;
   #provided: unknown;
   #owner: MenuItemOwner | null = null;
@@ -119,7 +125,16 @@ export class TpMenuRadioGroup extends TpElement {
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (changed.has('disabled')) this.#members.forEach((member) => member.requestUpdate());
+    this.#syncLabel();
   }
+  /** Names the semantic group by its `data-menu-label` child while `label` is empty. */
+  readonly #syncLabel = (): void => {
+    const control = this.#control;
+    if (!control) return;
+    const label = menuGroupLabel(this.label, this.children);
+    if ((control.ariaLabelledByElements?.[0] ?? null) !== label)
+      control.ariaLabelledByElements = label ? [label] : null;
+  };
   protected override render() {
     return this.renderPart(
       `${this.#owner?.itemPartPrefix ?? 'menu'}-radio-group`,
@@ -128,13 +143,27 @@ export class TpMenuRadioGroup extends TpElement {
         reference: this.#reference,
         properties: {
           role: 'group',
-          'aria-label': this.getAttribute('aria-label') ?? undefined,
+          'aria-label': this.label || undefined,
           'aria-disabled': this.disabled ? 'true' : undefined,
         },
-        content: html`<slot></slot>`,
+        content: html`<slot @slotchange=${this.#syncLabel}></slot>`,
       },
     );
   }
+}
+
+/**
+ * The label element that names a group without its own `label`: the first child carrying
+ * `data-menu-label`, or `null` while `label` is set or no such child exists.
+ */
+export function menuGroupLabel(
+  label: string,
+  children: ArrayLike<Element> & Iterable<Element>,
+): HTMLElement | null {
+  if (label) return null;
+  for (const child of children)
+    if (child.hasAttribute('data-menu-label')) return child as HTMLElement;
+  return null;
 }
 
 declare global {

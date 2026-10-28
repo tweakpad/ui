@@ -42,12 +42,30 @@
         <tp-button disabled focusable-when-disabled>Focusable disabled</tp-button>
         <tp-button native-action="false">Synthetic action</tp-button>
       </section>
+      <section class="row" id="triggers" aria-label="Icon and chevron triggers">
+        <tp-button id="trigger-default" variant="outline" aria-label="Choose a folder"
+          ><tp-icon slot="icon-start" data-icon="folder"></tp-icon
+          ><tp-icon slot="icon-end" data-icon="chevron"></tp-icon
+        ></tp-button>
+        <tp-button id="trigger-sm" variant="outline" size="sm" aria-label="Choose a region"
+          ><tp-icon slot="icon-start" data-icon="globe"></tp-icon
+          ><tp-icon slot="icon-end" data-icon="chevron"></tp-icon
+        ></tp-button>
+      </section>
       <div id="host"></div>
     </main>
     <script type="module">
       const built = new URLSearchParams(location.search).has('built');
       if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
       await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      const icon = (name) =>
+        import(/* @vite-ignore */ built ? `/dist/icons/${name}.js` : `/src/icons/${name}.ts`);
+      const [{ folderIcon }, { globeIcon }, { chevronDownIcon }] = await Promise.all(
+        ['folder', 'globe', 'chevron-down'].map(icon),
+      );
+      const icons = { folder: folderIcon, globe: globeIcon, chevron: chevronDownIcon };
+      for (const element of document.querySelectorAll('#triggers tp-icon'))
+        element.icon = icons[element.dataset.icon];
       const contract = await import('./contract-checks.js');
       window.buttonContract = contract;
       await customElements.whenDefined('tp-button');

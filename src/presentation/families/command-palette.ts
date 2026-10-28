@@ -27,6 +27,9 @@ const definition: ComponentDefinition = {
       name: 'command-palette-item',
     },
     {
+      name: 'command-palette-item-description',
+    },
+    {
       name: 'command-palette-match',
     },
     {
@@ -51,6 +54,7 @@ export const commandPalettePresentation = definePresentation({
       '[part~="command-palette-list"]': 'command-palette-list',
       '[part~="command-palette-group"]': 'command-palette-group',
       '[part~="command-palette-item"]': 'command-palette-item',
+      '[part~="command-palette-item-description"]': 'command-palette-item-description',
       '[part~="command-palette-match"]': 'command-palette-match',
       '[part~="command-palette-empty-state"]': 'command-palette-empty-state',
       '[part~="command-palette-separator"]': 'command-palette-separator',
