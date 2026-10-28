@@ -1,29 +1,16 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { calloutSurface, calloutTint, calloutTints } from './shared/callout-surface.js';
 
 export const alertAppearance: PresentationDictionary = {
   alert: [
-    {
-      selector: '&',
-      declarations: {
-        'column-gap': 'var(--tp-space-2)',
-        padding: 'var(--tp-space-2) var(--tp-space-2-5)',
-        border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
-        'border-radius': 'var(--tp-radius-lg)',
-        background: 'var(--tp-card)',
-        color: 'var(--tp-card-foreground)',
-        'font-size': 'var(--tp-text-sm)',
-        'box-shadow': 'var(--tp-shadow-none)',
-      },
-    },
+    { selector: '&', declarations: calloutSurface },
     {
       selector: '& > .body',
       declarations: { gap: 'var(--tp-space-0-5)' },
     },
-    ...(['success', 'warning', 'danger'] as const).map((severity) => ({
+    ...calloutTints.map((severity) => ({
       selector: `:host([severity='${severity}']) &`,
-      declarations: {
-        color: `color-mix(in oklab, var(--tp-${severity === 'danger' ? 'destructive' : severity}) 85%, var(--tp-card-foreground))`,
-      },
+      declarations: calloutTint(severity),
     })),
   ],
   'alert-title': [

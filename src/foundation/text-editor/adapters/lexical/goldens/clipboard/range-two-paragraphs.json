@@ -1,0 +1,4 @@
+{
+  "text/html": "<div data-text-editor-fragment=\"range\"><p data-id=\"c1\"><strong>rain shell</strong> first.</p><p data-id=\"c2\">Then the <a href=\"https://camp.example/stove\">stove</a></p></div>",
+  "text/plain": "rain shell first.\n\nThen the stove"
+}

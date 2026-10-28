@@ -32,8 +32,9 @@ const meta: Meta<IconStoryArgs> = {
     },
     size: {
       control: 'text',
-      description: 'Preferred square CSS extent. Explicit host width and height can override it.',
-      table: { type: { summary: 'CSS length' }, defaultValue: { summary: '1em' } },
+      description:
+        "Preferred square CSS extent. Empty takes the icon extent of the enclosing control's size, otherwise the `--tp-icon-size-md` role. Explicit host width and height can override it.",
+      table: { type: { summary: 'CSS length' }, defaultValue: { summary: "''" } },
     },
   },
   render: (args) =>

@@ -1,0 +1,679 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "brief00001",
+        "align": null,
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Harbor master's daily brief"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "brief00002",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Wind "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "light"
+        },
+        {
+          "type": "text",
+          "text": ", swell "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "italic"
+            }
+          ],
+          "text": "low"
+        },
+        {
+          "type": "text",
+          "text": ", visibility "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "underline"
+            }
+          ],
+          "text": "good"
+        },
+        {
+          "type": "text",
+          "text": "; the "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "strike"
+            }
+          ],
+          "text": "north"
+        },
+        {
+          "type": "text",
+          "text": " south channel is open. Tide tables are at "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://harbor.example/tides"
+              }
+            }
+          ],
+          "text": "the harbor office"
+        },
+        {
+          "type": "text",
+          "text": ", and the buoy feed reports "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ],
+          "text": "buoy.read(7)"
+        },
+        {
+          "type": "text",
+          "text": "."
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "Pressure 1013 hPa, water at 14 m"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "superscript"
+            }
+          ],
+          "text": "3"
+        },
+        {
+          "type": "text",
+          "text": "/s, nitrate NO"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "subscript"
+            }
+          ],
+          "text": "3"
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "brief00003",
+        "align": "center"
+      },
+      "content": [
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "blue"
+              }
+            }
+          ],
+          "text": "Blue water"
+        },
+        {
+          "type": "text",
+          "text": ", "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "yellow"
+              }
+            }
+          ],
+          "text": "yellow flags"
+        },
+        {
+          "type": "text",
+          "text": " and "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://harbor.example/alerts"
+              }
+            },
+            {
+              "type": "bold"
+            },
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "gray"
+              }
+            },
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "red"
+              }
+            }
+          ],
+          "text": "red alerts"
+        },
+        {
+          "type": "text",
+          "text": "."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "brief00004",
+        "align": "end",
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Moorings"
+        }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "attrs": {
+        "id": "brief00005",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Check every line twice"
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "before the evening tide."
+        }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": {
+        "id": "brief00006",
+        "language": "json"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "{ \"berth\": 12, \"vessel\": \"Kittiwake\" }"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "brief00007"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "East pier"
+                }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "id": "brief00008"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Berths 1 to 6"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "brief00009"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "West pier"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "orderedList",
+      "attrs": {
+        "start": 3,
+        "type": null
+      },
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "brief00010"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Log arrivals"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "brief00011"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Log departures"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "taskList",
+      "content": [
+        {
+          "type": "taskItem",
+          "attrs": {
+            "id": "brief00012",
+            "checked": true
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Fuel dock inspected"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "taskItem",
+          "attrs": {
+            "id": "brief00013",
+            "checked": false
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Crane serviced"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "horizontalRule",
+      "attrs": {
+        "id": "brief00014"
+      }
+    },
+    {
+      "type": "image",
+      "attrs": {
+        "id": "brief00015",
+        "src": "https://harbor.example/pier.jpg",
+        "alt": "The east pier at low tide",
+        "width": 560
+      }
+    },
+    {
+      "type": "table",
+      "attrs": {
+        "id": "brief00016",
+        "headerRow": true,
+        "headerColumn": true
+      },
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": [120],
+                "background": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Berth"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": [100],
+                "background": null,
+                "align": "center"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Vessel"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": [100],
+                "background": null,
+                "align": "end"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Length"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 2,
+                "colwidth": [120],
+                "background": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "East"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": [100],
+                "background": "green",
+                "align": "center"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Kittiwake"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": [100],
+                "background": null,
+                "align": "end"
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "12 m"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 2,
+                "rowspan": 1,
+                "colwidth": [100, 100],
+                "background": "yellow",
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Reserved for the pilot boat"
+                    }
+                  ]
+                },
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "until noon"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "brief00017",
+        "align": "justify"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Questions go to the harbor office before 18:00."
+        }
+      ]
+    }
+  ]
+}

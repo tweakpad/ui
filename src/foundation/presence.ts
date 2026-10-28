@@ -8,6 +8,15 @@ export interface PresenceControllerOptions {
   onComplete?: (present: boolean) => void;
 }
 
+/** Running animations of an element's composed subtree: projected content keeps its own roots. */
+function composedAnimations(element: Element, found = new Set<Animation>()): Set<Animation> {
+  for (const animation of element.getAnimations({ subtree: true })) found.add(animation);
+  for (const node of [element, ...element.querySelectorAll('*')])
+    if (node.shadowRoot)
+      for (const child of node.shadowRoot.children) composedAnimations(child, found);
+  return found;
+}
+
 export class PresenceController implements ReactiveController {
   readonly #host: ReactiveControllerHost;
   readonly #options: PresenceControllerOptions;
@@ -149,11 +158,9 @@ export class PresenceController implements ReactiveController {
       if (generation !== this.#generation || present !== this.#requested) return;
       const surface = this.#options.surface?.();
       const animations = surface
-        ? surface
-            .getAnimations({ subtree: true })
-            .filter(
-              (animation) => animation.playState !== 'finished' && animation.playState !== 'idle',
-            )
+        ? [...composedAnimations(surface)].filter(
+            (animation) => animation.playState !== 'finished' && animation.playState !== 'idle',
+          )
         : [];
       const completions = [...this.#trackedCompletions];
       if (!animations.length && !completions.length) {

@@ -1,6 +1,7 @@
 import { markupExample, moduleExample } from './documentation-examples.js';
 import { setupCalendarExample } from './calendar-example.js';
 import setupSource from './calendar-example.js?raw';
+import datePickerSource from './date-picker-trigger.js?raw';
 
 /** Examples place Calendar in a Card; the Card owns the surface and outline. */
 const inCard = (calendar: string) =>
@@ -15,7 +16,7 @@ const interactive = (title: string, id: string, markup: string, description: str
     markup,
     description,
     setup: setupCalendarExample,
-    source: setupSource,
+    source: `${datePickerSource.replaceAll(/^export /gmu, '')}\n${setupSource.replace(/^import \{ applyDatePickerTrigger \}.*\n/mu, '')}`,
     call: `setupCalendarExample(document.getElementById('${id}'));`,
   });
 

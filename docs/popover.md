@@ -43,6 +43,11 @@ open the Popover; a press can pin a hover-open popup. Outside press/focus, Escap
 Close actions and imperative close all use the same cancelable owner. Nested
 portaled overlays remain in the owning branch, including for modal allowances.
 
+Without a Trigger, the owner opens the Popover: it sets `open`, places the popup with
+`anchor` (property only: an element or a virtual anchor, such as the rectangles of a text
+selection), and sets `open` back to false when `tp-open-change` proposes closing. Without
+`anchor`, the popup sits at the element in the `anchor` slot, else at the Trigger.
+
 ## Slots and parts
 
 | Slot          | Public part / role                                                                           |

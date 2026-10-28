@@ -39,6 +39,8 @@ export class HoverSurfaceController {
   #timer: number | undefined;
   #timerWindow: Window | undefined;
   #corridor: (() => void) | undefined;
+  /** The trigger the pending timer or safe corridor acts for; `undefined` for the popup's own. */
+  #pendingFor: HTMLElement | undefined;
   #focusOpened = false;
   #pinned = false;
   #hoverOpenedAt = -Infinity;
@@ -59,34 +61,48 @@ export class HoverSurfaceController {
     this.#timerWindow = undefined;
     this.#corridor?.();
     this.#corridor = undefined;
+    this.#pendingFor = undefined;
   };
-  #schedule(callback: () => void, duration: number): void {
+  /**
+   * Cancels the pending open or close only when it acts for `element`: another trigger's change
+   * (one becoming disabled) leaves the open trigger's pending close in place.
+   */
+  cancelFor(element: HTMLElement): void {
+    if (this.#pendingFor === element) this.cancel();
+  }
+  #schedule(callback: () => void, duration: number, element?: HTMLElement): void {
     this.cancel();
+    this.#pendingFor = element;
     this.#timerWindow = this.options.document().defaultView ?? undefined;
     this.#timer = this.#timerWindow?.setTimeout(() => {
       this.#timer = undefined;
       this.#timerWindow = undefined;
+      this.#pendingFor = undefined;
       callback();
     }, delay(duration));
   }
   #focusedInside(): boolean {
     return this.options.inside(deepActiveElement(this.options.document()));
   }
-  #scheduleClose(event: Event, config: HoverTriggerOptions = {}): void {
+  #scheduleClose(event: Event, config: HoverTriggerOptions = {}, element?: HTMLElement): void {
     if (
       this.#pinned ||
       this.#focusOpened ||
       (!event.type.startsWith('focus') && this.#focusedInside())
     )
       return;
-    this.#schedule(() => {
-      if (!this.#pinned && !this.#focusOpened && !this.#focusedInside())
-        this.options.request(
-          false,
-          event.type.startsWith('focus') ? 'focus-outside' : 'trigger-hover',
-          event,
-        );
-    }, config.closeDelay ?? this.options.closeDelay());
+    this.#schedule(
+      () => {
+        if (!this.#pinned && !this.#focusOpened && !this.#focusedInside())
+          this.options.request(
+            false,
+            event.type.startsWith('focus') ? 'focus-outside' : 'trigger-hover',
+            event,
+          );
+      },
+      config.closeDelay ?? this.options.closeDelay(),
+      element,
+    );
   }
   bind(element: HTMLElement, config: HoverTriggerOptions = {}): () => void {
     let touch = false;
@@ -110,6 +126,7 @@ export class HoverSurfaceController {
       this.#schedule(
         () => this.options.request(true, 'trigger-hover', event, element),
         group.instant ? 0 : (config.openDelay ?? this.options.openDelay()),
+        element,
       );
     };
     const leave = (event: PointerEvent) => {
@@ -118,17 +135,18 @@ export class HoverSurfaceController {
       this.cancel();
       if (this.#pinned || this.#focusedInside()) return;
       const popup = this.options.popup();
-      if (this.options.open() && this.options.hoverable() && popup)
+      if (this.options.open() && this.options.hoverable() && popup) {
         this.#corridor = safeCorridor(
           element,
           popup,
           event,
-          (e) => this.#scheduleClose(e, config),
+          (e) => this.#scheduleClose(e, config, element),
           {
             contains: this.options.inside,
           },
         );
-      else this.#scheduleClose(event, config);
+        this.#pendingFor = element;
+      } else this.#scheduleClose(event, config, element);
     };
     const move = (event: PointerEvent) => {
       this.point = { x: event.clientX, y: event.clientY };
@@ -152,6 +170,7 @@ export class HoverSurfaceController {
         this.#schedule(
           () => this.options.request(true, 'trigger-focus', event, element),
           config.openDelay ?? this.options.openDelay(),
+          element,
         );
       else this.options.request(true, 'trigger-focus', event, element);
     };
@@ -160,7 +179,7 @@ export class HoverSurfaceController {
       this.#focusOpened = false;
       this.cancel();
       if (this.options.inside(event.relatedTarget as Node | null)) return;
-      this.#scheduleClose(event, config);
+      this.#scheduleClose(event, config, element);
     };
     const activate = (event: MouseEvent | KeyboardEvent) => {
       touch = false;

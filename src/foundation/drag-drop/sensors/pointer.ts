@@ -1,4 +1,5 @@
 import { CleanupScope, Scheduler } from '../../services.js';
+import { leaseDragCursor } from '../../drag-cursor.js';
 import { composedContains } from '../../focus.js';
 import { leaseStyle } from '../../owned-styles.js';
 import { frameCoordinates, sameOriginDocuments } from '../dom-geometry.js';
@@ -262,8 +263,20 @@ export class PointerSensor implements Sensor {
         }
         event.preventDefault();
         capture.setPointerCapture(pointerId);
-        scope.add(leaseStyle(element.ownerDocument.documentElement, 'user-select', 'none'));
-        scope.add(leaseStyle(element.ownerDocument.documentElement, 'cursor', 'grabbing'));
+        const owner = element.ownerDocument;
+        const touch = event.pointerType !== 'mouse';
+        // A root declaration restyles every element (V-587). A mouse drag keeps text selection
+        // off through `selectstart` and its cancelled moves, and writes no `user-select` at all;
+        // touch and pen keep it against the platform's long-press selection. The cursor shows
+        // through the drag cursor's layer, which styles one element, for every pointer with one.
+        // Both wait for the next frame, so that the drag's own reads in the starting task force
+        // no style recalculation.
+        scope.add(
+          scheduler.animationFrame(() => {
+            if (touch) scope.add(leaseStyle(owner.documentElement, 'user-select', 'none'));
+            if (event.pointerType !== 'touch') scope.add(leaseDragCursor(owner, 'grabbing'));
+          }),
+        );
         scope.add(this.manager.ownInputFlush(flush));
         controller.signal.addEventListener('abort', cleanup, { once: true });
         scope.add(this.manager.monitor.addEventListener('dragstart', () => flush()));

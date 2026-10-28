@@ -332,7 +332,7 @@ export const easingSurfaceStyles = css`
     pointer-events: none;
   }
 
-  /* The preview square is centered and sized to the graph area; rotation fits it when turned. */
+  /* The preview square fills the graph area in every mode; the box clips what leaves it. */
   .preview-layer {
     position: absolute;
     inset: 0;
@@ -347,14 +347,9 @@ export const easingSurfaceStyles = css`
   .shape {
     display: block;
     flex: none;
-    inline-size: auto;
-    block-size: calc(100% * var(--_tp-easing-editor-headroom, 1));
-    aspect-ratio: 1 / 1;
+    inline-size: 100%;
+    block-size: 100%;
     will-change: transform;
-  }
-
-  .preview-layer[data-mode='rotation'] > .shape {
-    block-size: 70.7%;
   }
 
   .handle,

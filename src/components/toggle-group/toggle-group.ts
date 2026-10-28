@@ -6,10 +6,16 @@ import { ControllableState, orderedValuesEqual } from '../../foundation/controll
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { CollectionRegistry } from '../../foundation/collection.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
+import type {
+  ToolbarController,
+  ToolbarItemOptions,
+  ToolbarRegistration,
+} from '../../foundation/toolbar.js';
+import { toolbarItemOwner, whenToolbar } from '../../foundation/toolbar-membership.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import { toggleGroupJoinedPresentation } from '../../presentation/recipes/toggle-group.js';
-import { TpToggle, type ToggleSelectionOwner } from '../toggle/toggle.js';
+import { TpToggle, type ToggleSelectionOwner, type ToggleSize } from '../toggle/toggle.js';
 import { normalizeToggleValues, toggleSelection } from './selection.js';
 import { toggleGroupPresentation } from '../../presentation/families/toggle-group.js';
 
@@ -75,7 +81,7 @@ export class TpToggleGroup
   onValueChange: ((event: TpValueChangeEvent<readonly string[]>) => void) | undefined;
   loopFocus = true;
   variant: 'ghost' | 'outline' = 'ghost';
-  size: 'sm' | 'default' | 'lg' = 'default';
+  size: ToggleSize = 'default';
   spacing = 2;
   label = '';
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
@@ -86,6 +92,20 @@ export class TpToggleGroup
   #observer: MutationObserver | undefined;
   #scheduled = false;
   #registered = new Map<TpToggle, { target: HTMLElement; cleanup: () => void }>();
+  // Inside a Toolbar root the group is a Toolbar group: its part is the registered group and its
+  // members are Toolbar items (`uwg-te-toggle-group-req-toolbar`, `node-009977`).
+  #toolbar: ToolbarController | null = null;
+  #toolbarCancel: (() => void) | null = null;
+  #toolbarGroup: {
+    element: HTMLElement;
+    disabled: boolean;
+    registration: ToolbarRegistration<{ disabled?: boolean }>;
+  } | null = null;
+  #toolbarItems = new Map<
+    TpToggle,
+    { excluded: boolean; registration: ToolbarRegistration<ToolbarItemOptions> }
+  >();
+  #part: HTMLElement | null = null;
   #state = new ControllableState<readonly string[]>({
     host: this,
     initialValue: [],
@@ -191,6 +211,7 @@ export class TpToggleGroup
     };
     return this.renderPart('toggle-group', state, {
       tag: 'div',
+      reference: this.#partReference,
       properties: {
         class: 'group',
         role: 'group',
@@ -223,7 +244,17 @@ export class TpToggleGroup
       ],
     });
     this.#schedule();
+    this.#toolbarCancel = whenToolbar(this, (toolbar) => {
+      this.#toolbar = toolbar;
+      this.#schedule();
+      return () => this.#releaseToolbar();
+    });
   }
+  #partReference = (element: HTMLElement | null): void => {
+    if (element === this.#part) return;
+    this.#part = element;
+    if (this.#toolbar) this.#schedule();
+  };
   #schedule = (): void => {
     if (this.#scheduled || !this.isConnected) return;
     this.#scheduled = true;
@@ -272,6 +303,7 @@ export class TpToggleGroup
                   this.orientation,
                   member.hasAttribute('data-icon-inline-start'),
                   member.hasAttribute('data-icon-inline-end'),
+                  `${this.size}`.startsWith('icon'),
                 ),
               },
             }
@@ -296,12 +328,74 @@ export class TpToggleGroup
         }
       });
     }
+    this.#syncToolbar();
+  }
+  /**
+   * Registers the `toggle-group` part as the Toolbar group and every member as a `button` item:
+   * a disabled member, or every member of a disabled group, stays a focusable stop that cannot
+   * activate (`node-010070`), as the text editor's toolbars require of the Toggle groups they
+   * render while the editor is enabled (`uwg-te-req-a11y-2`, `uwg-te-req-tools-1`), and an
+   * excluded member is skipped as the standalone group skips it. A toolbar whose disabled mode is
+   * `fully` skips every member while its root is disabled (`uwg-te-req-prop-3`, `node-010070`).
+   */
+  #syncToolbar(): void {
+    const toolbar = this.#toolbar;
+    if (!toolbar) return;
+    const part = this.#part;
+    const disabled = this.effectiveDisabled;
+    if (this.#toolbarGroup && this.#toolbarGroup.element !== part) {
+      this.#toolbarGroup.registration.dispose();
+      this.#toolbarGroup = null;
+    }
+    if (part && !this.#toolbarGroup)
+      this.#toolbarGroup = {
+        element: part,
+        disabled,
+        registration: toolbar.registerGroup(part, { disabled }),
+      };
+    else if (this.#toolbarGroup && this.#toolbarGroup.disabled !== disabled) {
+      this.#toolbarGroup.disabled = disabled;
+      this.#toolbarGroup.registration.update({ disabled });
+    }
+    for (const member of this.#members) {
+      const excluded = this.#excluded.has(member);
+      const item = this.#toolbarItems.get(member);
+      if (item) {
+        if (item.excluded === excluded) continue;
+        item.excluded = excluded;
+        item.registration.update({ focusableWhenDisabled: !excluded });
+      } else if (toolbarItemOwner(member))
+        this.#diagnose(
+          'toolbar-member',
+          'A Toggle group inside a Toolbar registers its own Toggles; do not register them as Toolbar items.',
+        );
+      else
+        this.#toolbarItems.set(member, {
+          excluded,
+          registration: toolbar.registerItem(member, {
+            kind: 'button',
+            focusableWhenDisabled: !excluded,
+          }),
+        });
+    }
+  }
+  #releaseToolbar(): void {
+    for (const item of this.#toolbarItems.values()) item.registration.dispose();
+    this.#toolbarItems.clear();
+    this.#toolbarGroup?.registration.dispose();
+    this.#toolbarGroup = null;
+    if (!this.#toolbar) return;
+    this.#toolbar = null;
+    // Standalone again: the group's own tab stop and arrow keys return.
+    for (const member of this.#members) member.requestUpdate();
   }
   #release(member: TpToggle): void {
     if (member.selectionOwner === this) member.selectionOwner = null;
     setPartComposition(member, this);
     this.#registered.get(member)?.cleanup();
     this.#registered.delete(member);
+    this.#toolbarItems.get(member)?.registration.dispose();
+    this.#toolbarItems.delete(member);
   }
   #focusIn = (event: FocusEvent): void => {
     const member = event
@@ -318,6 +412,8 @@ export class TpToggleGroup
     }
   };
   #key = (event: KeyboardEvent): void => {
+    // Inside a Toolbar its arrow, Home and End keys are the Toolbar's.
+    if (this.#toolbar) return;
     if (this.effectiveDisabled || componentHandlingPrevented(event) || event.isComposing) return;
     const member = event
       .composedPath()
@@ -342,6 +438,9 @@ export class TpToggleGroup
   }
   override disconnectedCallback(): void {
     this.#observer?.disconnect();
+    this.#toolbarCancel?.();
+    this.#toolbarCancel = null;
+    this.#releaseToolbar();
     for (const member of this.#members) this.#release(member);
     this.#members = [];
     this.#focused = null;

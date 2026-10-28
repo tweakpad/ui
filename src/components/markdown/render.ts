@@ -4,7 +4,6 @@ import { builtinHighlighter, type CodeHighlighter } from '../../foundation/code/
 import { collectTargets } from '../../foundation/collect-targets.js';
 import { inlineText } from '../../foundation/markdown/index.js';
 import type {
-  MarkdownAlertKind,
   MarkdownContent,
   MarkdownElement,
   MarkdownFootnoteDefinition,
@@ -13,6 +12,7 @@ import type {
   MarkdownTable,
   MarkdownTableRow,
 } from '../../foundation/markdown/index.js';
+import { alertKindSeverity } from '../../presentation/recipes/shared/callout-surface.js';
 import { fenceOptions } from './fence-meta.js';
 import type {
   MarkdownHeadingTarget,
@@ -20,14 +20,6 @@ import type {
   MarkdownRenderer,
   MarkdownRenderers,
 } from './types.js';
-
-const SEVERITY: Record<MarkdownAlertKind, string> = {
-  note: 'informational',
-  important: 'informational',
-  tip: 'success',
-  warning: 'warning',
-  caution: 'danger',
-};
 
 let taskSequence = 0;
 
@@ -122,7 +114,7 @@ export class MarkdownTreeRenderer {
         return this.#table(node);
       case 'alert':
         return html`<tp-alert
-          severity=${SEVERITY[node.kind]}
+          severity=${alertKindSeverity[node.kind]}
           .title=${this.options.messages[node.kind]}
           data-flow
           >${this.nodes(node.children)}</tp-alert

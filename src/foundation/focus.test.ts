@@ -5,7 +5,10 @@ import {
   composedScopeContains,
   focusAfterRemoval,
   focusableElements,
+  focusableFrom,
   isAvailable,
+  tabbableElements,
+  trapTabKey,
 } from './focus.js';
 
 describe('composed ancestry', () => {
@@ -98,6 +101,28 @@ describe('focus across owner realms', () => {
     expect(isAvailable(input)).toBe(true);
   });
 
+  it('moves on from the place in the tree of a reference outside the sequence, never from the start', () => {
+    // A page control, an editing root, a roving grip (tab index -1) after it, a later control and
+    // one of positive tab index, which the sequence visits first.
+    const before = element(),
+      editing = element(),
+      grip = element(-1),
+      after = element(),
+      positive = element(1);
+    const root = { childNodes: [before, editing, grip, after, positive] } as unknown as ParentNode;
+    expect(focusableFrom(root, grip, 1)).toEqual([after]);
+    expect(focusableFrom(root, grip, -1)).toEqual([editing, before, positive]);
+    // A reference in the sequence counts by its own place.
+    expect(focusableFrom(root, editing, 1)).toEqual([after]);
+    expect(focusableFrom(root, editing, -1)).toEqual([before, positive]);
+    // Without a reference, the sequence from its start.
+    expect(focusableFrom(root, null, 1)).toEqual([positive, before, editing, after]);
+    // The last control in the tree has nothing after it.
+    const last = element(-1);
+    const tail = { childNodes: [before, last] } as unknown as ParentNode;
+    expect(focusableFrom(tail, last, 1)).toEqual([]);
+  });
+
   it('visits distributed children and sorts positive tab order before zero', () => {
     const regular = element(),
       positive = element(2),
@@ -110,6 +135,46 @@ describe('focus across owner realms', () => {
     });
     const root = { childNodes: [slot] } as unknown as ParentNode;
     expect(focusableElements(root)).toEqual([positive, regular]);
+  });
+
+  it('keeps a control focusable while disabled in the Tab sequence that a trap wraps, as the browser does, and leaves a natively disabled one out', () => {
+    const first = element(),
+      focusableDisabled = element(),
+      nativeDisabled = element();
+    // `aria-disabled="true"`: unavailable to activation, still reached by Tab.
+    Object.assign(focusableDisabled, {
+      matches: (selector: string) => selector === '[disabled], [aria-disabled="true"]',
+    });
+    Object.assign(nativeDisabled, {
+      matches: (selector: string) =>
+        selector === '[disabled], [aria-disabled="true"]' || selector.includes(':disabled'),
+    });
+    const document = { activeElement: first as Element | null };
+    const root = {
+      childNodes: [first, focusableDisabled, nativeDisabled],
+      ownerDocument: document,
+    } as unknown as ParentNode;
+    expect(tabbableElements(root)).toEqual([first, focusableDisabled]);
+    expect(focusableElements(root)).toEqual([first]);
+    const tab = (shiftKey: boolean) => {
+      const event = {
+        key: 'Tab',
+        shiftKey,
+        defaultPrevented: false,
+        preventDefault() {
+          this.defaultPrevented = true;
+        },
+      };
+      trapTabKey(event as unknown as KeyboardEvent, root);
+      return event.defaultPrevented;
+    };
+    // Tab from the first stop goes on natively to the control focusable while disabled.
+    expect(tab(false)).toBe(false);
+    // Shift+Tab from the first stop wraps to the last one, that control.
+    let focused: unknown = null;
+    Object.assign(focusableDisabled, { focus: () => (focused = focusableDisabled) });
+    expect(tab(true)).toBe(true);
+    expect(focused).toBe(focusableDisabled);
   });
 });
 

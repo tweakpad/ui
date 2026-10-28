@@ -11,6 +11,7 @@ import { TpInput } from '../../../components/input/input.js';
 import { TpInputGroup } from '../../../components/input-group/input-group.js';
 import { TpKeyHint } from '../../../components/key-hint/key-hint.js';
 import { TpKeyHintGroup } from '../../../components/key-hint/key-hint-group.js';
+import { renderShortcutHint } from '../../../components/key-hint/shortcut-hint.js';
 import { TpMenu } from '../../../components/menu/menu.js';
 import { TpMenuItem } from '../../../components/menu/menu-item.js';
 import { TpSeparator } from '../../../components/separator/separator.js';
@@ -40,9 +41,9 @@ import { workflowIcon } from '../../../icons/workflow.js';
 import { xIcon } from '../../../icons/x.js';
 import type { FlowRunScope } from '../../../foundation/flow/run/types.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
-import { format, resolveStrings } from '../strings.js';
+import { fillTemplate } from '../../../foundation/template.js';
+import { resolveStrings } from '../strings.js';
 import {
-  renderShortcut,
   RUN_KEYS,
   ZOOM_FIT_KEYS,
   ZOOM_IN_KEYS,
@@ -188,8 +189,9 @@ const controlsStyles = css`
     align-items: center;
   }
 
-  /* A vertical toolbar is one column: every set spans it, so square icon Buttons and the wider
-     Toggles line up instead of each group keeping its own fit-content width. */
+  /* A vertical toolbar is one column: every set spans it, so the square icon controls and the wider
+     sets (the zoom field, the transport, a consumer's labelled Button) line up instead of each
+     group keeping its own fit-content width. */
   .controls[data-orientation='vertical'] > :is(tp-button-group, tp-toggle-group, tp-toggle),
   .controls[data-orientation='vertical'] .transport > tp-button-group {
     inline-size: 100%;
@@ -213,7 +215,8 @@ const controlsStyles = css`
   }
 
   /* The zoom field holds "100%" and its menu trigger. Inputs and Input groups have one height (the
-     default control height), so the bar's Buttons and Toggles use the default size to line up. */
+     default control height), so the bar's icon Buttons and Toggles use the icon size of that step
+     to line up. */
   tp-input-group.zoom {
     inline-size: calc(var(--tp-spacing) * 24);
     flex: none;
@@ -364,8 +367,10 @@ export class TpFlowControls extends TpElement {
   }
 
   /**
-   * Registers every composed Button (and the zoom field and its trigger) as a roving item and
-   * the Toggle groups as toolbar groups, consumer children included.
+   * Registers every composed Button and Toggle, the zoom field and its menu trigger as roving
+   * items, consumer children included. A Toggle group registers itself and its Toggles with the
+   * toolbar it sits in (`uwg-te-toggle-group-req-toolbar`), so the bar leaves it and its Toggles
+   * alone.
    */
   #syncItems = (): void => {
     const toolbar = this.#toolbar;
@@ -377,15 +382,17 @@ export class TpFlowControls extends TpElement {
       }) ?? []
     ).flatMap((element) =>
       element.localName === 'tp-button-group'
-        ? [...element.querySelectorAll<HTMLElement>('tp-button, tp-toggle, button')]
+        ? [...element.querySelectorAll<HTMLElement>('tp-button, tp-toggle, button')].filter(
+            (control) => !control.closest('tp-toggle-group'),
+          )
         : [element as HTMLElement],
     );
     const elements = [
       ...this.renderRoot.querySelectorAll<HTMLElement>(
-        'tp-button.control, tp-toggle.lock, tp-toggle-group.tools, tp-input.zoom-input',
+        'tp-button.control, tp-button.zoom-trigger, tp-toggle.lock, tp-toggle.palette, tp-input.zoom-input',
       ),
       ...slotted.filter((element) =>
-        ['tp-button', 'tp-toggle', 'tp-toggle-group', 'button'].includes(element.localName),
+        ['tp-button', 'tp-toggle', 'button'].includes(element.localName),
       ),
     ];
     for (const element of elements) {
@@ -393,12 +400,10 @@ export class TpFlowControls extends TpElement {
       if (this.#items.has(element)) continue;
       this.#items.set(
         element,
-        element.localName === 'tp-toggle-group'
-          ? toolbar.registerGroup(element)
-          : toolbar.registerItem(element, {
-              // The zoom field keeps its caret keys; the toolbar moves on past its edges.
-              kind: element.localName === 'tp-input' ? 'input' : 'button',
-            }),
+        toolbar.registerItem(element, {
+          // The zoom field keeps its caret keys; the toolbar moves on past its edges.
+          kind: element.localName === 'tp-input' ? 'input' : 'button',
+        }),
       );
     }
     for (const [element, registration] of this.#items)
@@ -614,26 +619,23 @@ export class TpFlowControls extends TpElement {
           ?disabled=${this.disabled}
         ></tp-button>
         <tp-menu-item value="zoom-in"
-          ><tp-icon .icon=${plusIcon}></tp-icon>${strings.zoomIn}${renderShortcut(
-            ZOOM_IN_KEYS,
-          )}</tp-menu-item
+          ><tp-icon .icon=${plusIcon}></tp-icon
+          >${strings.zoomIn}${renderShortcutHint(ZOOM_IN_KEYS, 'menu')}</tp-menu-item
         >
         <tp-menu-item value="zoom-out"
-          ><tp-icon .icon=${minusIcon}></tp-icon>${strings.zoomOut}${renderShortcut(
-            ZOOM_OUT_KEYS,
-          )}</tp-menu-item
+          ><tp-icon .icon=${minusIcon}></tp-icon
+          >${strings.zoomOut}${renderShortcutHint(ZOOM_OUT_KEYS, 'menu')}</tp-menu-item
         >
         <tp-menu-item value="fit"
-          ><tp-icon .icon=${scanIcon}></tp-icon>${strings.zoomToFit}${renderShortcut(
-            ZOOM_FIT_KEYS,
-          )}</tp-menu-item
+          ><tp-icon .icon=${scanIcon}></tp-icon
+          >${strings.zoomToFit}${renderShortcutHint(ZOOM_FIT_KEYS, 'menu')}</tp-menu-item
         >
         <tp-separator></tp-separator>
         ${this.zoomPresets.map(
           (level) =>
             html`<tp-menu-item inset value=${String(level)}
-              >${format(strings.zoomToLevel, { percent: `${Math.round(level * 100)}%` })}${
-                level === 1 ? renderShortcut(ZOOM_RESET_KEYS) : nothing
+              >${fillTemplate(strings.zoomToLevel, { percent: `${Math.round(level * 100)}%` })}${
+                level === 1 ? renderShortcutHint(ZOOM_RESET_KEYS, 'menu') : nothing
               }</tp-menu-item
             >`,
         )}
@@ -673,6 +675,7 @@ export class TpFlowControls extends TpElement {
     return html`<tp-toggle
       class="control lock"
       variant="outline"
+      size="icon"
       data-action="lock"
       .pressed=${this.locked}
       ?disabled=${this.disabled}
@@ -689,6 +692,7 @@ export class TpFlowControls extends TpElement {
     return html`<tp-toggle
       class="control palette"
       variant="outline"
+      size="icon"
       data-action="palette"
       .pressed=${this.paletteOpen}
       ?disabled=${this.disabled || this.readOnly}
@@ -726,6 +730,7 @@ export class TpFlowControls extends TpElement {
     return html`<tp-toggle-group
       class="tools"
       variant="outline"
+      size="icon"
       spacing="0"
       .orientation=${this.orientation}
       .value=${[this.tool]}
@@ -820,9 +825,8 @@ export class TpFlowControls extends TpElement {
           .disabled=${unavailable}
         ></tp-button>
         <tp-menu-item value="graph"
-          ><tp-icon .icon=${playIcon}></tp-icon>${strings.runGraph}${renderShortcut(
-            RUN_KEYS,
-          )}</tp-menu-item
+          ><tp-icon .icon=${playIcon}></tp-icon
+          >${strings.runGraph}${renderShortcutHint(RUN_KEYS, 'menu')}</tp-menu-item
         >
         <tp-menu-item inset value="node" ?disabled=${!node || running}
           >${strings.runSelected}</tp-menu-item
@@ -868,7 +872,9 @@ export class TpFlowControls extends TpElement {
               ? html`<tp-icon .icon=${chip.icon} aria-hidden="true"></tp-icon>`
               : html`<tp-spinner size="sm" label=""></tp-spinner>`
           }<span aria-hidden="true">${count}</span
-          ><span class="visually-hidden">${format(strings[chip.label], { count })}</span></tp-badge
+          ><span class="visually-hidden"
+            >${fillTemplate(strings[chip.label], { count })}</span
+          ></tp-badge
         >`;
       })}
     </div>`;

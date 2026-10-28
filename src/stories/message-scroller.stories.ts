@@ -3,6 +3,7 @@ import { keyed } from 'lit/directives/keyed.js';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import type { TpMessageScroller } from '../components/message-scroller/index.js';
 import './message-scroller.examples.js';
+import { publishedSource } from './documentation-examples.js';
 import { messageScrollerExamples } from './message-scroller.examples.js';
 import documentation from '../../docs/message-scroller.md?raw';
 
@@ -10,7 +11,7 @@ import demoSource from './message-scroller-streaming.ts?raw';
 
 const baseSource = `import '@tweakpad/ui/register';
 import '@tweakpad/ui/styles.css';
-${demoSource.replace('../components/message-scroller/index.js', '@tweakpad/ui').replaceAll(/'\.\.\/icons\/([^']+)\.js'/g, "'@tweakpad/ui/icons/$1'")}
+${publishedSource(demoSource)}
 // Mount <message-scroller-demo></message-scroller-demo>`;
 
 interface Args {

@@ -3,6 +3,11 @@ import type { IconDefinition } from '../../icons/types.js';
 export interface CommandItem extends SelectOption {
   keywords?: readonly string[];
   icon?: IconDefinition;
+  /**
+   * Secondary text after the label and the item's accessible description; filtering reads it only
+   * through a supplied filter or, on the list, through `matchFields` or a `source`.
+   */
+  description?: string;
   shortcut?: string;
   forceMount?: boolean;
   onSelect?: (event: Event) => void;

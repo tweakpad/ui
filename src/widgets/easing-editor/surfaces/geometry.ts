@@ -1,53 +1,72 @@
+import { convertEasingCurve, hasBezierFit } from '../../../foundation/easing/convert.js';
 import { easingFunction, progressionRange } from '../../../foundation/easing/evaluate.js';
 import { sampleEasing } from '../../../foundation/easing/sample.js';
 import type {
+  BezierCurve,
   EasingCurve,
   EasingFunction,
   EasingPoint,
   ProgressionRange,
 } from '../../../foundation/easing/types.js';
 
-/** The plot's coordinate box: the unit square plus the overshoot band, in a 0–1 frame. */
-export interface PlotBox {
-  readonly range: ProgressionRange;
+const CENTER = 0.5;
+/**
+ * The shown range around the unit box: centered on 0.5 and shared by both axes, so an overshoot
+ * zooms the whole plot out uniformly and the unit box stays square in the middle. Extents inside
+ * the unit box keep it; others fit it exactly, so the furthest value sits on the plot frame.
+ */
+export function fitRange(range: ProgressionRange): ProgressionRange {
+  const half = Math.max(CENTER, range.max - CENTER, CENTER - range.min);
+  return { min: CENTER - half, max: CENTER + half };
 }
 
-const QUARTER = 0.25;
-/** Flat curves stay within the unit box; others extend the range in quarter steps. */
-export function quantizeRange(range: ProgressionRange): ProgressionRange {
-  const min = range.min < 0 ? Math.floor((range.min - 0.02) / QUARTER) * QUARTER : 0;
-  const max = range.max > 1 ? Math.ceil((range.max + 0.02) / QUARTER) * QUARTER : 1;
-  return { min, max };
+const FITS = new WeakMap<EasingCurve, BezierCurve | null>();
+
+/**
+ * The record whose handles the graph shows: the Bézier fit of a sine, power, expo, circ or back
+ * ease (cached per record), or the record itself.
+ */
+export function shownCurve(curve: EasingCurve): EasingCurve {
+  if (curve.kind !== 'parametric' || !hasBezierFit(curve)) return curve;
+  let fit = FITS.get(curve);
+  if (fit === undefined) {
+    const converted = convertEasingCurve(curve, 'bezier');
+    fit = converted.kind === 'bezier' ? converted : null;
+    FITS.set(curve, fit);
+  }
+  return fit ?? curve;
 }
 
 /**
- * The progression range the graph shows for a record: the curve's own range plus every handle
- * or point, widened to quarter steps (Widgets 6.2 `uwg-ee-req-pres-1`).
+ * The range the graph shows for a record: the curve's own progression plus every handle or
+ * point it shows, fitted around the center (Widgets 6.2 `uwg-ee-req-pres-1`). Time and
+ * progression share it.
  */
 export function curveRange(curve: EasingCurve | null): ProgressionRange {
   if (!curve) return { min: 0, max: 1 };
   const range = progressionRange(easingFunction(curve));
   let min = range.min;
   let max = range.max;
-  if (curve.kind === 'bezier') {
-    min = Math.min(min, curve.y1, curve.y2);
-    max = Math.max(max, curve.y1, curve.y2);
-  } else if (curve.kind === 'custom')
-    for (const point of curve.points) {
+  const shown = shownCurve(curve);
+  if (shown.kind === 'bezier') {
+    min = Math.min(min, shown.y1, shown.y2);
+    max = Math.max(max, shown.y1, shown.y2);
+  } else if (shown.kind === 'custom')
+    for (const point of shown.points) {
       min = Math.min(min, point.output);
       max = Math.max(max, point.output);
     }
-  return quantizeRange({ min, max });
+  return fitRange({ min, max });
 }
 
-/** Fraction of the plot height (0 at the bottom, 1 at the top) of a progression value. */
-export function progressionFraction(value: number, range: ProgressionRange): number {
+/** Fraction of the plot extent (0 at the left or bottom, 1 at the right or top) of a value. */
+export function axisFraction(value: number, range: ProgressionRange): number {
   const span = range.max - range.min || 1;
   return (value - range.min) / span;
 }
 
-/** Progression value at a fraction of the plot height (0 at the bottom, 1 at the top). */
-export function progressionAt(fraction: number, range: ProgressionRange): number {
+/** Value at a fraction of the plot extent (0 at the left or bottom, 1 at the right or top). */
+export function axisAt(fraction: number, range: ProgressionRange): number {
   return range.min + fraction * (range.max - range.min);
 }
 
@@ -62,7 +81,7 @@ export function curvePolyline(
   return sampleEasing(fn, samples + 1)
     .map(
       (point) =>
-        `${(point.input * width).toFixed(2)},${((1 - progressionFraction(point.output, range)) * height).toFixed(2)}`,
+        `${(axisFraction(point.input, range) * width).toFixed(2)},${((1 - axisFraction(point.output, range)) * height).toFixed(2)}`,
     )
     .join(' ');
 }
@@ -75,8 +94,8 @@ export function pointPositions(
   height: number,
 ): ReadonlyArray<{ x: number; y: number }> {
   return points.map((point) => ({
-    x: point.input * width,
-    y: (1 - progressionFraction(point.output, range)) * height,
+    x: axisFraction(point.input, range) * width,
+    y: (1 - axisFraction(point.output, range)) * height,
   }));
 }
 
@@ -88,7 +107,7 @@ export function thumbnailPolyline(curve: EasingCurve, size = 32, margin = 6): st
   return sampleEasing(fn, 33)
     .map((point) => {
       const x = margin + point.input * inner;
-      const y = margin + (1 - progressionFraction(point.output, range)) * inner;
+      const y = margin + (1 - axisFraction(point.output, range)) * inner;
       return `${x.toFixed(1)},${Math.min(size, Math.max(0, y)).toFixed(1)}`;
     })
     .join(' ');
@@ -98,8 +117,7 @@ export function thumbnailPolyline(curve: EasingCurve, size = 32, margin = 6): st
 export function frameTicks(fn: EasingFunction, count: number, range: ProgressionRange): number[] {
   const n = Math.max(2, Math.round(count));
   const ticks: number[] = [];
-  for (let index = 0; index < n; index++)
-    ticks.push(progressionFraction(fn(index / (n - 1)), range));
+  for (let index = 0; index < n; index++) ticks.push(axisFraction(fn(index / (n - 1)), range));
   return ticks;
 }
 

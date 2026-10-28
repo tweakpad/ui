@@ -1,0 +1,532 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000001",
+        "align": null,
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Ridge hike packing list"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000002"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Shelter"
+                }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "id": "te00000003"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Tent body"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "bulletList",
+                      "content": [
+                        {
+                          "type": "listItem",
+                          "attrs": {
+                            "id": "te00000004"
+                          },
+                          "content": [
+                            {
+                              "type": "paragraph",
+                              "attrs": {
+                                "id": null,
+                                "align": null
+                              },
+                              "content": [
+                                {
+                                  "type": "text",
+                                  "text": "Poles in three sections"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "listItem",
+                          "attrs": {
+                            "id": "te00000005"
+                          },
+                          "content": [
+                            {
+                              "type": "paragraph",
+                              "attrs": {
+                                "id": null,
+                                "align": null
+                              },
+                              "content": [
+                                {
+                                  "type": "text",
+                                  "text": "Twelve stakes"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "id": "te00000006"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "Ground sheet"
+                        },
+                        {
+                          "type": "hardBreak"
+                        },
+                        {
+                          "type": "text",
+                          "text": "folded in four"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000007"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": "center"
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Water, two liters each"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "orderedList",
+      "attrs": {
+        "start": 4,
+        "type": null
+      },
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000008"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Check the forecast"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000009"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "File the route"
+                }
+              ]
+            },
+            {
+              "type": "orderedList",
+              "attrs": {
+                "start": 1,
+                "type": null
+              },
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "id": "te00000010"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "With the ranger station"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "id": "te00000011"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "With a friend at home"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "taskList",
+      "content": [
+        {
+          "type": "taskItem",
+          "attrs": {
+            "id": "te00000012",
+            "checked": true
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Boots waxed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "taskItem",
+          "attrs": {
+            "id": "te00000013",
+            "checked": false
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Map printed"
+                }
+              ]
+            },
+            {
+              "type": "taskList",
+              "content": [
+                {
+                  "type": "taskItem",
+                  "attrs": {
+                    "id": "te00000014",
+                    "checked": true
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "North section"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "taskItem",
+                  "attrs": {
+                    "id": "te00000015",
+                    "checked": false
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "South section"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000016"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "A bullet list right after the task list"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "orderedList",
+      "attrs": {
+        "start": 1,
+        "type": null
+      },
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000017"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "An ordered list right after the bullet list"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "te00000018"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Kinds mixed under one item"
+                }
+              ]
+            },
+            {
+              "type": "orderedList",
+              "attrs": {
+                "start": 1,
+                "type": null
+              },
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "id": "te00000019"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "an ordered child"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "taskList",
+              "content": [
+                {
+                  "type": "taskItem",
+                  "attrs": {
+                    "id": "te00000020",
+                    "checked": true
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "a task child"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "bulletList",
+              "content": [
+                {
+                  "type": "listItem",
+                  "attrs": {
+                    "id": "te00000021"
+                  },
+                  "content": [
+                    {
+                      "type": "paragraph",
+                      "attrs": {
+                        "id": null,
+                        "align": null
+                      },
+                      "content": [
+                        {
+                          "type": "text",
+                          "text": "a bullet child"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

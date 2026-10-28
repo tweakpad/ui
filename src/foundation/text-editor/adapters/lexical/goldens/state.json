@@ -1,0 +1,413 @@
+{
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Night bake checklist",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "tag": "h2",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "heading",
+        "version": 1,
+        "$": {
+          "tp-id": "state00001"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Proof the ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 1,
+            "mode": "normal",
+            "style": "",
+            "text": "rye",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " loaves, then ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "score the tops",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-color": "blue"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " and ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 128,
+            "mode": "normal",
+            "style": "",
+            "text": "check the oven",
+            "type": "text",
+            "version": 1,
+            "$": {
+              "tp-highlight": "yellow"
+            }
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " twice.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "state00002"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Wash the trays before midnight.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "center",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "state00003"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "Every timing is in the recipe ",
+            "type": "text",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "docs",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "rel": null,
+            "target": null,
+            "title": null,
+            "url": "https://bakery.example/recipes",
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "link",
+            "version": 1
+          },
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": " by the door.",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "state00004"
+        }
+      },
+      {
+        "children": [],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "textFormat": 0,
+        "textStyle": "",
+        "type": "paragraph",
+        "version": 1,
+        "$": {
+          "tp-id": "state00005"
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Dough",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 1,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Hours",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 1,
+                "headerState": 1,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              }
+            ],
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "tablerow",
+            "version": 1
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "detail": 0,
+                        "format": 0,
+                        "mode": "normal",
+                        "style": "",
+                        "text": "Rest overnight in the cool room",
+                        "type": "text",
+                        "version": 1
+                      }
+                    ],
+                    "direction": null,
+                    "format": "",
+                    "indent": 0,
+                    "textFormat": 0,
+                    "textStyle": "",
+                    "type": "paragraph",
+                    "version": 1
+                  }
+                ],
+                "backgroundColor": null,
+                "colSpan": 2,
+                "headerState": 0,
+                "rowSpan": 1,
+                "direction": null,
+                "format": "",
+                "indent": 0,
+                "type": "tablecell",
+                "version": 1
+              }
+            ],
+            "direction": null,
+            "format": "",
+            "indent": 0,
+            "type": "tablerow",
+            "version": 1
+          }
+        ],
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "table",
+        "version": 1,
+        "$": {
+          "tp-id": "state00006"
+        }
+      },
+      {
+        "children": [
+          {
+            "detail": 0,
+            "format": 0,
+            "mode": "normal",
+            "style": "",
+            "text": "oven.preheat(230);",
+            "type": "text",
+            "version": 1
+          }
+        ],
+        "language": "js",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "code",
+        "version": 1,
+        "$": {
+          "tp-id": "state00007"
+        }
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Flour",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 1,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "state00008"
+            }
+          },
+          {
+            "children": [
+              {
+                "detail": 0,
+                "format": 0,
+                "mode": "normal",
+                "style": "",
+                "text": "Starter",
+                "type": "text",
+                "version": 1
+              }
+            ],
+            "indent": 0,
+            "value": 2,
+            "direction": null,
+            "format": "",
+            "type": "listitem",
+            "version": 1,
+            "$": {
+              "tp-id": "state00009"
+            }
+          }
+        ],
+        "listType": "bullet",
+        "start": 1,
+        "tag": "ul",
+        "direction": null,
+        "format": "",
+        "indent": 0,
+        "type": "list",
+        "version": 1
+      }
+    ],
+    "direction": null,
+    "format": "",
+    "indent": 0,
+    "type": "root",
+    "version": 1
+  }
+}

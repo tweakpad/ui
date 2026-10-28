@@ -146,7 +146,7 @@ export function qualityModel(state: MediaState, context: MediaRadioModelContext)
  * Menu collects them), keeps its value controlled by the store, and requests the selection
  * with the selecting reason and event. A group with no usable options renders no items and is
  * `hidden` (`data-availability`, `data-hidden`); while the player is disabled or the list is
- * unavailable the items are disabled. The group label (`aria-label`) comes from the messages
+ * unavailable the items are disabled. The group label (`label`) comes from the messages
  * unless authored. `renderItem(option, group)` replaces the default item.
  *
  * @fires tp-value-change - The Menu radio group's cancelable proposal (the request follows when
@@ -180,6 +180,8 @@ export abstract class TpMediaRadioGroupElement extends TpMenuRadioGroup {
     hidden: false,
   };
   #owned: OwnedAttributes | undefined;
+  /** The label this group took from its messages, replaced when they change. */
+  #messageLabel = '';
 
   /** Message key of the group label (`speed`, `captions`, `audio`, `quality`). */
   protected abstract readonly labelKey: MediaMessageKey;
@@ -270,9 +272,9 @@ export abstract class TpMediaRadioGroupElement extends TpMenuRadioGroup {
     // Controlled by the store (never `undefined`, which would switch to uncontrolled mode): the
     // selection follows media state, not the proposal.
     if (!this.hasUpdated || !Object.is(this.value, next.value)) this.value = next.value;
-    const owned = (this.#owned ??= new OwnedAttributes(this));
-    if (owned.original('aria-label') === null)
-      owned.set('aria-label', this.mediaMessages.get(this.labelKey));
+    // The group's name is its message unless the consumer set `label`.
+    const message = this.mediaMessages.get(this.labelKey);
+    if (!this.label || this.label === this.#messageLabel) this.label = this.#messageLabel = message;
   }
 
   protected override updated(changed: PropertyValues<this>): void {

@@ -1,5 +1,6 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
+import { statusAppearance } from './shared/status.js';
 
 /** Default Map appearance (`ucl21-map` map-l-presentation): existing token roles only. */
 export const mapAppearance: PresentationDictionary = {
@@ -22,21 +23,7 @@ export const mapAppearance: PresentationDictionary = {
       },
     },
   ],
-  'map-status': [
-    {
-      declarations: {
-        color: 'var(--tp-muted-foreground)',
-        'font-size': 'var(--tp-text-sm)',
-        background: 'var(--tp-muted)',
-        gap: 'var(--tp-space-2)',
-        padding: 'var(--tp-space-4)',
-      },
-    },
-    {
-      selector: ':host([data-status="error"]) &',
-      declarations: { color: 'var(--tp-destructive)' },
-    },
-  ],
+  'map-status': statusAppearance,
   'map-pin': [
     {
       declarations: {

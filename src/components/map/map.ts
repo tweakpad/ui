@@ -3,11 +3,11 @@ import { defaultTrue } from '../../foundation/converters.js';
 import { TpElement } from '../../foundation/element.js';
 import { ControllableState } from '../../foundation/controllable-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
-import { GeneratedStyleResource } from '../../foundation/generated-style.js';
+import { adoptStyleText } from '../../foundation/generated-style.js';
 import { resolvesReducedMotion } from '../../foundation/motion.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
-import { windowFrameSource } from '../../foundation/map/camera.js';
+import { windowFrames } from '../../foundation/frame-loop.js';
 import {
   MapController,
   type MapCameraDetail,
@@ -296,7 +296,6 @@ export class TpMap extends TpElement implements MapApi {
   #pinsQueued = false;
   #scheme: MapScheme = 'light';
   #resolvedTheme: ResolvedMapTheme | null = null;
-  #styles = new Map<string, { resource: GeneratedStyleResource; count: number }>();
   #resize: ResizeObserver | undefined;
   #mutations: MutationObserver | undefined;
   #schemeObserver: MutationObserver | undefined;
@@ -718,8 +717,8 @@ export class TpMap extends TpElement implements MapApi {
         return this.#selection.set(value, reason, sourceEvent);
       },
       reducedMotion: () => resolvesReducedMotion(this),
-      adoptStyles: (cssText) => this.#adoptStyles(cssText),
-      frames: () => windowFrameSource(this.ownerDocument.defaultView ?? window),
+      adoptStyles: (cssText) => adoptStyleText(this, this.renderRoot as ShadowRoot, cssText),
+      frames: () => windowFrames(this.ownerDocument.defaultView ?? window),
       dispatchRequest: (detail: MapRequestDetail) =>
         this.emit('tp-map-request', detail, { cancelable: true }),
       requestFailed: (detail: MapRequestFailedDetail) => this.emit('tp-map-request-failed', detail),
@@ -785,27 +784,6 @@ export class TpMap extends TpElement implements MapApi {
     this.#resize?.disconnect();
     this.#resize = new view.ResizeObserver(() => this.controller.refresh());
     this.#resize.observe(surface);
-  }
-
-  #adoptStyles(cssText: string): () => void {
-    const root = this.renderRoot as ShadowRoot;
-    let entry = this.#styles.get(cssText);
-    if (!entry) {
-      const resource = new GeneratedStyleResource(this, root);
-      resource.setText(cssText);
-      entry = { resource, count: 0 };
-      this.#styles.set(cssText, entry);
-    }
-    entry.count += 1;
-    let released = false;
-    return () => {
-      if (released) return;
-      released = true;
-      const current = this.#styles.get(cssText);
-      if (!current || --current.count > 0) return;
-      current.resource.dispose();
-      this.#styles.delete(cssText);
-    };
   }
 
   // Slot projection (map-f-pin-content) ------------------------------------------------------

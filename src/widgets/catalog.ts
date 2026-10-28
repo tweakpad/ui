@@ -15,6 +15,7 @@ export const widgetCatalog = [
   ['Easing editor', 'tp-easing-editor', 'flattening-compound'],
   ['Flow', 'tp-flow', 'flattening-compound'],
   ['Emoji picker', 'tp-emoji-picker', 'flattening-compound'],
+  ['Text editor', 'tp-text-editor', 'flattening-compound'],
 ] as const satisfies readonly WidgetTuple[];
 
 export const widgetEntries: readonly WidgetEntry[] = widgetCatalog.map((entry: WidgetTuple) => ({

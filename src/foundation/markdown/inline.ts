@@ -18,16 +18,18 @@ export interface InlineContext {
   readonly footnotes: ReadonlySet<string>;
 }
 
-const ESCAPABLE = /^[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/;
+/** ASCII punctuation, which a backslash escapes (shared with the serializer). */
+export const ESCAPABLE = /^[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/;
 const ESCAPED = /\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g;
-const PUNCTUATION = /[\p{P}\p{S}]/u;
-const WHITESPACE = /\s/u;
+/** The character classes of the emphasis rules. */
+export const PUNCTUATION = /[\p{P}\p{S}]/u;
+export const WHITESPACE = /\s/u;
 const LINK_LABEL = /^\[(?:[^\\[\]]|\\.){0,999}\]/s;
 const LINK_DESTINATION_BRACES = /^<(?:[^<>\n\\]|\\.)*>/;
 const LINK_TITLE = /^(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\((?:\\.|[^()\\])*\))/s;
-const EMAIL_AUTOLINK =
+export const EMAIL_AUTOLINK =
   /^<([a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*)>/;
-const AUTOLINK = /^<([A-Za-z][A-Za-z0-9.+-]{1,31}:[^<>\p{Cc} ]*)>/u;
+export const AUTOLINK = /^<([A-Za-z][A-Za-z0-9.+-]{1,31}:[^<>\p{Cc} ]*)>/u;
 const SPNL = /^ *(?:\n *)?/;
 const MAIN = /^[^\n`[\]\\!<&*_~]+/;
 const SPACE_AT_END_OF_LINE = /^[ \t]*(?:\n|$)/;
@@ -39,6 +41,27 @@ export function unescapeString(text: string): string {
     .replace(/&(?:#[xX][0-9a-fA-F]{1,6}|#[0-9]{1,7}|[A-Za-z][A-Za-z0-9]{1,31});/g, (match) => {
       return decodeEntity(match) ?? match;
     });
+}
+
+/**
+ * Whether a run of the delimiter `char` (`*`, `_` or `~`) can open or close emphasis, given the
+ * characters before and after it; the start and end of the inline content count as line endings.
+ */
+export function delimiterRole(
+  char: string,
+  before: string,
+  after: string,
+): { readonly canOpen: boolean; readonly canClose: boolean } {
+  const afterSpace = WHITESPACE.test(after);
+  const afterPunct = PUNCTUATION.test(after);
+  const beforeSpace = WHITESPACE.test(before);
+  const beforePunct = PUNCTUATION.test(before);
+  const left = !afterSpace && (!afterPunct || beforeSpace || beforePunct);
+  const right = !beforeSpace && (!beforePunct || afterSpace || afterPunct);
+  return {
+    canOpen: char === '_' ? left && (!right || beforePunct) : left,
+    canClose: char === '_' ? right && (!left || afterPunct) : right,
+  };
 }
 
 /** Normalizes a link or footnote label, with or without its brackets, for matching. */
@@ -318,14 +341,7 @@ class InlineParser {
     if (char === '~' && count > 2) return;
     const before = start === 0 ? '\n' : this.#subject.charAt(start - 1);
     const after = this.#pos >= this.#subject.length ? '\n' : this.#peek();
-    const afterSpace = WHITESPACE.test(after);
-    const afterPunct = PUNCTUATION.test(after);
-    const beforeSpace = WHITESPACE.test(before);
-    const beforePunct = PUNCTUATION.test(before);
-    const left = !afterSpace && (!afterPunct || beforeSpace || beforePunct);
-    const right = !beforeSpace && (!beforePunct || afterSpace || afterPunct);
-    const canOpen = char === '_' ? left && (!right || beforePunct) : left;
-    const canClose = char === '_' ? right && (!left || afterPunct) : right;
+    const { canOpen, canClose } = delimiterRole(char, before, after);
     if (!canOpen && !canClose) return;
     const delimiter: Delimiter = {
       char,

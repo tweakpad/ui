@@ -1,6 +1,6 @@
 import type { PresentationDictionary } from '../../resolver.js';
 import { controlSizePresentation, rule, variantPresentation } from '../shared/variant.js';
-import { buttonCoreAppearance } from './button.js';
+import { buttonCoreAppearance, buttonSizes } from './button.js';
 
 export const toggleCoreAppearance: PresentationDictionary = {
   toggle: [
@@ -16,7 +16,7 @@ export const toggleCoreAppearance: PresentationDictionary = {
         `${part}-variant-${variant}`,
         part === 'toggle' ? variantPresentation(variant, true) : [],
       ]),
-      ...['sm', 'default', 'lg'].map((size) => [
+      ...buttonSizes.map((size) => [
         `${part}-size-${size}`,
         part === 'toggle'
           ? controlSizePresentation(size, {
