@@ -252,7 +252,10 @@ it, the same diagnostic names the feature.
 replaces it. Define a tool with `defineTextEditorTool` from `@tweakpad/ui/text-editor`: an `id`,
 a `kind` (`button`, `toggle`, `menu`, `radio-menu`, `color`, `link`, `image`, `table-size`,
 `suggestion` or `custom`), a `label`, an optional `icon`, `shortcut` and `keywords`, and the
-`action` it runs: one or more actions, or a function of the tool context that returns them.
+`action` it runs: one or more actions, or a function of the tool context that returns them. A
+`shortcut` is a key pattern or a list of them; an entry `{ pattern, platforms }` binds on the
+listed platforms only (`windows`, `linux`, `mac`), resolved against the editor's configured
+platform rather than the machine the module loads on.
 `isActive`, `isEnabled` and `isVisible` refine the state that the editor derives. A tool appears
 where the layout names it; with `surfaces`, it also joins the `*` entry that ends the default
 slash menu, turn-into menu and block menu. In the fixed toolbar, a tool that `isVisible` hides
