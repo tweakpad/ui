@@ -38,8 +38,21 @@ export interface KeyChordInit {
   shiftKey?: boolean | undefined;
 }
 
+/**
+ * A pattern that binds on the listed platforms only, resolved against the owner's platform
+ * rather than the machine the module loads on. Elsewhere the entry binds nothing.
+ */
+export interface PlatformKeyPattern {
+  readonly pattern: string;
+  readonly platforms: readonly ResolvedKeyHintPlatform[];
+}
+
 /** A pattern string (`Mod+Shift+f`, `Space`, `0-9`, `k, Space`), a chord or a list. */
-export type KeyBindingKeys = string | KeyChordInit | readonly (string | KeyChordInit)[];
+export type KeyBindingKeys =
+  | string
+  | KeyChordInit
+  | PlatformKeyPattern
+  | readonly (string | KeyChordInit | PlatformKeyPattern)[];
 
 export interface KeyChord {
   /** Lowercased `KeyboardEvent.key` used for matching. */
@@ -217,8 +230,10 @@ export function parseKeyPattern(input: string, platform: ResolvedKeyHintPlatform
 
 function chordsFor(keys: KeyBindingKeys, platform: ResolvedKeyHintPlatform): KeyChord[] {
   const list = typeof keys === 'string' || !Array.isArray(keys) ? [keys] : keys;
-  return (list as readonly (string | KeyChordInit)[]).flatMap((entry) => {
+  return (list as readonly (string | KeyChordInit | PlatformKeyPattern)[]).flatMap((entry) => {
     if (typeof entry === 'string') return parseKeyPattern(entry, platform);
+    if ('pattern' in entry)
+      return entry.platforms.includes(platform) ? parseKeyPattern(entry.pattern, platform) : [];
     // An empty chord key is accepted and never matches (KeyboardEvent.key is never empty).
     if (typeof entry?.key !== 'string') throw new Error('Invalid key chord: missing key.');
     return [
@@ -571,12 +586,14 @@ export class KeyBindingOwner {
 
   /** Published shortcut for an action (and optional value), or undefined. */
   shortcut(action: string, value?: unknown): KeyShortcut | undefined {
-    const bindings = this.#bindings.filter(
+    const candidates = this.#bindings.filter(
       (binding) =>
         binding.options.action === action &&
         (value === undefined || Object.is(binding.options.value, value)) &&
         this.#enabled(binding),
     );
+    // A binding whose patterns are all scoped to other platforms holds no chord to show.
+    const bindings = candidates.filter((binding) => binding.chords.length > 0);
     if (!bindings.length) return undefined;
     const aria = [
       ...new Set(bindings.flatMap((binding) => binding.chords.map((chord) => ariaChord(chord)))),

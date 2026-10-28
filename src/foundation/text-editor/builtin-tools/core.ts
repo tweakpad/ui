@@ -4,10 +4,11 @@
  * `uwg-te-req-tools-5`, `uwg-te-req-tables-5`).
  *
  * The tools that the widget always holds: history, marks, colors, alignment, the kinds of a
- * block, the block menus of the fixed toolbar and the shortcut-only block actions. Shortcuts hold
- * the chords of the platform on which this module runs, which it reads once when it loads, so
- * that `redo` lists Ctrl+Y only outside Apple platforms. The tools that change the kind of a
- * block hide while the selection lies in a table, and alignment applies to the cells of a table.
+ * block, the block menus of the fixed toolbar and the shortcut-only block actions. A shortcut
+ * that differs by platform, such as `redo` listing Ctrl+Y only outside Apple platforms, scopes
+ * that pattern to its platforms; the key-binding owner resolves it against the platform the
+ * editor is configured for. The tools that change the kind of a block hide while the selection
+ * lies in a table, and alignment applies to the cells of a table.
  */
 import { ellipsisVerticalIcon } from '../../../icons/ellipsis.js';
 import { minusIcon } from '../../../icons/minus.js';
@@ -37,7 +38,6 @@ import {
 } from '../../../icons/text-formatting.js';
 import type { IconDefinition } from '../../../icons/types.js';
 import { undoIcon } from '../../../icons/undo.js';
-import { keyHintPlatform } from '../../key-notation.js';
 import type { TextEditorCapability } from '../capabilities.js';
 import type {
   TextEditorAlign,
@@ -69,9 +69,6 @@ import {
   textSided,
 } from './shared.js';
 import { cellAlignment, tableScope } from './table-scope.js';
-
-/** The platform whose chords the built-in tools hold, read once when this module loads. */
-const PLATFORM = keyHintPlatform('auto', globalThis.navigator);
 
 // Formatting tools (uwg-te-tab-tools)
 
@@ -227,7 +224,7 @@ export const textEditorCoreTools = Object.freeze({
     icon: redoIcon,
     group: 'history',
     surfaces: ['toolbar'],
-    shortcut: PLATFORM === 'mac' ? 'Mod+Shift+Z' : ['Mod+Shift+Z', 'Ctrl+Y'],
+    shortcut: ['Mod+Shift+Z', { pattern: 'Ctrl+Y', platforms: ['windows', 'linux'] }],
     requires: ['history'],
     action: { type: 'history.redo' },
     isEnabled: ({ state }) => state.history.redo,
