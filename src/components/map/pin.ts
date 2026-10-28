@@ -1,5 +1,5 @@
 import { arrowKeys } from '../../foundation/collection.js';
-import { css, html, type PropertyValues } from 'lit';
+import { css, html, nothing, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { normalizePosition, type MapPosition } from '../../foundation/map/geo.js';
@@ -227,7 +227,7 @@ export class TpMapPin extends TpMapElement implements MapPinRecord {
         tabindex=${tabbable ? '0' : '-1'}
         aria-label=${this.accessibleLabel}
         aria-pressed=${this.selected ? 'true' : 'false'}
-        aria-disabled=${disabled ? 'true' : 'false'}
+        aria-disabled=${disabled ? 'true' : nothing}
         @click=${this.#click}
         @keydown=${this.#keydown}
         @focus=${this.#focus}

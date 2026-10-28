@@ -125,7 +125,6 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
         '.step': String(state.step),
         '.value': finite(state.value) ?? nativeMinimum,
         '.disabled': state.disabled,
-        '.required': state.required,
         tabindex: state.disabled ? -1 : this.tabIndex,
         'aria-label': state.label || undefined,
         'aria-valuetext': state.valueText,
@@ -135,7 +134,6 @@ export class TpSliderThumb extends TpFormElement<number | undefined> {
         'aria-disabled': state.indeterminate ? 'true' : undefined,
         'aria-orientation': state.orientation,
         'aria-readonly': state.readOnly ? 'true' : undefined,
-        'aria-required': state.required ? 'true' : undefined,
         'aria-invalid': state.invalid ? 'true' : undefined,
         '@input': (event: Event) => {
           if (!this.#canceledAdjustmentKey)

@@ -339,6 +339,7 @@ export class TpTime extends TpElement implements TimeRefreshTarget {
           part: describing ? 'time-value focusable' : 'time-value',
           class: 'value',
           datetime: this.#value?.machine || nothing,
+          lang: this.locale || nothing,
           tabindex: describing ? '0' : nothing,
           'data-presentation': this.#presentation,
           'data-kind': this.#value?.kind ?? nothing,

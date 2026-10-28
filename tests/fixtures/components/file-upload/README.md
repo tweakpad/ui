@@ -33,6 +33,8 @@ loopback; use `http://[::1]:5173/` when `localhost` resolves to another server.
    read `#log` for `contract=…`), CSVs for `#csv`. For the pointer path into the picker, call
    `upload_file` on slotted title text; shadow fallback text is not targetable by the tool.
 4. Click a Remove Button and the Retry Button (after "Add three files") with real clicks.
+   Tab to a Remove Button and press Enter: focus moves to the next item's Remove Button,
+   the previous one for the last item, and the input once the list (or Clear all) is gone.
 5. Tab to an input and screenshot the Dropzone focus ring; check the input leaves the tab
    order in the full grid.
 6. Evaluate `await fileUploadFixture.dropFiles(el, files, { leave: true })` for
