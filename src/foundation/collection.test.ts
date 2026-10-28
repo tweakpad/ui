@@ -34,18 +34,20 @@ describe('arrow keys', () => {
 
 interface FakeElement extends HTMLElement {
   focused: number;
+  order: number;
 }
 
 function element(order: number, disabled = false): FakeElement {
-  return {
+  const fake = {
     focused: 0,
+    order,
     hasAttribute: (name: string) => name === 'disabled' && disabled,
     matches: (selector: string) => selector === ':disabled' && disabled,
     focus() {
-      this.focused++;
+      fake.focused++;
     },
-    order,
-  } as unknown as FakeElement;
+  };
+  return fake as unknown as FakeElement;
 }
 
 function key(name: string, init: Partial<KeyboardEvent> = {}): KeyboardEvent {
@@ -86,7 +88,7 @@ describe('collection arrow keys', () => {
     const items = [element(1), element(2, true), element(3)];
     const collection = new CollectionRegistry();
     for (const item of items) {
-      collection.register({ element: item, order: () => (item as { order: number }).order });
+      collection.register({ element: item, order: () => item.order });
     }
     return { registry: collection, items };
   }
