@@ -11,6 +11,7 @@
  * key chord or touches the DOM: shortcuts are key patterns of the key-binding owner.
  */
 import type { IconDefinition } from '../../icons/types.js';
+import type { PlatformKeyPattern } from '../key-bindings.js';
 import { allowedUrl } from '../markdown/url.js';
 import {
   isMutatingAction,
@@ -210,8 +211,11 @@ export interface TextEditorTool {
   readonly group?: string | undefined;
   /** Further words that the slash menu matches. */
   readonly keywords?: readonly string[] | undefined;
-  /** One key pattern of the key-binding owner or a list of them; the first one is shown. */
-  readonly shortcut?: string | readonly string[] | undefined;
+  /**
+   * One key pattern of the key-binding owner or a list of them; the first one is shown. An entry
+   * scoped to platforms binds on those platforms only.
+   */
+  readonly shortcut?: string | readonly (string | PlatformKeyPattern)[] | undefined;
   /** The capabilities that the tool needs, all of them; none when absent. */
   readonly requires?: readonly TextEditorCapability[] | undefined;
   /** The actions of an activation, or a function of the tool context returning them. */
