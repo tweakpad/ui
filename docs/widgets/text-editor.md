@@ -300,7 +300,7 @@ accepted file, in bytes or as text with a unit such as `'10MB'` (no limit by def
 
 ### Modes
 
-Two setups cover most editors. The classic toolbar editor keeps every control in the fixed
+Three setups cover most editors. The classic toolbar editor keeps every control in the fixed
 toolbar and adds links, tables and images:
 
 ```js
@@ -322,8 +322,16 @@ editor.features = [
 editor.layout = { toolbar: [] };
 ```
 
-Both appear as stories and as copyable examples. Keeping the fixed toolbar beside the block
-surfaces, as the default story does, is a third option; the core editor with no features is the
+The selection toolbar editor has no fixed toolbar either: selecting text shows the formatting
+controls over it.
+
+```js
+editor.features = [textEditorSelectionToolbar(), textEditorLinks()];
+editor.layout = { toolbar: [] };
+```
+
+Each appears as a story and as a copyable example. Keeping the fixed toolbar beside the block
+surfaces, as the default story does, is another option; the core editor with no features is the
 smallest.
 
 A feature's tools exist only while the feature is assigned: the default layouts leave them out
