@@ -1,9 +1,3 @@
-/* Storybook Docs uses a white canvas even when the system prefers dark colors. */
-.sbdocs {
-  color-scheme: light;
-  color: var(--tp-foreground);
-}
-
 .tp-docs-example {
   margin-block: var(--tp-space-8);
 }
@@ -12,6 +6,14 @@
 .tp-docs-example > figcaption {
   margin-block-end: var(--tp-space-2);
   font-weight: var(--tp-font-medium);
+}
+
+/*
+ * A canvas on a Docs page (the Default story and every use case) is the library's page surface, in
+ * either scheme: Storybook's own canvas color would frame the previews in a second gray.
+ */
+.sbdocs .docs-story {
+  background: var(--tp-background);
 }
 
 .tp-docs-example-preview {

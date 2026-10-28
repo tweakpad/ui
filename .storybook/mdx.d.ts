@@ -4,6 +4,8 @@ declare module '*.mdx' {
 
   const Page: ComponentType;
   export default Page;
+  /** Named React components a block file exports (the themed Docs container). */
+  export const ThemedDocsContainer: ComponentType<{ context: unknown; children?: unknown }>;
 }
 
 // The framework's manifest reader ships without types; it is a set of preview annotations.

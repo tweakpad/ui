@@ -1,10 +1,11 @@
 import { definePreview, setCustomElementsManifest } from '@storybook/web-components-vite';
 import * as manifestArgTypes from '@storybook/web-components/entry-preview-argtypes';
 import addonDocs from '@storybook/addon-docs';
-import { create } from 'storybook/theming';
 import { html } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import DocumentationPage from './docs-page.mdx';
+import { ThemedDocsContainer } from './docs-container.mdx';
+import { applyTheme, themePreference } from './docs-theme.js';
 import { manifest } from './manifest.js';
 import { elementApi } from '../src/docs/api.js';
 import {
@@ -64,6 +65,19 @@ const preview = definePreview({
   // Every story file gets a Docs page; opt out per file with `tags: ['!autodocs']`.
   tags: ['autodocs'],
   globalTypes: {
+    theme: {
+      description: 'Color scheme of the Docs pages and stories; System follows the device',
+      toolbar: {
+        title: 'Theme',
+        icon: 'mirror',
+        items: [
+          { value: 'system', title: 'System' },
+          { value: 'light', title: 'Light' },
+          { value: 'dark', title: 'Dark' },
+        ],
+        dynamicTitle: true,
+      },
+    },
     density: {
       description: 'Token density preset (prototype)',
       toolbar: {
@@ -77,7 +91,7 @@ const preview = definePreview({
       },
     },
   },
-  initialGlobals: { density: 'default' },
+  initialGlobals: { theme: 'system', density: 'default' },
   // The manifest lists every member of the element, base plumbing included. Controls keep the
   // element's own public attributes and properties (the rows of its API reference) plus whatever
   // the story declares itself; events, slots and parts are the Docs page's API section.
@@ -104,6 +118,7 @@ const preview = definePreview({
       const root = document.documentElement;
       if (context.globals.density === 'compact') root.dataset.tpDensity = 'compact';
       else delete root.dataset.tpDensity;
+      applyTheme(themePreference(context.globals));
       return story();
     },
     // A documented element's Default story is the page's main use case: until its Controls change,
@@ -131,8 +146,9 @@ const preview = definePreview({
     options: { storySort: { order: ['Tweakpad UI', 'Components', 'Widgets'] } },
     docs: {
       page: DocumentationPage,
-      // Code in the docs (prose, property tables and source panels) uses the library's mono role.
-      theme: create({ base: 'light', fontCode: 'var(--tp-font-mono)' }),
+      // Every Docs page takes the Theme toolbar's scheme (System by default), Storybook's blocks
+      // and the library previews alike.
+      container: ThemedDocsContainer,
       source: { format: false },
       // Every story on a docs page keeps the canvas toolbar (reload, zoom, open isolated). The
       // Canvas block reads this parameter as a boolean; its declared type mirrors `withSource`.

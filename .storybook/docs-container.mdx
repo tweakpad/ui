@@ -1,0 +1,33 @@
+import React from 'react';
+import { DocsContainer } from '@storybook/addon-docs/blocks';
+import { applyTheme, docsThemes, themePreference } from './docs-theme.js';
+
+export const darkQuery = '(prefers-color-scheme: dark)';
+
+export function ThemedDocsContainer({ context, children }) {
+  // Every Docs page (component pages, MDX pages, the catalog) renders in this container: Storybook's
+  // own blocks take the light or dark theme, and the page's library elements the same scheme.
+  // The preference is the Theme toolbar global; `system` follows the device and its changes.
+  const [preference, setPreference] = React.useState(() =>
+    themePreference(context.store?.userGlobals?.globals),
+  );
+  const [prefersDark, setPrefersDark] = React.useState(() => matchMedia(darkQuery).matches);
+  React.useEffect(() => {
+    const updated = ({ globals }) => setPreference(themePreference(globals));
+    context.channel.on('globalsUpdated', updated);
+    const media = matchMedia(darkQuery);
+    const device = () => setPrefersDark(media.matches);
+    media.addEventListener('change', device);
+    return () => {
+      context.channel.off('globalsUpdated', updated);
+      media.removeEventListener('change', device);
+    };
+  }, [context]);
+  React.useLayoutEffect(() => applyTheme(preference), [preference]);
+  const dark = preference === 'dark' || (preference === 'system' && prefersDark);
+  return (
+    <DocsContainer context={context} theme={dark ? docsThemes.dark : docsThemes.light}>
+      {children}
+    </DocsContainer>
+  );
+}
