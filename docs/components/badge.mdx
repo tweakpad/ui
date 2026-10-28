@@ -5,7 +5,6 @@ tag: tp-badge
 ---
 
 <Preview
-  title="Badge"
   code={`<tp-badge>New</tp-badge>
 <tp-badge variant="secondary">12 unread</tp-badge>
 <tp-badge variant="outline">Draft</tp-badge>`}
@@ -13,14 +12,13 @@ tag: tp-badge
 
 ## Usage
 
-A Badge is a non-focusable label, so it never adds a tab stop. Its text should carry the meaning on its own: "Failed" says more than a red pill. Write counts with their noun, like "12 unread", rather than a bare number, unless the surrounding text supplies it.
+A Badge is a non-focusable label, so it never adds a tab stop. Its text carries the meaning on its own: "Failed" says more than a red pill, and "12 unread" more than a bare number.
 
 ### Status in a list
 
 <Preview
-  title="Status in a list"
   align="stretch"
-  code={`<div style="display:grid;gap:var(--tp-space-3);inline-size:100%;max-inline-size:28rem;margin-inline:auto;font-size:var(--tp-text-sm)">
+  code={`<div style="display:grid;gap:var(--tp-space-3);max-inline-size:28rem;font-size:var(--tp-text-sm)">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--tp-space-3)">
     <span>Website redesign</span>
     <tp-badge variant="secondary">In review</tp-badge>
@@ -40,12 +38,11 @@ A Badge is a non-focusable label, so it never adds a tab stop. Its text should c
 </div>`}
 />
 
-One badge per row names the row's state. The default variant marks the one thing to notice; neutral states take `secondary` or `outline`, and a blocking problem takes `destructive`.
+One badge per row names the row's state, and its variant says how much the state matters.
 
 ### Marks and progress
 
 <Preview
-  title="With marks"
   code={`<tp-badge variant="secondary">
   <tp-icon id="badge-verified-icon" size="var(--tp-icon-size-xs)"></tp-icon>
   Verified
@@ -65,23 +62,21 @@ document.getElementById('badge-verified-icon').icon = checkIcon;
 document.getElementById('badge-failed-icon').icon = circleAlertIcon;`}
 />
 
-The label takes text plus an inline mark: an Icon or a Spinner. Keep the mark decorative (an Icon without a label, a Spinner with `label=""`) when the text already says what it means. Badge does not announce changes; put a badge whose state matters to assistive technology in a live region the application owns.
+An Icon or a Spinner before the text is a decorative mark (no icon label, `label=""` on the Spinner) when the text already says what it means. Badge does not announce changes; a state that assistive technology must hear belongs in a live region the application owns.
 
 ### Counts in buttons
 
 <Preview
-  title="Counts in buttons"
   code={`<tp-button variant="outline">Inbox <tp-badge variant="secondary">8</tp-badge></tp-button>
 <tp-button variant="ghost">Pull requests <tp-badge variant="outline">3 open</tp-badge></tp-button>`}
 />
 
-A badge inside a Button or link stays passive, so the composition keeps one interactive target: the button owns the action and its accessible name includes the count. A bare number is fine here because the button text supplies the noun.
+Inside a Button the badge stays passive, so the composition keeps one interactive target whose accessible name includes the count. A bare number works here because the button text supplies the noun.
 
 ### Filter chips
 
 <Preview
-  title="Interactive badges"
-  code={`<div id="badge-filters" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-4);padding-block:var(--tp-space-2)">
+  code={`<div id="badge-filters" style="display:flex;flex-wrap:wrap;align-items:center;gap:var(--tp-space-4)">
   <tp-badge interactive variant="secondary" data-filter="open">Open · 12</tp-badge>
   <tp-badge interactive variant="outline" data-filter="mine">Assigned to me · 4</tp-badge>
   <tp-badge interactive variant="outline" data-filter="archived" disabled>Archived · 0</tp-badge>
@@ -111,12 +106,11 @@ for (const badge of document.querySelectorAll('#badge-filters tp-badge')) {
 }`}
 />
 
-`interactive` declares that a badge acts, and the `badge` part contract supplies the native element that does: a button for a filter chip, a link for navigation. Keep `bind` on that element and render `content` inside it, so the pill keeps its part, its slot and its appearance. The pill keeps its size while its pointer target grows to the minimum, so leave room between interactive badges. The `link` variant alone never navigates; for a full action, form or loading behavior, use Button.
+`interactive` declares that a badge acts; the `badge` part contract supplies the native element that does, a button for a chip and a link for navigation, with `bind` on that element and `content` inside it. The pill keeps its size while its pointer target grows to the minimum, so leave room between interactive badges. The `link` variant alone never navigates; for a full action, form or loading behavior, use Button.
 
 ### Variants
 
 <Preview
-  title="Variants"
   code={`<tp-badge>Default</tp-badge>
 <tp-badge variant="secondary">Secondary</tp-badge>
 <tp-badge variant="destructive">Destructive</tp-badge>
@@ -127,4 +121,4 @@ for (const badge of document.querySelectorAll('#badge-filters tp-badge')) {
 <tp-badge variant="link">Link</tp-badge>`}
 />
 
-`variant` is visual emphasis only. Use `destructive` for failures and blocking problems, `success` and `warning` for healthy and degraded states, `secondary` or `outline` for neutral metadata, and the default for the one thing you want noticed.
+`variant` is visual emphasis only: `destructive` for failures and blocking problems, `success` and `warning` for healthy and degraded states, `secondary` or `outline` for neutral metadata, the default for the one thing you want noticed.

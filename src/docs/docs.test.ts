@@ -170,8 +170,28 @@ describe('documentation pages', () => {
           `${page.id}:${heading.line}: ${heading.text} is generated, not authored`,
         ).toBe(false);
       }
-      for (const preview of page.previews)
-        expect(preview.title, `${page.id}:${preview.line}`).toBeTruthy();
+      for (const preview of page.previews) {
+        const siblings = page.previews.filter(
+          (other) => other.afterHeading === preview.afterHeading,
+        );
+        const heading = page.headings.find((entry) => entry.slug === preview.afterHeading);
+        // A section's single preview is named by its heading; a title there is said twice.
+        if (siblings.length === 1)
+          expect(
+            preview.title,
+            `${page.id}:${preview.line}: the heading names this preview`,
+          ).toBeUndefined();
+        else {
+          expect(
+            preview.title,
+            `${page.id}:${preview.line}: several previews need titles`,
+          ).toBeTruthy();
+          expect(
+            preview.title?.toLowerCase(),
+            `${page.id}:${preview.line}: a title repeats the heading`,
+          ).not.toBe(heading?.text.toLowerCase());
+        }
+      }
     }
   });
 
@@ -313,6 +333,6 @@ Text with a \`<Preview />\` in code.
     );
     expect(() => page('<Preview title="A" code={`${x}`} />')).toThrow('interpolate');
     expect(() => page('<Preview title="A" code="x"></Preview>')).toThrow('self-closing');
-    expect(() => page('<Preview code="x" />')).toThrow('needs a title');
+    expect(() => page('<Preview title="A" />')).toThrow('needs code');
   });
 });
