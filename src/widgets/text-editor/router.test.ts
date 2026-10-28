@@ -466,18 +466,18 @@ describe('text editor router', () => {
   });
 
   it('redoes on Ctrl+Y outside Apple platforms only (uwg-te-tab-keymap-r1)', async () => {
-    const r = await setup();
-    const request = vi.spyOn(r.controller, 'request');
-    r.press(mod('y'));
+    // The platform is the router's configuration, never the machine running the test.
+    const windows = await setup({ platform: 'windows' });
+    const windowsRequest = vi.spyOn(windows.controller, 'request');
+    expect(windows.press(mod('y')).consumed).toBe(true);
+    expect(windowsRequest.mock.calls.map(([proposal]) => proposal.target)).toEqual(['redo']);
+    expect(windows.router.shortcut('redo')?.aria).toBe('Control+Shift+Z Control+Y');
+
     const mac = await setup({ platform: 'mac' });
+    const macRequest = vi.spyOn(mac.controller, 'request');
     expect(mac.press(mod('y')).consumed).toBe(false);
-    // The built-in redo lists Ctrl+Y only where the machine is not an Apple platform.
-    expect(request.mock.calls.map(([proposal]) => proposal.target)).toEqual(
-      typeof r.router.shortcut('redo')?.aria === 'string' &&
-        r.router.shortcut('redo')!.aria.includes('Control+Y')
-        ? ['redo']
-        : [],
-    );
+    expect(macRequest).not.toHaveBeenCalled();
+    expect(mac.router.shortcut('redo')?.aria).toBe('Shift+Meta+Z');
   });
 
   it('lets AltGraph characters reach the engine (uwg-te-req-key-2, mp-kb-pattern)', async () => {
