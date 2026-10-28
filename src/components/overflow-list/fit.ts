@@ -91,6 +91,8 @@ export class OverflowFitController implements ReactiveController {
   /** Inputs of the last fit; a narrowing ceiling holds while they stay the same. */
   #key = '';
   #ceiling = Number.POSITIVE_INFINITY;
+  /** The previous pass changed the intrinsic size and left its choice to this one. */
+  #resized = false;
   #releaseFonts: (() => void) | undefined;
   readonly #observed = new Map<Element, () => void>();
 
@@ -114,6 +116,9 @@ export class OverflowFitController implements ReactiveController {
       this.#forgetCount();
     }
     this.#state = state;
+    // An update that runs after the host's removal keeps the state for a reconnection, which
+    // observes it again (`hostConnected`): observing now would hold the removed list for good.
+    if (!this.#host.isConnected) return;
     this.#observe(state);
     this.#schedule();
   }
@@ -259,7 +264,16 @@ export class OverflowFitController implements ReactiveController {
       this.#countEstimate = Math.max(this.#countEstimate, size);
     }
     const countSize = (omitted: number) => this.#countSizes.get(omitted) ?? this.#countEstimate;
-    this.#size(state, measured, countSize);
+    // A list that takes its inline size from its intrinsic one measured the available size
+    // against the previous Items (after an Item change): measure once more before choosing, so
+    // a stale size never presents a passing partition that moves a focused Item to the pool.
+    if (this.#size(state, measured, countSize) && !this.#resized) {
+      this.#resized = true;
+      this.#lock(state, measured.blockSize);
+      this.#schedule();
+      return;
+    }
+    this.#resized = false;
     const key = JSON.stringify([
       measured.available,
       measured.gap,
@@ -315,8 +329,15 @@ export class OverflowFitController implements ReactiveController {
     state.list.style.setProperty('block-size', `${blockSize}px`);
   }
 
-  /** Intrinsic inline sizes that never depend on the partition: the Count alone, or one row. */
-  #size(state: OverflowFitState, measured: Measured, countSize: (omitted: number) => number): void {
+  /**
+   * Intrinsic inline sizes that never depend on the partition: the Count alone, or one row.
+   * Returns whether either changed.
+   */
+  #size(
+    state: OverflowFitState,
+    measured: Measured,
+    countSize: (omitted: number) => number,
+  ): boolean {
     const total = state.items.length;
     const cap = limitPartition(total, state.limit);
     const [start, end] = shownRange(total, cap, state.from);
@@ -324,13 +345,16 @@ export class OverflowFitController implements ReactiveController {
     let max = row.reduce((sum, size) => sum + size, 0) + measured.gap * Math.max(0, row.length - 1);
     if (cap < total) max += (row.length ? measured.gap : 0) + countSize(total - cap);
     const min = Math.min(countSize(total) || this.#countEstimate, max);
+    let changed = false;
     for (const [name, size] of [
       ['--_tp-overflow-min', min],
       ['--_tp-overflow-max', max],
     ] as const) {
       const value = `${Math.ceil(size)}px`;
-      if (state.sizer.style.getPropertyValue(name) !== value)
-        state.sizer.style.setProperty(name, value);
+      if (state.sizer.style.getPropertyValue(name) === value) continue;
+      state.sizer.style.setProperty(name, value);
+      changed = true;
     }
+    return changed;
   }
 }

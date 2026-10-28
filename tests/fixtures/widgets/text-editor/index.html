@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Text editor widget</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main>
+      <h1>Text editor widget</h1>
+      <p id="meta" class="meta" data-fixture-chrome></p>
+      <p id="summary" class="meta" data-fixture-chrome>Loading the editors…</p>
+      <button id="before" type="button">Before editors</button>
+      <div id="instances"></div>
+      <div id="mount"></div>
+      <p id="drop-source" draggable="true" data-fixture-chrome>Seed packet: rainbow chard</p>
+      <button id="after" type="button">After editors</button>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

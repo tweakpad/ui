@@ -1,4 +1,5 @@
 /** Nested reveal and clipping. */
+import { elementFromPointBelow } from '../drag-cursor.js';
 import { composedParent } from '../focus.js';
 import { isDocumentScroller, scrollableAncestors } from '../scroll.js';
 import { Rectangle } from './geometry.js';
@@ -153,12 +154,15 @@ export class DragScrolling {
     if (!source) return;
     const frame = getFrameTransform(source),
       point = operation.position.current;
-    let hit = source.ownerDocument.elementFromPoint(
+    // Through the drag cursor's layer, which covers the page while the drag shows its cursor.
+    let hit = elementFromPointBelow(
+      source.ownerDocument,
       (point.x - frame.x) / frame.scaleX,
       (point.y - frame.y) / frame.scaleY,
     );
     while (hit?.shadowRoot) {
-      const deeper = hit.shadowRoot.elementFromPoint(
+      const deeper = elementFromPointBelow(
+        hit.shadowRoot,
         (point.x - frame.x) / frame.scaleX,
         (point.y - frame.y) / frame.scaleY,
       );

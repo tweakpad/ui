@@ -1,10 +1,7 @@
-import { interactiveMarkupExample } from './documentation-examples.js';
+import { interactiveMarkupExample, publishedSource } from './documentation-examples.js';
 import { setupDragDropListExample } from './drag-drop-list-example.js';
 import setupSource from './drag-drop-list-example.js?raw';
-const script = setupSource.replace(
-  "'../foundation/drag-drop/index.js'",
-  "'@tweakpad/ui/drag-drop'",
-);
+const script = publishedSource(setupSource);
 function example(title: string, mode: string, content: string, description: string) {
   const id = `drag-drop-${mode}-example`;
   return interactiveMarkupExample(

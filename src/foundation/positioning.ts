@@ -1,5 +1,6 @@
 import { composedParent } from './focus.js';
 import { observeResize, observeScroll } from './observation.js';
+import { POSITIONING_PROPERTIES } from './positioning-properties.js';
 import { visualViewportBox } from './scroll.js';
 export type Side = 'top' | 'right' | 'bottom' | 'left';
 export type LogicalSide = Side | 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
@@ -76,7 +77,21 @@ export interface AutoUpdatePolicy {
 
 export interface VirtualAnchor {
   getBoundingRectangle(): Rect;
+  /**
+   * The anchor's client rectangles in order, such as the line boxes of a text range; with two or
+   * more, the inline-fragment stage picks the reference rectangle among them.
+   */
+  getClientRectangles?(): readonly Rect[];
   contextElement?: Element;
+}
+
+/** Input of the inline-fragment stage (Foundation §10.7.2). */
+export interface InlineFragmentOptions {
+  /** A client point that selects the containing or nearest fragment. */
+  x?: number | undefined;
+  y?: number | undefined;
+  /** Widens the band that decides which line fragment holds the point; default 2. */
+  padding?: number | undefined;
 }
 export type AnchorGeometry = Element | VirtualAnchor;
 export type CollisionBoundary = 'clipping-ancestors' | Element | Element[] | Rect;
@@ -86,22 +101,58 @@ export interface PositioningOffsetContext {
   anchor: { width: number; height: number };
   positioner: { width: number; height: number };
 }
-/** Resolve the theme spacing seed for the numeric positioning API, including calc()/rem. */
+/** Resolved spacing per document, by everything a measurement of it depends on. */
+const resolvedSpacing = new WeakMap<Document, Map<string, number>>();
+
+/**
+ * Resolve the theme spacing seed for the numeric positioning API, including calc()/rem. A probe
+ * measures each distinct seed once: later calls with the same seed, units, font size, root font
+ * size (and viewport, for viewport units) read the cache and leave the document untouched, so
+ * positioning passes that ask for it do not mutate the DOM they observe.
+ */
 export function themeSpacing(element: HTMLElement, units = 1): number {
   const document = element.ownerDocument;
   const view = document.defaultView;
   if (!view || !document.body) return 0;
   const style = view.getComputedStyle(element);
+  const seed = style.getPropertyValue('--tp-spacing').trim() || '0px';
+  const root = /rem|rlh|rex|rch|ric|rcap/i.test(seed)
+    ? view.getComputedStyle(document.documentElement).fontSize
+    : '';
+  const viewport = /\d(?:d|s|l)?v(?:w|h|i|b|min|max)\b/i.test(seed)
+    ? `${view.innerWidth}x${view.innerHeight}`
+    : '';
+  const key = `${seed}|${units}|${style.fontSize}|${root}|${viewport}`;
+  let cache = resolvedSpacing.get(document);
+  if (!cache) resolvedSpacing.set(document, (cache = new Map()));
+  const cached = cache.get(key);
+  if (cached !== undefined) return cached;
   const probe = document.createElement('span');
   probe.style.cssText = 'position:fixed;visibility:hidden;pointer-events:none;contain:strict;';
-  probe.style.inlineSize = `calc(${style.getPropertyValue('--tp-spacing').trim() || '0px'} * ${units})`;
+  probe.style.inlineSize = `calc(${seed} * ${units})`;
   probe.style.fontSize = style.fontSize;
   document.body.append(probe);
   try {
-    return probe.getBoundingClientRect().width;
+    const width = probe.getBoundingClientRect().width;
+    if (cache.size >= 64) cache.clear();
+    cache.set(key, width);
+    return width;
   } finally {
     probe.remove();
   }
+}
+
+/** Sets an inline declaration only when its value changes (`null` removes it). */
+function writeStyle(element: HTMLElement, name: string, value: string | null): void {
+  const style = element.style;
+  if (value === null) {
+    if (style.getPropertyValue(name)) style.removeProperty(name);
+  } else if (style.getPropertyValue(name) !== value) style.setProperty(name, value);
+}
+
+/** Sets a `data-*` attribute only when its value changes. */
+function writeData(element: HTMLElement, key: string, value: string): void {
+  if (element.dataset[key] !== value) element.dataset[key] = value;
 }
 
 export type GeometryOffset = number | ((context: PositioningOffsetContext) => number);
@@ -138,7 +189,15 @@ export interface PositioningOptions {
   collision?: CollisionPolicy;
   padding?: number | Partial<Record<Side, number>>;
   transformPositioning?: boolean;
+  /**
+   * Anchors the surface box to the far edge of its containing block when it sits above (`bottom`)
+   * or before (`right`) its anchor, so a change of the box's own size keeps the edge next to the
+   * anchor in place: a viewport morphing inside a box that already has its settled size.
+   */
+  adaptiveOrigin?: boolean;
   tracking?: AutoUpdatePolicy | false;
+  /** Pointer coordinates and padding of the inline-fragment stage of a multi-rectangle anchor. */
+  inline?: InlineFragmentOptions | undefined;
 }
 
 export interface PositioningHandle {
@@ -350,12 +409,142 @@ function transformOrigin(placement: Placement, anchor: Rect, x: number, y: numbe
   return `left ${originY}px`;
 }
 
+/**
+ * The line fragments of an anchor's client rectangles: the rectangles in block order, those whose
+ * top lies within half the height of the previous one joined into one line box. Empty rectangles
+ * are left out while any other remains.
+ */
+function lineFragments(rectangles: readonly Rect[]): Rect[] {
+  const finite = rectangles.filter(finiteRect);
+  const sized = finite.filter((value) => value.width > 0 && value.height > 0);
+  const sorted = (sized.length ? sized : finite).slice().sort((a, b) => a.y - b.y);
+  const lines: Rect[][] = [];
+  let previous: Rect | null = null;
+  for (const value of sorted) {
+    if (!previous || value.y - previous.y > previous.height / 2) lines.push([value]);
+    else lines.at(-1)!.push(value);
+    previous = value;
+  }
+  return lines.map((line) => {
+    const left = Math.min(...line.map((value) => value.left));
+    const top = Math.min(...line.map((value) => value.top));
+    const right = Math.max(...line.map((value) => value.right));
+    const bottom = Math.max(...line.map((value) => value.bottom));
+    return rect(left, top, right - left, bottom - top);
+  });
+}
+
+/**
+ * The inline-fragment stage (Foundation §10.7.2): the reference rectangle of a multi-rectangle
+ * anchor for a side, or `null` for fewer than two rectangles. A supplied point selects the line
+ * fragment that holds it, within `padding` (default 2), else the nearest one. Without a point, a
+ * top or bottom side takes the block span from the first to the last line with the inline extent
+ * of the first line for top and of the last line for bottom; a left or right side takes the lines
+ * that reach furthest to that side, over their block span.
+ */
+export function inlineFragmentRect(
+  rectangles: readonly Rect[],
+  side: Side,
+  options: InlineFragmentOptions = {},
+): Rect | null {
+  if (rectangles.length < 2) return null;
+  const lines = lineFragments(rectangles);
+  if (!lines.length) return null;
+  const { x, y } = options;
+  if (typeof x === 'number' && typeof y === 'number' && Number.isFinite(x) && Number.isFinite(y)) {
+    const padding = options.padding ?? 2;
+    const containing = lines.find(
+      (line) =>
+        x >= line.left - padding &&
+        x <= line.right + padding &&
+        y >= line.top - padding &&
+        y <= line.bottom + padding,
+    );
+    if (containing) return containing;
+    const distance = (line: Rect) =>
+      Math.hypot(
+        Math.max(line.left - x, 0, x - line.right),
+        Math.max(line.top - y, 0, y - line.bottom),
+      );
+    return lines.reduce((best, line) => (distance(line) < distance(best) ? line : best));
+  }
+  if (lines.length === 1) return lines[0]!;
+  const first = lines[0]!;
+  const last = lines.at(-1)!;
+  if (side === 'top' || side === 'bottom') {
+    const line = side === 'top' ? first : last;
+    return rect(line.left, first.top, line.width, last.bottom - first.top);
+  }
+  const edge =
+    side === 'left'
+      ? Math.min(...lines.map((line) => line.left))
+      : Math.max(...lines.map((line) => line.right));
+  const measured = lines.filter((line) => (side === 'left' ? line.left : line.right) === edge);
+  const left = Math.min(...measured.map((line) => line.left));
+  const right = Math.max(...measured.map((line) => line.right));
+  const top = measured[0]!.top;
+  const bottom = measured.at(-1)!.bottom;
+  return rect(left, top, right - left, bottom - top);
+}
+
+const sameRect = (a: Rect, b: Rect): boolean =>
+  a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+
+/**
+ * Computes the surface's position at `anchor`. With two or more `fragments` (the anchor's client
+ * rectangles), the inline-fragment stage picks the reference rectangle for the requested side; when
+ * collision handling moves to a side whose reference differs, one rectangle reset recomputes the
+ * position at that side with its reference.
+ */
 export function computeSurfacePosition(
   anchor: Rect,
   surface: Rect,
   clipping: Rect,
   options: PositioningOptions = {},
   direction: 'ltr' | 'rtl' = 'ltr',
+  fragments: readonly Rect[] = [],
+): PositioningResult | null {
+  if (fragments.length < 2) return computeStages(anchor, surface, clipping, options, direction);
+  const side = placementParts(options.placement ?? 'bottom').side;
+  const reference = inlineFragmentRect(fragments, side, options.inline) ?? anchor;
+  const result = computeStages(reference, surface, clipping, options, direction);
+  if (!result) return null;
+  const chosen = inlineFragmentRect(
+    fragments,
+    placementParts(result.placement).side,
+    options.inline,
+  );
+  if (!chosen || sameRect(chosen, reference)) return result;
+  const reset = computeStages(
+    chosen,
+    surface,
+    clipping,
+    {
+      ...options,
+      automatic: false,
+      placement: result.placement,
+      collision: { ...options.collision, side: 'none' },
+    },
+    direction,
+  );
+  if (!reset) return result;
+  const { flip, automaticPlacement } = result.stageData;
+  return {
+    ...reset,
+    stageData: {
+      ...reset.stageData,
+      ...(flip ? { flip } : {}),
+      ...(automaticPlacement ? { automaticPlacement } : {}),
+    },
+  };
+}
+
+function computeStages(
+  anchor: Rect,
+  surface: Rect,
+  clipping: Rect,
+  options: PositioningOptions,
+  direction: 'ltr' | 'rtl',
 ): PositioningResult | null {
   if (![anchor, surface, clipping].every(finiteRect)) return null;
   const initial = options.placement ?? 'bottom';
@@ -500,7 +689,7 @@ export function computeSurfacePosition(
 
   if (options.arrow) {
     // Directional Arrow styles must settle before measuring cross-axis/depth extents.
-    options.arrow.dataset.side = side;
+    writeData(options.arrow, 'side', side);
     const measured = options.arrow.getBoundingClientRect();
     const arrowRect = rect(
       0,
@@ -571,7 +760,7 @@ export function resolveSide(side: LogicalSide, element: Element): Side {
   if (side === 'block-end') return oppositeSide(blockStart);
   return side;
 }
-function overflowAncestors(element: Element): Element[] {
+function overflowAncestors(element: Element, clipping = false): Element[] {
   const result: Element[] = [];
   for (let current = composedParent(element); current; current = composedParent(current)) {
     if (!(current instanceof Element)) continue;
@@ -586,6 +775,9 @@ function overflowAncestors(element: Element): Element[] {
       )
     )
       result.push(current);
+    // No ancestor of a top-layer element clips it or its content, such as an item of a
+    // menu that anchors a submenu.
+    if (clipping && current.matches(':popover-open, :modal')) break;
   }
   return result;
 }
@@ -620,7 +812,9 @@ function clippingRect(
     return intersect(root, boundary);
   const elements =
     boundary === 'clipping-ancestors'
-      ? overflowAncestors(element).filter((ancestor) => ancestor !== element.ownerDocument.body)
+      ? overflowAncestors(element, true).filter(
+          (ancestor) => ancestor !== element.ownerDocument.body,
+        )
       : Array.isArray(boundary)
         ? boundary
         : [boundary];
@@ -716,15 +910,39 @@ function clearPosition(surface: HTMLElement): void {
   surface.style.removeProperty('translate');
   surface.style.removeProperty('left');
   surface.style.removeProperty('top');
-  for (const property of [
-    '--tp-anchor-width',
-    '--tp-anchor-height',
-    '--tp-available-width',
-    '--tp-available-height',
-    '--tp-transform-origin',
-  ]) {
-    surface.style.removeProperty(property);
+  surface.style.removeProperty('right');
+  surface.style.removeProperty('bottom');
+  for (const property of POSITIONING_PROPERTIES) surface.style.removeProperty(property);
+}
+
+/** The padding box the surface's offsets resolve against, in the frame of `x` and `y`. */
+function containingBlockSize(
+  surface: HTMLElement,
+  strategy: PositioningStrategy,
+  topLayer: boolean,
+): { width: number; height: number } {
+  const offsetParent = strategy === 'fixed' || topLayer ? null : surface.offsetParent;
+  if (offsetParent instanceof HTMLElement && offsetParent !== surface.ownerDocument.body)
+    return { width: offsetParent.clientWidth, height: offsetParent.clientHeight };
+  const root = surface.ownerDocument.documentElement;
+  return { width: root.clientWidth, height: root.clientHeight };
+}
+
+/**
+ * Whether mutation records can change the scroll ancestry of the nodes in `chain` (the anchor
+ * context and the surface with their composed ancestors): a node of the chain was added or
+ * removed. Mutations elsewhere, the surface's own content and the probes of `themeSpacing`
+ * among them, cannot.
+ */
+function movesChain(records: readonly MutationRecord[], chain: () => ReadonlySet<Node>): boolean {
+  let nodes: ReadonlySet<Node> | null = null;
+  for (const record of records) {
+    if (record.type !== 'childList') continue;
+    for (const list of [record.removedNodes, record.addedNodes])
+      for (let index = 0; index < list.length; index++)
+        if ((nodes ??= chain()).has(list[index]!)) return true;
   }
+  return false;
 }
 
 export function positionSurface(
@@ -752,6 +970,8 @@ export function positionSurface(
       'getBoundingRectangle' in reference
         ? reference.getBoundingRectangle()
         : fromDomRect(reference.getBoundingClientRect());
+    const fragments =
+      'getBoundingRectangle' in reference ? (reference.getClientRectangles?.() ?? []) : [];
     const root = viewportRect(ownerWindow);
     const topLayer = surface.matches(':popover-open, :modal');
     const clipping =
@@ -762,11 +982,13 @@ export function positionSurface(
     // clamps its scroller to zero before the final available size is restored.
     if (options.constrainSize && !current) {
       const padding = paddingRecord(options.padding);
-      surface.style.setProperty(
+      writeStyle(
+        surface,
         '--tp-available-width',
         `${Math.max(0, clipping.width - padding.left - padding.right)}px`,
       );
-      surface.style.setProperty(
+      writeStyle(
+        surface,
         '--tp-available-height',
         `${Math.max(0, clipping.height - padding.top - padding.bottom)}px`,
       );
@@ -782,6 +1004,7 @@ export function positionSurface(
       clipping,
       currentOptions,
       direction,
+      fragments,
     );
     if (pass !== generation || destroyed) return null;
     if (!result) {
@@ -799,8 +1022,8 @@ export function positionSurface(
       anchorRect.right <= anchorClip.left ||
       anchorRect.left >= anchorClip.right;
     if (options.constrainSize) {
-      surface.style.setProperty('--tp-available-width', `${result.availableWidth}px`);
-      surface.style.setProperty('--tp-available-height', `${result.availableHeight}px`);
+      writeStyle(surface, '--tp-available-width', `${result.availableWidth}px`);
+      writeStyle(surface, '--tp-available-height', `${result.availableHeight}px`);
       if (
         surface.offsetWidth !== surfaceRect.width ||
         surface.offsetHeight !== surfaceRect.height
@@ -811,6 +1034,7 @@ export function positionSurface(
           clipping,
           { ...options, placement: result.placement, collision: { side: 'none', align: 'shift' } },
           direction,
+          fragments,
         );
         if (resized)
           result = {
@@ -825,7 +1049,7 @@ export function positionSurface(
     }
     // Resolve the containing block using the requested strategy, including when
     // changing from fixed to absolute while the surface is already open.
-    surface.style.position = result.strategy;
+    writeStyle(surface, 'position', result.strategy);
     if (result.strategy !== 'fixed') {
       const offsetParent = topLayer ? null : surface.offsetParent;
       if (offsetParent instanceof HTMLElement) {
@@ -847,33 +1071,45 @@ export function positionSurface(
     }
     const x = roundToDevicePixel(result.x, ownerWindow);
     const y = roundToDevicePixel(result.y, ownerWindow);
-    if (options.transformPositioning ?? true) {
-      surface.style.left = '0px';
-      surface.style.top = '0px';
-      surface.style.translate = `${x}px ${y}px`;
-    } else {
-      surface.style.removeProperty('translate');
-      surface.style.left = `${x}px`;
-      surface.style.top = `${y}px`;
-    }
-    surface.dataset.positioned = '';
-    surface.dataset.placement = result.placement;
     const resolved = placementParts(result.placement);
-    surface.dataset.side = resolved.side;
-    surface.dataset.align = resolved.alignment;
+    // Above or before the anchor, the box hangs from the far edge of its containing block: its
+    // offsets are the distances from that edge, so its own size change leaves the anchored edge.
+    let right: number | undefined, bottom: number | undefined;
+    if (options.adaptiveOrigin && (resolved.side === 'top' || resolved.side === 'left')) {
+      const block = containingBlockSize(surface, result.strategy, topLayer);
+      if (resolved.side === 'top')
+        bottom = roundToDevicePixel(block.height - (result.y + surface.offsetHeight), ownerWindow);
+      else right = roundToDevicePixel(block.width - (result.x + surface.offsetWidth), ownerWindow);
+    }
+    // Every write below happens only when its value changes: a pass whose geometry did not change
+    // leaves the surface untouched, so observers of the surface do not wake.
+    const transform = options.transformPositioning ?? true;
+    writeStyle(surface, 'left', right === undefined ? (transform ? '0px' : `${x}px`) : 'auto');
+    writeStyle(surface, 'right', right === undefined ? null : transform ? '0px' : `${right}px`);
+    writeStyle(surface, 'top', bottom === undefined ? (transform ? '0px' : `${y}px`) : 'auto');
+    writeStyle(surface, 'bottom', bottom === undefined ? null : transform ? '0px' : `${bottom}px`);
+    writeStyle(
+      surface,
+      'translate',
+      transform
+        ? `${right === undefined ? x : -right}px ${bottom === undefined ? y : -bottom}px`
+        : null,
+    );
+    writeData(surface, 'positioned', '');
+    writeData(surface, 'placement', result.placement);
+    writeData(surface, 'side', resolved.side);
+    writeData(surface, 'align', resolved.alignment);
     surface.toggleAttribute('data-anchor-hidden', result.stageData.hide.referenceHidden);
     surface.toggleAttribute('data-reference-hidden', result.stageData.hide.referenceHidden);
     surface.toggleAttribute('data-escaped', result.stageData.hide.escaped);
-    surface.style.setProperty('--tp-anchor-width', `${result.anchorWidth}px`);
-    surface.style.setProperty('--tp-anchor-height', `${result.anchorHeight}px`);
-    surface.style.setProperty('--tp-available-width', `${result.availableWidth}px`);
-    surface.style.setProperty('--tp-available-height', `${result.availableHeight}px`);
-    surface.style.setProperty('--tp-transform-origin', result.transformOrigin);
-    if (options.matchReferenceWidth) surface.style.minWidth = `${result.anchorWidth}px`;
+    writeStyle(surface, '--tp-anchor-width', `${result.anchorWidth}px`);
+    writeStyle(surface, '--tp-anchor-height', `${result.anchorHeight}px`);
+    writeStyle(surface, '--tp-available-width', `${result.availableWidth}px`);
+    writeStyle(surface, '--tp-available-height', `${result.availableHeight}px`);
+    writeStyle(surface, '--tp-transform-origin', result.transformOrigin);
+    if (options.matchReferenceWidth) writeStyle(surface, 'min-width', `${result.anchorWidth}px`);
     if (options.arrow && result.stageData.arrow) {
       const arrow = result.stageData.arrow;
-      options.arrow.style.removeProperty('left');
-      options.arrow.style.removeProperty('top');
       const vertical = resolved.side === 'top' || resolved.side === 'bottom';
       const shifted = vertical ? result.stageData.shift.x !== 0 : result.stageData.shift.y !== 0;
       const staticOffset = !shifted ? options.arrowStaticOffset : undefined;
@@ -885,11 +1121,11 @@ export function positionSurface(
             : /^-?\d+(?:\.\d+)?(?:%|px)$/.test(staticOffset)
               ? staticOffset
               : undefined;
-      if (arrow.x !== undefined) options.arrow.style.left = offset ?? `${arrow.x}px`;
-      if (arrow.y !== undefined) options.arrow.style.top = offset ?? `${arrow.y}px`;
+      writeStyle(options.arrow, 'left', arrow.x === undefined ? null : (offset ?? `${arrow.x}px`));
+      writeStyle(options.arrow, 'top', arrow.y === undefined ? null : (offset ?? `${arrow.y}px`));
       options.arrow.toggleAttribute('data-uncentered', Math.abs(arrow.centerOffset) > 0.5);
-      options.arrow.dataset.side = resolved.side;
-      options.arrow.dataset.align = resolved.alignment;
+      writeData(options.arrow, 'side', resolved.side);
+      writeData(options.arrow, 'align', resolved.alignment);
     }
     current = { ...result, x, y };
     options.onPosition?.(current);
@@ -930,7 +1166,16 @@ export function positionSurface(
             );
       };
       bind();
-      const observer = new ownerWindow.MutationObserver(() => {
+      // Only a move of the anchor or the surface, or of one of their ancestors, can change the
+      // scroll ancestry or detach the anchor; layout shifts are the move observation's.
+      const chain = (): Set<Node> => {
+        const nodes = new Set<Node>();
+        for (const start of [context, surface])
+          for (let node: Node | null = start; node; node = composedParent(node)) nodes.add(node);
+        return nodes;
+      };
+      const observer = new ownerWindow.MutationObserver((records) => {
+        if (!movesChain(records, chain)) return;
         bind();
         schedule();
       });

@@ -1,0 +1,239 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000001",
+        "align": "center",
+        "level": 1
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Clayworks studio handbook"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000002",
+        "align": "justify"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Members may use the wheels, the slab roller and the glaze room during open hours. Book the kilns a day ahead and label every shelf you load."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000003",
+        "align": null,
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Opening hours"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000004",
+        "align": "end",
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Firing schedule"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000005",
+        "align": null,
+        "level": 4
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Glazes"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000006",
+        "align": null,
+        "level": 5
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Cleanup"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "te00000007",
+        "align": null,
+        "level": 6
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Fine print"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000008",
+        "align": null
+      }
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000009",
+        "align": null
+      }
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000010",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The two empty paragraphs above stay in HTML."
+        }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "attrs": {
+        "id": "te00000011",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Wedge the clay"
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "until it is even,"
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "then let it rest."
+        }
+      ]
+    },
+    {
+      "type": "blockquote",
+      "attrs": {
+        "id": "te00000012",
+        "align": "center"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A quote of two paragraphs"
+        },
+        {
+          "type": "hardBreak"
+        },
+        {
+          "type": "text",
+          "text": "becomes one quote with a line break."
+        }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": {
+        "id": "te00000013",
+        "language": "python"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "def kiln_ramp(target):\n\t# a tab-indented comment\n\treturn target - 40\n\n\nprint(\"``double`` and ```triple``` backticks\")\n"
+        }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": {
+        "id": "te00000014",
+        "language": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "plain code, no language"
+        }
+      ]
+    },
+    {
+      "type": "horizontalRule",
+      "attrs": {
+        "id": "te00000015"
+      }
+    },
+    {
+      "type": "image",
+      "attrs": {
+        "id": "te00000016",
+        "src": "https://clayworks.example/wheel.jpg",
+        "alt": "A wheel with a half-thrown bowl",
+        "width": 480
+      }
+    },
+    {
+      "type": "image",
+      "attrs": {
+        "id": "te00000017",
+        "src": "https://clayworks.example/kiln.jpg",
+        "alt": "",
+        "width": null
+      }
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "te00000018",
+        "align": "end"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Signed, the studio team"
+        }
+      ]
+    }
+  ]
+}

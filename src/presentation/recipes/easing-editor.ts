@@ -63,17 +63,8 @@ export const easingEditorAppearance: PresentationDictionary = {
   ],
   // The badge is a Badge (tp-badge) host floating over the graph and keeps the Badge's recipe.
   'easing-editor-badge': [],
-  // Registered on the presets Toggle's control: icon-only, square like the play Button.
-  'easing-editor-presets-toggle': [
-    {
-      selector: '&[part~="toggle"]',
-      declarations: {
-        'padding-inline': '0',
-        'inline-size': 'var(--tp-control-height-sm)',
-        'min-inline-size': 'var(--tp-control-height-sm)',
-      },
-    },
-  ],
+  // The presets Toggle is icon-only: its square box is the Toggle's icon size.
+  'easing-editor-presets-toggle': [],
   // The mode Button is a Button host in the header and keeps the Button's recipe.
   'easing-editor-preview-mode': [],
   // The presets overlay floats over the graph on a translucent surface.

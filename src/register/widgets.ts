@@ -4,11 +4,13 @@ import { TpColorPicker } from '../widgets/color-picker/color-picker.js';
 import { TpEasingEditor } from '../widgets/easing-editor/easing-editor.js';
 import { TpFlow } from '../widgets/flow/flow.js';
 import { TpEmojiPicker } from '../widgets/emoji-picker/emoji-picker.js';
+import { TpTextEditor } from '../widgets/text-editor/text-editor.js';
 import { defineElement } from '../foundation/define.js';
 
 defineElement(TpColorPicker.tagName, TpColorPicker);
 defineElement(TpEasingEditor.tagName, TpEasingEditor);
 defineElement(TpFlow.tagName, TpFlow);
 defineElement(TpEmojiPicker.tagName, TpEmojiPicker);
+defineElement(TpTextEditor.tagName, TpTextEditor);
 
 export * from '../widgets/index.js';

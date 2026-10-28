@@ -1,6 +1,21 @@
 import type { PresentationDictionary, PresentationRule } from '../../resolver.js';
 import { controlSizePresentation, rule, variantPresentation } from '../shared/variant.js';
 
+/**
+ * The Button size set: the control steps and their square `icon-*` steps. Toggle and Toggle group
+ * offer the same set.
+ */
+export const buttonSizes = [
+  'xs',
+  'sm',
+  'default',
+  'lg',
+  'icon-xs',
+  'icon-sm',
+  'icon',
+  'icon-lg',
+] as const;
+
 const button: Record<string, readonly PresentationRule[]> = {
   button: [
     rule({
@@ -28,7 +43,7 @@ for (const part of Object.keys(button)) {
         'border-color': 'light-dark(var(--tp-border), var(--tp-input))',
       }),
     ];
-  for (const size of ['xs', 'sm', 'default', 'lg', 'icon-xs', 'icon-sm', 'icon', 'icon-lg'])
+  for (const size of buttonSizes)
     button[`${part}-size-${size}`] = part === 'button' ? controlSizePresentation(size) : [];
 }
 

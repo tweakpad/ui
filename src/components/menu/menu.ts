@@ -48,6 +48,14 @@ export interface MenuPartTarget {
   element: HTMLElement;
   owner: TpElement;
 }
+/** Menubar changes between members: the bar stays, so neither menu animates. */
+const MENUBAR_GROUP_REASONS: ReadonlySet<ChangeReason> = new Set<ChangeReason>([
+  'trigger-focus',
+  'focus-outside',
+  'trigger-hover',
+  'list-navigation',
+  'sibling-open',
+]);
 interface CommandRecord extends ChoiceRecord<HTMLElement> {
   element: HTMLElement;
   item?: TpMenuItem;
@@ -121,6 +129,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   #bar: MenuBarOwner | null = null;
+  #lastReason: ChangeReason | undefined;
   #indicators = new Map<HTMLElement, TpIcon>();
   #keyboard = false;
   #lastOpening = false;
@@ -261,6 +270,17 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   protected override get surfaceDisabled(): boolean {
     return super.surfaceDisabled || !!this.#bar?.disabled || !!this.#parent?.menuDisabled;
   }
+  /**
+   * A menu that another menu replaces changes without motion: one menubar menu handing over to the
+   * next, and a submenu closed by a sibling opening. Presence motion is for the whole branch
+   * appearing or leaving.
+   */
+  protected override get instant(): string | undefined {
+    const reason = this.#lastReason;
+    if (reason === 'sibling-open' || (this.#bar && reason && MENUBAR_GROUP_REASONS.has(reason)))
+      return 'group';
+    return super.instant;
+  }
   get itemPartPrefix(): string {
     return this.partPrefix;
   }
@@ -275,6 +295,20 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   }
   protected override get surfaceModal(): boolean {
     return !this.parentMenu && (this.#bar?.modal ?? super.surfaceModal);
+  }
+  /**
+   * A submenu or a menubar menu renders no guard after its trigger: the trigger is an item of the
+   * parent menu or of the menubar, the menus handle Tab themselves (a press closes the branch and
+   * leaves the menubar), and the guard would be a focusable child of the `menu` or `menubar`
+   * among its items.
+   */
+  protected override get rendersTriggerGuard(): boolean {
+    return !this.parentMenu && !this.#bar && super.rendersTriggerGuard;
+  }
+  /** Tab out of a menubar's menu leaves the menubar, one stop: its other triggers are passed over. */
+  protected override focusOutsidePasses(element: HTMLElement): boolean {
+    const bar = this.rootMenu.#bar?.interactionElement;
+    return super.focusOutsidePasses(element) || (!!bar && composedContains(bar, element));
   }
   protected override get surfaceBranchElements(): readonly Element[] {
     const elements = super.surfaceBranchElements;
@@ -792,6 +826,7 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   }
   protected override accepted(open: boolean, reason: ChangeReason, event?: Event): void {
     super.accepted(open, reason);
+    this.#lastReason = reason;
     if (open) {
       this.#lastOpening =
         surfaceInteraction(event) === 'keyboard' ||
@@ -813,7 +848,9 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
       this.#highlight(this.#collection.highlighted, true);
     } else {
       this.#highlight(undefined, false);
-      this.popup?.focus({ preventScroll: true });
+      // The popup is never a focus-ring target; a scripted focus otherwise inherits
+      // `:focus-visible` from an element that always matches it, such as a contenteditable.
+      this.popup?.focus({ preventScroll: true, focusVisible: false });
     }
     this.#openingLast = false;
   }

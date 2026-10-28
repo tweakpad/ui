@@ -1,0 +1,281 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "id": "state00001",
+        "align": null,
+        "level": 2
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Night bake checklist"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "state00002",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Proof the "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "rye"
+        },
+        {
+          "type": "text",
+          "text": " loaves, then "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "textColor",
+              "attrs": {
+                "color": "blue"
+              }
+            }
+          ],
+          "text": "score the tops"
+        },
+        {
+          "type": "text",
+          "text": " and "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "highlight",
+              "attrs": {
+                "color": "yellow"
+              }
+            }
+          ],
+          "text": "check the oven"
+        },
+        {
+          "type": "text",
+          "text": " twice."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "state00003",
+        "align": "center"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Wash the trays before midnight."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "state00004",
+        "align": null
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Every timing is in the recipe "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "link",
+              "attrs": {
+                "href": "https://bakery.example/recipes"
+              }
+            }
+          ],
+          "text": "docs"
+        },
+        {
+          "type": "text",
+          "text": " by the door."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "attrs": {
+        "id": "state00005",
+        "align": null
+      }
+    },
+    {
+      "type": "table",
+      "attrs": {
+        "id": "state00006",
+        "headerRow": true,
+        "headerColumn": false
+      },
+      "content": [
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Dough"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "tableHeader",
+              "attrs": {
+                "colspan": 1,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Hours"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "tableRow",
+          "content": [
+            {
+              "type": "tableCell",
+              "attrs": {
+                "colspan": 2,
+                "rowspan": 1,
+                "colwidth": null,
+                "background": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "paragraph",
+                  "attrs": {
+                    "id": null,
+                    "align": null
+                  },
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Rest overnight in the cool room"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "codeBlock",
+      "attrs": {
+        "id": "state00007",
+        "language": "js"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "oven.preheat(230);"
+        }
+      ]
+    },
+    {
+      "type": "bulletList",
+      "content": [
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "state00008"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Flour"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "attrs": {
+            "id": "state00009"
+          },
+          "content": [
+            {
+              "type": "paragraph",
+              "attrs": {
+                "id": null,
+                "align": null
+              },
+              "content": [
+                {
+                  "type": "text",
+                  "text": "Starter"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

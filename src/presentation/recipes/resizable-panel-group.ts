@@ -1,15 +1,7 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { resizeSeparatorRules } from './shared/separator.js';
 export const resizablePanelGroupAppearance: PresentationDictionary = {
-  'resizable-panel-group-separator': [
-    { declarations: { background: 'var(--tp-border)' } },
-    {
-      selector: '&:focus-visible',
-      declarations: {
-        outline: 'var(--tp-ring-width) var(--tp-border-style) var(--tp-ring)',
-        'outline-offset': 'var(--tp-ring-offset)',
-      },
-    },
-  ],
+  'resizable-panel-group-separator': resizeSeparatorRules,
   'resizable-panel-group-handle-decoration': [
     {
       declarations: {

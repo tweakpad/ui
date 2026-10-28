@@ -16,7 +16,12 @@ export interface TreeProjection {
   minDepth: number;
   maxDepth: number;
   parentId: string | null;
+  /** No depth within the clamp is accepted by the nest predicate: the projection is vetoed. */
+  vetoed: boolean;
 }
+
+/** Whether `parent` accepts `source` as a child at a projected position. */
+export type TreeNestPredicate = (parent: ProjectedRow, source: ProjectedRow) => boolean;
 
 export interface TreeMove {
   itemId: string;
@@ -35,18 +40,36 @@ export function dragDepth(offset: number, indentation: number, rtl = false): num
 /**
  * Projection of the source row at `index` in the sorted rows (its descendants removed): the
  * requested depth clamped between the next row's depth and one more than the previous row's.
+ * With `canNest`, the depth is lowered to the deepest depth within the clamp whose projected
+ * parent accepts the source row (depth zero has no parent and is always accepted); when no depth
+ * within the clamp is accepted, the clamped projection is returned with `vetoed` set.
  */
 export function projectDepth(
   rows: readonly ProjectedRow[],
   index: number,
   requestedDepth: number,
+  canNest?: TreeNestPredicate,
 ): TreeProjection {
   const previous = rows[index - 1];
   const next = rows[index + 1];
   const maxDepth = previous ? previous.depth + 1 : 0;
   const minDepth = next ? Math.min(next.depth, maxDepth) : 0;
-  const depth = Math.min(maxDepth, Math.max(minDepth, requestedDepth));
-  return { depth, minDepth, maxDepth, parentId: projectedParent(rows, index, depth) };
+  const clamped = Math.min(maxDepth, Math.max(minDepth, requestedDepth));
+  const source = rows[index];
+  if (canNest && source)
+    for (let depth = clamped; depth >= minDepth; depth--) {
+      const parentId = projectedParent(rows, index, depth);
+      const parent = parentId === null ? undefined : rows.find((row) => row.id === parentId);
+      if (!parent || canNest(parent, source))
+        return { depth, minDepth, maxDepth, parentId, vetoed: false };
+    }
+  return {
+    depth: clamped,
+    minDepth,
+    maxDepth,
+    parentId: projectedParent(rows, index, clamped),
+    vetoed: Boolean(canNest && source),
+  };
 }
 
 function projectedParent(

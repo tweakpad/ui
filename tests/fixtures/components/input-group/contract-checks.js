@@ -31,7 +31,8 @@ export async function actionInheritance() {
 export async function singleBoundary() {
   const input = document.querySelector('#group tp-input');
   await settle(input);
-  const borderWidth = getComputedStyle(input.shadowRoot.querySelector('input')).borderWidth;
+  // The native editor renders in the Input's light DOM.
+  const borderWidth = getComputedStyle(input.inputElement).borderWidth;
   if (borderWidth !== '0px') throw new Error(`grouped input border is ${borderWidth}`);
   return { borderWidth };
 }

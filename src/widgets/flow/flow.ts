@@ -17,6 +17,7 @@ import {
   editableTargetInPath,
 } from '../../foundation/interactive-target.js';
 import { LiveAnnouncer } from '../../foundation/announcer.js';
+import { containNestedEvents } from '../../foundation/nested-events.js';
 import {
   resolvesReducedMotion,
   prepareMotion,
@@ -80,6 +81,7 @@ import { TpSeparator } from '../../components/separator/separator.js';
 import { TpIcon } from '../../components/icon/icon.js';
 import { TpKeyHint } from '../../components/key-hint/key-hint.js';
 import { TpKeyHintGroup } from '../../components/key-hint/key-hint-group.js';
+import { renderShortcutHint } from '../../components/key-hint/shortcut-hint.js';
 import { TpOpenChangeEvent } from '../../foundation/events.js';
 import { TpButton } from '../../components/button/button.js';
 import { TpAlertDialog } from '../../components/alert-dialog/alert-dialog.js';
@@ -109,7 +111,6 @@ import {
   DELETE_KEYS,
   DUPLICATE_KEYS,
   PASTE_KEYS,
-  renderShortcut,
   RUN_KEYS,
   SELECT_ALL_KEYS,
   ZOOM_FIT_KEYS,
@@ -242,7 +243,8 @@ import { LightDomAdoption } from './adoption.js';
 import { SvgFlowRenderer } from './renderers/svg-renderer.js';
 import { defaultPropertyControls } from './node/property-controls.js';
 import { flowStyles } from './styles.js';
-import { DEFAULT_STRINGS, format, resolveStrings } from './strings.js';
+import { fillTemplate } from '../../foundation/template.js';
+import { DEFAULT_STRINGS, resolveStrings } from './strings.js';
 import {
   FLOW_HEADER_SLOTS,
   FLOW_PANEL_POSITIONS,
@@ -924,7 +926,19 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#announcer = new LiveAnnouncer({
       root: () => (this.renderRoot instanceof ShadowRoot ? this.renderRoot : this),
     });
-    for (const type of NESTED_EVENT_TYPES) this.addEventListener(type, this.#containNested, true);
+    // Events of authored light-DOM content pass unchanged (uwg-fl-req-evt-3): seen from the
+    // shadow root, their target stays in the light DOM.
+    const authored = (_event: Event, origin: Node) => origin.getRootNode() !== this.renderRoot;
+    // Content rendered directly in the shadow root stops on the way in.
+    containNestedEvents(this, {
+      types: NESTED_EVENT_TYPES,
+      on: 'host',
+      passes: authored,
+      contained: (event, origin) => this.#nestedContained(event, origin),
+    });
+    // A constituent rendered there (the node library, the inspector, a pooled node) handles the
+    // events of its own shadow root first; they stop at this shadow root, retargeted to it.
+    containNestedEvents(this, { types: NESTED_EVENT_TYPES, on: 'root', passes: authored });
     // Internal constituent events are not composed: authored (light-DOM) hosts reach the
     // element, pooled hosts reach the shadow root. Listen on both.
     this.#listenInternal(this);
@@ -1354,7 +1368,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#selectionState.set(this.#normalizeSelection(this.selection), reason, sourceEvent);
     this.commit(reason, sourceEvent);
     this.#announcer.announce(
-      format(this.#resolvedStrings.announceDeleted, {
+      fillTemplate(this.#resolvedStrings.announceDeleted, {
         nodes: plan.nodes.length,
         edges: plan.edges.length,
       }),
@@ -1379,8 +1393,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       const strings = this.#resolvedStrings;
       this.#deleteTitle =
         plan.nodes.length === 1
-          ? format(strings.confirmDeleteNode, { name: this.#nodeLabel(plan.nodes[0]!.id) })
-          : format(strings.confirmDeleteNodes, { count: plan.nodes.length });
+          ? fillTemplate(strings.confirmDeleteNode, { name: this.#nodeLabel(plan.nodes[0]!.id) })
+          : fillTemplate(strings.confirmDeleteNodes, { count: plan.nodes.length });
       this.#pendingDeletion = {
         ids: { nodes: plan.nodes.map((node) => node.id), edges: plan.edges.map((edge) => edge.id) },
         reason,
@@ -1494,7 +1508,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (!result.applied) return undefined;
     this.commit(reason, sourceEvent);
     this.#announcer.announce(
-      format(this.#resolvedStrings.announceConnected, {
+      fillTemplate(this.#resolvedStrings.announceConnected, {
         source: this.#nodeLabel(connection.source),
         target: this.#nodeLabel(connection.target),
       }),
@@ -2023,7 +2037,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   /** Keyboard zoom changes are announced as a percentage (pointer zoom is self-evident). */
   #announceZoom(): void {
     this.#announcer.announce(
-      format(this.#resolvedStrings.announceZoom, { percent: Math.round(this.viewport.zoom * 100) }),
+      fillTemplate(this.#resolvedStrings.announceZoom, {
+        percent: Math.round(this.viewport.zoom * 100),
+      }),
     );
   }
 
@@ -2210,7 +2226,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.commit(reason, sourceEvent);
     const moved = this.#model.getNode(ids[0]!)?.position;
     this.#announcer.announce(
-      format(this.#resolvedStrings.announceMoved, {
+      fillTemplate(this.#resolvedStrings.announceMoved, {
         label: this.#nodeLabel(ids[0]!),
         x: Math.round(moved?.x ?? 0),
         y: Math.round(moved?.y ?? 0),
@@ -2413,7 +2429,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       }),
     );
     this.#announcer.announce(
-      format(this.#resolvedStrings.announceLayout, { count: result.positions.size }),
+      fillTemplate(this.#resolvedStrings.announceLayout, { count: result.positions.size }),
     );
     return result;
   }
@@ -3026,7 +3042,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       .categories=${this.schema?.categories ?? []}
       .icons=${this.icons}
       .strings=${strings}
-      .label=${format(strings.paletteLabel, { flow: this.#name })}
+      .label=${fillTemplate(strings.paletteLabel, { flow: this.#name })}
       ?disabled=${!this.editable}
     ></tp-flow-palette>`;
     if (this.palette === 'sidebar') return palette;
@@ -3077,7 +3093,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       .propertyControls=${this.propertyControls}
       .icons=${this.icons}
       .strings=${this.#resolvedStrings}
-      .label=${format(this.#resolvedStrings.inspectorLabel, { flow: this.#name })}
+      .label=${fillTemplate(this.#resolvedStrings.inspectorLabel, { flow: this.#name })}
       .connections=${{
         incoming: connected
           .filter((edge) => edge.target === id)
@@ -3277,7 +3293,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #edgeAriaLabelOf(edge: FlowEdge): string {
     if (this.getEdgeAriaLabel) return this.getEdgeAriaLabel(edge);
     const strings = this.#resolvedStrings;
-    const base = format(strings.edgeFrom, {
+    const base = fillTemplate(strings.edgeFrom, {
       source: this.#nodeLabel(edge.source),
       target: this.#nodeLabel(edge.target),
     });
@@ -3292,7 +3308,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       const count = value.nodes.length + value.edges.length;
       this.#announcer.announce(
         count
-          ? format(this.#resolvedStrings.announceSelected, { count })
+          ? fillTemplate(this.#resolvedStrings.announceSelected, { count })
           : this.#resolvedStrings.announceCleared,
       );
     }
@@ -3516,7 +3532,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#placing = { type };
     if (this.palette === 'menu') this.setPaletteOpen(false, 'item-press', sourceEvent);
     this.#announcer.announce(
-      format(this.#resolvedStrings.announcePlacing, { label: definition.label }),
+      fillTemplate(this.#resolvedStrings.announcePlacing, { label: definition.label }),
     );
     this.requestUpdate();
   }
@@ -4677,7 +4693,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       announced.set(id, state.status);
       if (first || previous === state.status) continue;
       this.#announcer.announce(
-        format(this.#resolvedStrings.announceStatus, {
+        fillTemplate(this.#resolvedStrings.announceStatus, {
           label: this.#nodeLabel(id),
           status: this.#statusLabel(state.status),
         }),
@@ -4771,9 +4787,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (status) {
       parts.push(this.#statusLabel(status.status));
       if (status.status === 'failed' && status.error)
-        parts.push(format(strings.ariaError, { message: status.error }));
+        parts.push(fillTemplate(strings.ariaError, { message: status.error }));
       if (status.warnings?.length)
-        parts.push(format(strings.ariaWarnings, { count: status.warnings.length }));
+        parts.push(fillTemplate(strings.ariaWarnings, { count: status.warnings.length }));
     }
     const issues = this.#nodeIssues.get(node.id);
     if (issues?.length)
@@ -5039,12 +5055,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   // ---- nested events ----------------------------------------------------------------------------
 
-  #containNested = (event: Event): void => {
-    // Capture listeners on the host see the retargeted event; the real target is the path head.
-    const target = event.composedPath()[0] as Node | undefined;
-    if (!target || target === this) return;
-    if (target.getRootNode() !== this.renderRoot) return;
-    event.stopPropagation();
+  /** A contained constituent event from the shadow root: the palette and context-menu lanes. */
+  #nestedContained(event: Event, target: Node): void {
     if (
       event.type === 'tp-open-change' &&
       target instanceof Element &&
@@ -5081,7 +5093,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           queueMicrotask(() => back.focus({ preventScroll: true, focusVisible: !pointer }));
       }
     }
-  };
+  }
 
   // ---- context menu and waypoints --------------------------------------------------------------
 
@@ -5132,9 +5144,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         value=${value}
         variant=${options.destructive ? 'destructive' : 'ghost'}
         ?disabled=${options.disabled ?? false}
-        ><tp-icon .icon=${icon}></tp-icon>${label}${
-          options.keys ? renderShortcut(options.keys) : nothing
-        }</tp-menu-item
+        ><tp-icon .icon=${icon}></tp-icon>${label}${renderShortcutHint(
+          options.keys,
+          'menu',
+        )}</tp-menu-item
       >`;
     const runs = this.#runRequests;
     const remove = item('delete', trashIcon, strings.delete, {

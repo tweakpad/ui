@@ -24,6 +24,63 @@ import { sortableMembership } from './sortable.js';
 import type { Draggable } from './entities.js';
 import type { DropAnimation, FeedbackMode, FeedbackOptions } from './types.js';
 
+/** Half the span, in pixels, that the paused follow animations cover. */
+export const FOLLOW_RANGE = 1e6;
+
+/**
+ * Moves an overlay that follows the pointer through two paused animations of its `transform` (x)
+ * and `translate` (y), whose current times are the offsets. The compositor applies a new current
+ * time, while writing the translate on every move restyles, repaints and commits the page, which
+ * over a large document exceeds the frame budget. The overlay must have no transform or
+ * translate of its own.
+ */
+export class PointerFollow {
+  #animations: { readonly x: Animation; readonly y: Animation } | undefined;
+  constructor(readonly element: Pick<Element, 'animate'>) {}
+
+  /** Whether the animations place the overlay. */
+  get active(): boolean {
+    return this.#animations !== undefined;
+  }
+
+  /** Places the overlay at an offset, in pixels of its frame. */
+  move(offset: Coordinates): void {
+    let animations = this.#animations;
+    if (!animations) {
+      const options: KeyframeAnimationOptions = {
+        duration: 2 * FOLLOW_RANGE,
+        fill: 'both',
+        easing: 'linear',
+      };
+      animations = this.#animations = {
+        x: this.element.animate(
+          [
+            { transform: `translateX(${-FOLLOW_RANGE}px)` },
+            { transform: `translateX(${FOLLOW_RANGE}px)` },
+          ],
+          options,
+        ),
+        y: this.element.animate(
+          [{ translate: `0px ${-FOLLOW_RANGE}px` }, { translate: `0px ${FOLLOW_RANGE}px` }],
+          options,
+        ),
+      };
+      animations.x.pause();
+      animations.y.pause();
+    }
+    animations.x.currentTime = FOLLOW_RANGE + offset.x;
+    animations.y.currentTime = FOLLOW_RANGE + offset.y;
+  }
+
+  /** Cancels the animations: the overlay loses the offset, which the caller writes if it keeps it. */
+  stop(): void {
+    const animations = this.#animations;
+    this.#animations = undefined;
+    animations?.x.cancel();
+    animations?.y.cancel();
+  }
+}
+
 export class DragFeedback {
   #scope: CleanupScope | undefined;
   #element: HTMLElement | undefined;
@@ -38,6 +95,8 @@ export class DragFeedback {
   #motion: MotionHandle | undefined;
   #origin: Rectangle | undefined;
   #overlayDropAnimation: DropAnimation | undefined;
+  /** How pointer moves place an overlay (`PointerFollow`); none for other feedback. */
+  #follow: PointerFollow | undefined;
   mode: FeedbackMode = 'none';
   constructor(readonly manager: DragDropManager) {}
   /** List adapter supplies a real component composition for opaque shadow content. */
@@ -253,6 +312,11 @@ export class DragFeedback {
     styles.set('transform-origin', overlay ? '0 0' : origin);
     styles.set('translate', overlay ? '0px 0px' : translate);
     if (overlay) this.#initialTranslate = { x: 0, y: 0 };
+    // An overlay has no transform or translate of its own to keep, so two animations can own them.
+    if (overlay && typeof element.animate === 'function') {
+      const follow = (this.#follow = new PointerFollow(element));
+      scope.add(() => follow.stop());
+    }
     if (topLayer) {
       attributes.set('popover', 'manual');
       try {
@@ -318,6 +382,8 @@ export class DragFeedback {
     if (root === this.#root) return;
     if (!root.isConnected || root.nodeType !== 1)
       throw new Error('Feedback root must remain connected.');
+    // The move measures and re-places the overlay from its written translate.
+    this.#stopFollowing();
     const before = measureElement(element),
       oldFrame = getFrameTransform(element),
       oldAncestors = ancestorScale(element);
@@ -399,6 +465,11 @@ export class DragFeedback {
     if (translate.x === this.#translate.x && translate.y === this.#translate.y) return;
     const previous = this.#translate;
     this.#translate = translate;
+    if (operation.input !== 'keyboard' && this.#follow) {
+      this.#follow.move(translate);
+      return;
+    }
+    this.#stopFollowing();
     styles.set('translate', `${translate.x}px ${translate.y}px`);
     if (operation.input === 'keyboard' && this.#options.keyboardTransition !== null) {
       this.#motion?.cancel();
@@ -415,11 +486,21 @@ export class DragFeedback {
       );
     }
   }
+  /** Ends a `PointerFollow`, writing the offset it reached as the overlay's translate. */
+  #stopFollowing(): void {
+    const follow = this.#follow;
+    if (!follow?.active) return;
+    this.#styles?.set('translate', `${this.#translate.x}px ${this.#translate.y}px`);
+    follow.stop();
+  }
+
   async settle(): Promise<void> {
     const element = this.#element,
       source = this.#source,
       original = this.#original;
     if (!element || !source || !original) return;
+    // The settle animation and measures start from the offset the pointer reached.
+    this.#stopFollowing();
     const animation = resolveDropAnimation(
       source.feedbackOptions.dropAnimation,
       this.#overlayDropAnimation,
@@ -499,6 +580,7 @@ export class DragFeedback {
   }
   dispose(): void {
     this.mode = 'none';
+    this.#follow = undefined;
     this.#root = null;
     this.#motion?.cancel();
     this.#motion = undefined;

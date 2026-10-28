@@ -37,11 +37,7 @@ render(
             >
           </div>
           <tp-separator></tp-separator>
-          <tp-menu-radio-group
-            id="density-commands"
-            .defaultValue=${'comfortable'}
-            aria-label="Density"
-          >
+          <tp-menu-radio-group id="density-commands" .defaultValue=${'comfortable'} label="Density">
             <tp-menu-radio-item value="compact">Compact</tp-menu-radio-item>
             <tp-menu-radio-item value="comfortable">Comfortable</tp-menu-radio-item>
           </tp-menu-radio-group>

@@ -1,5 +1,16 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Emitter, ObservableStore, shallowEqual } from './store.js';
+
+/** Captures the tasks queued with `queueMicrotask`, so a deferred error can be run and observed. */
+function captureMicrotasks(): (() => void)[] {
+  const tasks: (() => void)[] = [];
+  vi.stubGlobal('queueMicrotask', (task: () => void) => tasks.push(task));
+  return tasks;
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('coherent operation publication (drag-drop V-70)', () => {
   it('publishes batches whose old value is undefined exactly once', () => {
@@ -198,6 +209,63 @@ describe('ObservableStore', () => {
     });
     expect(subscriber).toHaveBeenCalledOnce();
     expect(subscriber).toHaveBeenCalledWith({ value: 2, previousValue: 0, reason: 'selection' });
+  });
+
+  it('skips a subscriber that an earlier one removed during the running publication', () => {
+    const store = new ObservableStore(0);
+    const plain = vi.fn();
+    const selected = vi.fn();
+    const stops: (() => void)[] = [];
+    store.subscribe(() => {
+      for (const stop of stops) stop();
+    });
+    stops.push(store.subscribe(plain), store.subscribe(selected, { selector: (value) => value }));
+    store.set(1);
+    store.set(2);
+    expect(plain).not.toHaveBeenCalled();
+    expect(selected).not.toHaveBeenCalled();
+  });
+
+  it('runs later subscribers after one throws and rethrows its error in a microtask', () => {
+    const tasks = captureMicrotasks();
+    const store = new ObservableStore(0);
+    const after = vi.fn();
+    store.subscribe(({ value }) => {
+      if (value === 1) store.set(2);
+      throw new Error(`subscriber failed at ${value}`);
+    });
+    store.subscribe(({ value }) => after(value));
+    expect(() => store.set(1)).not.toThrow();
+    expect(after.mock.calls).toEqual([[1], [2]]);
+    expect(store.value).toBe(2);
+    expect(tasks).toHaveLength(2);
+    expect(() => tasks[0]!()).toThrow('subscriber failed at 1');
+    expect(() => tasks[1]!()).toThrow('subscriber failed at 2');
+  });
+
+  it('still skips equal selected slices, and a failing selection keeps the last delivered slice', () => {
+    const tasks = captureMicrotasks();
+    const store = new ObservableStore({ version: 0, marks: { bold: false } });
+    const marks: unknown[] = [];
+    const versions: number[] = [];
+    store.subscribe((value) => marks.push(value), {
+      selector: (state) => ({ ...state.marks }),
+      equality: shallowEqual,
+    });
+    store.subscribe<number>((version) => versions.push(version), {
+      selector: (state) => {
+        if (state.version === 2) throw new Error('selector failed');
+        return state.version;
+      },
+    });
+    store.set({ version: 1, marks: { bold: false } });
+    expect(() => store.set({ version: 2, marks: { bold: true } })).not.toThrow();
+    store.set({ version: 1, marks: { bold: true } });
+    store.set({ version: 3, marks: { bold: true } });
+    expect(marks).toEqual([{ bold: true }]);
+    expect(versions).toEqual([1, 3]);
+    expect(tasks).toHaveLength(1);
+    expect(() => tasks[0]!()).toThrow('selector failed');
   });
 });
 

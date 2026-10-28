@@ -17,6 +17,8 @@ Import `@tweakpad/ui/styles.css` once to install the default token set. Componen
 
 - Color pairs: `background`/`foreground`, `card`/`card-foreground`, `popover`/`popover-foreground`, `primary`/`primary-foreground`, `secondary`/`secondary-foreground`, `muted`/`muted-foreground`, `accent`/`accent-foreground`, `destructive`/`destructive-foreground`, `success`/`success-foreground`, and `warning`/`warning-foreground`.
 - Unpaired colors: `border`, `input`, `ring`, and `chart-1` through `chart-5`.
+- Syntax colors: one role per scope of highlighted code: `syntax-comment`, `syntax-keyword`, `syntax-string`, `syntax-number`, `syntax-function`, `syntax-type`, `syntax-constant`, `syntax-variable`, `syntax-property`, `syntax-tag`, `syntax-attribute`, `syntax-operator`, `syntax-inserted` and `syntax-deleted`. See [Code block](code-block.md#theming).
+- Content colors: `content-<hue>` and `content-<hue>-foreground` for the hues `gray`, `brown`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink` and `red`. See [Content colors](#content-colors).
 - Spacing: `spacing` plus the derived `space-*` scale: `space-0`, `space-0-5`, `space-1`, `space-1-5`, `space-2`, `space-2-5`, `space-3`, `space-4`, `space-5`, `space-6`, `space-8`, `space-10`, `space-12` and `space-16`. Each equals `spacing` times its suffix; a trailing `-5` is the half step.
 - Typography: `font-*`, `text-*`, `leading-*`, and `tracking-*`.
 - Extents: `control-height-xs|sm|md|lg`, `icon-size-xs|sm|md|lg`, and `target-size-min`.
@@ -61,15 +63,38 @@ Every single-line control resolves its size from one step table (`CONTROL_STEPS`
 
 `icon-*` sizes are squares of the step height. A control publishes its icon extent to slotted Icons, so `<tp-icon>` inside a small Button or Toggle follows the step unless it sets `size`.
 
+### Content colors
+
+Content colors are the colors that people apply inside documents: a text color, a highlight or a table cell background. Content stores only the hue name, such as `blue`, and the content color roles resolve it in every theme and color scheme, so a colored word keeps its meaning when the theme or scheme changes.
+
+Each hue has two roles. The surface role `content-<hue>` paints highlights and table cell backgrounds; the foreground role `content-<hue>-foreground` paints colored text and the text on its own surface. The choice `default` names no role: text keeps the surrounding color and no fill is painted.
+
+In the default theme, every foreground keeps a contrast of at least 4.5:1 on `background` and on its own surface, in light and dark, and every surface stays visibly apart from `background`. A text color of one hue over a highlight of another hue renders as named, with no contrast guarantee.
+
+Content colors are for user content and for the swatches that offer these colors. Never use them for controls, states, selection, focus or any other interface paint; those use the semantic color pairs above.
+
+Paint with the roles directly, without a fallback value:
+
+```css
+.note-highlight {
+  background: var(--tp-content-blue);
+  color: var(--tp-content-blue-foreground);
+}
+```
+
+A theme may leave the content colors out. A missing surface role then paints no fill, and text with a missing foreground role keeps the surrounding color.
+
 ## Derived interaction colors
 
 Library-authored percentage variations use the semantic color roles with `color-mix(in oklab, …)`. The mix percentage is documented where the interaction rule is defined; it is not a new token such as `--tp-input-hover`. Base role values can still use any valid CSS color notation.
 
-For example, outline and ghost Buttons share the hover recipe `color-mix(in oklab, var(--tp-input) 50%, transparent)`. That translucent layer transitions over the opaque `--tp-background` fill, while text keeps `--tp-foreground`; outline alone paints the `--tp-border` boundary. Filled Button variants instead mix their paired base role toward a mode-aware contrast role. The link appearance never paints a background. `transparent` is an alpha operand or a no-paint value, not a replacement for a content-bearing surface role. Selected and focused states continue to use their semantic `accent` and `ring` roles; `--tp-opacity-disabled` remains a non-color state token.
+For example, a hovered Button paints its hover color as a layer between its own fill and its content. A ghost Button's layer is `color-mix(in oklab, var(--tp-input) 50%, transparent)`, a translucent mix that lets the surface behind the Button show through. [Button](button.md#hover-colors) lists the mix of each variant and the fill it sits on.
+
+`transparent` is an alpha operand or a no-paint value, not a replacement for a content-bearing surface role. Selected and focused states continue to use their semantic `accent` and `ring` roles; `--tp-opacity-disabled` remains a non-color state token.
 
 ## Complete themes and modes
 
-Applications may override a few inherited roles for a scoped brand region. A named replacement theme or mode must provide every required role and must keep the same role set as every other mode. The exported `REQUIRED_TOKEN_ROLES`, `assertCompleteTokenSet`, and `assertCompatibleTokenModes` utilities validate that contract.
+Applications may override a few inherited roles for a scoped brand region. A named replacement theme or mode must provide every required role and must keep the same role set as every other mode. The exported `REQUIRED_TOKEN_ROLES`, `assertCompleteTokenSet`, and `assertCompatibleTokenModes` utilities validate that contract. The required roles include the syntax and content colors, so a complete replacement theme defines them too, and `assertCompleteTokenSet` names any that are missing. A theme that leaves the content colors out still renders, as described in [Content colors](#content-colors).
 
 ```ts
 import { assertCompatibleTokenModes } from '@tweakpad/ui';

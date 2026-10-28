@@ -163,11 +163,53 @@ markdown.streaming = false;
 ## Parser adapters
 
 The `parser` property accepts any `{ name?, parse(source) }` that returns an mdast root,
-for example a configured remark processor. The library never imports a parser package.
-Reference links and definitions in the returned tree are resolved; a parser that throws or
-returns something other than a root falls back to the built-in parser and reports
-`markdown-parser`. The built-in parser is also available as `parseMarkdown` from
-`@tweakpad/ui/markdown`, with `resolveMarkdown` and `completeMarkdown`.
+for example an adapter around a markdown engine your application already uses. The library
+never imports a parser package. Reference links and definitions in the returned tree are
+resolved; a parser that throws or returns something other than a root falls back to the
+built-in parser and reports `markdown-parser`. The built-in parser is also available as
+`parseMarkdown` from `@tweakpad/ui/markdown`, with `resolveMarkdown`, `completeMarkdown`
+and `serializeMarkdown`.
+
+## Serializer
+
+`serializeMarkdown(root)` writes a tree back as markdown in the same dialect. Parsing the
+result with `parseMarkdown` gives the same tree, apart from source positions, so a document
+can be read, changed as a tree and written again.
+
+```js
+import { parseMarkdown, serializeMarkdown } from '@tweakpad/ui/markdown';
+
+const tree = parseMarkdown('# Notes');
+tree.children.push({ type: 'paragraph', children: [{ type: 'text', value: 'Added *as text*' }] });
+const markdown = serializeMarkdown(tree);
+```
+
+```md
+# Notes
+
+Added \*as text\*
+```
+
+- The same tree always gives the same text, and no value makes it throw.
+- Text is escaped only where it would otherwise be read as syntax: `5*3` and `a * b` stay as
+  they are, `*x*` in text becomes `\*x\*`, and a line that would start a heading, quote or
+  list item gets a backslash before its marker. Whitespace the parser would strip, such as
+  a leading space, is written as a character reference (`&#32;`).
+- Each construct has one form: `*emphasis*`, `**strong**`, `~~strikethrough~~`, `-` bullets,
+  `1.` ordered items, `***` rules, `#` headings, fenced code whose fence no line of the code
+  repeats, and links as `[text](url "title")`, or `<url>` when the text is the address.
+  Where two spans meet, `_` replaces `*` so that their delimiters stay apart. A heading that
+  holds a line break is underlined at levels 1 and 2; deeper, the break becomes `<br>`.
+- An `html` node is written as its value. A node of a type the serializer does not know is
+  written as its children, or its value as text.
+- Content a position cannot hold changes form without breaking the structure around it: a
+  line break in a table cell becomes `<br>`, a pipe in a cell is escaped, and a paragraph
+  without content is written as a no-break space, which reads back as an empty paragraph.
+- What `resolveMarkdown` adds resolves again: alerts are written as `> [!NOTE]` quotes,
+  elements the element policy admitted as their HTML with escaped attribute values, and the
+  footnotes section as footnote definitions.
+
+The text ends with a line break; an empty tree gives an empty string.
 
 ## Security
 
@@ -178,6 +220,41 @@ with `urlPolicy`:
 
 ```js
 markdown.urlPolicy = { links: ['https:'], images: ['https:', 'data:'] };
+```
+
+## Shared policies
+
+The rules the resolve step applies are exported from `@tweakpad/ui/markdown`, so code that
+cleans imported HTML, such as an editor's paste handling, applies the same definitions
+instead of keeping a copy:
+
+| Export                                              | Definition                                                                                  |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `DEFAULT_MARKDOWN_ELEMENTS`                         | the default element policy                                                                  |
+| `mergeElementPolicy(policy)`                        | the default policy with yours merged in, as a map of tag to attribute names                 |
+| `isAlwaysRemovedAttribute(name)`                    | `true` for event handlers (`on…`), `style` and `srcdoc`, whatever a policy lists            |
+| `LINK_URL_ATTRIBUTES`                               | attributes whose value is a link: `href`, `action`, `formaction`, `cite`, …                 |
+| `IMAGE_URL_ATTRIBUTES`                              | attributes whose value is an image source: `src`, `poster`, `srcset`                        |
+| `DEFAULT_LINK_PROTOCOLS`, `DEFAULT_IMAGE_PROTOCOLS` | the default protocol lists                                                                  |
+| `linkProtocols(policy)`, `imageProtocols(policy)`   | the protocols of a URL policy, the defaults where it sets none                              |
+| `allowedUrl(url, protocols)`                        | whether a destination passes a protocol list; relative references and fragments always pass |
+
+The lists and the default element policy are frozen. A value that cleaned content keeps in
+its own model, such as an alignment read from `style`, is read before the attribute is
+removed; the attribute itself is never kept.
+
+```js
+import {
+  allowedUrl,
+  isAlwaysRemovedAttribute,
+  LINK_URL_ATTRIBUTES,
+  linkProtocols,
+} from '@tweakpad/ui/markdown';
+
+function keeps(name, value) {
+  if (isAlwaysRemovedAttribute(name)) return false;
+  return !LINK_URL_ATTRIBUTES.includes(name) || allowedUrl(value, linkProtocols(null));
+}
 ```
 
 ## Theming

@@ -42,8 +42,9 @@ Widgets are opt-in: neither `@tweakpad/ui` nor `@tweakpad/ui/register` includes 
 
 ## Browser support
 
-Current versions of Chrome, Edge, Firefox and Safari.
+Current versions of Chrome, Edge, Firefox and Safari. The text editor needs Chrome or Edge 137 or
+later, Firefox 142 or later, or Safari 17.5 or later.
 
 ## License
 
-MIT. Third-party portions keep their MIT notices in the package's `LICENSE.*` files.
+MIT. Third-party portions keep their original notices (MIT or ISC) in the package's `LICENSE.*` files.

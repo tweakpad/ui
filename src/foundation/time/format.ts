@@ -1,5 +1,6 @@
 import { dateTimeFormatter, durationFormatter, relativeTimeFormatter } from '../date-locale.js';
 import { numberFormatter } from '../intl.js';
+import { fillTemplate } from '../template.js';
 import { civilEpoch, type ResolvedTime, type TimeDuration } from './parse.js';
 
 export type TimeMode = 'auto' | 'relative' | 'calendar' | 'absolute' | 'duration';
@@ -210,15 +211,13 @@ export function presetFor(
 const messageText = (message: TimeMessage, context: TimeMessageContext) =>
   typeof message === 'function'
     ? message(context)
-    : message.replace(/\{(time|weekday|date|week|year)\}/g, (_, key: string) =>
-        key === 'time'
-          ? context.time
-          : key === 'weekday'
-            ? context.weekday
-            : key === 'date'
-              ? context.formattedDate
-              : String(key === 'week' ? context.week : context.year),
-      );
+    : fillTemplate(message, {
+        time: context.time,
+        weekday: context.weekday,
+        date: context.formattedDate,
+        week: context.week,
+        year: context.year,
+      });
 
 function contextFor(
   value: ResolvedTime,

@@ -13,7 +13,7 @@ stateful command semantics; native anchors remain valid link interoperability.
   <tp-button slot="trigger" variant="outline">Document actions</tp-button>
   <tp-menu-item value="new">New document</tp-menu-item>
   <tp-menu-checkbox-item default-checked>Word wrap</tp-menu-checkbox-item>
-  <tp-menu-radio-group aria-label="Density">
+  <tp-menu-radio-group label="Density">
     <tp-menu-radio-item value="compact">Compact</tp-menu-radio-item>
     <tp-menu-radio-item value="comfortable">Comfortable</tp-menu-radio-item>
   </tp-menu-radio-group>
@@ -107,6 +107,7 @@ own ordinary submenu trigger and chevron.
 | `tp-menu-radio-group.value`               | unknown                            | Optional controlled selection; values use Object.is identity.                                      |
 | RadioGroup `defaultValue / default-value` | unknown property; string attribute | undefined; uncontrolled initial selection.                                                         |
 | RadioGroup `disabled`, `onValueChange`    | boolean, value event callback      | false; group proposal callback.                                                                    |
+| RadioGroup `label`                        | string                             | empty; the group's accessible name. Without it, a `data-menu-label` child names the group.         |
 | `tp-menu-radio-item.value`                | unknown; string attribute          | Required, unique in nearest RadioGroup. Missing/later duplicate values are diagnosed and excluded. |
 | RadioItem `checked`                       | read-only boolean                  | Derived from RadioGroup; activating the selected choice does not clear it.                         |
 | RadioItem `keepMounted / keep-mounted`    | boolean                            | false; retain its inactive Indicator.                                                              |
@@ -147,6 +148,8 @@ Menu popups are at least as wide as their anchor, within the available viewport 
 Pointer highlighting preserves the current scroll position. Keyboard navigation brings the active item into the nearest scroll container without scrolling outer documentation or application regions.
 
 ## Active item and checked values
+
+A submenu that closes because a sibling submenu opens leaves at once, without exit motion; the opening submenu enters as usual.
 
 An open Menu tree has one active highlight across all submenu levels. Pointer or keyboard navigation transfers it to the current item. Ancestors retain their navigation position without keeping an active background; returning from a submenu restores its trigger. Checked checkbox/radio values keep their indicators independently of the active highlight. `highlightedItem` is null for inactive menu levels.
 

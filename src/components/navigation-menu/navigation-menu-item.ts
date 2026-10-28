@@ -125,6 +125,22 @@ export class TpNavigationMenuItem extends TpElement {
     this.#container = container;
     this.requestUpdate();
   }
+  /**
+   * Projects and styles the content now. The owner assigns the container while its own template
+   * is still detached, so it asks for this once that template is attached and measures right after.
+   */
+  flushContent(): void {
+    this.requestUpdate();
+    this.performUpdate();
+    this.presentationController.refresh();
+  }
+  #syncContent(): void {
+    if (this.#container)
+      this.#portal.update(this.#container, this.#renderContent(), {
+        projectedNodes: this.#contentNodes,
+      });
+    else this.#portal.clear();
+  }
   #reference(name: string): (element: HTMLElement | null) => void {
     return this.presentationController.partReference(name, name, (element) => {
       if (name === 'navigation-menu-content') this.#content = element;
@@ -248,11 +264,7 @@ export class TpNavigationMenuItem extends TpElement {
         if (host.slot !== slot) host.slot = slot;
       }
     } else this.#indicatorPortal.clear();
-    if (this.#container)
-      this.#portal.update(this.#container, this.#renderContent(), {
-        projectedNodes: this.#contentNodes,
-      });
-    else this.#portal.clear();
+    this.#syncContent();
     const roots = [...this.#portal.ownedChildren].filter(
       (node): node is Element => node.nodeType === 1,
     );

@@ -35,6 +35,19 @@
   gap: var(--tp-space-4);
 }
 
+/* Share header and value tracks across each row, including wrapped descriptions. */
+.size-report-cards > tp-card,
+.size-report-cards > tp-card::part(card) {
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: span 2;
+  row-gap: 0;
+}
+
+.size-report-cards > tp-card::part(card-header) {
+  align-content: start;
+}
+
 /* Package paths are long unbroken words in the mono role; let them wrap inside the card. */
 .size-report-cards code {
   overflow-wrap: anywhere;

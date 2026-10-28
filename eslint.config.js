@@ -15,6 +15,11 @@ export default tseslint.config(
     rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
   {
+    // Copyable documentation examples are page modules: browser globals, as an application writes them.
+    files: ['src/**/*.js'],
+    languageOptions: { globals: globals.browser },
+  },
+  {
     files: ['scripts/**/*.mjs'],
     languageOptions: {
       globals: { ...globals.browser, ...globals.node },

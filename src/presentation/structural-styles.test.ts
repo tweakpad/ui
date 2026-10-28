@@ -3,6 +3,7 @@ import { PresentationController } from './controller.js';
 import { ContentSecurityService, contentSecurityPolicy } from '../foundation/content-security.js';
 import { GeneratedStyleResource } from '../foundation/generated-style.js';
 import { setLogicalPortalOwner } from '../foundation/portal-ownership.js';
+import { badgePresentation } from './families/badge.js';
 
 type Host = ConstructorParameters<typeof PresentationController>[0];
 type TestStyle = {
@@ -238,6 +239,38 @@ describe('shared generated resource policy', () => {
     policy.update({ nonce: 'ignored' });
     expect(state.children).toEqual([]);
     expect(state.sheets()).toEqual([]);
+    policy.dispose();
+  });
+
+  it('an update after the removal subscribes its recipe resource to no policy until the host reconnects', () => {
+    const state = fixture(environment('same'));
+    const host = state.host as typeof state.host & Record<string, unknown>;
+    // A Badge whose first update runs after its removal (a child rendered by a removed owner).
+    (host.constructor as Record<string, unknown>)['presentation'] = badgePresentation;
+    Object.assign(host, {
+      localName: 'tp-badge',
+      isConnected: false,
+      partPresentation: {},
+      part: { add: vi.fn(), remove: vi.fn(), contains: () => false },
+      matches: () => false,
+      setAttribute: vi.fn(),
+      removeAttribute: vi.fn(),
+      dispatchEvent: vi.fn(),
+    });
+    (state.root as unknown as { querySelectorAll: () => never[] }).querySelectorAll = () => [];
+    const policy = new ContentSecurityService(state.host.ownerDocument as unknown as Document);
+    state.controller.hostUpdated();
+    const written = state.sheets().length;
+    expect(written).toBeGreaterThan(0);
+    // Not subscribed: a policy change does not reach the removed element's resource.
+    policy.update({ disableStyleElements: true });
+    expect(state.sheets()).toHaveLength(written);
+    policy.update({ disableStyleElements: false });
+    // The reconnection subscribes it again, so the policy reaches it.
+    host['isConnected'] = true;
+    state.controller.hostConnected();
+    policy.update({ disableStyleElements: true });
+    expect(state.sheets()).toHaveLength(0);
     policy.dispose();
   });
 });

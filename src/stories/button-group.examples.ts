@@ -128,7 +128,7 @@ export const buttonGroupExamples = [
       group('Attachments', iconButton('plus', 'Add attachment')) +
         group(
           'Message',
-          `<tp-input-group>${input('Message', 'placeholder="Send a message…"')}<tp-tooltip slot="inline-end" label="Toggle voice mode"><tp-toggle slot="trigger" data-voice variant="ghost" size="sm" aria-label="Voice mode">${icon('bell').replace('slot="icon-start"', '')}</tp-toggle></tp-tooltip></tp-input-group>`,
+          `<tp-input-group>${input('Message', 'placeholder="Send a message…"')}<tp-tooltip slot="inline-end" label="Toggle voice mode"><tp-toggle slot="trigger" data-voice variant="ghost" size="icon-sm" aria-label="Voice mode">${icon('bell').replace('slot="icon-start"', '')}</tp-toggle></tp-tooltip></tp-input-group>`,
         ),
     ),
     'The application toggles text entry independently from the voice action. This example does not record audio.',

@@ -1,4 +1,8 @@
-import type { RequiredTokenRole, TokenFamily } from '../../presentation/tokens.js';
+import {
+  TOKEN_FAMILIES,
+  type RequiredTokenRole,
+  type TokenFamily,
+} from '../../presentation/tokens.js';
 
 /** How a role's value is read from the page. */
 export type ValueKind = 'color' | 'length' | 'raw' | 'shadow' | 'time';
@@ -10,6 +14,7 @@ export type PreviewKind =
   | 'line'
   | 'ring'
   | 'syntax'
+  | 'content'
   | 'bar'
   | 'font-family'
   | 'font-size'
@@ -49,6 +54,13 @@ export const FAMILIES = {
     description: 'One color per lexical scope of highlighted code.',
     value: 'color',
     preview: 'syntax',
+  },
+  content: {
+    title: 'Content color',
+    description:
+      'Colors that people apply inside documents: per hue, a surface for highlights and table cell backgrounds and a foreground for text. Only user content and the swatches that offer these colors use them. Foreground rows give their contrast on their surface and on the background, flagged under 4.5:1.',
+    value: 'color',
+    preview: 'fill',
   },
   spacing: {
     title: 'Spacing',
@@ -140,7 +152,28 @@ export const PAIRED_SURFACE: Partial<Record<RequiredTokenRole, RequiredTokenRole
   'destructive-foreground': 'destructive',
   'success-foreground': 'success',
   'warning-foreground': 'warning',
+  'content-gray-foreground': 'content-gray',
+  'content-brown-foreground': 'content-brown',
+  'content-orange-foreground': 'content-orange',
+  'content-yellow-foreground': 'content-yellow',
+  'content-green-foreground': 'content-green',
+  'content-blue-foreground': 'content-blue',
+  'content-purple-foreground': 'content-purple',
+  'content-pink-foreground': 'content-pink',
+  'content-red-foreground': 'content-red',
 };
+
+const CONTENT_ROLES: ReadonlySet<RequiredTokenRole> = new Set(TOKEN_FAMILIES.content);
+
+/**
+ * The surfaces a foreground role's contrast is measured on: its paired surface, and for a content
+ * color also the background (ccx-defined). Empty for a role without a paired surface.
+ */
+export function contrastSurfaces(role: RequiredTokenRole): readonly RequiredTokenRole[] {
+  const surface = PAIRED_SURFACE[role];
+  if (!surface) return [];
+  return CONTENT_ROLES.has(role) ? [surface, 'background'] : [surface];
+}
 
 const PREVIEW_OVERRIDES: Partial<Record<RequiredTokenRole, PreviewKind>> = {
   border: 'line',
@@ -167,7 +200,11 @@ const VALUE_OVERRIDES: Partial<Record<RequiredTokenRole, ValueKind>> = {
 };
 
 export const previewKind = (role: RequiredTokenRole, family: TokenFamily): PreviewKind =>
-  PAIRED_SURFACE[role] ? 'foreground' : (PREVIEW_OVERRIDES[role] ?? FAMILIES[family].preview);
+  PAIRED_SURFACE[role]
+    ? family === 'content'
+      ? 'content'
+      : 'foreground'
+    : (PREVIEW_OVERRIDES[role] ?? FAMILIES[family].preview);
 
 export const valueKind = (role: RequiredTokenRole, family: TokenFamily): ValueKind =>
   VALUE_OVERRIDES[role] ?? FAMILIES[family].value;
@@ -233,6 +270,24 @@ export const DESCRIPTIONS = {
   'syntax-operator': 'Operators.',
   'syntax-inserted': 'Added lines in a diff.',
   'syntax-deleted': 'Removed lines in a diff.',
+  'content-gray': 'Gray highlight and table cell background in user content.',
+  'content-gray-foreground': 'Gray text in user content, and text on the gray surface.',
+  'content-brown': 'Brown highlight and table cell background in user content.',
+  'content-brown-foreground': 'Brown text in user content, and text on the brown surface.',
+  'content-orange': 'Orange highlight and table cell background in user content.',
+  'content-orange-foreground': 'Orange text in user content, and text on the orange surface.',
+  'content-yellow': 'Yellow highlight and table cell background in user content.',
+  'content-yellow-foreground': 'Yellow text in user content, and text on the yellow surface.',
+  'content-green': 'Green highlight and table cell background in user content.',
+  'content-green-foreground': 'Green text in user content, and text on the green surface.',
+  'content-blue': 'Blue highlight and table cell background in user content.',
+  'content-blue-foreground': 'Blue text in user content, and text on the blue surface.',
+  'content-purple': 'Purple highlight and table cell background in user content.',
+  'content-purple-foreground': 'Purple text in user content, and text on the purple surface.',
+  'content-pink': 'Pink highlight and table cell background in user content.',
+  'content-pink-foreground': 'Pink text in user content, and text on the pink surface.',
+  'content-red': 'Red highlight and table cell background in user content.',
+  'content-red-foreground': 'Red text in user content, and text on the red surface.',
   spacing:
     'Seed of the spacing scale. Every space step, control height and icon size multiplies it.',
   'space-0': 'No space.',
