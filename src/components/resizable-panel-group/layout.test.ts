@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { extentInPixels, normalizeLayout, resizeBoundary, resizePanel } from './layout.js';
+import {
+  extentInPixels,
+  normalizeLayout,
+  resizeBoundary,
+  resizePanel,
+  separatorValue,
+} from './layout.js';
 import type { PanelBounds } from './types.js';
 const bound = (min = 0, max = 1000, extra: Partial<PanelBounds> = {}): PanelBounds => ({
   min,
@@ -58,5 +64,13 @@ describe('resizable panel constraints', () => {
         expect(size).toBeLessThanOrEqual(bounds[i]!.max);
       });
     }
+  });
+});
+describe('resizable panel separator values', () => {
+  it('announces percentages with two decimals and no floating-point residue', () => {
+    expect(separatorValue(30.000000000000004)).toBe(30);
+    expect(separatorValue(44.99999999999999)).toBe(45);
+    expect(separatorValue(85.00000000000001)).toBe(85);
+    expect(separatorValue(33.333333)).toBe(33.33);
   });
 });

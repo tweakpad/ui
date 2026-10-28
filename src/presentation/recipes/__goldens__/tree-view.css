@@ -1,0 +1,49 @@
+/* tp-tree-view appearance */
+/* tree-view */
+&{font-size:var(--tp-text-sm)}
+/* tree-view-viewport */
+/* tree-view-item */
+/* tree-view-row */
+&{gap:var(--tp-space-2);padding:var(--tp-space-2);border-radius:var(--tp-radius-md);background:transparent;color:var(--tp-foreground);font-size:var(--tp-text-sm);font-weight:var(--tp-font-normal);text-align:start;block-size:max(var(--tp-control-height-md), var(--_tp-coarse-target, 0px));min-block-size:max(var(--tp-control-height-md), var(--_tp-coarse-target, 0px));--_tp-icon-extent:var(--tp-icon-size-md)}
+&::before{background-color:var(--tp-accent)}
+&:is(:hover, [data-popup-open]):not([data-disabled], :disabled, [aria-disabled="true"]), &[data-active]{color:var(--tp-accent-foreground)}
+&:is(:hover, [data-popup-open]):not([data-disabled], :disabled, [aria-disabled="true"])::before, &[data-active]::before{opacity:1}
+&{margin-block:calc(var(--tp-space-1) / 2);margin-inline-start:calc(var(--_tp-tree-depth, 0) * var(--tp-tree-view-indent))}
+&[data-selected]{color:var(--tp-accent-foreground)}
+&[data-selected]::before{opacity:1}
+&[data-selected]{font-weight:var(--tp-font-medium)}
+:host(:focus-visible) &{outline:var(--tp-ring-width) var(--tp-border-style) var(--tp-ring);outline-offset:calc(-1 * var(--tp-ring-width))}
+&[data-disabled]{opacity:0.5;cursor:not-allowed}
+&[data-dragging]{opacity:0.4}
+/* tree-view-row-size-sm */
+&{block-size:max(var(--tp-control-height-sm), var(--_tp-coarse-target, 0px));min-block-size:max(var(--tp-control-height-sm), var(--_tp-coarse-target, 0px));padding:var(--tp-space-1-5) var(--tp-space-2)}
+/* tree-view-row-size-default */
+/* tree-view-indent */
+&{inset-inline-start:calc(-1 * calc(var(--_tp-tree-depth, 0) * var(--tp-tree-view-indent)));inset-block:calc(-1 * calc(var(--tp-space-1) / 2));background-image:linear-gradient(to right, transparent calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2), var(--tp-border) calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2), var(--tp-border) calc(calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2) + var(--tp-border-width)), transparent calc(calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2) + var(--tp-border-width)));background-size:var(--tp-tree-view-indent) 100%}
+:host(:dir(rtl)) &{background-image:linear-gradient(to left, transparent calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2), var(--tp-border) calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2), var(--tp-border) calc(calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2) + var(--tp-border-width)), transparent calc(calc(var(--tp-space-2) + var(--tp-icon-size-md) / 2 - var(--tp-border-width) / 2) + var(--tp-border-width)))}
+:host([data-guides="none"]) &{background-image:none}
+/* tree-view-indicator */
+/* tree-view-checkbox */
+&{gap:var(--tp-space-2);color:var(--tp-foreground);background:transparent;border:0;padding:0;font:inherit;font-size:var(--tp-text-sm);text-align:start;min-block-size:var(--tp-control-height-xs)}
+& > .box{border:var(--tp-border-width) var(--tp-border-style) var(--tp-input);background:light-dark(transparent, color-mix(in oklab, var(--tp-input) 30%, transparent));box-shadow:var(--tp-shadow-sm)}
+&:focus-visible{outline:none}
+&:focus-visible > .box{border-color:var(--tp-ring);outline:var(--tp-ring-width) var(--tp-border-style) color-mix(in oklab, var(--tp-ring) 50%, transparent);outline-offset:0}
+&[data-invalid] > .box{border-color:var(--tp-destructive)}
+&[data-invalid]:focus-visible > .box{outline-color:color-mix(in oklab, var(--tp-destructive) 20%, transparent)}
+&[data-disabled]{opacity:.5;cursor:not-allowed}
+& > .box{border-radius:min(var(--tp-radius-sm), var(--tp-space-1))}
+&[data-checked] > .box, &[data-indeterminate] > .box{background:var(--tp-primary);color:var(--tp-primary-foreground);border-color:var(--tp-primary)}
+/* tree-view-leading */
+&{gap:var(--tp-space-2)}
+/* tree-view-label */
+/* tree-view-trailing */
+&{gap:var(--tp-space-2);color:var(--tp-muted-foreground)}
+/* tree-view-handle */
+&{cursor:grab}
+/* tree-view-status */
+&{gap:var(--tp-space-2);padding:var(--tp-space-1) var(--tp-space-2);padding-inline-start:calc(calc(var(--tp-space-2) + calc(var(--_tp-tree-depth, 0) * var(--tp-tree-view-indent))) + var(--tp-tree-view-indent));color:var(--tp-muted-foreground);font-size:var(--tp-text-sm);min-block-size:var(--tp-control-height-sm)}
+/* tree-view-group */
+/* tree-view-empty */
+&{padding:var(--tp-space-2);color:var(--tp-muted-foreground)}
+
+/* tp-tree-view structure */

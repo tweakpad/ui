@@ -1,5 +1,6 @@
 export default {
-  ignoreFiles: ['**/*.d.ts'],
+  // Golden files hold the generator's exact text, not authored CSS.
+  ignoreFiles: ['**/*.d.ts', 'src/presentation/recipes/__goldens__/**'],
   extends: ['stylelint-config-standard'],
   overrides: [
     {

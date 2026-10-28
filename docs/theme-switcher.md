@@ -31,7 +31,7 @@ import { TpThemeSwitcher } from '@tweakpad/ui';
 | `onValueChange`                  | callback                      | Receives the same cancelable `TpValueChangeEvent` as `tp-value-change`.                                                   |
 | `storageKey` / `storage-key`     | string or `null` (property)   | `tp-theme`; `null` disables persistence. Controls with the same target and key share one store.                           |
 | `target`                         | HTMLElement (property only)   | The document root. A scoped target themes only its subtree.                                                               |
-| `size`                           | `sm` or `default`             | `default`. Button uses `icon-sm` / `icon`; Toggle group and Switch use their own sizes.                                   |
+| `size`                           | `sm` or `default`             | `default`. Button and Toggle group use `icon-sm` / `icon`; Switch uses its own sizes.                                     |
 | `label`                          | string                        | "Dark mode" for the switch, "Theme" for the button and group.                                                             |
 | `disabled`                       | Boolean                       | false; reaches the composed control.                                                                                      |
 | `resolvedTheme`                  | readonly `light` or `dark`    | The scheme the preference resolves to on the target.                                                                      |

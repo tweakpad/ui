@@ -1,9 +1,11 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { TEXT_EDITOR_COLORS } from '../foundation/text-editor/palette.js';
 import {
   assertCompatibleTokenModes,
   assertCompleteStylingCoverage,
   assertCompleteTokenSet,
+  missingTokenRoles,
   REQUIRED_TOKEN_ROLES,
   STYLING_CATEGORIES,
   TOKEN_FAMILIES,
@@ -128,6 +130,63 @@ describe('foundational styling tokens', () => {
     expect(() =>
       assertCompatibleTokenModes({ light: complete, dark: { ...complete } }),
     ).not.toThrow();
+  });
+
+  describe('content color roles (ccx-roles, ccx-defined, ccx-scope)', () => {
+    const CONTENT_ROLES = TEXT_EDITOR_COLORS.flatMap((hue) => [
+      `content-${hue}`,
+      `content-${hue}-foreground`,
+    ]);
+
+    it('requires the content roles in every complete token set, in palette order (ccx-roles, ccx-defined)', () => {
+      expect(TOKEN_FAMILIES.content).toEqual(CONTENT_ROLES);
+      const required: readonly string[] = REQUIRED_TOKEN_ROLES;
+      for (const role of CONTENT_ROLES) expect(required, role).toContain(role);
+    });
+
+    it('names the content roles missing from a set without them (ccx-defined)', () => {
+      const set = Object.fromEntries(
+        Object.entries(complete).filter(([role]) => !CONTENT_ROLES.includes(role)),
+      );
+      expect(missingTokenRoles(set)).toEqual(CONTENT_ROLES);
+      expect(() => assertCompleteTokenSet(set)).toThrow(
+        `Incomplete token set; missing: ${CONTENT_ROLES.join(', ')}`,
+      );
+    });
+
+    it('ships a complete default token set with compatible light and dark modes (ccx-defined)', () => {
+      const root = /^:root \{([\s\S]*?)^\}/mu.exec(styles)?.[1] ?? '';
+      const light: Record<string, string> = {};
+      const dark: Record<string, string> = {};
+      for (const [, role, value] of root
+        .replace(/\/\*[\s\S]*?\*\//gu, '')
+        .matchAll(/--tp-([\w-]+)\s*:\s*([^;]+);/gu)) {
+        const text = value!.trim().replace(/\s+/gu, ' ');
+        const pair = /^light-dark\(\s*([^,]+?)\s*,\s*([^)]+?)\s*\)$/u.exec(text);
+        light[role!] = pair?.[1] ?? text;
+        dark[role!] = pair?.[2] ?? text;
+      }
+      expect(missingTokenRoles(light)).toEqual([]);
+      expect(Object.keys(light)).toEqual(expect.arrayContaining(CONTENT_ROLES));
+      expect(() => assertCompatibleTokenModes({ light, dark })).not.toThrow();
+    });
+
+    // Guard: content roles paint only content and the swatches that offer content colors.
+    it('keeps the content roles out of interface presentation (ccx-scope)', () => {
+      const allowed = (path: string) =>
+        path === 'presentation/recipes/text-editor.ts' || path.startsWith('widgets/text-editor/');
+      const offenders = ['components', 'widgets', 'presentation', 'foundation'].flatMap((root) =>
+        readdirSync(new URL(`../${root}/`, import.meta.url), { recursive: true })
+          .map(String)
+          .filter((file) => file.endsWith('.ts') && !file.endsWith('.test.ts'))
+          .map((file) => `${root}/${file}`)
+          .filter((path) =>
+            readFileSync(new URL(`../${path}`, import.meta.url), 'utf8').includes('--tp-content-'),
+          )
+          .filter((path) => !allowed(path)),
+      );
+      expect(offenders).toEqual([]);
+    });
   });
 
   it('requires every styling category to be classified', () => {

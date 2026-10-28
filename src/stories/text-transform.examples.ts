@@ -79,7 +79,7 @@ export const textTransformExamples = [
     title: 'Custom presets and formatters',
     id: 'text-transform-custom',
     setup: setupTextTransformExample,
-    source: setupSource.replaceAll("'../foundation/text-transform/presets.js'", "'@tweakpad/ui'"),
+    source: setupSource,
     call: "setupTextTransformExample(document.getElementById('text-transform-custom'));",
     markup:
       stack(`<span>Return fare <tp-text-transform preset="fare" value="36"></tp-text-transform></span>

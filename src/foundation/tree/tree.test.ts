@@ -336,6 +336,44 @@ describe('projection', () => {
     expect(projection).toMatchObject({ depth: 3, maxDepth: 3, minDepth: 0, parentId: 'main.ts' });
     expect(projectDepth(sorted, 3, 2).parentId).toBe('app');
     expect(projectDepth(sorted, 3, 0).parentId).toBeNull();
+    expect(projection.vetoed).toBe(false);
+  });
+
+  it('lowers the depth to the deepest one whose parent accepts the row (nest predicate)', () => {
+    const sorted = rows(['src', 'app', 'main.ts', 'index.ts', 'docs']);
+    // Only folders accept children.
+    const folders = new Set(['src', 'app']);
+    const canNest = (parent: { id: string }) => folders.has(parent.id);
+    expect(projectDepth(sorted, 3, 5, canNest)).toMatchObject({
+      depth: 2,
+      parentId: 'app',
+      vetoed: false,
+    });
+    expect(projectDepth(sorted, 3, 1, canNest)).toMatchObject({ depth: 1, parentId: 'src' });
+    // Depth zero is always accepted.
+    expect(projectDepth(sorted, 3, 3, () => false)).toMatchObject({
+      depth: 0,
+      parentId: null,
+      vetoed: false,
+    });
+  });
+
+  it('vetoes a projection with no accepted depth within the clamp', () => {
+    // A row between two children of app: the clamp is depth 2 to 3.
+    const sorted = [
+      { id: 'src', depth: 0, parentId: null },
+      { id: 'app', depth: 1, parentId: 'src' },
+      { id: 'main.ts', depth: 2, parentId: 'app' },
+      { id: 'docs', depth: 0, parentId: null },
+      { id: 'routes.ts', depth: 2, parentId: 'app' },
+    ];
+    const projection = projectDepth(sorted, 3, 3, () => false);
+    expect(projection).toMatchObject({ depth: 3, minDepth: 2, maxDepth: 3, vetoed: true });
+    expect(projectDepth(sorted, 3, 3, (parent) => parent.id === 'app')).toMatchObject({
+      depth: 2,
+      parentId: 'app',
+      vetoed: false,
+    });
   });
 
   it('resolves and applies a move without touching unrelated records', () => {

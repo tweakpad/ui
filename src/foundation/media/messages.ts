@@ -1,4 +1,5 @@
 import { numberFormatter } from '../intl.js';
+import { fillTemplate } from '../template.js';
 /**
  * Media player messages dictionary (`mp-f-locale`; contract proposal §3.13).
  *
@@ -193,16 +194,12 @@ export const DEFAULT_MEDIA_MESSAGES: Readonly<MediaPlayerMessageDictionary> = Ob
   dismiss: 'OK',
 } satisfies MediaPlayerMessageDictionary);
 
-const PLACEHOLDER = /\{(\w+)\}/g;
-
 /** Replaces `{name}` placeholders; unknown placeholders are left intact. */
 export function interpolateMediaMessage(
   template: string,
   params: Readonly<Record<string, Text>> = {},
 ): string {
-  return template.replace(PLACEHOLDER, (match, name: string) =>
-    Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match,
-  );
+  return fillTemplate(template, params);
 }
 
 /** Resolves message keys through layered dictionaries. */

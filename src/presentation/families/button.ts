@@ -1,7 +1,7 @@
 import type { ComponentDefinition } from '../definition.js';
 import { definePresentation } from '../family.js';
 import { buttonAppearance } from '../recipes/button.js';
-import { buttonCoreAppearance } from '../recipes/core/button.js';
+import { buttonCoreAppearance, buttonSizes } from '../recipes/core/button.js';
 
 const definition: ComponentDefinition = {
   name: 'Button',
@@ -15,7 +15,7 @@ const definition: ComponentDefinition = {
     },
     {
       name: 'size',
-      values: ['xs', 'sm', 'default', 'lg', 'icon-xs', 'icon-sm', 'icon', 'icon-lg'],
+      values: buttonSizes,
       default: 'default',
     },
   ],

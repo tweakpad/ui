@@ -16,6 +16,7 @@ import {
   deepActiveElement,
   focusManaged,
   focusableElements,
+  focusableFrom,
   restoreFocus,
   shadowReferenceTarget,
   trapTabKey,
@@ -183,6 +184,23 @@ export abstract class TpAnchoredSurface extends TpElement {
         max-block-size: var(--tp-available-height, calc(100dvh - var(--tp-space-3) * 2));
       }
 
+      /* With a viewport the positioner holds the settled size of the current view; the viewport
+         morphs inside it from the anchored edge, so a size change never moves the anchored edge. */
+      .positioner[data-viewport] {
+        display: flex;
+        flex-direction: column;
+        inline-size: var(--tp-positioner-width, max-content);
+        block-size: var(--tp-positioner-height, auto);
+      }
+
+      .positioner[data-viewport][data-side='top'] {
+        justify-content: flex-end;
+      }
+
+      .positioner[data-viewport][data-side='left'] {
+        align-items: flex-end;
+      }
+
       .positioner:not([data-positioned]),
       .positioner[data-anchor-hidden] {
         visibility: hidden;
@@ -207,6 +225,16 @@ export abstract class TpAnchoredSurface extends TpElement {
         flex: 1 1 auto;
         max-block-size: inherit;
         overflow: auto;
+      }
+
+      /* The body scrolls, which clips what paints outside it: it keeps room for the focus rings of
+         the controls at its edges and gives the room back in its margin, so its content keeps its
+         place, and an item scrolled into view still stops at the content edge. Viewport entries
+         are measured as the popup size and keep their box. */
+      .body:not(.viewport-entry) {
+        padding: var(--tp-ring-width);
+        margin: calc(var(--tp-ring-width) * -1);
+        scroll-padding: var(--tp-ring-width);
       }
 
       .backdrop {
@@ -361,6 +389,7 @@ export abstract class TpAnchoredSurface extends TpElement {
   #viewport = new PopupViewportController(
     this,
     () => this.presentationController.partElement('viewport') ?? null,
+    () => this.positioner,
   );
   protected readonly state = new SurfaceState({
     read: () => this.#providedOpen,
@@ -663,6 +692,20 @@ export abstract class TpAnchoredSurface extends TpElement {
       '@pointerleave': this.popupLeave,
     };
   }
+  /** A viewport surface: the positioner holds the current view's settled size while it morphs. */
+  protected get viewportPositioning(): boolean {
+    return this.showViewport && !!this.content;
+  }
+  protected positionerProperties(): Record<string, unknown> {
+    return {
+      class: 'positioner',
+      popover: 'manual',
+      hidden: this.presence.state === 'retained',
+      '.inert': !this.open,
+      'aria-hidden': this.open ? undefined : 'true',
+      'data-viewport': this.viewportPositioning,
+    };
+  }
   protected popupViewContent(payload: unknown): unknown {
     return this.content
       ? this.content(payload)
@@ -672,6 +715,10 @@ export abstract class TpAnchoredSurface extends TpElement {
   }
   get viewportState() {
     return this.#viewport.state;
+  }
+  /** Sizes the viewport and positioner from the current view now, for content that arrived late. */
+  protected remeasureViewport(): void {
+    this.#viewport.measure();
   }
   protected popupContent(): unknown {
     if (this.showViewport && this.content)
@@ -694,19 +741,27 @@ export abstract class TpAnchoredSurface extends TpElement {
       );
     return html`<div class="body">${this.popupViewContent(this.payload)}</div>`;
   }
-  protected renderLayer(): unknown {
-    const state = this.presence.state;
+  /**
+   * The arrow's box and outline, read only for a surface that shows its arrow: an unset width or
+   * height resolves the theme spacing through a measured probe, a layout read that a render without
+   * an arrow must not force.
+   */
+  #arrowGeometry(): { readonly w: number; readonly h: number; readonly path: string } {
     const w = Math.max(1, this.arrowWidth),
       h = Math.max(1, this.arrowHeight);
     const r = Math.min(Math.max(0, this.arrowTipRadius), h / 2);
     const path =
       this.arrowPath ||
       `M0 0 L${w / 2 - r} ${h - r} Q${w / 2} ${h} ${w / 2 + r} ${h - r} L${w} 0 Z`;
+    return { w, h, path };
+  }
+  protected renderLayer(): unknown {
+    const arrow = this.showArrow ? this.#arrowGeometry() : null;
     const body = this.popupContent();
     const content = this.surfacePart('content', {
       properties: this.popupProperties(),
       content: html`${this.showViewport ? this.surfacePart('viewport', { properties: { class: 'viewport', 'data-open': this.open, 'data-closed': !this.open, 'data-transitioning': this.viewportState.transitioning, 'data-activation-direction': this.viewportState.activationDirection }, content: body }) : body}${
-        this.showArrow
+        arrow
           ? this.surfacePart('arrow', {
               properties: {
                 class: 'arrow',
@@ -715,16 +770,16 @@ export abstract class TpAnchoredSurface extends TpElement {
                   '--_tp-arrow-width':
                     this.#arrowWidth === undefined
                       ? `calc(var(--tp-spacing) * ${this.defaultArrowWidthUnits})`
-                      : `${w}px`,
+                      : `${arrow.w}px`,
                   '--_tp-arrow-height':
                     this.#arrowHeight === undefined
                       ? `calc(var(--tp-spacing) * ${this.defaultArrowHeightUnits})`
-                      : `${h}px`,
+                      : `${arrow.h}px`,
                 },
               },
-              content: html`<svg viewBox=${`0 0 ${w} ${h}`} aria-hidden="true">
+              content: html`<svg viewBox=${`0 0 ${arrow.w} ${arrow.h}`} aria-hidden="true">
                 <path
-                  d=${path}
+                  d=${arrow.path}
                   stroke=${this.arrowBorderColor || 'none'}
                   stroke-width=${this.arrowBorderWidth}
                 ></path>
@@ -753,13 +808,7 @@ export abstract class TpAnchoredSurface extends TpElement {
         ? this.surfacePart('portal', {
             properties: { class: 'portal' },
             content: this.surfacePart('positioner', {
-              properties: {
-                class: 'positioner',
-                popover: 'manual',
-                hidden: state === 'retained',
-                '.inert': !this.open,
-                'aria-hidden': this.open ? undefined : 'true',
-              },
+              properties: this.positionerProperties(),
               content: html`${guards ? html`<span class="visually-hidden" tabindex="0" data-focus-guard @focus=${() => this.triggerElement?.focus()}></span>` : nothing}${content}${guards ? html`<span class="visually-hidden" tabindex="0" data-focus-guard @focus=${() => this.focusOutside(1)}></span>` : nothing}`,
             }),
           })
@@ -769,7 +818,16 @@ export abstract class TpAnchoredSurface extends TpElement {
   protected override render() {
     return html`<slot name="trigger" @slotchange=${this.syncSlot}></slot
       ><slot name="anchor" @slotchange=${this.contentChanged}></slot
-      >${this.open && this.portal && this.preserveTabOrder && !this.surfaceModal && !this.isTooltip ? html`<span class="visually-hidden" tabindex="0" data-focus-guard @focus=${() => (focusableElements(this.popup!)[0] ?? this.popup)?.focus()}></span>` : nothing}${this.portal ? nothing : this.renderLayer()}`;
+      >${this.rendersTriggerGuard ? html`<span class="visually-hidden" tabindex="0" data-focus-guard @focus=${() => (focusableElements(this.popup!)[0] ?? this.popup)?.focus()}></span>` : nothing}${this.portal ? nothing : this.renderLayer()}`;
+  }
+  /**
+   * Whether the host renders the focus guard after its trigger, which moves sequential focus from
+   * the trigger into an open portaled popup that keeps the tab order.
+   */
+  protected get rendersTriggerGuard(): boolean {
+    return (
+      this.open && this.portal && this.preserveTabOrder && !this.surfaceModal && !this.isTooltip
+    );
   }
   protected surfaceKeydown = (event: KeyboardEvent): void => {
     if (this.surfaceModal && this.dismissController.isTopmost && this.popup)
@@ -797,18 +855,19 @@ export abstract class TpAnchoredSurface extends TpElement {
         this.setOpen(false, 'focus-outside', event);
     });
   };
+  /**
+   * Moves focus on from the trigger's place in the sequence, outside the surface's branch, and
+   * closes. A trigger outside the sequence (a roving item) counts by its place in the tree.
+   */
   protected focusOutside(direction: -1 | 1): void {
-    const target = this.triggerElement;
-    const items = focusableElements(this.ownerDocument.body);
-    const start = target ? items.indexOf(target) : -1;
-    for (let index = start + direction; index >= 0 && index < items.length; index += direction) {
-      const item = items[index]!;
-      if (!this.dismissController.contains(item)) {
-        item.focus();
-        break;
-      }
-    }
+    focusableFrom(this.ownerDocument.body, this.triggerElement, direction)
+      .find((item) => !this.focusOutsidePasses(item))
+      ?.focus();
     this.setOpen(false, 'focus-outside');
+  }
+  /** Whether Tab out of the surface passes over an element: those of the surface's branch. */
+  protected focusOutsidePasses(element: HTMLElement): boolean {
+    return this.dismissController.contains(element);
   }
   protected dismissSurface(event: Event): void {
     this.setOpen(false, event.type === 'keydown' ? 'escape-key' : 'outside-press', event);
@@ -1272,6 +1331,7 @@ export abstract class TpAnchoredSurface extends TpElement {
       collision: this.collisionAvoidance,
       sticky: this.sticky,
       constrainSize: true,
+      adaptiveOrigin: this.viewportPositioning,
       arrow: this.showArrow ? (this.presentationController.partElement('arrow') ?? null) : null,
       get arrowPadding() {
         return arrowPadding();
@@ -1286,10 +1346,13 @@ export abstract class TpAnchoredSurface extends TpElement {
       },
       onPosition: (result) => {
         this.#positionResult = result;
+        // Unchanged values are not written again: an unchanged pass leaves the popup untouched.
         for (const node of [this.popup])
           if (node) {
-            node.dataset.side = surface.dataset.side!;
-            node.dataset.align = surface.dataset.align!;
+            if (node.dataset.side !== surface.dataset.side)
+              node.dataset.side = surface.dataset.side!;
+            if (node.dataset.align !== surface.dataset.align)
+              node.dataset.align = surface.dataset.align!;
             node.toggleAttribute('data-anchor-hidden', result.stageData.hide.referenceHidden);
           }
       },
@@ -1494,7 +1557,8 @@ export abstract class TpHoverSurface extends TpAnchoredSurface {
     return this.hover.bind(element, options);
   }
   protected override triggerBecameDisabled(element: HTMLElement): void {
-    this.hover.cancel();
+    // Only that trigger's pending open or close: another trigger's pending close still runs.
+    this.hover.cancelFor(element);
     super.triggerBecameDisabled(element);
   }
   protected override popupFocus = (): void => {

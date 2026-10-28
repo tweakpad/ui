@@ -43,5 +43,6 @@ export {
   validMove,
   type ProjectedRow,
   type TreeMove,
+  type TreeNestPredicate,
   type TreeProjection,
 } from './projection.js';

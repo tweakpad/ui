@@ -26,6 +26,7 @@ const examples = {
     ></tp-flow>`,
   'tp-emoji-picker': () =>
     html`<tp-emoji-picker label="Reaction" name="reaction"></tp-emoji-picker>`,
+  'tp-text-editor': () => html`<tp-text-editor label="Field notes" name="notes"></tp-text-editor>`,
 } satisfies Record<WidgetTag, () => TemplateResult>;
 
 export function renderWidgetExample(tagName: WidgetTag): TemplateResult {

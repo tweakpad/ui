@@ -1,4 +1,4 @@
-import { keyEvent } from './fakes.test.js';
+import { keyEvent, type KeyEventInit } from './fakes.test.js';
 import { describe, expect, it, vi } from 'vitest';
 import {
   KeyBindingOwner,
@@ -9,6 +9,7 @@ import {
   parseKeyPattern,
   type KeyBindingOptions,
 } from './key-bindings.js';
+import type { ResolvedKeyHintPlatform } from './key-notation.js';
 import { preventComponentHandling } from './part.js';
 import { CleanupScope } from './services.js';
 
@@ -68,6 +69,10 @@ function element(
 function owner(host = element(), options: ConstructorParameters<typeof KeyBindingOwner>[1] = {}) {
   return new KeyBindingOwner(host, { platform: 'windows', ...options });
 }
+/** Whether the first chord of `pattern`, parsed for `platform`, matches `event` there. */
+function matches(pattern: string, platform: ResolvedKeyHintPlatform, event: KeyboardEvent) {
+  return matchesKeyChord(parseKeyPattern(pattern, platform)[0]!, event, platform);
+}
 function bind(target: KeyBindingOwner, options: Partial<KeyBindingOptions> & { keys: string }) {
   const handler = vi.fn<KeyBindingOptions['handler']>(() => undefined);
   const release = target.register({ handler, ...options });
@@ -122,50 +127,50 @@ describe('Key pattern parsing', () => {
 describe('Key chord matching', () => {
   const [ctrlF] = parseKeyPattern('Ctrl+f', 'linux');
   it('compares keys case-insensitively and modifiers exactly', () => {
-    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'F', ctrlKey: true }))).toBe(true);
-    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'f' }))).toBe(false);
-    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'f', ctrlKey: true, shiftKey: true }))).toBe(
-      false,
-    );
-    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'f', ctrlKey: true, metaKey: true }))).toBe(
-      false,
-    );
+    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'F', ctrlKey: true }), 'linux')).toBe(true);
+    expect(matchesKeyChord(ctrlF!, keyEvent({ key: 'f' }), 'linux')).toBe(false);
+    expect(
+      matchesKeyChord(ctrlF!, keyEvent({ key: 'f', ctrlKey: true, shiftKey: true }), 'linux'),
+    ).toBe(false);
+    expect(
+      matchesKeyChord(ctrlF!, keyEvent({ key: 'f', ctrlKey: true, metaKey: true }), 'linux'),
+    ).toBe(false);
   });
   it('implies Shift and Alt for caseless symbols but not for letters', () => {
     const [greater] = parseKeyPattern('>', 'linux');
-    expect(matchesKeyChord(greater!, keyEvent({ key: '>', shiftKey: true }))).toBe(true);
-    expect(matchesKeyChord(greater!, keyEvent({ key: '>', shiftKey: true, altKey: true }))).toBe(
-      true,
-    );
-    expect(matchesKeyChord(greater!, keyEvent({ key: '>', ctrlKey: true }))).toBe(false);
+    expect(matchesKeyChord(greater!, keyEvent({ key: '>', shiftKey: true }), 'linux')).toBe(true);
+    expect(
+      matchesKeyChord(greater!, keyEvent({ key: '>', shiftKey: true, altKey: true }), 'linux'),
+    ).toBe(true);
+    expect(matchesKeyChord(greater!, keyEvent({ key: '>', ctrlKey: true }), 'linux')).toBe(false);
     const [question] = parseKeyPattern('Shift+?', 'linux');
-    expect(matchesKeyChord(question!, keyEvent({ key: '?' }))).toBe(false);
-    expect(matchesKeyChord(question!, keyEvent({ key: '?', shiftKey: true }))).toBe(true);
+    expect(matchesKeyChord(question!, keyEvent({ key: '?' }), 'linux')).toBe(false);
+    expect(matchesKeyChord(question!, keyEvent({ key: '?', shiftKey: true }), 'linux')).toBe(true);
     const [k] = parseKeyPattern('k', 'linux');
-    expect(matchesKeyChord(k!, keyEvent({ key: 'K', shiftKey: true }))).toBe(false);
+    expect(matchesKeyChord(k!, keyEvent({ key: 'K', shiftKey: true }), 'linux')).toBe(false);
     const [space] = parseKeyPattern('Space', 'linux');
-    expect(matchesKeyChord(space!, keyEvent({ key: ' ', shiftKey: true }))).toBe(false);
+    expect(matchesKeyChord(space!, keyEvent({ key: ' ', shiftKey: true }), 'linux')).toBe(false);
   });
   it('matches a Shift chord on a digit by the physical key, whatever character it types', () => {
     const [shiftOne] = parseKeyPattern('Shift+1', 'linux');
-    expect(matchesKeyChord(shiftOne!, keyEvent({ key: '!', code: 'Digit1', shiftKey: true }))).toBe(
-      true,
-    );
-    expect(matchesKeyChord(shiftOne!, keyEvent({ key: '1', code: 'Digit1', shiftKey: true }))).toBe(
-      true,
-    );
-    expect(matchesKeyChord(shiftOne!, keyEvent({ key: '1', code: 'Digit1' }))).toBe(false);
-    expect(matchesKeyChord(shiftOne!, keyEvent({ key: '!', code: 'Digit2', shiftKey: true }))).toBe(
-      false,
-    );
+    expect(
+      matchesKeyChord(shiftOne!, keyEvent({ key: '!', code: 'Digit1', shiftKey: true }), 'linux'),
+    ).toBe(true);
+    expect(
+      matchesKeyChord(shiftOne!, keyEvent({ key: '1', code: 'Digit1', shiftKey: true }), 'linux'),
+    ).toBe(true);
+    expect(matchesKeyChord(shiftOne!, keyEvent({ key: '1', code: 'Digit1' }), 'linux')).toBe(false);
+    expect(
+      matchesKeyChord(shiftOne!, keyEvent({ key: '!', code: 'Digit2', shiftKey: true }), 'linux'),
+    ).toBe(false);
     const [one] = parseKeyPattern('1', 'linux');
-    expect(matchesKeyChord(one!, keyEvent({ key: '!', code: 'Digit1', shiftKey: true }))).toBe(
-      false,
-    );
+    expect(
+      matchesKeyChord(one!, keyEvent({ key: '!', code: 'Digit1', shiftKey: true }), 'linux'),
+    ).toBe(false);
   });
   it('never matches Unidentified (IME) keys', () => {
     const [unidentified] = parseKeyPattern('Unidentified', 'linux');
-    expect(matchesKeyChord(unidentified!, keyEvent('Unidentified'))).toBe(false);
+    expect(matchesKeyChord(unidentified!, keyEvent('Unidentified'), 'linux')).toBe(false);
   });
   it('treats explicit chord objects as exact, without implied modifiers', () => {
     const target = owner();
@@ -177,6 +182,161 @@ describe('Key chord matching', () => {
     expect(handler).toHaveBeenCalledTimes(1);
     expect(() => target.register({ keys: {} as never, handler })).toThrow(/missing key/);
     target.register({ keys: { key: '' }, handler: () => true });
+  });
+});
+
+describe('Key chord matching across keyboard layouts', () => {
+  const option = { metaKey: true, altKey: true };
+  const controlAlt = { ctrlKey: true, altKey: true };
+
+  it('matches an Alt chord by its physical letter or digit key on Apple platforms (mp-kb-pattern)', () => {
+    expect(matches('Mod+Alt+0', 'mac', keyEvent({ key: 'º', code: 'Digit0', ...option }))).toBe(
+      true,
+    );
+    expect(matches('Mod+Alt+1', 'mac', keyEvent({ key: '¡', code: 'Digit1', ...option }))).toBe(
+      true,
+    );
+    expect(matches('Mod+Alt+C', 'mac', keyEvent({ key: 'ç', code: 'KeyC', ...option }))).toBe(true);
+    expect(
+      matches(
+        'Mod+Alt+Shift+C',
+        'mac',
+        keyEvent({ key: 'Ç', code: 'KeyC', shiftKey: true, ...option }),
+      ),
+    ).toBe(true);
+    expect(matches('Alt+k', 'mac', keyEvent({ key: '˚', code: 'KeyK', altKey: true }))).toBe(true);
+    expect(matches('Mod+Alt+E', 'mac', keyEvent({ key: 'Dead', code: 'KeyE', ...option }))).toBe(
+      true,
+    );
+  });
+
+  it('keeps the physical Alt match to Apple platforms and to Alt chords (mp-kb-pattern)', () => {
+    for (const platform of ['windows', 'linux'] as const) {
+      const cases: [string, KeyEventInit][] = [
+        ['Mod+Alt+0', { key: 'º', code: 'Digit0', ...controlAlt }],
+        ['Mod+Alt+1', { key: '¡', code: 'Digit1', ...controlAlt }],
+        ['Mod+Alt+C', { key: 'ç', code: 'KeyC', ...controlAlt }],
+        ['Mod+Alt+Shift+C', { key: 'Ç', code: 'KeyC', shiftKey: true, ...controlAlt }],
+        ['Alt+k', { key: '˚', code: 'KeyK', altKey: true }],
+        ['Mod+Alt+E', { key: 'Dead', code: 'KeyE', ...controlAlt }],
+      ];
+      for (const [pattern, init] of cases)
+        expect(matches(pattern, platform, keyEvent(init)), `${pattern} on ${platform}`).toBe(false);
+    }
+    // A chord without Alt, another digit key, or a key with no letter or digit position.
+    expect(matches('Mod+k', 'mac', keyEvent({ key: '˚', code: 'KeyK', ...option }))).toBe(false);
+    expect(matches('Mod+Alt+1', 'mac', keyEvent({ key: '¡', code: 'Digit2', ...option }))).toBe(
+      false,
+    );
+    expect(matches('Mod+Alt+[', 'mac', keyEvent({ key: '“', ...option }))).toBe(false);
+    // A physical match compares every modifier exactly: Shift is not implied.
+    expect(
+      matches(
+        'Mod+Alt+1',
+        'mac',
+        keyEvent({ key: '⁄', code: 'Digit1', shiftKey: true, ...option }),
+      ),
+    ).toBe(false);
+    expect(matches('Mod+Alt+C', 'mac', keyEvent({ key: 'ç', code: 'KeyC', ...option }))).toBe(true);
+  });
+
+  it('matches no Mod chord without Alt while AltGraph is active (mp-kb-pattern, uwg-te-req-key-2)', () => {
+    const cases: [string, ResolvedKeyHintPlatform, KeyEventInit][] = [
+      ['Mod+]', 'windows', { key: ']', code: 'Digit9', ...controlAlt }],
+      ['Mod+[', 'windows', { key: '[', code: 'Digit8', ...controlAlt }],
+      ['Mod+\\', 'windows', { key: '\\', code: 'Minus', ...controlAlt }],
+      ['Mod+Shift+8', 'windows', { key: '*', code: 'Digit8', shiftKey: true, ...controlAlt }],
+      ['Mod+]', 'linux', { key: ']', code: 'Digit9', ctrlKey: true }],
+    ];
+    for (const [pattern, platform, init] of cases) {
+      const label = `${pattern} on ${platform}`;
+      expect(matches(pattern, platform, keyEvent(init, { altGraph: true })), label).toBe(false);
+      expect(matches(pattern, platform, keyEvent(init, { altGraph: false })), label).toBe(true);
+      expect(matches(pattern, platform, keyEvent(init)), label).toBe(true);
+    }
+  });
+
+  it('still matches Mod+Alt chords while AltGraph is active (mp-kb-pattern, uwg-te-req-key-2)', () => {
+    for (const active of [true, false]) {
+      // Option, reported as AltGraph on Apple platforms.
+      const digit = keyEvent({ key: '¡', code: 'Digit1', ...option }, { altGraph: active });
+      expect(matches('Mod+Alt+1', 'mac', digit)).toBe(true);
+      const letter = keyEvent({ key: 'ç', code: 'KeyC', ...option }, { altGraph: active });
+      expect(matches('Mod+Alt+C', 'mac', letter)).toBe(true);
+      // Control+Alt, reported as AltGraph on Windows.
+      const typed = keyEvent({ key: '1', code: 'Digit1', ...controlAlt }, { altGraph: active });
+      expect(matches('Mod+Alt+1', 'windows', typed)).toBe(true);
+      // An AltGr bracket has no physical digit match off Apple platforms.
+      const bracket = keyEvent({ key: '[', code: 'Digit8', ...controlAlt }, { altGraph: active });
+      expect(matches('Mod+Alt+8', 'windows', bracket)).toBe(false);
+    }
+  });
+
+  it('the owner matches with its resolved platform (mp-kb-pattern)', () => {
+    const apple = owner(element(), { platform: 'mac' });
+    const { handler: heading } = bind(apple, { keys: 'Mod+Alt+1' });
+    const optionDigit = keyEvent({ key: '¡', code: 'Digit1', ...option });
+    expect(apple.handleKeyDown(optionDigit)).toBe(true);
+    expect(heading).toHaveBeenCalledTimes(1);
+    expect(optionDigit.defaultPrevented).toBe(true);
+
+    const windows = owner();
+    const { handler: indent } = bind(windows, { keys: 'Mod+]' });
+    const bracket = { key: ']', code: 'Digit9', ...controlAlt };
+    const typed = keyEvent(bracket, { altGraph: true });
+    expect(windows.hasMatchingBinding(typed, 'owner')).toBe(false);
+    expect(windows.handleKeyDown(typed)).toBe(false);
+    expect(indent).not.toHaveBeenCalled();
+    expect(typed.defaultPrevented).toBe(false);
+    expect(windows.handleKeyDown(keyEvent(bracket, { altGraph: false }))).toBe(true);
+    expect(indent).toHaveBeenCalledTimes(1);
+
+    const doc = documentFor('Win32');
+    const routed = new KeyBindingOwner(element('div', {}, doc));
+    expect(routed.platform).toBe('windows');
+    const { handler: outdent } = bind(routed, { keys: 'Mod+]', scope: 'document' });
+    const typedInDocument = keyEvent(bracket, { altGraph: true, path: [doc] });
+    doc.dispatchEvent(typedInDocument);
+    expect(outdent).not.toHaveBeenCalled();
+    expect(typedInDocument.defaultPrevented).toBe(false);
+    doc.dispatchEvent(keyEvent(bracket, { altGraph: false, path: [doc] }));
+    expect(outdent).toHaveBeenCalledTimes(1);
+    routed.dispose();
+  });
+
+  it('prefers the chord with more modifiers for a slash typed with Shift+7 (mp-kb-pattern)', () => {
+    const target = owner();
+    const calls: string[] = [];
+    target.register({ keys: 'Mod+/', handler: () => void calls.push('slash') });
+    target.register({ keys: 'Mod+Shift+7', handler: () => void calls.push('digit') });
+    const slash = keyEvent({ key: '/', code: 'Digit7', shiftKey: true, ctrlKey: true });
+    expect(matches('Mod+/', 'windows', slash)).toBe(true);
+    expect(matches('Mod+Shift+7', 'windows', slash)).toBe(true);
+    expect(target.handleKeyDown(slash)).toBe(true);
+    expect(calls).toEqual(['digit']);
+  });
+
+  it('matches nothing on a bare modifier keydown (mp-kb-pattern)', () => {
+    const modifiers: KeyEventInit[] = [
+      { key: 'Meta', code: 'MetaLeft', metaKey: true },
+      { key: 'Shift', code: 'ShiftLeft', shiftKey: true },
+      { key: 'Alt', code: 'AltLeft', altKey: true },
+      { key: 'Control', code: 'ControlLeft', ctrlKey: true },
+      { key: 'AltGraph', code: 'AltRight', ...controlAlt },
+    ];
+    for (const platform of ['mac', 'windows'] as const) {
+      const target = owner(element(), { platform });
+      const handler = vi.fn();
+      for (const keys of ['Mod+Alt+1', 'Alt+k', 'Shift+1', 'Mod+]', '>'])
+        target.register({ keys, handler });
+      for (const init of modifiers)
+        for (const active of [true, false]) {
+          const event = keyEvent(init, { altGraph: active });
+          expect(target.handleKeyDown(event), `${init.key} on ${platform}`).toBe(false);
+          expect(event.defaultPrevented).toBe(false);
+        }
+      expect(handler).not.toHaveBeenCalled();
+    }
   });
 });
 
@@ -526,6 +686,21 @@ describe('Shortcut publication', () => {
     });
     expect(target.shortcut('seek')?.display).toBe('⌥←');
   });
+  it('publishes Windows display and ARIA forms (mp-kb-publish)', () => {
+    const target = owner();
+    bind(target, { keys: 'Mod+b', action: 'bold' });
+    bind(target, { keys: 'Mod+Alt+1', action: 'heading' });
+    bind(target, { keys: 'Mod+Shift+8', action: 'list' });
+    bind(target, { keys: 'Mod+Shift+z, Mod+y', action: 'redo' });
+    expect(target.shortcut('bold')?.display).toBe('Ctrl+B');
+    expect(target.shortcut('heading')?.display).toBe('Ctrl+Alt+1');
+    expect(target.shortcut('list')?.display).toBe('Ctrl+Shift+8');
+    expect(target.shortcut('redo')).toEqual({
+      aria: 'Control+Shift+z Control+y',
+      display: 'Ctrl+Shift+Z',
+      keys: ['Control', 'Shift', 'Z'],
+    });
+  });
   it('detects the platform from the owner window when automatic', () => {
     const target = new KeyBindingOwner(element('div', {}, documentFor('MacIntel')));
     expect(target.platform).toBe('mac');
@@ -667,12 +842,15 @@ describe('Key name aliases', () => {
   it('matches Esc, Return and symbol patterns against the canonical event keys', () => {
     const [esc] = parseKeyPattern('Esc', 'linux');
     expect(esc).toMatchObject({ key: 'escape', label: 'Esc' });
-    expect(matchesKeyChord(esc!, keyEvent('Escape'))).toBe(true);
-    expect(matchesKeyChord(parseKeyPattern('Return', 'linux')[0]!, keyEvent('Enter'))).toBe(true);
+    expect(matchesKeyChord(esc!, keyEvent('Escape'), 'linux')).toBe(true);
+    expect(
+      matchesKeyChord(parseKeyPattern('Return', 'linux')[0]!, keyEvent('Enter'), 'linux'),
+    ).toBe(true);
     expect(
       matchesKeyChord(
         parseKeyPattern('Mod+⌫', 'windows')[0]!,
         keyEvent({ key: 'Backspace', ctrlKey: true }),
+        'windows',
       ),
     ).toBe(true);
     expect(parseKeyPattern('space', 'linux')[0]).toMatchObject({ key: ' ', label: 'Space' });

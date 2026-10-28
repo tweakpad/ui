@@ -6,7 +6,7 @@ import rendererSource from './stories/data-visualization.examples.ts?raw';
 import datePickerSource from './stories/date-picker-trigger.js?raw';
 import mapSource from './stories/map-example.js?raw';
 import mediaSource from './stories/media.ts?raw';
-import { publishedIconImports, publishedWidgetImports } from './stories/documentation-examples.js';
+import { publishedPackageImports } from './stories/documentation-examples.js';
 
 const workspaceSources = import.meta.glob<string>('./stories/workspace/**/*.{ts,css}', {
   query: '?raw',
@@ -16,11 +16,7 @@ const workspaceSources = import.meta.glob<string>('./stories/workspace/**/*.{ts,
 
 /** Rewrites repository-relative imports to the published package and the files listed below. */
 const published = (source: string) =>
-  publishedWidgetImports(publishedIconImports(source))
-    .replace(/'(?:\.\.\/)+components\/[^']+'/g, "'@tweakpad/ui'")
-    .replace(/'(?:\.\.\/)+foundation\/drag-drop\/index\.js'/g, "'@tweakpad/ui/drag-drop'")
-    .replace(/'(?:\.\.\/)+foundation\/map\/index\.js'/g, "'@tweakpad/ui/map'")
-    .replace(/'(?:\.\.\/)+foundation\/[^']+'/g, "'@tweakpad/ui'")
+  publishedPackageImports(source)
     .replaceAll("'../data-visualization.examples.js'", "'./chart.js'")
     .replaceAll("'../../data-visualization.examples.js'", "'../chart.js'")
     .replaceAll("'../date-picker-trigger.js'", "'./date-picker-trigger.js'")

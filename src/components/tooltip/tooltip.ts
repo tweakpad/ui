@@ -72,6 +72,8 @@ export class TpTooltip extends TpHoverSurface {
               ]
             : [],
         ),
+        // Content rendered from a payload (`content`) lives in the popup, not among the children.
+        ...(this.popupElement?.querySelectorAll<TpElement>('tp-key-hint') ?? []),
       ].filter((hint) => !hint.closest('[slot=trigger]')),
     );
     for (const hint of this.#hints) if (!hints.has(hint)) setPartComposition(hint, this);

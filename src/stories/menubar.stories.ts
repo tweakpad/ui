@@ -39,7 +39,7 @@ const menuContent = `
     <tp-menu-checkbox-item default-checked>Word wrap</tp-menu-checkbox-item>
     <tp-menu-checkbox-item>Show ruler</tp-menu-checkbox-item>
     <tp-separator></tp-separator>
-    <tp-menu-radio-group aria-label="Density" default-value="comfortable">
+    <tp-menu-radio-group label="Density" default-value="comfortable">
       <span data-menu-label>Density</span>
       <tp-menu-radio-item value="compact">Compact</tp-menu-radio-item>
       <tp-menu-radio-item value="comfortable">Comfortable</tp-menu-radio-item>

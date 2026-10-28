@@ -159,6 +159,11 @@ export class ObservableStore<T> {
    * selected value and runs only when `equality` (default `Object.is`) reports that it changed.
    * The selected type is inferred from the selector's return type, so give an inline selector a
    * typed parameter (or pass the type argument) when the listener needs the selected type.
+   * After unsubscribing, the listener is not called again, also not later in a running
+   * publication. An error thrown while publishing, by the listener or a later selection, is
+   * rethrown in a microtask so the other subscribers still run, and a selection that failed keeps
+   * the last selected value; the first selection and `emitCurrent` run at once, so their errors
+   * reach the caller.
    */
   subscribe(subscriber: StoreSubscriber<T>, options?: boolean | StoreSubscribeOptions): () => void;
   subscribe<S>(
@@ -203,7 +208,17 @@ export class ObservableStore<T> {
   #notify(change: StoreChange<T>): void {
     this.#notifying = true;
     try {
-      for (const subscriber of [...this.#subscribers]) subscriber(change);
+      for (const subscriber of [...this.#subscribers]) {
+        if (!this.#subscribers.has(subscriber)) continue;
+        try {
+          subscriber(change);
+        } catch (error) {
+          // One failing subscriber must not stop the others; surface it outside the publication.
+          queueMicrotask(() => {
+            throw error;
+          });
+        }
+      }
     } finally {
       this.#notifying = false;
       while (this.#queue.length && !this.#notifying) this.#queue.shift()!();

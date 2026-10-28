@@ -10,7 +10,7 @@ import type {
   FlowSide,
 } from '../../../foundation/flow/types.js';
 import type { FlowPortDirection } from '../../../foundation/flow/edges/endpoints.js';
-import { format } from '../strings.js';
+import { fillTemplate } from '../../../foundation/template.js';
 import type { FlowInteractionHost } from './host.js';
 
 export interface ConnectionStart {
@@ -164,7 +164,7 @@ export class ConnectionSession {
       });
     this.#draw(focused.point, focused);
     host.announce(
-      format(host.strings.announceCandidate, {
+      fillTemplate(host.strings.announceCandidate, {
         target: `${host.nodeLabel(focused.nodeId)}: ${host.portLabel(focused.nodeId, focused.port.id)} (${this.#keyboard.index + 1}/${list.length})`,
       }),
     );

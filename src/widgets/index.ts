@@ -5,6 +5,7 @@ export * from './color-picker/index.js';
 export * from './easing-editor/index.js';
 export * from './emoji-picker/index.js';
 export * from './flow/index.js';
+export * from './text-editor/index.js';
 export * from './catalog.js';
 export { widgetPresentationFamilies } from '../presentation/families/widgets.js';
 export { widgetDefinitions, defaultWidgetPresentationDictionary } from '../presentation/widgets.js';

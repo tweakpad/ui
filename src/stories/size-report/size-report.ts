@@ -1,11 +1,11 @@
-import { LitElement, html, nothing } from 'lit';
+import { LitElement, html } from 'lit';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import report from '../size-report.json';
 import { kb, sizeChartRenderer, sizeChartSeries, type SizeChartRow } from './size-chart.js';
 import './size-report.css';
 
 type Component = (typeof report.components)[number];
-type SortKey = 'documented' | 'root' | 'own' | 'name';
+type SortKey = 'gzip' | 'bytes' | 'name';
 
 // Components ship from `@tweakpad/ui`, widgets from `@tweakpad/ui/widgets`; each section has its
 // own whole-section total.
@@ -13,22 +13,20 @@ const sectionRows = (section: string) =>
   report.components.filter((component) => component.section === section);
 const componentRows = sectionRows('components');
 const widgetRows = sectionRows('widgets');
-const share = (bytes: number, total: number) => `${((bytes / total) * 100).toFixed(1)}%`;
 const sorters: Record<SortKey, (a: Component, b: Component) => number> = {
-  documented: (a, b) => b.gzip - a.gzip,
-  root: (a, b) => b.rootGzip - a.rootGzip,
-  own: (a, b) => b.ownGzip - a.ownGzip,
+  gzip: (a, b) => b.gzip - a.gzip,
+  bytes: (a, b) => b.bytes - a.bytes,
   name: (a, b) => a.name.localeCompare(b.name),
 };
 const chartRows: SizeChartRow[] = [...componentRows]
-  .sort(sorters.documented)
+  .sort(sorters.gzip)
   .slice(0, 15)
   .map((component) => ({
     name: component.name,
-    shared: report.shared.gzip,
-    component: Math.max(0, component.gzip - report.shared.gzip),
+    gzip: component.gzip,
+    bytes: component.bytes,
   }));
-const largest = [...componentRows].sort(sorters.documented)[0]!;
+const largest = [...componentRows].sort(sorters.gzip)[0]!;
 // Horizontal bars take their height from the row count, not the default 16:9 plot.
 const chartPresentation = {
   'data-visualization-plot-region': { styleHook: { 'aspect-ratio': 'auto' } },
@@ -41,7 +39,7 @@ const chartPresentation = {
 export class SizeReportView extends LitElement {
   static override properties = { query: { state: true }, sort: { state: true } };
   query = '';
-  sort: SortKey = 'documented';
+  sort: SortKey = 'gzip';
 
   protected override createRenderRoot() {
     return this;
@@ -69,8 +67,8 @@ export class SizeReportView extends LitElement {
           <h1>Bundle size</h1>
           <p>
             What an application ships for each component of <code>@tweakpad/ui</code>
-            ${report.version}: the published files it imports, sized as the build log lists them,
-            and gzipped.
+            ${report.version}: independent minified JavaScript bundles, before and after gzip.
+            Required dependencies included; Lit and optional engines excluded.
           </p>
         </div>
         <div class="size-report-status">
@@ -80,16 +78,11 @@ export class SizeReportView extends LitElement {
       </header>
 
       <section class="size-report-cards" aria-label="Summary">
-        ${this.#card('Shared runtime', kb(report.shared.gzip), 'Paid once per application')}
-        ${this.#card(html`<code>lit</code>`, kb(report.lit.gzip), 'Peer dependency, not counted below')}
-        ${this.#card('Whole library', kb(report.full.gzip), html`<code>@tweakpad/ui/register</code>`)}
+        ${this.#card(html`<code>lit</code>`, kb(report.lit.gzip), 'Gzip · peer dependency, excluded below')}
+        ${this.#card('All components · gzip', kb(report.full.gzip), html`<code>@tweakpad/ui/register</code>`)}
+        ${this.#card('Largest component · gzip', kb(largest.gzip), largest.name)}
         ${this.#card(
-          'Largest component',
-          kb(largest.gzip),
-          `${largest.name}, ${share(largest.gzip, report.full.gzip)} of the library`,
-        )}
-        ${this.#card(
-          'Widgets',
+          'All widgets · gzip',
           kb(report.fullWidgets.gzip),
           html`<code>@tweakpad/<wbr />ui/<wbr />register/<wbr />widgets</code>, ${widgetRows.length}
             published`,
@@ -104,12 +97,12 @@ export class SizeReportView extends LitElement {
 
         <div slot="panel" value="overview">${this.#overview()}</div>
         <div slot="panel" value="components">
-          ${this.#table(rows, componentRows.length, report.full.gzip, 'components')}
+          ${this.#table(rows, componentRows.length, 'components')}
         </div>
         <div slot="panel" value="widgets">
           ${
             widgetRows.length
-              ? this.#table(widgets, widgetRows.length, report.fullWidgets.gzip, 'widgets')
+              ? this.#table(widgets, widgetRows.length, 'widgets')
               : html`<tp-empty-state>
                   No widgets are published yet
                   <span slot="description"
@@ -136,7 +129,7 @@ export class SizeReportView extends LitElement {
     return html`<tp-data-visualization
       class="size-report-chart"
       label="Largest components"
-      description="The 15 largest components as documented, in gzip size. Striped segments are the shared runtime every component needs; solid segments are the component's own code and the parts it renders."
+      description="The 15 largest independent component bundles, ordered by gzip size."
       .data=${chartRows}
       .series=${sizeChartSeries}
       .renderer=${sizeChartRenderer}
@@ -151,8 +144,8 @@ export class SizeReportView extends LitElement {
           <thead>
             <tr>
               <th scope="col">Component</th>
-              <th scope="col">Shared runtime</th>
-              <th scope="col">Component</th>
+              <th scope="col">Gzip</th>
+              <th scope="col">Uncompressed</th>
             </tr>
           </thead>
           <tbody>
@@ -160,8 +153,8 @@ export class SizeReportView extends LitElement {
               (row) =>
                 html`<tr>
                   <th scope="row">${row.name}</th>
-                  <td>${kb(row.shared)}</td>
-                  <td>${kb(row.component)}</td>
+                  <td>${kb(row.gzip)}</td>
+                  <td>${kb(row.bytes)}</td>
                 </tr>`,
             )}
           </tbody>
@@ -170,7 +163,7 @@ export class SizeReportView extends LitElement {
     </tp-data-visualization>`;
   }
 
-  #table(rows: Component[], count: number, total: number, noun: string) {
+  #table(rows: Component[], count: number, noun: string) {
     return html`<div class="size-report-toolbar">
         <tp-input
           type="search"
@@ -183,14 +176,13 @@ export class SizeReportView extends LitElement {
         ></tp-input>
         <tp-select
           label="Sort by"
-          default-value="documented"
+          .value=${this.sort}
           @tp-value-change=${(event: TpValueChangeEvent<SortKey>) => {
             this.sort = event.detail.value;
           }}
         >
-          <option value="documented">As documented</option>
-          <option value="root">Root only</option>
-          <option value="own">Beyond shared</option>
+          <option value="gzip">Gzip</option>
+          <option value="bytes">Uncompressed</option>
           <option value="name">Name</option>
         </tp-select>
       </div>
@@ -202,38 +194,27 @@ export class SizeReportView extends LitElement {
           <thead>
             <tr>
               <th scope="col">Component</th>
-              <th scope="col">As documented</th>
-              <th scope="col">Shipped</th>
-              <th scope="col">Root only</th>
-              <th scope="col">Beyond shared</th>
-              <th scope="col">Of section</th>
+              <th scope="col">Gzip</th>
+              <th scope="col">Uncompressed</th>
               <th scope="col">Modules</th>
               <th scope="col">Also ships</th>
             </tr>
           </thead>
           <tbody>
-            ${rows.map((component) => this.#row(component, total))}
+            ${rows.map((component) => this.#row(component))}
           </tbody>
         </table>
       </tp-table>`;
   }
 
-  #row(component: Component, total: number) {
+  #row(component: Component) {
     return html`<tr>
       <th scope="row">
         <span class="size-report-name">${component.name}</span>
         <code>${component.tagName}</code>
-        ${
-          component.uses.length
-            ? html`<span class="size-report-muted">with ${component.uses.join(', ')}</span>`
-            : nothing
-        }
       </th>
       <td class="size-report-number"><strong>${kb(component.gzip)}</strong></td>
       <td class="size-report-number">${kb(component.bytes)}</td>
-      <td class="size-report-number">${kb(component.rootGzip)}</td>
-      <td class="size-report-number">${kb(component.ownGzip)}</td>
-      <td class="size-report-number">${share(component.gzip, total)}</td>
       <td class="size-report-number">${component.modules}</td>
       <td>
         ${
@@ -253,30 +234,22 @@ export class SizeReportView extends LitElement {
     return html`<div class="size-report-method">
       <p>${report.method}</p>
       <ul>
+        <li><strong>Gzip</strong>: the minified bundle compressed for transfer.</li>
+        <li><strong>Uncompressed</strong>: the same minified bundle before compression.</li>
         <li>
-          <strong>As documented</strong>: the gzip size of the component with the parts its
-          canonical example composes, for example the media player with its video layout.
+          Each row includes the element and its required dependencies, without extra demo parts.
         </li>
         <li>
-          <strong>Shipped</strong>: the same files before compression, as <code>npm run build</code>
-          lists them (kB of 1000 bytes). The build log's gzip column uses a different compressor and
-          lands within about one percent of the figures here.
-        </li>
-        <li><strong>Root only</strong>: the element alone, without authored parts.</li>
-        <li>
-          <strong>Beyond shared</strong>: the documented size minus the shared runtime every
-          component needs. Components share more than that runtime, so adding a second component
-          usually costs less than this column.
+          Shared dependencies are included in each standalone measurement; row sizes should not be
+          added together.
         </li>
         <li>
-          <strong>Tree-shaking</strong>: each component is also bundled from its own module. The
-          report fails if importing through <code>@tweakpad/ui</code> ships any module the direct
-          import does not.
+          Tree-shaking is checked against a direct module import. The main package must not pull in
+          widgets.
         </li>
         <li>
-          <strong>Widgets</strong>: measured the same way from <code>@tweakpad/ui/widgets</code>,
-          with their own whole-section total. The report fails if
-          <code>@tweakpad/ui/register</code> ships a widget module.
+          <code>npm run size:report</code> builds the package, measures all bundles and replaces
+          this report automatically. No intermediate steps are needed.
         </li>
       </ul>
       <p class="size-report-muted">

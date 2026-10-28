@@ -103,7 +103,9 @@ describe('per-component presentation ownership', () => {
         tagClass.set(match[2]!, match[1]!);
     }
     // Each class declares what its own templates render; helper modules without a class belong
-    // to the classes of their folder, so they are checked against the folder's declarations.
+    // to the classes of their folder, so they are checked against the folder's declarations. A
+    // widget feature (`elements: Object.freeze([...])`) declares what its views render, which the
+    // widget defines when the feature attaches.
     const missing = new Set<string>();
     const renders = (text: string) =>
       [...text.matchAll(/(?:<|\btag: ?'|createElement\(')(tp-[a-z0-9-]+)/g)].map((m) => m[1]!);
@@ -112,6 +114,7 @@ describe('per-component presentation ownership', () => {
         ...text.matchAll(
           /static (?:override )?get elementDependencies\(\)[^{]*\{\s*return \[([^\]]*)\]/g,
         ),
+        ...text.matchAll(/\belements: Object\.freeze\(\[([^\]]*)\]\)/g),
       ]
         .flatMap((m) => m[1]!.split(','))
         .map((name) => name.trim());

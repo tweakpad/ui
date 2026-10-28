@@ -1,5 +1,6 @@
 import { LitElement, css, html, nothing, svg } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
+import { iconGraphicAttributes, iconPathAttributes } from '../../foundation/icon-graphic.js';
 import type { IconDefinition } from '../../icons/types.js';
 import { PresentationController } from '../../presentation/controller.js';
 import type { PartPresentation } from '../../presentation/resolver.js';
@@ -80,27 +81,28 @@ export class TpIcon extends LitElement {
 
   protected override render() {
     if (!this.icon) return nothing;
+    const graphic = iconGraphicAttributes(this.icon);
     return html`<svg
       part="icon-graphic"
-      viewBox=${this.icon.viewBox}
-      fill="none"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      viewBox=${graphic.viewBox}
+      fill=${graphic.fill}
+      stroke=${graphic.stroke}
+      stroke-linecap=${graphic['stroke-linecap']}
+      stroke-linejoin=${graphic['stroke-linejoin']}
       aria-hidden="true"
       focusable="false"
     >
-      ${this.icon.paths.map(
-        (path) =>
-          svg`<path
-            d=${path.d}
-            fill=${ifDefined(path.fill)}
-            stroke=${ifDefined(path.stroke)}
-            stroke-width=${ifDefined(path.strokeWidth)}
-            fill-rule=${ifDefined(path.fillRule)}
-            clip-rule=${ifDefined(path.clipRule)}
-          ></path>`,
-      )}
+      ${this.icon.paths.map((path) => {
+        const drawn = iconPathAttributes(path);
+        return svg`<path
+          d=${drawn.d}
+          fill=${ifDefined(drawn.fill)}
+          stroke=${ifDefined(drawn.stroke)}
+          stroke-width=${ifDefined(drawn['stroke-width'])}
+          fill-rule=${ifDefined(drawn['fill-rule'])}
+          clip-rule=${ifDefined(drawn['clip-rule'])}
+        ></path>`;
+      })}
     </svg>`;
   }
 }

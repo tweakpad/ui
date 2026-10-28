@@ -7,6 +7,9 @@
  * this class never touches the DOM beyond the viewport element and overlay elements it is handed.
  */
 import type { ChangeReason } from '../types.js';
+import { domError } from '../dom-error.js';
+import { EngineMountSession } from '../engine-session.js';
+import { deferRelease } from '../services.js';
 import {
   type MapAnimationOptions,
   type MapEngine,
@@ -33,7 +36,8 @@ import {
   projectFlat,
   unprojectFlat,
 } from './geo.js';
-import { travelDuration, tweenCamera, type TweenFrameSource } from './camera.js';
+import type { FrameSource } from '../frame-loop.js';
+import { travelDuration, tweenCamera } from './camera.js';
 import { resolveMotionTiming } from '../motion.js';
 import { MapStore, type MapState, type MapSubscribeOptions } from './state.js';
 import { mapThemesEqual, type ResolvedMapTheme } from './theme.js';
@@ -127,7 +131,7 @@ export interface MapControllerHost {
   select(value: string | null, reason: ChangeReason, sourceEvent?: Event): boolean;
   reducedMotion(): boolean;
   adoptStyles(cssText: string): () => void;
-  frames(): TweenFrameSource;
+  frames(): FrameSource;
   /** Dispatches the cancelable request event; returns `false` when cancelled. */
   dispatchRequest(detail: MapRequestDetail): boolean;
   requestFailed(detail: MapRequestFailedDetail): void;
@@ -143,16 +147,6 @@ export interface MapControllerHost {
 
 const ZOOM_EPSILON = 0.001;
 
-function domError(name: string, message: string): Error {
-  try {
-    return new DOMException(message, name);
-  } catch {
-    const error = new Error(message);
-    error.name = name;
-    return error;
-  }
-}
-
 interface OverlayRecord {
   position: MapPosition;
   handle: MapOverlayHandle | null;
@@ -162,8 +156,24 @@ export class MapController {
   readonly store = new MapStore();
   readonly #host: MapControllerHost;
   #engine: MapEngine | null = null;
-  #instance: MapEngineInstance | null = null;
-  #mounting: AbortController | null = null;
+  readonly #session = new EngineMountSession<MapEngineInstance>({
+    attached: (instance) => {
+      for (const [element, record] of this.#overlays)
+        record.handle = this.#attach(instance, element, record.position);
+    },
+    ready: () => this.#ready(),
+    detaching: () => {
+      for (const record of this.#overlays.values()) {
+        record.handle?.remove();
+        record.handle = null;
+      }
+    },
+    failed: (error) => {
+      this.store.patch({ status: 'error', error, moving: false, bounds: null });
+      this.#syncDerived();
+      this.#host.failed(error);
+    },
+  });
   #camera: MapCamera = DEFAULT_CAMERA;
   #homeApplied = false;
   /** A camera request arrived after the mount context captured the camera. */
@@ -176,12 +186,17 @@ export class MapController {
   #frameEvent: Event | undefined;
   #requestReason: ChangeReason | null = null;
   #connected = false;
-  #destroyTimer: { cancel(): void } | null = null;
+  #cancelRelease: (() => void) | null = null;
   #appearance: { scheme: MapScheme; theme: ResolvedMapTheme | null } | null = null;
   #config: MapConfig | null = null;
 
   constructor(host: MapControllerHost) {
     this.#host = host;
+  }
+
+  /** The attached engine instance, ready or not. */
+  get #instance(): MapEngineInstance | null {
+    return this.#session.instance;
   }
 
   get state(): MapState {
@@ -224,10 +239,10 @@ export class MapController {
 
   connect(): void {
     this.#connected = true;
-    if (this.#destroyTimer) {
+    if (this.#cancelRelease) {
       // Reconnection within two frames cancels deferred destruction (map-f-lifecycle).
-      this.#destroyTimer.cancel();
-      this.#destroyTimer = null;
+      this.#cancelRelease();
+      this.#cancelRelease = null;
       this.#instance?.resize?.();
       return;
     }
@@ -238,22 +253,18 @@ export class MapController {
     this.#connected = false;
     this.#cancelAnimation();
     this.#cancelFrame();
-    const frames = this.#host.frames();
-    let handle = frames.requestAnimationFrame(() => {
-      handle = frames.requestAnimationFrame(() => {
-        this.#destroyTimer = null;
-        if (!this.#connected) {
-          if (this.#instance) this.#camera = this.#readCamera();
-          this.#teardown();
-        }
-      });
+    this.#cancelRelease = deferRelease(this.#host.frames(), () => {
+      this.#cancelRelease = null;
+      if (!this.#connected) {
+        if (this.#instance) this.#camera = this.#readCamera();
+        this.#teardown();
+      }
     });
-    this.#destroyTimer = { cancel: () => frames.cancelAnimationFrame(handle) };
   }
 
   /** Re-checks mounting (for example after the viewport gains size). */
   refresh(): void {
-    if (!this.#instance && !this.#mounting) this.#mount();
+    if (!this.#instance && !this.#session.mounting) this.#mount();
     else this.#instance?.resize?.();
     this.#syncDerived();
   }
@@ -261,7 +272,7 @@ export class MapController {
   #mount(): void {
     const engine = this.#engine;
     const viewport = this.#host.viewport();
-    if (!this.#connected || !engine || !viewport || this.#instance || this.#mounting) {
+    if (!this.#connected || !engine || !viewport || this.#instance || this.#session.mounting) {
       if (!engine) this.store.patch({ status: 'idle', error: null, bounds: null, moving: false });
       this.#syncDerived();
       return;
@@ -274,73 +285,36 @@ export class MapController {
     }
     const config = (this.#config = this.#host.config());
     const appearance = (this.#appearance = this.#host.appearance());
-    const mounting = (this.#mounting = new AbortController());
-    let readyReported = false;
-    const live = () => this.#mounting === mounting || this.#instanceSignal === mounting.signal;
-    const context: MapEngineContext = {
-      initialCamera: this.#camera,
-      minZoom: config.minZoom,
-      maxZoom: config.maxZoom,
-      interactive: config.interactive && !config.disabled,
-      cooperativeGestures: config.cooperativeGestures,
-      scheme: appearance.scheme,
-      theme: appearance.theme,
-      signal: mounting.signal,
-      reducedMotion: () => this.#host.reducedMotion(),
-      adoptStyles: (cssText) => this.#host.adoptStyles(cssText),
-      ready: () => {
-        if (!live() || readyReported) return;
-        readyReported = true;
-        if (this.#instance) this.#ready();
-      },
-      camera: (reason, sourceEvent) => {
-        if (live()) this.#engineCamera(reason ?? 'engine', sourceEvent);
-      },
-      cameraEnd: (reason, sourceEvent) => {
-        if (live()) this.#engineCameraEnd(reason ?? 'engine', sourceEvent);
-      },
-      press: (position, point, sourceEvent) => {
-        if (live() && this.#status() === 'ready')
-          this.#host.pressed({ position: normalizePosition(position), point, sourceEvent });
-      },
-      error: (error) => {
-        if (live()) this.#fail(error);
-      },
-    };
-    this.#cameraDirty = false;
-    this.store.patch({ status: 'loading', error: null });
-    let result: MapEngineInstance | Promise<MapEngineInstance>;
-    try {
-      result = engine.mount(viewport, context);
-    } catch (error) {
-      this.#mounting = null;
-      this.#fail(error);
-      return;
-    }
-    void Promise.resolve(result).then(
-      (instance) => {
-        if (this.#mounting !== mounting) {
-          instance.destroy();
-          return;
-        }
-        this.#mounting = null;
-        this.#instance = instance;
-        this.#instanceSignal = mounting.signal;
-        this.#instanceAbort = mounting;
-        for (const [element, record] of this.#overlays)
-          record.handle = this.#attach(instance, element, record.position);
-        if (readyReported) this.#ready();
-      },
-      (error) => {
-        if (this.#mounting !== mounting) return;
-        this.#mounting = null;
-        this.#fail(error);
-      },
-    );
+    this.#session.start((control) => {
+      const context: MapEngineContext = {
+        initialCamera: this.#camera,
+        minZoom: config.minZoom,
+        maxZoom: config.maxZoom,
+        interactive: config.interactive && !config.disabled,
+        cooperativeGestures: config.cooperativeGestures,
+        scheme: appearance.scheme,
+        theme: appearance.theme,
+        signal: control.signal,
+        reducedMotion: () => this.#host.reducedMotion(),
+        adoptStyles: (cssText) => this.#host.adoptStyles(cssText),
+        ready: control.ready,
+        camera: (reason, sourceEvent) => {
+          if (control.live()) this.#engineCamera(reason ?? 'engine', sourceEvent);
+        },
+        cameraEnd: (reason, sourceEvent) => {
+          if (control.live()) this.#engineCameraEnd(reason ?? 'engine', sourceEvent);
+        },
+        press: (position, point, sourceEvent) => {
+          if (control.live() && this.#status() === 'ready')
+            this.#host.pressed({ position: normalizePosition(position), point, sourceEvent });
+        },
+        error: control.fail,
+      };
+      this.#cameraDirty = false;
+      this.store.patch({ status: 'loading', error: null });
+      return engine.mount(viewport, context);
+    });
   }
-
-  #instanceSignal: AbortSignal | null = null;
-  #instanceAbort: AbortController | null = null;
 
   #ready(): void {
     const instance = this.#instance;
@@ -359,43 +333,10 @@ export class MapController {
     for (const { resolve } of this.#pending.splice(0)) resolve('completed');
   }
 
-  #fail(error: unknown): void {
-    const instance = this.#instance;
-    this.#instance = null;
-    this.#instanceAbort?.abort();
-    this.#instanceAbort = null;
-    this.#instanceSignal = null;
-    this.#mounting?.abort();
-    this.#mounting = null;
-    for (const record of this.#overlays.values()) {
-      record.handle?.remove();
-      record.handle = null;
-    }
-    try {
-      instance?.destroy();
-    } catch {
-      /* the engine already failed */
-    }
-    this.store.patch({ status: 'error', error, moving: false, bounds: null });
-    this.#syncDerived();
-    this.#host.failed(error);
-  }
-
   #teardown(): void {
     this.#cancelAnimation();
     this.#cancelFrame();
-    this.#mounting?.abort();
-    this.#mounting = null;
-    for (const record of this.#overlays.values()) {
-      record.handle?.remove();
-      record.handle = null;
-    }
-    const instance = this.#instance;
-    this.#instance = null;
-    this.#instanceAbort?.abort();
-    this.#instanceAbort = null;
-    this.#instanceSignal = null;
-    instance?.destroy();
+    this.#session.teardown();
     for (const { resolve } of this.#pending.splice(0)) resolve('cancelled');
     this.store.patch({ status: 'idle', moving: false, bounds: null });
     this.#syncDerived();
@@ -403,8 +344,8 @@ export class MapController {
 
   /** Final cleanup when the root is gone for good. */
   dispose(): void {
-    this.#destroyTimer?.cancel();
-    this.#destroyTimer = null;
+    this.#cancelRelease?.();
+    this.#cancelRelease = null;
     this.#engine = null;
     this.#teardown();
     this.#overlays.clear();

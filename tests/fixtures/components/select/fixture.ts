@@ -625,7 +625,11 @@ async function apiChecks() {
     await settle(host);
     const down = host.popupElement!.querySelector<HTMLElement>('.select-scroll-down')!;
     assertion(down, 'overflow scroll control missing');
-    down.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+    // A pointer that moves over the arrow scrolls; an arrow that appears under a resting one does not.
+    down.dispatchEvent(new PointerEvent('pointermove', { pointerType: 'mouse' }));
+    await delay(100);
+    assertion(host.listElement!.scrollTop === 0, 'resting pointer scrolled');
+    down.dispatchEvent(new PointerEvent('pointermove', { pointerType: 'mouse', movementY: 1 }));
     await delay(100);
     assertion(host.listElement!.scrollTop > 0, 'hold did not scroll');
     down.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
@@ -638,7 +642,7 @@ async function apiChecks() {
     await wait(host);
     host
       .popupElement!.querySelector('.select-scroll-down')!
-      .dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+      .dispatchEvent(new PointerEvent('pointermove', { pointerType: 'mouse', movementY: 1 }));
     await settle(host);
     const atEdgeRenders = renders;
     await delay(120);

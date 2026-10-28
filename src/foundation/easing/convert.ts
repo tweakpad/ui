@@ -38,6 +38,14 @@ const BEZIER_SEEDS: Readonly<Record<string, Quad>> = {
 };
 const SAMPLES = 33;
 
+/**
+ * Whether a parametric record is a single ease a cubic Bézier can stand in for: the families with
+ * a known Bézier approximation. Elastic, bounce and steps need points.
+ */
+export function hasBezierFit(curve: ParametricCurve): boolean {
+  return `${curve.family}:in` in BEZIER_SEEDS;
+}
+
 const squaredError = (a: EasingFunction, b: EasingFunction): number => {
   let error = 0;
   for (let index = 0; index <= SAMPLES; index++) {

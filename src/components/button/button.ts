@@ -12,6 +12,7 @@ import type { IconDefinition } from '../../icons/types.js';
 import { buttonPresentation } from '../../presentation/families/button.js';
 import { TpSpinner } from '../spinner/spinner.js';
 import { TpIcon } from '../icon/icon.js';
+import { observeSlots, slotOccupied } from '../shared/slots.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 type ButtonType = 'button' | 'submit' | 'reset';
@@ -127,6 +128,9 @@ export class TpButton extends TpElement {
   #unnamedReported = false;
 
   #slottedMarks = new Set<LogicalPosition>();
+  /** Whether the last render found Label content: text, an element or a forwarded slot. */
+  #labelOccupied = false;
+  #releaseSlots: (() => void) | undefined;
   #controlElement: HTMLElement | null = null;
   #invalidLinkDelegate: ComponentPartContract['renderDelegate'];
   #controlReference = (element: HTMLElement | null): void => {
@@ -217,6 +221,13 @@ export class TpButton extends TpElement {
           ? iconPosition !== position
           : !this.#slottedMarks.has(position) &&
             !('content' in (this.partContracts[`button-${position}-mark`] ?? {}));
+    // In a text size an empty Label takes no flex slot, as an absent mark does; an icon size keeps
+    // it visually hidden as the name (ucl16-button-icon-label, uwg-te-req-pres-1).
+    this.#labelOccupied = slotOccupied(this, '', { text: true });
+    const hiddenLabel =
+      !`${this.size}`.startsWith('icon') &&
+      !this.#labelOccupied &&
+      !('content' in (this.partContracts['button-label'] ?? {}));
     const content = html`${this.renderPart('button-leading-mark', state, {
       tag: 'span',
       properties: { part: parts('button-leading-mark'), hidden: hiddenMark('leading') },
@@ -224,7 +235,8 @@ export class TpButton extends TpElement {
       content: mark('leading'),
     })}${this.renderPart('button-label', state, {
       tag: 'span',
-      properties: { part: parts('button-label') },
+      properties: { part: parts('button-label'), hidden: hiddenLabel },
+      protectedProperties: ['hidden'],
       content: html`<slot @slotchange=${this.#checkName}></slot>`,
     })}${this.renderPart('button-trailing-mark', state, {
       tag: 'span',
@@ -307,10 +319,22 @@ export class TpButton extends TpElement {
       this.#press.keyUp(event);
   };
 
+  override connectedCallback(): void {
+    super.connectedCallback();
+    // Text edits fire no slotchange; only a change of occupancy needs a render.
+    this.#releaseSlots = observeSlots(this, this.#syncLabel, { characterData: true });
+  }
+
   override disconnectedCallback(): void {
     this.#press.reset();
+    this.#releaseSlots?.();
+    this.#releaseSlots = undefined;
     super.disconnectedCallback();
   }
+
+  #syncLabel = (): void => {
+    if (slotOccupied(this, '', { text: true }) !== this.#labelOccupied) this.requestUpdate();
+  };
 
   override focus(options?: FocusOptions): void {
     this.#control()?.focus(options);
