@@ -160,7 +160,7 @@ export class TpResizableHandle extends TpElement {
         'aria-valuemin': state.min,
         'aria-valuemax': state.max,
         'aria-valuenow': state.now,
-        'aria-disabled': String(state.disabled),
+        'aria-disabled': state.disabled ? 'true' : undefined,
         'data-disabled': state.disabled,
         'data-dragging': state.dragging,
         'data-orientation': state.orientation,

@@ -3,6 +3,7 @@ import {
   composedContains,
   composedParent,
   composedScopeContains,
+  focusAfterRemoval,
   focusableElements,
   isAvailable,
 } from './focus.js';
@@ -109,5 +110,37 @@ describe('focus across owner realms', () => {
     });
     const root = { childNodes: [slot] } as unknown as ParentNode;
     expect(focusableElements(root)).toEqual([positive, regular]);
+  });
+});
+
+describe('focus after removal', () => {
+  function target(): HTMLElement & { focused: FocusOptions[] } {
+    const element = { focused: [] as FocusOptions[] } as HTMLElement & { focused: FocusOptions[] };
+    element.focus = (options?: FocusOptions) => {
+      element.focused.push(options ?? {});
+    };
+    return element;
+  }
+
+  it('focuses the entry that took the removed index', () => {
+    const [a, b, c] = [target(), target(), target()];
+    const fallback = target();
+    focusAfterRemoval([a, b, c], 1, fallback);
+    expect(b.focused).toEqual([{ preventScroll: true }]);
+    expect([a, c, fallback].flatMap((entry) => entry.focused)).toEqual([]);
+  });
+
+  it('falls back to the last entry when the removed one was last', () => {
+    const [a, b] = [target(), target()];
+    focusAfterRemoval([a, b], 2, target());
+    expect(b.focused).toHaveLength(1);
+    expect(a.focused).toHaveLength(0);
+  });
+
+  it('focuses the owner once nothing remains, and tolerates a missing owner', () => {
+    const fallback = target();
+    focusAfterRemoval([], 0, fallback, { preventScroll: false });
+    expect(fallback.focused).toEqual([{ preventScroll: false }]);
+    expect(() => focusAfterRemoval([], 3, null)).not.toThrow();
   });
 });

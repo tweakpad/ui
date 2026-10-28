@@ -151,8 +151,6 @@ export class TpRadioGroupItem extends TpFormElement<unknown> {
           tabindex: disabled ? -1 : (this.#owner?.tabStop(this) ?? -1),
           'aria-checked': String(checked),
           'aria-disabled': disabled ? 'true' : undefined,
-          'aria-required': required ? 'true' : undefined,
-          'aria-readonly': this.radioReadOnly ? 'true' : undefined,
           'aria-invalid': invalid ? 'true' : undefined,
           'data-checked': checked,
           'data-unchecked': !checked,

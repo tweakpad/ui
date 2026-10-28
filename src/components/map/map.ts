@@ -645,7 +645,7 @@ export class TpMap extends TpElement implements MapApi {
       part="viewport"
       role="region"
       aria-label=${this.label || messages.map}
-      aria-busy=${status === 'loading' ? 'true' : 'false'}
+      aria-busy=${status === 'loading' ? 'true' : nothing}
     >
       <div class="surface"></div>
       ${

@@ -5,6 +5,7 @@ import { TpValueChangeEvent } from '../../foundation/events.js';
 import { LiveAnnouncer } from '../../foundation/announcer.js';
 import { ValidationRun } from '../../foundation/validation.js';
 import { defaultTrue, numberOrNull } from '../../foundation/converters.js';
+import { composedContains, deepActiveElement, focusAfterRemoval } from '../../foundation/focus.js';
 import { formatBytes, parseByteSize } from '../../foundation/format-bytes.js';
 import { listFormatter } from '../../foundation/date-locale.js';
 import { resolveLocale } from '../../foundation/services.js';
@@ -778,8 +779,11 @@ export class TpFileUpload extends TpFormElement<readonly File[]> {
         return false;
       this.#queue.cancel(item.id);
     }
+    const index = this.#store.items.findIndex((entry) => entry.id === item.id);
+    const held = this.#holdsFocus(this.#part('file-upload-item', index));
     this.#store.remove(item.id);
     this.#changed();
+    if (held) this.#refocus(index);
     this.#announce(this.#t('removed', { name: item.file.name }));
     return true;
   }
@@ -800,11 +804,34 @@ export class TpFileUpload extends TpFormElement<readonly File[]> {
         return false;
     }
     if (!previous.length && !this.#store.items.length) return true;
+    const held =
+      this.#holdsFocus(this.#part('file-upload-clear')) ||
+      this.#holdsFocus(this.#part('file-upload-items'));
     this.#abortPending();
     this.#store.clear();
     this.#changed();
+    if (held) this.#refocus(0);
     this.#announce(this.#t('cleared'));
     return true;
+  }
+
+  #part(name: string, index = 0): HTMLElement | null {
+    return this.renderRoot?.querySelectorAll<HTMLElement>(`[part~="${name}"]`)[index] ?? null;
+  }
+
+  /** Whether keyboard focus is inside a rendered part that the change is about to remove. */
+  #holdsFocus(element: HTMLElement | null): boolean {
+    return !!element && composedContains(element, deepActiveElement(this.ownerDocument));
+  }
+
+  /** Keeps focus in the control once the Button that held it is gone: the Remove Button of the item now at `index`, else the last one, else the input. */
+  #refocus(index: number): void {
+    void this.updateComplete.then(() => {
+      const buttons = [
+        ...this.renderRoot.querySelectorAll<HTMLElement>('[part~="file-upload-item-delete"]'),
+      ];
+      focusAfterRemoval(buttons, index, this.focusTarget());
+    });
   }
 
   #abortPending(): void {

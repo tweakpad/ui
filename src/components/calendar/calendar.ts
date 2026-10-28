@@ -2,6 +2,7 @@ import { bindPart } from '../../foundation/part.js';
 import { html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { createId } from '../../foundation/id.js';
+import { resolveLocale } from '../../foundation/services.js';
 import { dateTimeFormatter } from '../../foundation/date-locale.js';
 import { TpElement } from '../../foundation/element.js';
 import { TpFormElement } from '../../foundation/form-element.js';
@@ -403,11 +404,7 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
   }
 
   #locale(): string | undefined {
-    return (
-      this.locale ||
-      this.ownerDocument.documentElement.lang ||
-      this.ownerDocument.defaultView?.navigator.language
-    );
+    return this.locale || resolveLocale(this);
   }
   #monthLabel(date: string): string {
     if (this.calendarAdapter === gregorianCalendarAdapter) {
