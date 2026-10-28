@@ -5,6 +5,7 @@ import { createId } from '../../foundation/id.js';
 import { TpElement } from '../../foundation/element.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
 import { deepActiveElement } from '../../foundation/focus.js';
+import { arrowKeys, navigationKeyPreempted } from '../../foundation/collection.js';
 import {
   normalizeQuestionnaireAnswer,
   questionnaireAnswered,
@@ -792,6 +793,9 @@ export class TpQuestionnaire extends TpElement {
       'input:not([type=radio]):not([type=checkbox]):not([type=hidden]),textarea,[contenteditable]:not([contenteditable=false])',
     );
     const radio = target instanceof HTMLInputElement && target.type === 'radio';
+    // Modified arrows (history navigation, word movement) stay with the browser.
+    if (event.key.startsWith('Arrow') && navigationKeyPreempted(event)) return;
+    const { previous: back, next: forward } = arrowKeys('horizontal', this.direction);
 
     if (!textEntry && !radio && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
       const controls = this.#answerControls();
@@ -804,12 +808,12 @@ export class TpQuestionnaire extends TpElement {
       return;
     }
 
-    if (!textEntry && !radio && event.key === 'ArrowLeft') {
+    if (!textEntry && !radio && event.key === back) {
       event.preventDefault();
       this.#previousFromKeyboard(event);
       return;
     }
-    if (!textEntry && !radio && event.key === 'ArrowRight') {
+    if (!textEntry && !radio && event.key === forward) {
       event.preventDefault();
       const question = this.#activeQuestion();
       if (question && questionnaireAnswered(this.#answers[question.name]))

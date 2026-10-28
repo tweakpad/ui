@@ -32,7 +32,7 @@
 
 ## Interaction, forms and methods
 
-Press/Space selects; pressing the selected item does not clear it. Enter does not select. Arrow keys follow orientation and writing direction, wrap and skip disabled items, and select the focused Radio. Home/End choose the first/last eligible Radio. Every user selection proposal reports `item-press`, including arrow selection. One selected enabled Radio is the tab stop, otherwise the first enabled Radio is; Tab leaves the group. A group requires an accessible name.
+Press/Space selects; pressing the selected item does not clear it. Enter does not select. Arrow keys follow orientation and writing direction, wrap and skip disabled items, and select the focused Radio; consumed keys and arrows carrying Alt, Ctrl or Meta are left to the browser. Home/End choose the first/last eligible Radio. Every user selection proposal reports `item-press`, including arrow selection. One selected enabled Radio is the tab stop, otherwise the first enabled Radio is; Tab leaves the group. A group requires an accessible name.
 
 The group submits once only while a matching eligible Radio is mounted. String/number/Boolean values stringify; object values use JSON serialization while selection uses identity. Unmatched values remain stored, render no selection and fail required validity; matching remounts restore the checked presentation. Reset restores uncontrolled defaults with `form-reset`. Read-only retains submission; disabled omits it.
 
