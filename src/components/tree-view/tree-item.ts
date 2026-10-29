@@ -171,6 +171,15 @@ export class TpTreeItem extends TpElement {
         display: block;
       }
 
+      /*
+       * A settled open group (no enter or exit running) takes its content's height and never
+       * animates: its measured extent only drives the enter and exit transitions.
+       */
+      [part~='group'][data-open][data-settled] {
+        block-size: auto;
+        transition: none;
+      }
+
       .group-body {
         display: flow-root;
       }
@@ -195,6 +204,10 @@ export class TpTreeItem extends TpElement {
       this.#panel.sync(state);
       this.requestUpdate();
     },
+    onComplete: () => {
+      this.#moving = false;
+      this.requestUpdate();
+    },
   });
   readonly #panel = new DisclosurePanelController(this, {
     owner: () => this,
@@ -206,6 +219,8 @@ export class TpTreeItem extends TpElement {
   });
   #releaseSlots: (() => void) | null = null;
   #settled = false;
+  /** An enter or exit of the group is running; otherwise the group is settled at its rest size. */
+  #moving = false;
 
   constructor() {
     super();
@@ -291,10 +306,28 @@ export class TpTreeItem extends TpElement {
     }
     // Markup groups follow the expansion lane; records rows have no group.
     if (!this.state.records && this.state.expandable) {
-      if (!this.#settled || !this.state.transition) this.#presence.settle(expanded);
-      else this.#presence.setPresent(expanded);
+      if (!this.#settled || !this.state.transition) {
+        this.#moving = false;
+        this.#presence.settle(expanded);
+      } else {
+        if (!expanded && !this.#moving) this.#pinGroup();
+        this.#moving = true;
+        this.#presence.setPresent(expanded);
+      }
       this.#settled = true;
     }
+  }
+
+  /**
+   * A settled open group is `auto` high, which a transition cannot start from: before it collapses,
+   * it takes its measured height for one style update, so the exit animates from a length.
+   */
+  #pinGroup(): void {
+    const group = this.groupElement;
+    if (!group?.hasAttribute('data-settled')) return;
+    this.#panel.measure();
+    group.removeAttribute('data-settled');
+    void getComputedStyle(group).blockSize;
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -476,6 +509,7 @@ export class TpTreeItem extends TpElement {
             ?data-closed=${presence !== 'starting' && presence !== 'open'}
             ?data-starting-style=${presence === 'starting'}
             ?data-ending-style=${presence === 'ending'}
+            ?data-settled=${presence === 'open' && !this.#moving}
             ?hidden=${presence === 'absent' || presence === 'retained'}
           >
             <div class="group-body"><slot name="group"></slot></div>

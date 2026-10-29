@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tree view markup motion (issue 9)</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+    </style>
+  </head>
+  <body>
+    <tp-tree-view id="tree" label="Files" default-expanded='["src"]' style="max-inline-size: 20rem">
+      <tp-tree-item value="src">
+        src
+        <tp-tree-item value="a">a.ts</tp-tree-item>
+        <tp-tree-item value="b">b.ts</tp-tree-item>
+      </tp-tree-item>
+    </tp-tree-view>
+    <script type="module" src="./markup-motion.ts"></script>
+  </body>
+</html>

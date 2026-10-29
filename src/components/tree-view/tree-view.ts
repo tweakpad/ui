@@ -685,7 +685,6 @@ export class TpTreeView<T = TreeViewItem>
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    this.#transitionId = null;
     if (this.#records) {
       this.#mounted.clear();
       for (const element of this.renderRoot.querySelectorAll<TpTreeItem>('.list tp-tree-item')) {
@@ -708,6 +707,8 @@ export class TpTreeView<T = TreeViewItem>
         element.state = this.#state(id, false);
       }
     }
+    // Markup items read the toggled id from the state published above, so it clears only now.
+    this.#transitionId = null;
     this.#applyPendingFocus();
     if (this.#hadFocus && !this.matches(':focus-within') && this.#focusedId) {
       // A row element was re-created under focus (a motion region ended): keep focus on it.
