@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tree view page focus rule</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        font-family: system-ui;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+      }
+      main {
+        max-width: 24rem;
+      }
+      /* Generic page focus rules: they must not draw a second ring around a focused item. */
+      :focus {
+        outline: 2px dashed blue !important;
+        outline-offset: 4px;
+      }
+      :focus-visible {
+        outline: 2px solid red !important;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <button id="before" type="button">Before</button>
+      <tp-tree-view id="tree" label="Page focus rule" default-expanded='["a"]'>
+        <tp-tree-item value="a"
+          >Alpha<tp-tree-item value="a1">Alpha one</tp-tree-item
+          ><tp-tree-item value="a2">Alpha two</tp-tree-item></tp-tree-item
+        >
+        <tp-tree-item value="b">Beta</tp-tree-item>
+      </tp-tree-view>
+    </main>
+    <script type="module">
+      const built = new URL(location.href).searchParams.has('package');
+      const styles = document.createElement('link');
+      styles.rel = 'stylesheet';
+      styles.href = built ? '/dist/styles.css' : '/src/styles.css';
+      document.head.append(styles);
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      // Outline of the focused item host and of its row, for the README's assertion.
+      window.focusRings = () => {
+        const item = document.activeElement?.closest('tp-tree-item');
+        if (!item) return null;
+        const host = getComputedStyle(item);
+        const row = getComputedStyle(item.shadowRoot.querySelector("[part~='row']"));
+        return {
+          value: item.getAttribute('value'),
+          focusVisible: item.matches(':focus-visible'),
+          host: host.outlineStyle,
+          row: `${row.outlineStyle} ${row.outlineWidth}`,
+        };
+      };
+    </script>
+  </body>
+</html>
