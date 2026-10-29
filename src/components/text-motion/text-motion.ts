@@ -435,7 +435,10 @@ export class TpTextMotion extends TpElement {
         // from outside (typography, content), since a line pass never changes the height.
         const widthMoves = width !== previousWidth && !this.#splitter.fits(width);
         const heightMoved = width === previousWidth && height !== previousHeight;
-        if (widthMoves || heightMoved) scheduleLayoutPass(this, this.#linePass);
+        // A text split while it had no layout (in a hidden panel, tab or dialog) measured nothing;
+        // its lines are measured once it appears, whatever the width check says.
+        const appeared = previousWidth === 0 && width > 0;
+        if (widthMoves || heightMoved || appeared) scheduleLayoutPass(this, this.#linePass);
       }),
       observeFonts(this.ownerDocument, () => {
         if (this.#splitter.measuresLines) scheduleLayoutPass(this, this.#linePass);

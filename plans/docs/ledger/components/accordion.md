@@ -20,3 +20,4 @@
 
 | Kind | A text | Reason |
 | --- | --- | --- |
+| preview | Line-by-line reveal | requested change (2026-10-29): the lines reveal with Text motion and Scroll trigger instead of a hand-written content-role animation |
