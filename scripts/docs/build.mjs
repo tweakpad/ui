@@ -1,9 +1,10 @@
-// The documentation index, `dist/docs.json`: every page under `docs/components` and `docs/widgets`
-// parsed, related to the pages it renders and is rendered by, plus the token catalog. Runs at the
-// end of `npm run build`, after the library (`dist/docs/index.js`) and the Custom Elements
-// Manifest exist, and fails the build on anything the renderings would show wrong: a page for an
-// element the catalog does not list, a constituent tag the
-// manifest does not declare, or a documented element whose public API has an undescribed row.
+// The documentation index, `dist/docs.json`: every page under `docs/components`,
+// `docs/motion/<group>` and `docs/widgets` parsed, related to the pages it renders and is rendered
+// by, plus the token catalog. Runs at the end of `npm run build`, after the library
+// (`dist/docs/index.js`) and the Custom Elements Manifest exist, and fails the build on anything
+// the renderings would show wrong: a page for an element the catalog does not list, a constituent
+// tag the manifest does not declare, or a documented element whose public API has an undescribed
+// row.
 //
 // `scripts/docs/pending.json` lists the tags whose pages are not written yet: they need no page
 // and their API descriptions are not checked. A page for a pending tag takes it off the list.
@@ -26,7 +27,9 @@ if (!existsSync(manifestPath)) fail(['dist/custom-elements.json is missing: run 
 
 const { parseDoc, elementApi, manifestTags, relatedPages, tokenCatalog, undescribedApi } =
   await import(pathToFileURL(built).href);
-const { catalogEntries } = await import(pathToFileURL(join(root, 'dist/catalog.js')).href);
+const { catalogEntries, catalogFolder } = await import(
+  pathToFileURL(join(root, 'dist/catalog.js')).href
+);
 const { widgetEntries } = await import(pathToFileURL(join(root, 'dist/widgets/catalog.js')).href);
 const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const { version } = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
@@ -37,22 +40,23 @@ const pending = new Set(
 const problems = [];
 const pages = [];
 const entries = [
-  ...catalogEntries.map((entry) => ({ ...entry, section: 'components' })),
-  ...widgetEntries.map((entry) => ({ ...entry, section: 'widgets' })),
+  ...catalogEntries.map((entry) => ({ ...entry, folder: catalogFolder(entry) })),
+  ...widgetEntries.map((entry) => ({ ...entry, folder: 'widgets' })),
 ];
 const entryByTag = new Map(entries.map((entry) => [entry.tagName, entry]));
 const tags = new Set(manifestTags(manifest));
 
-for (const section of ['components', 'widgets']) {
-  const folder = join(root, 'docs', section);
-  if (!existsSync(folder)) continue;
-  for (const file of readdirSync(folder).sort()) {
+const folders = ['components', 'motion/text', 'widgets'];
+for (const folder of folders) {
+  const directory = join(root, 'docs', folder);
+  if (!existsSync(directory)) continue;
+  for (const file of readdirSync(directory).sort()) {
     if (!file.endsWith('.mdx')) continue;
-    const id = `${section}/${file.slice(0, -'.mdx'.length)}`;
-    const path = `docs/${section}/${file}`;
+    const id = `${folder}/${file.slice(0, -'.mdx'.length)}`;
+    const path = `docs/${folder}/${file}`;
     let page;
     try {
-      page = parseDoc(readFileSync(join(folder, file), 'utf8'), id);
+      page = parseDoc(readFileSync(join(directory, file), 'utf8'), id);
     } catch (error) {
       problems.push(error.message);
       continue;
@@ -60,8 +64,8 @@ for (const section of ['components', 'widgets']) {
     const entry = entryByTag.get(page.tag);
     if (!entry) problems.push(`${path}: ${page.tag} is not a catalog entry`);
     else {
-      if (entry.section !== section)
-        problems.push(`${path}: ${page.tag} belongs under docs/${entry.section}`);
+      if (entry.folder !== folder)
+        problems.push(`${path}: ${page.tag} belongs under docs/${entry.folder}`);
     }
     if (!tags.has(page.tag)) problems.push(`${path}: the manifest does not declare ${page.tag}`);
     for (const part of page.parts) {
@@ -75,7 +79,7 @@ for (const section of ['components', 'widgets']) {
 for (const entry of entries)
   if (!pending.has(entry.tagName) && !pages.some((page) => page.tag === entry.tagName))
     problems.push(
-      `${entry.tagName} has no page under docs/${entry.section} and is not listed in scripts/docs/pending.json`,
+      `${entry.tagName} has no page under docs/${entry.folder} and is not listed in scripts/docs/pending.json`,
     );
 for (const tag of pending)
   if (!entryByTag.has(tag))
@@ -93,8 +97,10 @@ for (const page of pages)
 
 if (problems.length) fail(problems);
 
-// Catalog order: components, then widgets.
-const order = new Map(entries.map((entry, index) => [entry.tagName, index]));
+// Catalog order within each folder: components, then Motion, then widgets.
+const order = new Map(
+  entries.map((entry, index) => [entry.tagName, folders.indexOf(entry.folder) * 1000 + index]),
+);
 pages.sort((a, b) => order.get(a.tag) - order.get(b.tag));
 const related = relatedPages(manifest, pages);
 const index = {

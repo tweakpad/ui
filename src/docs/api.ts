@@ -115,12 +115,19 @@ export interface ElementApi {
 const DIAGNOSTIC_EVENT = 'tp-diagnostic';
 
 /**
+ * Bases that hold the public API of the elements built on them, which no page of their own
+ * documents: the Motion › Text elements share their splitting and reveal API through one base.
+ */
+const OWN_API_BASES: ReadonlySet<string> = new Set(['TextRevealElement']);
+
+/**
  * An element's table lists what it declares itself. Members and attributes it inherits from a
  * base class (the shared element, form-control and surface bases, or another component it
- * extends) are not repeated on every page that inherits them. A member the element redeclares
- * is its own.
+ * extends) are not repeated on every page that inherits them, except those of an own-API base.
+ * A member the element redeclares is its own.
  */
-const inherited = (entry: { inheritedFrom?: { name?: string } }) => !!entry.inheritedFrom;
+const inherited = (entry: { inheritedFrom?: { name?: string } }) =>
+  !!entry.inheritedFrom && !OWN_API_BASES.has(entry.inheritedFrom.name ?? '');
 
 /** Public API the element declares itself. */
 const ownPublic = (member: ManifestMember) =>

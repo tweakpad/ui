@@ -1,8 +1,9 @@
 /**
- * Reader of the library's documentation pages (`docs/components/<slug>.mdx` and
- * `docs/widgets/<slug>.mdx`): one page per published component or widget, written in a restricted
- * MDX that both renderings (Storybook and the website) compile natively while tooling reads it
- * here without an MDX compiler. The page contract:
+ * Reader of the library's documentation pages (`docs/components/<slug>.mdx`,
+ * `docs/motion/<group>/<slug>.mdx` and `docs/widgets/<slug>.mdx`): one page per published
+ * component or widget, written in a restricted MDX that both renderings (Storybook and the
+ * website) compile natively while tooling reads it here without an MDX compiler. The page
+ * contract:
  *
  * - YAML frontmatter with flat scalar and list fields (`[a, b]` or a block list): `title`,
  *   `description`, `tag`, `parts`.
@@ -58,7 +59,7 @@ export interface DocElement {
 
 export interface ParsedDoc extends DocFrontmatter {
   readonly id: string;
-  readonly section: 'components' | 'widgets';
+  readonly folder: DocFolder;
   readonly slug: string;
   readonly headings: readonly DocHeading[];
   /** The first preview, when it comes before any heading. */
@@ -109,9 +110,19 @@ export function slugify(text: string): string {
     .replace(/\s+/g, '-');
 }
 
-/** A page id (`components/badge`) from its file path under `docs/`. */
+/**
+ * The documentation folders under `docs/`, in catalog order. A folder's first segment is its
+ * section; Motion pages sit one level deeper, in the group of what they move.
+ */
+export const DOC_FOLDERS = ['components', 'motion/text', 'widgets'] as const;
+export type DocFolder = (typeof DOC_FOLDERS)[number];
+
+const isDocFolder = (value: string): value is DocFolder =>
+  (DOC_FOLDERS as readonly string[]).includes(value);
+
+/** A page id (`components/badge`, `motion/text/text-split`) from its file path under `docs/`. */
 export function docId(file: string): string {
-  const match = /(?:^|\/)docs\/(components|widgets)\/([^/]+)\.mdx$/.exec(file);
+  const match = new RegExp(`(?:^|/)docs/(${DOC_FOLDERS.join('|')})/([^/]+)\\.mdx$`).exec(file);
   if (!match) throw new Error(`${file} is not a documentation page path`);
   return `${match[1]}/${match[2]}`;
 }
@@ -274,9 +285,9 @@ function blankFences(body: string): string {
 
 /** Reads one documentation page. `id` is its page id, `components/badge`. */
 export function parseDoc(source: string, id: string): ParsedDoc {
-  const [section, slug] = id.split('/') as ['components' | 'widgets', string];
-  if ((section !== 'components' && section !== 'widgets') || !slug)
-    throw new Error(`${id} is not a page id`);
+  const folder = id.slice(0, id.lastIndexOf('/'));
+  const slug = id.slice(id.lastIndexOf('/') + 1);
+  if (!isDocFolder(folder) || !slug) throw new Error(`${id} is not a page id`);
   const text = source.replace(/\r\n?/g, '\n');
   const lines = text.split('\n');
   const frontmatter = parseFrontmatter(lines, id);
@@ -408,7 +419,7 @@ export function parseDoc(source: string, id: string): ParsedDoc {
 
   return {
     id,
-    section,
+    folder,
     slug,
     title: field('title'),
     description: field('description'),

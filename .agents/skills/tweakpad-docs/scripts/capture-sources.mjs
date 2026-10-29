@@ -29,7 +29,7 @@ const frontmatterTag = (source) => /^tag:\s*(\S+)\s*$/m.exec(source)?.[1];
 
 // A: the website pages, by tag.
 const websitePages = new Map();
-for (const section of ['components', 'widgets']) {
+for (const section of ['components', 'motion/text', 'widgets']) {
   const folder = join(site, 'src/content/docs', section);
   if (!existsSync(folder)) throw new Error(`no website pages at ${folder}`);
   for (const file of readdirSync(folder).sort()) {

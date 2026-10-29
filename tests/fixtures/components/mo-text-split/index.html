@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Text motion verification</title>
+    <title>Text split verification</title>
     <link rel="stylesheet" href="/src/styles.css">
     <style>
       body { margin: 0; background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-sans); }
@@ -23,51 +23,51 @@
   </head>
   <body>
     <main>
-      <h1 class="fixture">Text motion verification</h1>
+      <h1 class="fixture">Text split verification</h1>
 
       <section class="case" id="case-base"><h2 class="label">Base: words and lines, line mask, up</h2>
-        <h2 class="display"><tp-text-motion id="base" split="words lines" mask="lines" reveal="up">Quiet spaces, open light, and rooms that breathe</tp-text-motion></h2>
+        <h2 class="display"><tp-mo-text-split id="base" split="words lines" mask="lines" reveal="up">Quiet spaces, open light, and rooms that breathe</tp-mo-text-split></h2>
         <p class="flow" id="base-below">Flow content directly below the heading.</p>
       </section>
 
       <section class="case" id="case-chars"><h2 class="label">Characters from the center, fade and blur; kerning-heavy text</h2>
-        <p class="display"><tp-text-motion id="chars" split="chars" reveal="fade blur" stagger="25" stagger-from="center">AVATAR Wave Toy</tp-text-motion></p>
+        <p class="display"><tp-mo-text-split id="chars" split="chars" reveal="fade blur" stagger="25" stagger-from="center">AVATAR Wave Toy</tp-mo-text-split></p>
         <p class="flow">Below the characters.</p>
       </section>
 
       <section class="case" id="case-nested"><h2 class="label">Nested formatting and a link across lines (resize the box)</h2>
         <div class="resizable" id="resizable">
-          <p class="lead"><tp-text-motion id="nested" split="words lines" reveal="fade up" stagger="20">Read the <a href="#case-nested" id="nested-link">documentation for <strong>every component</strong></a> and <em class="note">its many configurable options</em> before you ship, <code>tp-text-motion</code> included.</tp-text-motion></p>
+          <p class="lead"><tp-mo-text-split id="nested" split="words lines" reveal="fade up" stagger="20">Read the <a href="#case-nested" id="nested-link">documentation for <strong>every component</strong></a> and <em class="note">its many configurable options</em> before you ship, <code>tp-mo-text-split</code> included.</tp-mo-text-split></p>
           <p class="flow">Below the resizable paragraph.</p>
         </div>
       </section>
 
       <section class="case" id="case-scripts"><h2 class="label">Scripts: emoji, CJK, Arabic (falls back to words), Hebrew with English</h2>
-        <p class="lead"><tp-text-motion id="emoji" split="chars" reveal="fade up">Family 👩‍👩‍👧 and flags 🇯🇵🇫🇷 café</tp-text-motion></p>
-        <p class="lead" lang="ja"><tp-text-motion id="cjk" split="words lines" reveal="fade up">静かな空間と、開かれた光。呼吸する部屋。</tp-text-motion></p>
-        <p class="lead" dir="rtl" lang="ar"><tp-text-motion id="arabic" split="chars" reveal="fade">مساحات هادئة وضوء مفتوح</tp-text-motion></p>
-        <p class="lead" dir="rtl" lang="he"><tp-text-motion id="hebrew" split="words lines" mask="lines" reveal="up">מרחבים שקטים עם Hello World ואור פתוח בכל חדר בבית</tp-text-motion></p>
+        <p class="lead"><tp-mo-text-split id="emoji" split="chars" reveal="fade up">Family 👩‍👩‍👧 and flags 🇯🇵🇫🇷 café</tp-mo-text-split></p>
+        <p class="lead" lang="ja"><tp-mo-text-split id="cjk" split="words lines" reveal="fade up">静かな空間と、開かれた光。呼吸する部屋。</tp-mo-text-split></p>
+        <p class="lead" dir="rtl" lang="ar"><tp-mo-text-split id="arabic" split="chars" reveal="fade">مساحات هادئة وضوء مفتوح</tp-mo-text-split></p>
+        <p class="lead" dir="rtl" lang="he"><tp-mo-text-split id="hebrew" split="words lines" mask="lines" reveal="up">מרחבים שקטים עם Hello World ואור פתוח בכל חדר בבית</tp-mo-text-split></p>
       </section>
 
       <section class="case" id="case-breaks"><h2 class="label">Line breaks and preserved whitespace</h2>
-        <p class="lead"><tp-text-motion id="breaks" split="words lines" reveal="fade">First line<br>second line<br><br>after an empty line</tp-text-motion></p>
-        <p class="lead" style="white-space: pre-wrap"><tp-text-motion id="pre" split="words" reveal="fade">Spaced    out	tabbed</tp-text-motion></p>
+        <p class="lead"><tp-mo-text-split id="breaks" split="words lines" reveal="fade">First line<br>second line<br><br>after an empty line</tp-mo-text-split></p>
+        <p class="lead" style="white-space: pre-wrap"><tp-mo-text-split id="pre" split="words" reveal="fade">Spaced    out	tabbed</tp-mo-text-split></p>
       </section>
 
       <section class="case" id="case-masks"><h2 class="label">Word mask from below; character mask from the left; descenders (gjpqy)</h2>
-        <p class="display" style="line-height: 1"><tp-text-motion id="word-mask" split="words" mask="words" reveal="up" stagger="60">Gently jumping quaintly by</tp-text-motion></p>
-        <p class="display"><tp-text-motion id="char-mask" split="chars" mask="chars" reveal="right" stagger="20">Sliding glyphs</tp-text-motion></p>
+        <p class="display" style="line-height: 1"><tp-mo-text-split id="word-mask" split="words" mask="words" reveal="up" stagger="60">Gently jumping quaintly by</tp-mo-text-split></p>
+        <p class="display"><tp-mo-text-split id="char-mask" split="chars" mask="chars" reveal="right" stagger="20">Sliding glyphs</tp-mo-text-split></p>
       </section>
 
       <div class="spacer">Scroll: the next cases reveal on entry</div>
 
       <section class="case" id="case-trigger"><h2 class="label">Scroll trigger: heading, image group and caption in order</h2>
         <tp-scroll-trigger id="trigger" stagger="200">
-          <h3 class="display"><tp-text-motion id="trigger-heading" split="words lines" mask="lines" reveal="up">A coordinated entrance</tp-text-motion></h3>
+          <h3 class="display"><tp-mo-text-split id="trigger-heading" split="words lines" mask="lines" reveal="up">A coordinated entrance</tp-mo-text-split></h3>
           <tp-image-group id="trigger-group" stagger="120" reveal="fade up">
             <div class="row" id="trigger-images"></div>
           </tp-image-group>
-          <p class="lead"><tp-text-motion id="trigger-caption" reveal="fade">The caption follows once the images have revealed.</tp-text-motion></p>
+          <p class="lead"><tp-mo-text-split id="trigger-caption" reveal="fade">The caption follows once the images have revealed.</tp-mo-text-split></p>
         </tp-scroll-trigger>
         <p class="flow">Below the trigger.</p>
       </section>
@@ -75,8 +75,8 @@
       <div class="spacer">Scroll</div>
 
       <section class="case" id="case-repeat"><h2 class="label">Repeat on every entry; held until released</h2>
-        <p class="display"><tp-text-motion id="repeat" split="words" reveal="fade up" reveal-repeat>Every time it enters</tp-text-motion></p>
-        <p class="display"><tp-text-motion id="hold" split="words" reveal="fade up" reveal-hold>Held until released</tp-text-motion></p>
+        <p class="display"><tp-mo-text-split id="repeat" split="words" reveal="fade up" reveal-repeat>Every time it enters</tp-mo-text-split></p>
+        <p class="display"><tp-mo-text-split id="hold" split="words" reveal="fade up" reveal-hold>Held until released</tp-mo-text-split></p>
       </section>
 
       <section class="case" id="case-stress" hidden><h2 class="label">Stress</h2>

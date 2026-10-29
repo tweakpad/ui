@@ -1,5 +1,5 @@
 /**
- * Text segmentation for Text motion (Foundation §18.19 `tm-segmentation`). Pure functions, so
+ * Text segmentation for Text split (Foundation §18.19 `tm-segmentation`). Pure functions, so
  * splitting rules are testable without a document.
  */
 

@@ -1,5 +1,5 @@
 /**
- * The Text motion splitting engine (Foundation §18.19). It moves the original content into a
+ * The Text split splitting engine (Foundation §18.19). It moves the original content into a
  * detached holder, builds presentation-only pieces in the light tree, groups words into lines
  * from the rendered layout, and restores the original nodes on revert.
  *
@@ -20,17 +20,17 @@ export interface SplitConfig {
   readonly staggerFrom: StaggerFrom;
   /**
    * Lines become two windows cut at the middle of their text, each sliding a copy of the line
-   * (the `wipe` reveal): the real line in the end window, an inert copy in the start window.
+   * (Text mirror): the real line in the end window, an inert copy in the start window.
    */
-  readonly wipe?: boolean;
+  readonly mirror?: boolean;
 }
 
-/** One wipe window around a slide that carries `content`. */
-function wipeWindow(doc: Document, side: 'start' | 'end', content: HTMLElement): HTMLElement {
+/** One mirror window around a slide that carries `content`. */
+function mirrorWindow(doc: Document, side: 'start' | 'end', content: HTMLElement): HTMLElement {
   const window = doc.createElement('div');
-  window.dataset.tpWipeWindow = side;
+  window.dataset.tpMirrorWindow = side;
   const slide = doc.createElement('div');
-  slide.dataset.tpWipeSlide = '';
+  slide.dataset.tpMirrorSlide = '';
   slide.append(content);
   window.append(slide);
   return window;
@@ -289,7 +289,7 @@ export class TextSplitter {
     this.#containers = flattenContainers([this.#build(this.#holder!, this.host, config)]);
     if (this.#joined.length)
       this.options.diagnose?.(
-        'text-motion-joined-script',
+        'text-split-joined-script',
         `${this.#joined.length} word(s) use a script whose letters join when shaped ("${this.#joined[0]}"); they are split into words, not characters.`,
       );
     this.#endMeasure();
@@ -317,8 +317,11 @@ export class TextSplitter {
     const box = doc.createElement('div');
     box.dataset.tpMeasure = '';
     box.setAttribute('aria-hidden', 'true');
+    // No size containment: the copy's own width is the host's intrinsic width while it is
+    // measured, so a shrink-to-fit host (a flex or grid item, a float) lays the copy out at the
+    // width the original text takes instead of collapsing to its narrowest word.
     box.style.cssText =
-      'display:block;block-size:0;overflow:hidden;visibility:hidden;contain:strict;pointer-events:none';
+      'display:block;block-size:0;overflow:hidden;visibility:hidden;contain:layout paint style;pointer-events:none';
     const copy = this.#holder!.cloneNode(true) as DocumentFragment;
     const map = new Map<Node, Node>();
     const original = doc.createTreeWalker(this.#holder!);
@@ -468,13 +471,13 @@ export class TextSplitter {
         if (children.length === 0) line.dataset.tpFirstLine = '';
         assemble(line, group.items, pick);
         lines.push(line);
-        if (config.mask === 'lines' || config.wipe) {
+        if (config.mask === 'lines' || config.mirror) {
           const mask = this.#doc.createElement('div');
           mask.dataset.tpPiece = 'mask';
           mask.dataset.tpMaskUnit = 'lines';
-          if (config.wipe) {
-            mask.dataset.tpWipe = '';
-            mask.append(wipeWindow(this.#doc, 'end', line));
+          if (config.mirror) {
+            mask.dataset.tpMirror = '';
+            mask.append(mirrorWindow(this.#doc, 'end', line));
           } else mask.append(line);
           masks.push(mask);
           children.push(mask);
@@ -485,21 +488,21 @@ export class TextSplitter {
     this.#placed = new Set(this.host.childNodes);
     this.#pieces = { ...this.#pieces, lines, masks };
     this.#finish();
-    if (config.wipe) this.#twinLines(lines);
+    if (config.mirror) this.#twinLines(lines);
     this.#refocus(focused);
     return true;
   }
 
   /**
-   * The start window of each wipe line: an inert copy of the finished line, so its pieces carry
+   * The start window of each mirror line: an inert copy of the finished line, so its pieces carry
    * the same stagger and effects. It is visual only: no original text, no ids, no interaction.
    */
   #twinLines(lines: readonly HTMLElement[]): void {
     for (const line of lines) {
-      const mask = line.closest<HTMLElement>('[data-tp-wipe]');
+      const mask = line.closest<HTMLElement>('[data-tp-mirror]');
       if (!mask) continue;
       mask.style.setProperty(
-        '--_tp-tm-wipe-order',
+        '--_tp-tm-mirror-order',
         line.style.getPropertyValue('--tp-text-order') ||
           line.style.getPropertyValue('--tp-text-index') ||
           '0',
@@ -509,8 +512,8 @@ export class TextSplitter {
       for (const node of copy.querySelectorAll('[id]')) node.removeAttribute('id');
       copy.setAttribute('aria-hidden', 'true');
       copy.inert = true;
-      copy.dataset.tpWipeCopy = '';
-      mask.append(wipeWindow(this.#doc, 'start', copy));
+      copy.dataset.tpMirrorCopy = '';
+      mask.append(mirrorWindow(this.#doc, 'start', copy));
     }
   }
 
@@ -716,7 +719,7 @@ export class TextSplitter {
         if (isAtomic(element)) {
           // Keep the original element; its place in the holder is remembered for revert.
           flushRun();
-          const placeholder = this.#doc.createComment('tp-text-motion');
+          const placeholder = this.#doc.createComment('tp-mo-text-split');
           element.replaceWith(placeholder);
           this.#placeholders.set(element, placeholder);
           fragments.push({ path: [...path], atomic: element });

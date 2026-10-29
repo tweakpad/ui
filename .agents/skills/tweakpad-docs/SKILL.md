@@ -20,7 +20,7 @@ unfinished task, whatever else was done.
 
 | What                                   | Where                                                                                                                                         |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| The page (authored)                    | `docs/components/<slug>.mdx`, `docs/widgets/<slug>.mdx` (library)                                                                             |
+| The page (authored)                    | `docs/components/<slug>.mdx`, `docs/motion/<group>/<slug>.mdx`, `docs/widgets/<slug>.mdx` (library)                                                                           |
 | API Reference data (generated)         | JSDoc on the element → Custom Elements Manifest → `elementApi` (`src/docs/api.ts`)                                                            |
 | Related data (generated, website only) | manifest `renders` → `relatedPages` → `dist/docs.json`, plus pattern frontmatter `components`                                                 |
 | Storybook rendering                    | `.storybook/docs-page.mdx`, `.storybook/docs-library.mdx`, `src/stories/<slug>.stories.ts`                                                    |

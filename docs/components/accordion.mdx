@@ -138,22 +138,22 @@ The `leading` and `trailing` slots take numbers, icons, badges or status text, b
   <tp-accordion-item value="setup">
     <span slot="label">Set up your workspace</span>
     <tp-scroll-trigger reveal="up" stagger="80" reveal-repeat>
-      <p><tp-text-motion split="lines" mask="lines">Pick a name and URL. You can change both later in workspace settings.</tp-text-motion></p>
-      <p><tp-text-motion split="lines" mask="lines">Invite the people you work with most; they get an email with a link that expires in 7 days.</tp-text-motion></p>
-      <p><tp-text-motion split="lines" mask="lines">Import projects from Jira, Linear or a CSV export.</tp-text-motion></p>
+      <p><tp-mo-text-split split="lines" mask="lines">Pick a name and URL. You can change both later in workspace settings.</tp-mo-text-split></p>
+      <p><tp-mo-text-split split="lines" mask="lines">Invite the people you work with most; they get an email with a link that expires in 7 days.</tp-mo-text-split></p>
+      <p><tp-mo-text-split split="lines" mask="lines">Import projects from Jira, Linear or a CSV export.</tp-mo-text-split></p>
     </tp-scroll-trigger>
   </tp-accordion-item>
   <tp-accordion-item value="integrations">
     <span slot="label">Connect your tools</span>
     <tp-scroll-trigger reveal="up" stagger="80" reveal-repeat>
-      <p><tp-text-motion split="lines" mask="lines">Link GitHub to attach pull requests to tasks.</tp-text-motion></p>
-      <p><tp-text-motion split="lines" mask="lines">Add Slack to get a digest of mentions and due dates every morning.</tp-text-motion></p>
+      <p><tp-mo-text-split split="lines" mask="lines">Link GitHub to attach pull requests to tasks.</tp-mo-text-split></p>
+      <p><tp-mo-text-split split="lines" mask="lines">Add Slack to get a digest of mentions and due dates every morning.</tp-mo-text-split></p>
     </tp-scroll-trigger>
   </tp-accordion-item>
 </tp-accordion>`}
 />
 
-Text motion reveals a panel's lines each time its item opens. A Scroll trigger with `reveal-repeat` sequences the paragraphs, and a closed panel is hidden, so its lines reset for the next opening.
+Text split reveals a panel's lines each time its item opens. A Scroll trigger with `reveal-repeat` sequences the paragraphs, and a closed panel is hidden, so its lines reset for the next opening.
 
 Each item asks for motion with a bubbling `tp-motion-request`. Claim only the `content` role to stagger the panel's paragraphs; the accordion still measures the panel, animates its height and decides which item is open. Because the request bubbles, a listener on one item claims motion for that item only, and a listener on the accordion covers all of them.
 

@@ -13,6 +13,7 @@ import {
 import {
   parseStaggerFrom,
   RevealMembership,
+  type RevealCoordinatorHost,
   type RevealMember,
   type StaggerFrom,
 } from '../../foundation/reveal-coordination.js';
@@ -28,28 +29,9 @@ import {
   type SplitConfig,
   type SplitUnit,
 } from '../../foundation/text-split/splitter.js';
-import { textMotionPresentation } from '../../presentation/families/text-motion.js';
-import { textMotionPieceCss } from './piece-styles.js';
 
-export type TextMotionEffect =
-  'fade' | 'up' | 'down' | 'left' | 'right' | 'zoom-in' | 'zoom-out' | 'blur' | 'wipe';
-export type TextMotionMask = 'none' | 'lines' | 'words' | 'chars';
-
-const EFFECTS: readonly TextMotionEffect[] = [
-  'fade',
-  'up',
-  'down',
-  'left',
-  'right',
-  'zoom-in',
-  'zoom-out',
-  'blur',
-  'wipe',
-];
-const DEFAULT_REVEAL = 'fade up';
-
-/** Milliseconds of the first time in a computed time list (`0.56s`, `560ms`). */
-export const textMotionRoles = {
+/** The motion role every text reveal plays (Foundation §18.19). */
+export const textRevealRoles = {
   reveal: stateRole('reveal'),
 } as const satisfies Record<string, MotionRoleDefinition>;
 
@@ -63,32 +45,18 @@ export function parseSplitUnits(value: string | null | undefined): Set<SplitUnit
   return units;
 }
 
+/** What a text reveal splits: its units, the clipped unit, and whether lines become mirrors. */
+export type TextRevealSplit = Omit<SplitConfig, 'staggerFrom'>;
+
 /**
- * Splits its text into lines, words or characters and reveals the pieces one after another as the
- * text enters the view. The pieces are built around the original text, so links and inline
- * formatting keep working, and splitting never changes the space the text takes. Inside a Scroll
- * trigger the trigger decides when the reveal plays.
- *
- * @slot - The text, with inline formatting and interactive elements.
- * @fires tp-text-split - `{ lines, words, chars, masks }` after every split.
- * @fires tp-reveal-change - `{ revealed, effect }` when the reveal starts or a repeat resets it.
- * @fires tp-reveal-change-complete - `{ revealed }` after the last piece settles.
- * @cssprop --tp-text-motion-duration - Per-piece reveal duration. Default `var(--tp-duration-slow)`.
- * @cssprop --tp-text-motion-easing - Reveal easing. Default `var(--tp-easing-enter)`.
- * @cssprop --tp-text-motion-distance - Travel without a mask. Default `0.4em`.
- * @cssprop --tp-text-motion-scale - Scale offset for zoom-in and zoom-out. Default `0.2`.
- * @cssprop --tp-text-motion-blur - Start blur for `blur`. Default `0.15em`.
- * @cssprop --tp-text-motion-mask-bleed - How far masks extend over ascenders and descenders.
- * Default `0.1em`.
+ * The shared owner of the Motion › Text elements (Text split, Text mirror, Text stroke): it
+ * splits the text into pieces around the original content, keeps the lines in step with the
+ * layout, and plays, holds, hides and scrubs the reveal alone or inside a Scroll trigger. Each
+ * element names what it splits, its effect tokens and its piece styles; everything else is here.
  */
-export class TpTextMotion extends TpElement {
-  static tagName = 'tp-text-motion';
-  static override presentation = textMotionPresentation;
+export abstract class TextRevealElement extends TpElement {
   static override properties = {
     ...TpElement.properties,
-    split: { type: String, reflect: true },
-    mask: { type: String, reflect: true },
-    reveal: { type: String, reflect: true },
     stagger: { type: Number },
     staggerFrom: { type: String, attribute: 'stagger-from', reflect: true },
     revealRepeat: { type: Boolean, attribute: 'reveal-repeat', reflect: true },
@@ -100,26 +68,9 @@ export class TpTextMotion extends TpElement {
       :host {
         display: block;
       }
-
-      /* Characters are positioned individually, so kerning and ligatures cannot apply; they are
-         off from the first frame so splitting never re-wraps the text. */
-      :host([split~='chars']) {
-        font-kerning: none;
-        font-variant-ligatures: none;
-      }
     `,
   ];
 
-  /** Units to create: tokens of `chars`, `words`, `lines`. The finest unit animates. */
-  split = 'words';
-  /** The unit whose pieces are clipped, so they emerge from behind it. */
-  mask: TextMotionMask = 'none';
-  /**
-   * Effect tokens (`fade`, `up`, `down`, `left`, `right`, `zoom-in`, `zoom-out`, `blur`, `wipe`).
-   * `wipe` slides each line's two halves out of the middle of its text and needs `lines` in `split`.
-   * Unset uses the coordinator default, or `fade up`; empty disables the reveal.
-   */
-  reveal: string | undefined = undefined;
   /** Milliseconds between consecutive pieces. */
   stagger = 30;
   /** The piece the stagger starts from. */
@@ -131,6 +82,21 @@ export class TpTextMotion extends TpElement {
    * playing the reveal backwards; removing it reveals the text again.
    */
   revealHold = false;
+
+  /** Light-tree piece styles, adopted once per root for every instance in it. */
+  protected abstract readonly pieceCss: string;
+  /** What to split; read before every split. */
+  protected abstract splitOptions(): TextRevealSplit;
+  /** The active effect tokens; empty disables the reveal. */
+  protected abstract revealEffects(coordinator: RevealCoordinatorHost | undefined): string[];
+  /** After every split and line pass, and when the effects change: build effect-owned pieces. */
+  protected afterSplit(): void {}
+  /** The width changed without moving a word: aligned text moved inside its lines. */
+  protected widthChanged(): void {}
+  /** The element whose transitions and scrubbed animation time a piece's reveal. */
+  protected timedElement(piece: HTMLElement): Element {
+    return piece;
+  }
 
   readonly #splitter = new TextSplitter(this, {
     diagnose: (code, message) => queueMicrotask(() => this.diagnose(code, message)),
@@ -147,7 +113,7 @@ export class TpTextMotion extends TpElement {
   #releaseContent: (() => void)[] = [];
   #releaseStyles: (() => void) | undefined;
 
-  /** The line pieces, in order (empty unless `split` includes `lines`). */
+  /** The line pieces, in order (empty unless lines are split). */
   get lines(): HTMLElement[] {
     // Lines always exist internally so wrapping matches the original; only requested ones show.
     return this.#config.units.has('lines') ? [...this.#splitter.pieces.lines] : [];
@@ -158,7 +124,7 @@ export class TpTextMotion extends TpElement {
     return [...this.#splitter.pieces.words];
   }
 
-  /** The character pieces, in order (empty unless `split` includes `chars`). */
+  /** The character pieces, in order (empty unless characters are split). */
   get chars(): HTMLElement[] {
     return [...this.#splitter.pieces.chars];
   }
@@ -173,21 +139,17 @@ export class TpTextMotion extends TpElement {
     return this.#playback.revealed;
   }
 
-  get #effects(): TextMotionEffect[] {
-    const value = this.reveal ?? (this.#membership.host?.reveal || DEFAULT_REVEAL);
-    const tokens = value.split(/\s+/);
-    return EFFECTS.filter((effect) => tokens.includes(effect));
+  get #effects(): string[] {
+    return this.revealEffects(this.#membership.host);
   }
 
   get #config(): SplitConfig {
-    const units = parseSplitUnits(this.split);
-    const mask = this.mask === 'none' ? null : (this.mask as SplitUnit);
-    return {
-      units,
-      mask: mask && units.has(mask) ? mask : null,
-      staggerFrom: parseStaggerFrom(this.staggerFrom),
-      wipe: units.has('lines') && this.#effects.includes('wipe'),
-    };
+    return { ...this.splitOptions(), staggerFrom: parseStaggerFrom(this.staggerFrom) };
+  }
+
+  /** The pieces that carry the reveal, in document order. */
+  protected get animatedPieces(): readonly HTMLElement[] {
+    return this.#splitter.pieces.animated;
   }
 
   /** Ready to reveal: split, with the fonts it uses loaded. */
@@ -197,21 +159,18 @@ export class TpTextMotion extends TpElement {
 
   readonly #playback = new RevealPlayback({
     owner: this,
-    role: textMotionRoles.reveal,
+    role: textRevealRoles.reveal,
     emit: (type, detail) => {
-      // A settled reveal shows each wipe line whole, without its sliding copy.
+      // A settled reveal can drop what only the motion needed (Text mirror's sliding copies).
       if (type === 'tp-reveal-change-complete' && (detail as { revealed: boolean }).revealed)
         this.toggleAttribute('data-tp-at-rest', true);
       this.emit(type, detail);
     },
     effect: () => this.#effects.join(' '),
-    context: () => {
-      const animated = this.#splitter.pieces.animated;
-      return {
-        unit: this.getAttribute('data-tp-unit'),
-        count: animated.length,
-      };
-    },
+    context: () => ({
+      unit: this.getAttribute('data-tp-unit'),
+      count: this.#splitter.pieces.animated.length,
+    }),
     apply: (revealed, delay, animated = false) => {
       if (revealed && delay > 0) this.style.setProperty('--_tp-tm-delay', `${delay}ms`);
       else this.style.removeProperty('--_tp-tm-delay');
@@ -231,7 +190,7 @@ export class TpTextMotion extends TpElement {
           ? piece
           : latest,
       );
-      return transitionSpan(view.getComputedStyle(last));
+      return transitionSpan(view.getComputedStyle(this.timedElement(last)));
     },
   });
 
@@ -254,9 +213,10 @@ export class TpTextMotion extends TpElement {
       const last = Math.max(
         ...animated.map((piece) => Number(piece.style.getPropertyValue('--tp-text-order')) || 0),
       );
+      const timed = view.getComputedStyle(this.timedElement(animated[0]!));
       return (
         last * Math.max(0, Number(this.stagger) || 0) +
-        cssTimeMs(view.getComputedStyle(animated[0]!).animationDuration.split(',')[0]!)
+        cssTimeMs(timed.animationDuration.split(',')[0]!)
       );
     },
     scrub: (time) => {
@@ -310,7 +270,7 @@ export class TpTextMotion extends TpElement {
     this.#releaseStyles = adoptStyleText(
       this,
       root.nodeType === 11 ? (root as ShadowRoot) : this.ownerDocument,
-      textMotionPieceCss,
+      this.pieceCss,
     );
     this.#membership.connect();
     this.#observe();
@@ -376,7 +336,7 @@ export class TpTextMotion extends TpElement {
     this.style.setProperty('--_tp-tm-stagger', `${Math.max(0, Number(this.stagger) || 0)}ms`);
     if (this.#reverted) return;
     const config = this.#config;
-    const key = JSON.stringify([[...config.units], config.mask, config.staggerFrom, config.wipe]);
+    const key = JSON.stringify([[...config.units], config.mask, config.staggerFrom, config.mirror]);
     // The first split happens here, before the first paint of the defined element.
     if (key !== this.#splitKey) {
       this.#splitKey = key;
@@ -389,37 +349,13 @@ export class TpTextMotion extends TpElement {
     // Holding a revealed text again hides it: the reveal plays backwards to the start state.
     if (changed.has('revealHold') && this.revealHold && this.#playback.revealed)
       void this.#playback.hide();
-    if (changed.has('reveal')) this.#measureWipe();
-    if (changed.has('revealHold') || changed.has('reveal') || changed.has('revealRepeat'))
-      this.#readinessChanged();
+    if (changed.has('revealHold') || changed.has('revealRepeat')) this.#readinessChanged();
   }
 
-  /**
-   * `wipe` cuts each line at the middle of its own text, whatever the alignment: each line's wipe
-   * wrapper carries the start and size of the text it holds.
-   */
-  #measureWipe(): void {
-    if (this.getClientRects().length === 0) return;
-    const range = this.ownerDocument.createRange();
-    for (const mask of this.querySelectorAll<HTMLElement>('[data-tp-wipe]')) {
-      const line = mask.querySelector<HTMLElement>(
-        "[data-tp-piece='line']:not([data-tp-wipe-copy])",
-      );
-      if (!line) continue;
-      const box = line.getBoundingClientRect();
-      // Only the drawn text counts: the visually hidden original (for assistive technology) lays
-      // out as one long run inside its clipped box.
-      const rects = [...line.childNodes].flatMap((node) => {
-        if (node instanceof Element && node.matches('[data-tp-text]')) return [];
-        range.selectNodeContents(node);
-        return [...range.getClientRects()].filter((rect) => rect.width > 0);
-      });
-      if (!rects.length) continue;
-      const start = Math.min(...rects.map((rect) => rect.left)) - box.left;
-      const end = Math.max(...rects.map((rect) => rect.right)) - box.left;
-      mask.style.setProperty('--_tp-tm-wipe-start', `${start}px`);
-      mask.style.setProperty('--_tp-tm-wipe-size', `${end - start}px`);
-    }
+  /** The effects changed: effect-owned pieces follow, and the reveal re-evaluates. */
+  protected effectsChanged(): void {
+    this.afterSplit();
+    this.#readinessChanged();
   }
 
   protected override render() {
@@ -437,8 +373,8 @@ export class TpTextMotion extends TpElement {
 
   /** After every split or line pass: drop our own mutation records and announce the pieces. */
   #afterSplit(): void {
+    this.afterSplit();
     this.#discardOwnRecords();
-    this.#measureWipe();
     this.toggleAttribute('data-split-ready', this.#splitter.active);
     this.#emitSplit();
     this.#readinessChanged();
@@ -495,7 +431,7 @@ export class TpTextMotion extends TpElement {
         }
         if (previousWidth < 0) return;
         // Aligned text moves inside its line box with the width, even when no word moves.
-        if (width !== previousWidth) this.#measureWipe();
+        if (width !== previousWidth) this.widthChanged();
         // Recalculated inside the resize delivery, before the new layout is painted. A width
         // change matters only when it can move a word; a height change at the same width comes
         // from outside (typography, content), since a line pass never changes the height.
@@ -533,11 +469,5 @@ export class TpTextMotion extends TpElement {
   #contentChanged(): void {
     if (this.#reverted || !this.isConnected) return;
     this.#split();
-  }
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    'tp-text-motion': TpTextMotion;
   }
 }

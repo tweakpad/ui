@@ -2,15 +2,16 @@ import type { ComponentType } from 'react';
 import { docId, parseDoc, type ParsedDoc } from '../docs/parse.js';
 
 /**
- * The library's documentation pages (`docs/components/*.mdx`, `docs/widgets/*.mdx`) as Storybook
- * renders them: each page compiled to a component by Storybook's MDX plugin, and read by the
- * page parser from its source, so the Docs page knows the hero, the headings and the tags.
+ * The library's documentation pages (`docs/components/*.mdx`, `docs/motion/text/*.mdx`,
+ * `docs/widgets/*.mdx`) as Storybook renders them: each page compiled to a component by
+ * Storybook's MDX plugin, and read by the page parser from its source, so the Docs page knows the
+ * hero, the headings and the tags.
  */
 const compiled = import.meta.glob<{ default: ComponentType<{ components?: object }> }>(
-  '../../docs/{components,widgets}/*.mdx',
+  '../../docs/{components,motion/text,widgets}/*.mdx',
   { eager: true },
 );
-const sources = import.meta.glob<string>('../../docs/{components,widgets}/*.mdx', {
+const sources = import.meta.glob<string>('../../docs/{components,motion/text,widgets}/*.mdx', {
   eager: true,
   query: '?raw',
   import: 'default',

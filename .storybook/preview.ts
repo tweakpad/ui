@@ -142,8 +142,9 @@ const preview = definePreview({
   parameters: {
     a11y: { test: 'error' },
     controls: { expanded: true },
-    // Sidebar sections: the library pages first, then foundational components, then widgets.
-    options: { storySort: { order: ['Tweakpad UI', 'Components', 'Widgets'] } },
+    // Sidebar sections: the library pages first, then foundational components, Motion (grouped by
+    // what moves: Text first) and widgets.
+    options: { storySort: { order: ['Tweakpad UI', 'Components', 'Motion', ['Text'], 'Widgets'] } },
     docs: {
       page: DocumentationPage,
       // Every Docs page takes the Theme toolbar's scheme (System by default), Storybook's blocks

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { catalogEntries } from './catalog.js';
+import { catalogEntries, catalogFolder, motionGroups } from './catalog.js';
 
 describe('public catalog', () => {
   it('contains unique public controls and one Menu identity', () => {
@@ -25,5 +25,17 @@ describe('public catalog', () => {
         'thin-wrapper',
       ]),
     );
+  });
+
+  it('documents Motion elements in their group folders, each a catalog entry', () => {
+    for (const tags of Object.values(motionGroups))
+      for (const tag of tags)
+        expect(
+          catalogEntries.some((entry) => entry.tagName === tag),
+          tag,
+        ).toBe(true);
+    expect(catalogFolder({ tagName: 'tp-mo-text-split' })).toBe('motion/text');
+    expect(catalogFolder({ tagName: 'tp-mo-text-stroke' })).toBe('motion/text');
+    expect(catalogFolder({ tagName: 'tp-button' })).toBe('components');
   });
 });

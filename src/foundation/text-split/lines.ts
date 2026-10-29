@@ -1,5 +1,5 @@
 /**
- * Line grouping for Text motion (Foundation §18.19 `tm-lines`): pieces in document order are
+ * Line grouping for Text split (Foundation §18.19 `tm-lines`): pieces in document order are
  * grouped by their block position, so any inline direction groups the same way.
  */
 export interface PieceBox {

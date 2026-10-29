@@ -113,6 +113,23 @@ test('a changed A preview fails, unless a forced edit lists it', () => {
   assert.deepEqual(fixture(changed, { ledger }), []);
 });
 
+test('a renamed element renames its tag, title and previews through forced edits', () => {
+  const renamed = MERGED.replaceAll('tp-badge', 'tp-tag')
+    .replace('title: Badge', 'title: Tag')
+    .replace('title="Badge"', 'title="Tag"');
+  const problems = fixture(renamed);
+  assert.ok(
+    problems.some((problem) => problem.includes('frontmatter tag')),
+    problems.join('\n'),
+  );
+  const ledger = `${LEDGER}| frontmatter | title | the element was renamed |
+| frontmatter | tag | the element was renamed |
+| preview | Badge → Tag | the element was renamed |
+| preview | Variants | the element was renamed |
+`;
+  assert.deepEqual(fixture(renamed, { ledger }), []);
+});
+
 test('a B section placed before an A section fails', () => {
   const page = normalizeWebsitePage(WEBSITE).replace(
     '### Variants',

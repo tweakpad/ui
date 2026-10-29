@@ -58,7 +58,10 @@ Always work from these files, not from memory of the old pages.
      entry that does (the text editor's engine factories live under
      `@tweakpad/ui/text-editor/adapters/<engine>`);
    - an attribute the element does not read is replaced by the one it does, keeping the same
-     text (`aria-label` on `tp-menu-radio-group` becomes `label`).
+     text (`aria-label` on `tp-menu-radio-group` becomes `label`);
+   - an element renamed after the merge takes its new tag and name everywhere: the frontmatter
+     (`frontmatter` rows naming the field), every preview that uses it (a preview named after the
+     element lists `old title → new title`) and every paragraph that names it.
 
    Anything else is not a forced edit. If a check fails on A content for another reason, stop and
    report it. Do not edit A to make the check pass.
@@ -104,8 +107,9 @@ Always work from these files, not from memory of the old pages.
 ```
 
 - **Item** is the B item id exactly as captured. Every captured item has one row.
-- **Kind** is `preview` (A text = the preview title), `prose` (A text = the paragraph's first
-  words) or `heading` (A text = the heading).
+- **Kind** is `preview` (A text = the preview title, or `old → new` when a rename retitles it),
+  `prose` (A text = the paragraph's first words), `heading` (A text = the heading) or
+  `frontmatter` (A text = the field: `title`, `description` or `tag`).
 - When a page has no forced edits, keep the section with the header row only.
 
 ## What the checker verifies

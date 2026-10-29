@@ -15,7 +15,7 @@ const rooms = [
 
 const scrollTriggerDefaultSource = `<tp-scroll-trigger stagger="200">
   <h3 style="margin: 0 0 var(--tp-space-3); font-size: 2rem; line-height: 1.1">
-    <tp-text-motion split="words lines" mask="lines" reveal="up">Quiet spaces, open light</tp-text-motion>
+    <tp-mo-text-split split="words lines" mask="lines" reveal="up">Quiet spaces, open light</tp-mo-text-split>
   </h3>
   <tp-image-group reveal="fade up" stagger="120">
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--tp-space-3)">
@@ -28,7 +28,7 @@ ${rooms
     </div>
   </tp-image-group>
   <p style="margin: var(--tp-space-3) 0 0; color: var(--tp-muted-foreground)">
-    <tp-text-motion reveal="fade">Three rooms designed for focused work.</tp-text-motion>
+    <tp-mo-text-split reveal="fade">Three rooms designed for focused work.</tp-mo-text-split>
   </p>
 </tp-scroll-trigger>`;
 

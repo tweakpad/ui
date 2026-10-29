@@ -72,7 +72,9 @@ export const catalog = [
   ['Scroll trigger', 'tp-scroll-trigger', 'thin-wrapper'],
   ['Timeline', 'tp-timeline', 'compound-reexport'],
   ['Autocomplete', 'tp-autocomplete', 'flattening-compound'],
-  ['Text motion', 'tp-text-motion', 'compound-reexport'],
+  ['Text split', 'tp-mo-text-split', 'compound-reexport'],
+  ['Text mirror', 'tp-mo-text-mirror', 'compound-reexport'],
+  ['Text stroke', 'tp-mo-text-stroke', 'compound-reexport'],
   ['Cursor', 'tp-cursor', 'compound-reexport'],
   ['Table of contents', 'tp-table-of-contents', 'compound-reexport'],
   ['Tree view', 'tp-tree-view', 'compound-reexport'],
@@ -101,3 +103,24 @@ export const catalogEntries: readonly CatalogEntry[] = catalog.map(([name, tagNa
   tagName,
   kind,
 }));
+
+/** What a group of Motion elements moves; each group is a folder under `docs/motion/`. */
+export type MotionGroup = 'text';
+
+/**
+ * The documentation folder of a catalog entry, under `docs/`. Every entry ships from the main entry
+ * and `register`; Motion elements are only grouped apart, by what they move, in the catalog,
+ * Storybook (`Motion/Text/…`) and the documentation (`docs/motion/text/`).
+ */
+export type CatalogFolder = 'components' | `motion/${MotionGroup}`;
+
+/** The catalog entries documented under Motion, by group. */
+export const motionGroups: Readonly<Record<MotionGroup, readonly string[]>> = {
+  text: ['tp-mo-text-split', 'tp-mo-text-mirror', 'tp-mo-text-stroke'],
+};
+
+export const catalogFolder = (entry: Pick<CatalogEntry, 'tagName'>): CatalogFolder => {
+  for (const [group, tags] of Object.entries(motionGroups) as [MotionGroup, readonly string[]][])
+    if (tags.includes(entry.tagName)) return `motion/${group}`;
+  return 'components';
+};

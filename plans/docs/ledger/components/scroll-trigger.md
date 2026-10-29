@@ -22,3 +22,10 @@
 
 | Kind | A text | Reason |
 | --- | --- | --- |
+| preview | Scroll Trigger | Text motion was renamed Text split (`tp-mo-text-split`) |
+| preview | From the center | Text motion was renamed Text split (`tp-mo-text-split`) |
+| preview | Replay on entry | Text motion was renamed Text split (`tp-mo-text-split`) |
+| preview | Scrubbed band | Text motion was renamed Text split (`tp-mo-text-split`) |
+| preview | Custom scroll range | Text motion was renamed Text split (`tp-mo-text-split`) |
+| preview | Pinned scene | Text motion was renamed Text split (`tp-mo-text-split`) |
+| preview | Reveal events | Text motion was renamed Text split (`tp-mo-text-split`) |

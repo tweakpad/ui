@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { catalogEntries } from '../catalog.js';
+import { catalogEntries, catalogFolder } from '../catalog.js';
+import { DOC_FOLDERS } from '../docs/parse.js';
 import { widgetEntries } from '../widgets/catalog.js';
 
 const directory = new URL('./', import.meta.url);
@@ -22,21 +23,23 @@ const meta = (source: string) => source.split('export default meta')[0]!;
 const componentStories = [...stories.values()].filter((source) =>
   source.includes("title: 'Components/"),
 );
-const elementStories = [...componentStories, ...widgetStories.values()];
+const motionStories = [...stories.values()].filter((source) => source.includes("title: 'Motion/"));
+const elementStories = [...componentStories, ...motionStories, ...widgetStories.values()];
+/** The Storybook title path of each catalog folder. */
+const FOLDER_TITLES = { components: 'Components', 'motion/text': 'Motion/Text' } as const;
 
 describe('Storybook catalog entries', () => {
   const docsPage = read('../../.storybook/docs-page.mdx');
   const preview = read('../../.storybook/preview.ts');
 
-  it('has one statically indexed Default story for every public control', () => {
-    expect(componentStories).toHaveLength(catalogEntries.length);
+  it('has one statically indexed Default story for every public control, in its section', () => {
+    expect(componentStories.length + motionStories.length).toBe(catalogEntries.length);
     for (const entry of catalogEntries) {
+      const title = `title: '${FOLDER_TITLES[catalogFolder(entry)]}/${entry.name}'`;
       expect(
-        componentStories.filter((source) => source.includes(`component: '${entry.tagName}'`)),
+        elementStories.filter((source) => source.includes(`component: '${entry.tagName}'`)),
       ).toHaveLength(1);
-      expect(
-        componentStories.filter((source) => source.includes(`title: 'Components/${entry.name}'`)),
-      ).toHaveLength(1);
+      expect(elementStories.filter((source) => source.includes(title))).toHaveLength(1);
     }
   });
 
@@ -60,7 +63,9 @@ describe('Storybook catalog entries', () => {
     // The section exists before its first widget: an overview page, registration and ordering.
     expect(read('widgets/overview.mdx')).toContain('<Meta title="Widgets/Overview" />');
     expect(preview).toContain("import '../src/register/widgets.js';");
-    expect(preview).toContain("order: ['Tweakpad UI', 'Components', 'Widgets']");
+    expect(preview).toContain(
+      "order: ['Tweakpad UI', 'Components', 'Motion', ['Text'], 'Widgets']",
+    );
   });
 
   it('declares Docs and layout once in the preview, not per story file', () => {
@@ -111,20 +116,24 @@ describe('Storybook catalog entries', () => {
 
   it('renders each library documentation page from its own story, and nothing else from it', () => {
     const pages = new Set(
-      ['components', 'widgets'].flatMap((section) =>
-        (existsSync(new URL(`../../docs/${section}/`, import.meta.url))
-          ? readdirSync(new URL(`../../docs/${section}/`, import.meta.url))
+      DOC_FOLDERS.flatMap((folder) =>
+        (existsSync(new URL(`../../docs/${folder}/`, import.meta.url))
+          ? readdirSync(new URL(`../../docs/${folder}/`, import.meta.url))
           : []
         )
           .filter((file) => file.endsWith('.mdx'))
-          .map((file) => `${section}/${file.slice(0, -'.mdx'.length)}`),
+          .map((file) => `${folder}/${file.slice(0, -'.mdx'.length)}`),
       ),
     );
     const declared = new Map<string, string>();
     for (const [file, source] of [...stories, ...widgetStories]) {
-      const section = file.startsWith('widgets/') ? 'widgets' : 'components';
+      const folder = file.startsWith('widgets/')
+        ? 'widgets'
+        : source.includes("title: 'Motion/Text/")
+          ? 'motion/text'
+          : 'components';
       const slug = file.replace(/^widgets\//u, '').replace(/\.stories\.ts$/u, '');
-      const id = `${section}/${slug}`;
+      const id = `${folder}/${slug}`;
       const uses = /libraryDocs\('([^']+)'\)/u.exec(source)?.[1];
       if (uses) declared.set(uses, file);
       if (pages.has(id)) {

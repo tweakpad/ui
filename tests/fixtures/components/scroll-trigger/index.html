@@ -27,9 +27,9 @@
 
       <tp-scroll-trigger id="pinned" scrub scrub-once pin stagger="250" style="--tp-scroll-trigger-pin-length: 200vh">
         <div class="scene">
-          <h2><tp-text-motion id="pinned-heading" split="words" mask="words" reveal="up" stagger="80">Quiet spaces reveal as you scroll</tp-text-motion></h2>
+          <h2><tp-mo-text-split id="pinned-heading" split="words" mask="words" reveal="up" stagger="80">Quiet spaces reveal as you scroll</tp-mo-text-split></h2>
           <tp-image-group id="pinned-group" reveal="fade up" stagger="120"><div class="row" id="pinned-images"></div></tp-image-group>
-          <p><tp-text-motion id="pinned-caption" split="words" reveal="fade" stagger="40">Scrolling back up leaves everything at rest.</tp-text-motion></p>
+          <p><tp-mo-text-split id="pinned-caption" split="words" reveal="fade" stagger="40">Scrolling back up leaves everything at rest.</tp-mo-text-split></p>
         </div>
       </tp-scroll-trigger>
       <p class="flow" id="after-pinned">Flow content after the pinned section.</p>
@@ -37,8 +37,8 @@
       <div class="spacer">Scroll: this pinned section reverses on scroll up (the default)</div>
       <tp-scroll-trigger id="reversing" scrub pin stagger="200" scrub-smoothing="0.8" style="--tp-scroll-trigger-pin-length: 150vh">
         <div class="scene">
-          <h2><tp-text-motion id="reversing-heading" split="chars" reveal="fade blur" stagger="30" stagger-from="center">Back and forth</tp-text-motion></h2>
-          <p><tp-text-motion id="reversing-caption" split="words lines" mask="lines" reveal="up">Each line follows the scroll in both directions, trailing it slightly.</tp-text-motion></p>
+          <h2><tp-mo-text-split id="reversing-heading" split="chars" reveal="fade blur" stagger="30" stagger-from="center">Back and forth</tp-mo-text-split></h2>
+          <p><tp-mo-text-split id="reversing-caption" split="words lines" mask="lines" reveal="up">Each line follows the scroll in both directions, trailing it slightly.</tp-mo-text-split></p>
         </div>
       </tp-scroll-trigger>
       <p class="flow" id="after-reversing">Flow content after the reversing section.</p>
@@ -46,9 +46,9 @@
       <div class="spacer">Scroll: an unpinned band scrubbed across its cover range</div>
       <tp-scroll-trigger id="band" scrub scrub-range="cover" stagger="150" reveal="fade left">
         <div class="band">
-          <p><tp-text-motion id="band-1">First line slides in with the scroll</tp-text-motion></p>
-          <p><tp-text-motion id="band-2">then the second</tp-text-motion></p>
-          <p><tp-text-motion id="band-3">and the third.</tp-text-motion></p>
+          <p><tp-mo-text-split id="band-1">First line slides in with the scroll</tp-mo-text-split></p>
+          <p><tp-mo-text-split id="band-2">then the second</tp-mo-text-split></p>
+          <p><tp-mo-text-split id="band-3">and the third.</tp-mo-text-split></p>
         </div>
       </tp-scroll-trigger>
       <p class="flow" id="after-band">Flow content after the band.</p>
@@ -56,8 +56,8 @@
       <div class="spacer">Scroll: custom offsets, revealed between 25% entered and 40% through contain</div>
       <tp-scroll-trigger id="offsets" scrub scrub-range="entry 25% contain 40%" stagger="150" reveal="fade up">
         <div class="band">
-          <p><tp-text-motion id="offsets-1">Settled before the middle</tp-text-motion></p>
-          <p><tp-text-motion id="offsets-2">and at rest while read.</tp-text-motion></p>
+          <p><tp-mo-text-split id="offsets-1">Settled before the middle</tp-mo-text-split></p>
+          <p><tp-mo-text-split id="offsets-2">and at rest while read.</tp-mo-text-split></p>
         </div>
       </tp-scroll-trigger>
       <div class="spacer">End</div>

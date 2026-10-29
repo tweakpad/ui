@@ -29,3 +29,4 @@
 
 | Kind | A text | Reason |
 | --- | --- | --- |
+| preview | Headline, group and caption | Text motion was renamed Text split (`tp-mo-text-split`) |

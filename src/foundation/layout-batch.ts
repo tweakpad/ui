@@ -1,5 +1,5 @@
 /**
- * Batched layout passes (Foundation §12.3 `env-shared-observation`; Text motion `tm-lines`, Text
+ * Batched layout passes (Foundation §12.3 `env-shared-observation`; Text split `tm-lines`, Text
  * transform `ttf-refit`, Overflow list `ovl-refit`). Every owner that needs layout in the same
  * turn queues one pass. The batch runs every write, then every measurement in one layout, then
  * every apply, in a microtask that completes before the next paint. An owner keeps only its

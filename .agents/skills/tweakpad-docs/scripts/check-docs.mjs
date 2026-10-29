@@ -30,7 +30,7 @@ export const DISPOSITIONS = new Set([
   'dropped-api',
   'dropped-storybook',
 ]);
-const FORCED_KINDS = new Set(['preview', 'prose', 'heading']);
+const FORCED_KINDS = new Set(['preview', 'prose', 'heading', 'frontmatter']);
 
 /** The mechanical edits every moved A page gets: no Astro imports, no rendering-hint fields. */
 export function normalizeWebsitePage(source) {
@@ -157,9 +157,20 @@ export function checkPage(id, options = {}) {
   for (const edit of forced)
     if (!FORCED_KINDS.has(edit.kind))
       problems.push(
-        `${id}: ledger forced edit kind "${edit.kind}" is not preview, prose or heading`,
+        `${id}: ledger forced edit kind "${edit.kind}" is not preview, prose, heading or frontmatter`,
       );
-  const forcedPreview = new Set(forced.filter((e) => e.kind === 'preview').map((e) => e.text));
+  // A preview's A text is its title, or `old → new` when a renamed element renames the preview.
+  const forcedPreview = new Map(
+    forced
+      .filter((e) => e.kind === 'preview')
+      .map((e) => {
+        const [from, to] = e.text.split(' → ');
+        return [from, to ?? from];
+      }),
+  );
+  const forcedFrontmatter = new Set(
+    forced.filter((e) => e.kind === 'frontmatter').map((e) => e.text),
+  );
   const forcedHeading = new Set(forced.filter((e) => e.kind === 'heading').map((e) => e.text));
   const forcedProse = forced.filter((e) => e.kind === 'prose').map((e) => e.text);
 
@@ -175,7 +186,7 @@ export function checkPage(id, options = {}) {
     }
     if (website) {
       for (const field of ['title', 'description', 'tag'])
-        if (website[field] !== page[field])
+        if (website[field] !== page[field] && !forcedFrontmatter.has(field))
           problems.push(`${id}: frontmatter ${field} changed from the website page`);
       website.headings.forEach((heading, index) => {
         const actual = page.headings[index];
@@ -193,7 +204,7 @@ export function checkPage(id, options = {}) {
           (candidate, index) =>
             index >= cursor &&
             (forcedEdit
-              ? candidate.title === preview.title
+              ? candidate.title === forcedPreview.get(preview.title)
               : previewKey(candidate) === previewKey(preview)),
         );
         if (at === -1) {
@@ -272,7 +283,7 @@ export function checkPage(id, options = {}) {
 export function allIds(base = root) {
   const ids = new Set();
   for (const folder of ['docs', 'plans/docs/sources/website', 'plans/docs/sources/storybook'])
-    for (const section of ['components', 'widgets']) {
+    for (const section of ['components', 'motion/text', 'widgets']) {
       const path = join(base, folder, section);
       if (!existsSync(path)) continue;
       for (const file of readdirSync(path))

@@ -344,12 +344,12 @@ export async function verifySharedOwner() {
         `${tag} .visually-hidden uses the shared declarations ${hiddenMismatch(node).join(', ')}`,
       );
   }
-  const pieces = [...consumers.querySelectorAll('tp-text-motion [data-tp-text]')];
-  assert(pieces.length > 0, `text motion renders hidden text runs (${pieces.length})`);
+  const pieces = [...consumers.querySelectorAll('tp-mo-text-split [data-tp-text]')];
+  assert(pieces.length > 0, `text split renders hidden text runs (${pieces.length})`);
   for (const piece of pieces)
     assert(
       hiddenMismatch(piece).length === 0,
-      `text motion run uses the shared declarations ${hiddenMismatch(piece).join(', ')}`,
+      `text split run uses the shared declarations ${hiddenMismatch(piece).join(', ')}`,
     );
   const association = [...consumers.querySelectorAll<HTMLElement>('tp-input > span[id]')].filter(
     (node) => node.style.clipPath,

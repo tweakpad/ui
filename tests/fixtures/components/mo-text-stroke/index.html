@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Text stroke verification</title>
+    <link rel="stylesheet" href="/src/styles.css">
+    <style>
+      body { margin: 0; background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-sans); }
+      main { max-width: 960px; margin: 24px auto; padding: 16px; display: grid; gap: 40px; }
+      h1.fixture { font-size: 1.25rem; margin: 0; }
+      section.case { display: grid; gap: 12px; }
+      section.case > h2.label { font-size: 0.875rem; margin: 0; color: var(--tp-muted-foreground); font-weight: 500; }
+      .display { font-size: 2.5rem; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+      .lead { font-size: 1.125rem; line-height: 1.6; margin: 0; max-inline-size: 60ch; }
+      .flow { margin: 0; padding: 8px 12px; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-md); font-size: 0.875rem; color: var(--tp-muted-foreground); }
+      .resizable { resize: horizontal; overflow: hidden; inline-size: 520px; min-inline-size: 160px; max-inline-size: 100%; border: 1px solid var(--tp-border); border-radius: var(--tp-radius-lg); padding: 12px; }
+      .spacer { block-size: 80vh; display: grid; place-items: center; color: var(--tp-muted-foreground); font-size: 0.75rem; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-lg); }
+      .row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+      .stress { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+      tp-image { border-radius: var(--tp-radius-lg); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Text stroke verification</h1>
+
+      <section class="case" id="case-chars"><h2 class="label">Characters</h2>
+        <p class="display" style="font-size: 3.5rem"><tp-mo-text-stroke id="chars" split="chars" stagger="45">Northern lights</tp-mo-text-stroke></p>
+        <p class="flow">Below the characters.</p>
+      </section>
+
+      <section class="case" id="case-words"><h2 class="label">Words and lines, inline formatting and a link (resize the box)</h2>
+        <div class="resizable">
+          <p class="lead"><tp-mo-text-stroke id="words" split="words lines" stagger="80">Built for <strong>teams</strong> that ship <a href="#case-words" id="words-link">every day</a>, with <em>nothing</em> in the way.</tp-mo-text-stroke></p>
+          <p class="flow">Below the resizable paragraph.</p>
+        </div>
+      </section>
+
+      <section class="case" id="case-outline"><h2 class="label">Heavier, slower outline (custom properties)</h2>
+        <p class="display" style="font-size: 4rem; font-weight: 300; --tp-mo-text-stroke-width: 0.05em; --tp-mo-text-stroke-duration: 2.4s"><tp-mo-text-stroke id="outline" split="chars" stagger="80">Atlas</tp-mo-text-stroke></p>
+      </section>
+
+      <section class="case" id="case-hold"><h2 class="label">Hide and reveal (reveal-hold)</h2>
+        <p class="display"><tp-mo-text-stroke id="hold" split="chars" stagger="45">Quiet harbor</tp-mo-text-stroke></p>
+        <tp-button id="hold-toggle" variant="outline">Hide</tp-button>
+      </section>
+
+      <div class="spacer">Scroll: the scrubbed case follows</div>
+
+      <section class="case" id="case-scrub"><h2 class="label">Scrubbing Scroll trigger</h2>
+        <tp-scroll-trigger scrub scrub-range="cover">
+          <p class="display"><tp-mo-text-stroke id="scrub" split="chars" stagger="60">Drawn by the scroll</tp-mo-text-stroke></p>
+        </tp-scroll-trigger>
+      </section>
+      <div class="spacer">End</div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

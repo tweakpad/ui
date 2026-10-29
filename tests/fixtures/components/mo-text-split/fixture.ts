@@ -72,7 +72,7 @@ if (stress) {
   document.querySelector<HTMLElement>('#case-stress')!.hidden = false;
   const grid = document.querySelector('#stress')!;
   for (let index = 0; index < stress; index++) {
-    const text = document.createElement('tp-text-motion');
+    const text = document.createElement('tp-mo-text-split');
     text.setAttribute('split', index % 3 === 0 ? 'chars' : 'words lines');
     if (index % 2) text.setAttribute('mask', 'lines');
     text.textContent = `Card ${index + 1}: quiet spaces and open light for every room`;
@@ -85,7 +85,7 @@ const beforeDefinition = flowPositions();
 
 const define = async () => {
   const api = await import(/* @vite-ignore */ built ? '/dist/index.js' : '/src/index.ts');
-  for (const element of [api.TpTextMotion, api.TpScrollTrigger, api.TpImage, api.TpImageGroup])
+  for (const element of [api.TpMoTextSplit, api.TpScrollTrigger, api.TpImage, api.TpImageGroup])
     api.defineElement(element.tagName, element);
 };
 // `?defer=ms` defines the elements late, to compare layout before and after definition.

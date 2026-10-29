@@ -39,7 +39,8 @@ const files = new Set(pack.files.map((file) => file.path));
 const forbidden = [...files].filter(
   (path) =>
     /^(src|tmp|plans|external|scripts|tests|\.storybook)\/|^\.env|stylesheet\.js/u.test(path) ||
-    (/^docs\//u.test(path) && !/^docs\/(?:components|widgets)\/[^/]+\.mdx$/u.test(path)),
+    (/^docs\//u.test(path) &&
+      !/^docs\/(?:components|motion\/text|widgets)\/[^/]+\.mdx$/u.test(path)),
 );
 if (forbidden.length) fail(`unexpected files in the package: ${forbidden.slice(0, 10).join(', ')}`);
 const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));

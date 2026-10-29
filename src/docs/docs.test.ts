@@ -1,8 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { catalogEntries } from '../catalog.js';
+import { catalogEntries, catalogFolder } from '../catalog.js';
 import { widgetEntries } from '../widgets/catalog.js';
-import { docId, parseDoc, slugify, type ParsedDoc } from './parse.js';
+import { DOC_FOLDERS, docId, parseDoc, slugify, type ParsedDoc } from './parse.js';
 import { isPreviewSpecifier, previewImports, unsupportedImports } from './preview-runtime.js';
 
 /**
@@ -24,18 +24,18 @@ const sources = (dir: string): string[] =>
         : [],
   );
 
-const pages: ParsedDoc[] = ['components', 'widgets'].flatMap((section) =>
-  list(`docs/${section}/`)
+const pages: ParsedDoc[] = DOC_FOLDERS.flatMap((folder) =>
+  list(`docs/${folder}/`)
     .filter((file) => file.endsWith('.mdx'))
     .sort()
     .map((file) => {
-      const path = `docs/${section}/${file}`;
+      const path = `docs/${folder}/${file}`;
       return parseDoc(read(path), docId(path));
     }),
 );
 const entries = [
-  ...catalogEntries.map((entry) => ({ ...entry, section: 'components' as const })),
-  ...widgetEntries.map((entry) => ({ ...entry, section: 'widgets' as const })),
+  ...catalogEntries.map((entry) => ({ ...entry, folder: catalogFolder(entry) })),
+  ...widgetEntries.map((entry) => ({ ...entry, folder: 'widgets' as const })),
 ];
 const pending = new Set<string>(
   (JSON.parse(read('scripts/docs/pending.json')) as { tags: string[] }).tags,
@@ -113,7 +113,7 @@ describe('documentation pages', () => {
     for (const page of pages) {
       const entry = entries.find((candidate) => candidate.tagName === page.tag);
       expect(entry, `${page.id}: ${page.tag} is not a catalog entry`).toBeDefined();
-      expect(entry!.section, `${page.id} is in the wrong section`).toBe(page.section);
+      expect(entry!.folder, `${page.id} is in the wrong folder`).toBe(page.folder);
       expect(
         pending.has(page.tag),
         `${page.id}: ${page.tag} has a page; take it off pending.json`,
@@ -123,7 +123,7 @@ describe('documentation pages', () => {
       if (!pending.has(entry.tagName))
         expect(
           pages.some((page) => page.tag === entry.tagName),
-          `${entry.tagName} needs docs/${entry.section}/<slug>.mdx or a pending.json entry`,
+          `${entry.tagName} needs docs/${entry.folder}/<slug>.mdx or a pending.json entry`,
         ).toBe(true);
     for (const tag of pending)
       expect(

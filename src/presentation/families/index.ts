@@ -80,7 +80,9 @@ import { qrCodePresentation } from './qr-code.js';
 import { scrollTriggerPresentation } from './scroll-trigger.js';
 import { timelinePresentation } from './timeline.js';
 import { autocompletePresentation } from './autocomplete.js';
-import { textMotionPresentation } from './text-motion.js';
+import { moTextSplitPresentation } from './mo-text-split.js';
+import { moTextMirrorPresentation } from './mo-text-mirror.js';
+import { moTextStrokePresentation } from './mo-text-stroke.js';
 import { tableOfContentsPresentation } from './table-of-contents.js';
 import { treeViewPresentation } from './tree-view.js';
 
@@ -165,7 +167,9 @@ export { qrCodePresentation } from './qr-code.js';
 export { scrollTriggerPresentation } from './scroll-trigger.js';
 export { timelinePresentation } from './timeline.js';
 export { autocompletePresentation } from './autocomplete.js';
-export { textMotionPresentation } from './text-motion.js';
+export { moTextSplitPresentation } from './mo-text-split.js';
+export { moTextMirrorPresentation } from './mo-text-mirror.js';
+export { moTextStrokePresentation } from './mo-text-stroke.js';
 export { tableOfContentsPresentation } from './table-of-contents.js';
 export { treeViewPresentation } from './tree-view.js';
 
@@ -252,7 +256,9 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   scrollTriggerPresentation,
   timelinePresentation,
   autocompletePresentation,
-  textMotionPresentation,
+  moTextSplitPresentation,
+  moTextMirrorPresentation,
+  moTextStrokePresentation,
   tableOfContentsPresentation,
   treeViewPresentation,
 ];

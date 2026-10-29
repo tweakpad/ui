@@ -58,7 +58,7 @@ const beforeDefinition = { positions: flowPositions(), height: pageHeight() };
 
 const define = async () => {
   const api = await import('/src/index.ts');
-  for (const element of [api.TpTextMotion, api.TpScrollTrigger, api.TpImage, api.TpImageGroup])
+  for (const element of [api.TpMoTextSplit, api.TpScrollTrigger, api.TpImage, api.TpImageGroup])
     api.defineElement(element.tagName, element);
 };
 const defer = Number(params.get('defer') ?? 0);

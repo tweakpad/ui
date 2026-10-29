@@ -11,7 +11,7 @@ rest of the token set by `@tweakpad/ui/styles.css`:
 | ---------------------- | -------------------------------- | -------------------------------------------------------------- |
 | `--tp-duration-fast`   | `200ms`                          | Feedback: color, fill, track and thumb changes; dialog fades   |
 | `--tp-duration-normal` | `280ms`                          | Anchored surfaces, panels, layout changes and viewport moves   |
-| `--tp-duration-slow`   | `560ms`                          | Image and Text motion reveals, hover zoom                      |
+| `--tp-duration-slow`   | `560ms`                          | Image and Text split reveals, hover zoom                      |
 | `--tp-easing-standard` | `cubic-bezier(0.2, 0, 0, 1)`     | State changes and movement within the page                     |
 | `--tp-easing-enter`    | `cubic-bezier(0.22, 1, 0.36, 1)` | Arrivals: opening surfaces, reveals, items settling into place |
 | `--tp-easing-exit`     | `cubic-bezier(0.4, 0, 1, 1)`     | Departures: closing surfaces                                   |
@@ -152,7 +152,7 @@ const gsapDriver = {
 
 Web Animations and third-party tween libraries do not inherit a component's CSS transition declaration. Resolve the motion roles from the request's owner, as shown above, when the driver should follow the Tweakpad motion theme: duration roles always compute to seconds (`0.28s`), and easing roles to CSS easing functions. The `reducedMotion` field already reflects the resolved policy. Application-specific drivers may instead use durations and easings from their own centralized motion system.
 
-The library splits text only through [Text motion](components/text-motion.mdx), whose `reveal` role hands a claimed driver the split pieces, and sequences reveals only through [Scroll trigger](components/scroll-trigger.mdx) and Image groups. It does not construct timelines or define choreography between arbitrary descendants. A consumer may do that inside `play()` using its own light-DOM content. The Collapsible and Accordion **External line-by-line motion** stories demonstrate this boundary by claiming only the `content` role and staggering their paragraphs; panel measurement and presence remain owned by Collapsible.
+The library splits text only through [Text split](motion/text/text-split.mdx), whose `reveal` role hands a claimed driver the split pieces, and sequences reveals only through [Scroll trigger](components/scroll-trigger.mdx) and Image groups. It does not construct timelines or define choreography between arbitrary descendants. A consumer may do that inside `play()` using its own light-DOM content. The Collapsible and Accordion **External line-by-line motion** stories demonstrate this boundary by claiming only the `content` role and staggering their paragraphs; panel measurement and presence remain owned by Collapsible.
 
 ## Current role inventory
 
@@ -187,7 +187,7 @@ Public context lists only stable values supplied by the component in addition to
 | Marker                         | `shimmer`           | Content                                     | ambient: `start`, `stop`                            | —                                                    | non-blocking |
 | Status dot                     | `attention`         | Indicator                                   | ambient: `start`, `stop`                            | `motion`                                             | non-blocking |
 | Image                          | `reveal`            | Root                                        | state: `change`                                     | `effect`                                             | non-blocking |
-| Text motion                    | `reveal`            | Root                                        | state: `change`                                     | `effect`, `unit`, `count`                            | non-blocking |
+| Text split                    | `reveal`            | Root                                        | state: `change`                                     | `effect`, `unit`, `count`                            | non-blocking |
 | Cursor                         | `state`             | Surface                                     | state: `change`                                     | `state`, `previousState`, `zone`, `stuck`            | non-blocking |
 | Text editor selection toolbar  | `surface`           | `text-editor-selection-toolbar` part        | presence: `enter`, `exit`                           | `placement`                                          | blocking     |
 

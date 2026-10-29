@@ -262,7 +262,8 @@ scenarios rerun. An accessibility pass does not satisfy this gate.
 ### 7. Complete documentation and its compositions
 
 Every published component and widget has one documentation page, `docs/components/<slug>.mdx`
-(widgets: `docs/widgets/<slug>.mdx`), written once in the library. Storybook renders it with
+(Motion elements: `docs/motion/<group>/<slug>.mdx`; widgets: `docs/widgets/<slug>.mdx`), written once
+in the library. Storybook renders it with
 Storybook blocks, through the story's `libraryDocs()`. The website renders it with library
 components, from the installed package. **Follow the
 [tweakpad-docs skill](../tweakpad-docs/SKILL.md) for every documentation change.** It covers:

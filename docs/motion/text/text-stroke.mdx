@@ -1,0 +1,66 @@
+---
+title: Text stroke
+description: Draws the outline of every glyph, then fills the text in as it scrolls into view.
+tag: tp-mo-text-stroke
+---
+
+<Preview
+  title="Text stroke"
+  code={`<p style="margin:0;text-align:center;font-size:3.5rem;line-height:1.1;font-weight:600;letter-spacing:-0.02em">
+  <tp-mo-text-stroke split="chars" stagger="45" reveal-repeat>Northern lights</tp-mo-text-stroke>
+</p>`}
+/>
+
+## Usage
+
+Put Text stroke inside the heading or paragraph whose text it draws and keep typography on that element; the pieces and their outlines inherit it. Each piece draws its outline in the text color, then the text fills in over the second half of the reveal and the outline fades. The outlines are the browser's own strokes of the font, laid exactly over the text, so nothing around the text moves. A standalone text reveals the first time it enters the viewport.
+
+Inside a [Scroll trigger](../../../components/scroll-trigger/) that coordinator owns the timing; inside a scrubbing one the scroll position draws the outlines.
+
+Links and inline formatting keep working, the outlines are hidden from assistive technology, and screen readers read the text once. Under reduced motion the text appears filled immediately and the events still fire.
+
+### Words and characters
+
+`split` sets the pieces that draw one after another, with `stagger` milliseconds between them: words by default, or `chars` to draw glyph by glyph. Characters turn off kerning from the first frame, so the text never re-wraps when it splits.
+
+<Preview
+  title="Word by word"
+  code={`<p style="margin:0;inline-size:100%;text-align:center;font-size:2.25rem;line-height:1.15;font-weight:700">
+  <tp-mo-text-stroke split="words lines" stagger="140" reveal-repeat>Built for teams that ship every day</tp-mo-text-stroke>
+</p>`}
+/>
+
+### Outline
+
+`--tp-mo-text-stroke-width` sets the outline width, and `--tp-mo-text-stroke-length` the dash that draws one glyph: every glyph draws at once, so a glyph with a longer outline draws faster. A slower duration suits light weights and large sizes.
+
+<Preview
+  title="Heavier outline"
+  code={`<p style="margin:0;text-align:center;font-size:4rem;line-height:1;font-weight:300;--tp-mo-text-stroke-width:0.05em;--tp-mo-text-stroke-duration:2.4s">
+  <tp-mo-text-stroke split="chars" stagger="80" reveal-repeat>Atlas</tp-mo-text-stroke>
+</p>`}
+/>
+
+### Hiding and revealing again
+
+`reveal-hold` keeps a ready text waiting, unfilled and undrawn. Setting it on a revealed text hides it, fading the fill and undrawing the outlines; removing it reveals the text again.
+
+<Preview
+  title="Hide and reveal"
+  script={`const text = document.querySelector('#text-stroke-demo-hold');
+const toggle = document.querySelector('#text-stroke-demo-toggle');
+toggle.addEventListener('click', () => {
+  text.revealHold = !text.revealHold;
+  toggle.textContent = text.revealHold ? 'Reveal' : 'Hide';
+});`}
+  code={`<div style="display:grid;gap:var(--tp-space-5);justify-items:center;inline-size:100%">
+  <p style="margin:0;justify-self:stretch;text-align:center;font-size:3rem;line-height:1.1;font-weight:600;letter-spacing:-0.02em">
+    <tp-mo-text-stroke id="text-stroke-demo-hold" split="chars" stagger="45">Quiet harbor</tp-mo-text-stroke>
+  </p>
+  <tp-button id="text-stroke-demo-toggle" variant="outline">Hide</tp-button>
+</div>`}
+/>
+
+### Limits
+
+- Fonts whose glyphs are built from overlapping contours, common in variable fonts, show the overlaps as lines while the outline draws; the fill covers them as the reveal ends.

@@ -515,17 +515,23 @@ const examples = {
       label="Scan to connect your mobile device"
     ></tp-qr-code>
   `,
-  'tp-text-motion': () => html`
+  'tp-mo-text-split': () => html`
     <h3>
-      <tp-text-motion split="words lines" mask="lines" reveal="up"
-        >Quiet spaces, open light</tp-text-motion
+      <tp-mo-text-split split="words lines" mask="lines" reveal="up"
+        >Quiet spaces, open light</tp-mo-text-split
       >
     </h3>
   `,
+  'tp-mo-text-mirror': () => html`
+    <h3><tp-mo-text-mirror>Every review, in one timeline</tp-mo-text-mirror></h3>
+  `,
+  'tp-mo-text-stroke': () => html`
+    <h3><tp-mo-text-stroke split="chars">Northern lights</tp-mo-text-stroke></h3>
+  `,
   'tp-scroll-trigger': () => html`
     <tp-scroll-trigger stagger="150" reveal="fade up">
-      <p><tp-text-motion>Revealed together, in order</tp-text-motion></p>
-      <p><tp-text-motion>once the trigger enters view.</tp-text-motion></p>
+      <p><tp-mo-text-split>Revealed together, in order</tp-mo-text-split></p>
+      <p><tp-mo-text-split>once the trigger enters view.</tp-mo-text-split></p>
     </tp-scroll-trigger>
   `,
   // Targets live on the page around the example; the spy follows the page scroll.

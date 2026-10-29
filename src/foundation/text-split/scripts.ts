@@ -1,5 +1,5 @@
 /**
- * Script and direction facts for Text motion (Foundation §18.19 `tm-segmentation`).
+ * Script and direction facts for Text split (Foundation §18.19 `tm-segmentation`).
  */
 
 /** Scripts whose letters join or reorder when shaped; splitting them below words breaks them. */

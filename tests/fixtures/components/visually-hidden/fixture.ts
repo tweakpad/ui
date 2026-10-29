@@ -174,7 +174,7 @@ render(
         <tp-timeline-item value="sown">Sown</tp-timeline-item>
         <tp-timeline-item value="harvested">Harvested</tp-timeline-item>
       </tp-timeline>
-      <tp-text-motion split="words">Seeds sprout in spring</tp-text-motion>
+      <tp-mo-text-split split="words">Seeds sprout in spring</tp-mo-text-split>
       <tp-field label="Plot name" description="Shown to neighbors"><tp-input></tp-input></tp-field>
       <tp-command-palette label="Garden commands"
         ><tp-button slot="trigger" variant="outline">Commands</tp-button></tp-command-palette

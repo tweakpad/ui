@@ -1,0 +1,53 @@
+---
+title: Text mirror
+description: Reveals text line by line from the middle out, both halves of each line sliding apart from a seam.
+tag: tp-mo-text-mirror
+---
+
+<Preview
+  title="Text mirror"
+  code={`<p style="margin:0;inline-size:32rem;max-inline-size:100%;font-size:2.75rem;line-height:1.05;font-weight:600;letter-spacing:-0.02em;text-align:center">
+  <tp-mo-text-mirror stagger="90" reveal-repeat>Every review, every comment, in one shared timeline</tp-mo-text-mirror>
+</p>`}
+/>
+
+## Usage
+
+Put Text mirror inside the heading or paragraph whose text it reveals and keep typography on that element; the lines inherit it. Each line is cut at the middle of its own text, whatever the alignment, and both halves slide out of that seam to their places. Lines are measured from the original text's own layout, so the reveal never changes wrapping or height and nothing below moves. A standalone text reveals the first time it enters the viewport.
+
+Inside a [Scroll trigger](../../../components/scroll-trigger/) that coordinator owns the timing; inside a scrubbing one the scroll position slides the halves.
+
+Links and inline formatting keep working, and screen readers read the text once. At rest each line shows whole, so selection and links behave as in the original text. Under reduced motion every line appears at rest immediately and the events still fire.
+
+### Stagger
+
+`stagger` is the delay in milliseconds between consecutive lines, and `stagger-from` starts the sequence at the `first`, `last` or `center` line.
+
+<Preview
+  title="From the center line"
+  code={`<p style="margin:0;inline-size:100%;max-inline-size:28rem;text-align:start;font-size:1.25rem;line-height:1.5;font-weight:500">
+  <tp-mo-text-mirror stagger="120" stagger-from="center" reveal-repeat>Plan the week, share the board, and keep every decision next to the work it changed, so nobody has to ask twice.</tp-mo-text-mirror>
+</p>`}
+/>
+
+`reveal-repeat` resets the text once it has fully left the viewport and plays again when it returns.
+
+### Hiding and revealing again
+
+`reveal-hold` keeps a ready text waiting with its halves closed. Setting it on a revealed text hides it, sliding each line back into its seam; removing it reveals the text again.
+
+<Preview
+  title="Hide and reveal"
+  script={`const text = document.querySelector('#text-mirror-demo-hold');
+const toggle = document.querySelector('#text-mirror-demo-toggle');
+toggle.addEventListener('click', () => {
+  text.revealHold = !text.revealHold;
+  toggle.textContent = text.revealHold ? 'Reveal' : 'Hide';
+});`}
+  code={`<div style="display:grid;gap:var(--tp-space-5);justify-items:center;inline-size:100%">
+  <p style="margin:0;inline-size:100%;max-inline-size:36rem;text-align:center;font-size:1.5rem;line-height:1.4;font-weight:600">
+    <tp-mo-text-mirror id="text-mirror-demo-hold" stagger="90">Every review, every comment and every release, in one shared timeline.</tp-mo-text-mirror>
+  </p>
+  <tp-button id="text-mirror-demo-toggle" variant="outline">Hide</tp-button>
+</div>`}
+/>

@@ -152,13 +152,13 @@ To sequence images with surrounding text, wrap them in a [Scroll trigger](../scr
   title="Headline, group and caption"
   align="stretch"
   code={`<tp-scroll-trigger stagger="200" style="display:grid;gap:var(--tp-space-4);max-inline-size:40rem;margin-inline:auto;inline-size:100%">
-  <h3 style="margin:0"><tp-text-motion split="words lines" mask="lines" reveal="up">Spaces that work the way you do</tp-text-motion></h3>
+  <h3 style="margin:0"><tp-mo-text-split split="words lines" mask="lines" reveal="up">Spaces that work the way you do</tp-mo-text-split></h3>
   <tp-image-group reveal="fade up" stagger="120" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--tp-space-3)">
     <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
     <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
     <tp-image ratio="1" style="border-radius:var(--tp-radius-lg)" src="https://images.unsplash.com/photo-1548516173-3cabfa4607e9?w=400&q=75&auto=format&fit=crop" alt=""></tp-image>
   </tp-image-group>
-  <p style="margin:0;color:var(--tp-muted-foreground)"><tp-text-motion reveal="fade">Open desks, quiet rooms and a terrace, all bookable from the app.</tp-text-motion></p>
+  <p style="margin:0;color:var(--tp-muted-foreground)"><tp-mo-text-split reveal="fade">Open desks, quiet rooms and a terrace, all bookable from the app.</tp-mo-text-split></p>
 </tp-scroll-trigger>`}
 />
 

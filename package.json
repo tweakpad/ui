@@ -37,6 +37,7 @@
     "!dist/stylesheet.js",
     "!dist/stylesheet.js.map",
     "docs/components/*.mdx",
+    "docs/motion/text/*.mdx",
     "docs/widgets/*.mdx"
   ],
   "main": "./dist/index.js",

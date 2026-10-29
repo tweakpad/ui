@@ -1,27 +1,27 @@
 ---
-title: Text motion
+title: Text split
 description: Splits text into lines, words or characters and reveals them in sequence as the text scrolls into view.
-tag: tp-text-motion
+tag: tp-mo-text-split
 ---
 
 <Preview
-  title="Text motion"
+  title="Text split"
   code={`<p style="margin:0;inline-size:32rem;max-inline-size:100%;font-size:2.75rem;line-height:1.05;font-weight:600;letter-spacing:-0.02em;text-align:center">
-  <tp-text-motion split="words lines" mask="lines" reveal="up" reveal-repeat>
+  <tp-mo-text-split split="words lines" mask="lines" reveal="up" reveal-repeat>
     Quiet spaces, open light, and rooms that breathe
-  </tp-text-motion>
+  </tp-mo-text-split>
 </p>`}
 />
 
 ## Usage
 
-Put Text motion inside the heading or paragraph whose text it animates and keep typography on that element; the pieces inherit it. Lines are measured from the original text's own layout, so the split never changes wrapping or height and nothing below moves. A standalone text reveals the first time it enters the viewport.
+Put Text split inside the heading or paragraph whose text it animates and keep typography on that element; the pieces inherit it. Lines are measured from the original text's own layout, so the split never changes wrapping or height and nothing below moves. A standalone text reveals the first time it enters the viewport.
 
 The stylesheet keeps the text hidden, in its final space, until the element is defined, so the unsplit text never flashes (it appears anyway after three seconds if the script never loads).
 
-Inside a [Scroll trigger](../scroll-trigger/) (or an Image group), that coordinator owns the timing.
+Inside a [Scroll trigger](../../../components/scroll-trigger/) (or an Image group), that coordinator owns the timing.
 
-Inside a scrubbing [Scroll trigger](../scroll-trigger/) the scroll position drives the same reveal: every piece shows its eased state at the scrubbed time, in stagger order.
+Inside a scrubbing [Scroll trigger](../../../components/scroll-trigger/) the scroll position drives the same reveal: every piece shows its eased state at the scrubbed time, in stagger order.
 
 ### Masks
 
@@ -32,7 +32,7 @@ The mask extends a little over ascenders and descenders, so tight line heights n
 <Preview
   title="Words behind a mask"
   code={`<p style="margin:0;inline-size:100%;text-align:center;font-size:2rem;line-height:1.1;font-weight:600">
-  <tp-text-motion split="words" mask="words" reveal="up" stagger="60" reveal-repeat>Ship the release on Friday</tp-text-motion>
+  <tp-mo-text-split split="words" mask="words" reveal="up" stagger="60" reveal-repeat>Ship the release on Friday</tp-mo-text-split>
 </p>`}
 />
 
@@ -40,29 +40,13 @@ The mask extends a little over ascenders and descenders, so tight line heights n
 
 `reveal` combines effects such as `fade`, `blur`, `zoom-in` and the four directions. `split="chars"` animates user-perceived characters and turns off kerning from the first frame, so the text never re-wraps when it splits.
 
-Effects only change opacity, translate, scale and filter, so nothing around the text moves. `wipe` works on lines instead: each line is cut at the middle of its text, and both halves slide out of that seam to their places. It needs `lines` in `split`, combines with the other effects and follows `stagger` line by line.
+Effects only change opacity, translate, scale and filter, so nothing around the text moves. For lines that open from their middle, or glyphs drawn as outlines before they fill, use [Text mirror](../mo-text-mirror/) and [Text stroke](../mo-text-stroke/).
 
 <Preview
   title="Characters from the center"
   code={`<p style="margin:0;inline-size:100%;text-align:center;font-size:2.5rem;font-weight:600;letter-spacing:-0.02em">
-  <tp-text-motion split="chars" reveal="fade blur" stagger="25" stagger-from="center" reveal-repeat>Open light</tp-text-motion>
+  <tp-mo-text-split split="chars" reveal="fade blur" stagger="25" stagger-from="center" reveal-repeat>Open light</tp-mo-text-split>
 </p>`}
-/>
-
-<Preview
-  title="Line wipe"
-  script={`const text = document.querySelector('#text-motion-demo-wipe');
-const toggle = document.querySelector('#text-motion-demo-wipe-toggle');
-toggle.addEventListener('click', () => {
-  text.revealHold = !text.revealHold;
-  toggle.textContent = text.revealHold ? 'Reveal' : 'Hide';
-});`}
-  code={`<div style="display:grid;gap:var(--tp-space-5);justify-items:center;inline-size:100%">
-  <p style="margin:0;inline-size:100%;max-inline-size:36rem;text-align:center;font-size:1.5rem;line-height:1.4;font-weight:600">
-    <tp-text-motion id="text-motion-demo-wipe" split="lines" reveal="wipe" stagger="90">Every review, every comment and every release, in one shared timeline.</tp-text-motion>
-  </p>
-  <tp-button id="text-motion-demo-wipe-toggle" variant="outline">Hide</tp-button>
-</div>`}
 />
 
 ### Stagger
@@ -72,7 +56,7 @@ toggle.addEventListener('click', () => {
 <Preview
   title="Slow stagger"
   code={`<p style="margin:0;inline-size:100%;text-align:center;font-size:1.75rem;font-weight:600">
-  <tp-text-motion split="words" reveal="fade zoom-in" stagger="120" reveal-repeat>Every time it enters</tp-text-motion>
+  <tp-mo-text-split split="words" reveal="fade zoom-in" stagger="120" reveal-repeat>Every time it enters</tp-mo-text-split>
 </p>`}
 />
 
@@ -84,15 +68,15 @@ toggle.addEventListener('click', () => {
 
 <Preview
   title="Reveal on demand"
-  script={`const headline = document.querySelector('#text-motion-demo-hold');
-document.querySelector('#text-motion-demo-play').addEventListener('click', () => {
+  script={`const headline = document.querySelector('#text-split-demo-hold');
+document.querySelector('#text-split-demo-play').addEventListener('click', () => {
   headline.revealHold = false;
 });`}
   code={`<div style="display:grid;gap:var(--tp-space-5);justify-items:center;inline-size:100%">
   <p style="margin:0;justify-self:stretch;text-align:center;font-size:2rem;line-height:1.1;font-weight:600">
-    <tp-text-motion id="text-motion-demo-hold" split="words" mask="words" reveal="up" stagger="60" reveal-hold>Your workspace is ready</tp-text-motion>
+    <tp-mo-text-split id="text-split-demo-hold" split="words" mask="words" reveal="up" stagger="60" reveal-hold>Your workspace is ready</tp-mo-text-split>
   </p>
-  <tp-button id="text-motion-demo-play" variant="outline">Reveal</tp-button>
+  <tp-button id="text-split-demo-play" variant="outline">Reveal</tp-button>
 </div>`}
 />
 
@@ -126,7 +110,7 @@ document.addEventListener('tp-motion-request', (event) => {
   });
 });`}
   code={`<p style="margin:0;inline-size:100%;font-size:2rem;line-height:1.2;font-weight:600;text-align:center">
-  <tp-text-motion id="text-motion-custom" split="words" reveal="fade" reveal-repeat>Launch week starts Monday</tp-text-motion>
+  <tp-mo-text-split id="text-motion-custom" split="words" reveal="fade" reveal-repeat>Launch week starts Monday</tp-mo-text-split>
 </p>`}
 />
 
@@ -141,7 +125,7 @@ Pieces and masks are hidden from assistive technology. The original text of each
 <Preview
   title="Inline formatting"
   code={`<p style="margin:0;inline-size:32rem;max-inline-size:100%;font-size:var(--tp-text-lg);line-height:1.6">
-  <tp-text-motion split="words lines" reveal="fade up" stagger="15" reveal-repeat>Read the <a href="#rich-text">migration guide</a> before upgrading, and <em>back up your workspace</em> first.</tp-text-motion>
+  <tp-mo-text-split split="words lines" reveal="fade up" stagger="15" reveal-repeat>Read the <a href="#rich-text">migration guide</a> before upgrading, and <em>back up your workspace</em> first.</tp-mo-text-split>
 </p>`}
 />
 
@@ -170,4 +154,4 @@ Changing the content (for example `textContent`, or a template library updating 
 - `text-align: justify` stretches lines as usual, but every recalculation measures again.
 - `hyphens: auto` can break inside a word in the original; such a word is presented whole.
 - SVG `<text>` and vertical writing modes are not split.
-- A nested `tp-text-motion` is treated as one piece of the outer one.
+- A nested `tp-mo-text-split` is treated as one piece of the outer one.

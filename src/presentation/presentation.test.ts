@@ -50,10 +50,12 @@ describe('foundational styling tokens', () => {
     });
 
     // Default presentation motion resolves duration and easing roles; zero durations suppress
-    // motion. Exempt: Text motion's stagger property default and the scroll-driven fade whose
+    // motion. Exempt: the Motion › Text stagger property default and the scroll-driven fade whose
     // nominal timing never plays. The easing editor edits curves, so their notation is its data.
     const exempt: Record<string, readonly string[]> = {
-      'components/text-motion/piece-styles.ts': ['30ms'],
+      'components/mo-text-split/piece-styles.ts': ['30ms'],
+      'components/mo-text-mirror/piece-styles.ts': ['30ms'],
+      'components/mo-text-stroke/piece-styles.ts': ['30ms'],
       'presentation/recipes/message-scroller.ts': ['1ms', 'ease-in-out'],
     };
     const sources = ['components', 'widgets', 'presentation'].flatMap((root) =>

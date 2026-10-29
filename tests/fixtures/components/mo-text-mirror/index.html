@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Text mirror verification</title>
+    <link rel="stylesheet" href="/src/styles.css">
+    <style>
+      body { margin: 0; background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-sans); }
+      main { max-width: 960px; margin: 24px auto; padding: 16px; display: grid; gap: 40px; }
+      h1.fixture { font-size: 1.25rem; margin: 0; }
+      section.case { display: grid; gap: 12px; }
+      section.case > h2.label { font-size: 0.875rem; margin: 0; color: var(--tp-muted-foreground); font-weight: 500; }
+      .display { font-size: 2.5rem; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+      .lead { font-size: 1.125rem; line-height: 1.6; margin: 0; max-inline-size: 60ch; }
+      .flow { margin: 0; padding: 8px 12px; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-md); font-size: 0.875rem; color: var(--tp-muted-foreground); }
+      .resizable { resize: horizontal; overflow: hidden; inline-size: 520px; min-inline-size: 160px; max-inline-size: 100%; border: 1px solid var(--tp-border); border-radius: var(--tp-radius-lg); padding: 12px; }
+      .spacer { block-size: 80vh; display: grid; place-items: center; color: var(--tp-muted-foreground); font-size: 0.75rem; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-lg); }
+      .row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+      .stress { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+      tp-image { border-radius: var(--tp-radius-lg); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Text mirror verification</h1>
+
+      <section class="case" id="case-center"><h2 class="label">Centered heading</h2>
+        <h2 class="display" style="text-align: center"><tp-mo-text-mirror id="center" stagger="90">Every review, every comment, in one shared timeline</tp-mo-text-mirror></h2>
+        <p class="flow">Below the heading.</p>
+      </section>
+
+      <section class="case" id="case-start"><h2 class="label">Start-aligned paragraph with a link (resize the box)</h2>
+        <div class="resizable">
+          <p class="lead"><tp-mo-text-mirror id="start" stagger="60">Plan the week, share the board, and keep <a href="#case-start" id="start-link">every decision</a> next to the work it changed, so nobody has to ask twice.</tp-mo-text-mirror></p>
+          <p class="flow">Below the resizable paragraph.</p>
+        </div>
+      </section>
+
+      <section class="case" id="case-rtl"><h2 class="label">Right to left</h2>
+        <p class="lead" dir="rtl" lang="he"><tp-mo-text-mirror id="rtl">מרחבים שקטים עם אור פתוח בכל חדר בבית ובכל בוקר</tp-mo-text-mirror></p>
+      </section>
+
+      <section class="case" id="case-hold"><h2 class="label">Hide and reveal (reveal-hold)</h2>
+        <p class="display"><tp-mo-text-mirror id="hold" stagger="90">Every release, in one timeline</tp-mo-text-mirror></p>
+        <tp-button id="hold-toggle" variant="outline">Hide</tp-button>
+      </section>
+
+      <div class="spacer">Scroll: the scrubbed case follows</div>
+
+      <section class="case" id="case-scrub"><h2 class="label">Scrubbing Scroll trigger</h2>
+        <tp-scroll-trigger scrub scrub-range="cover">
+          <p class="display"><tp-mo-text-mirror id="scrub" stagger="120">The scroll slides every half</tp-mo-text-mirror></p>
+        </tp-scroll-trigger>
+      </section>
+      <div class="spacer">End</div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>
