@@ -1,5 +1,72 @@
 # @tweakpad/ui
 
+## 0.1.4
+
+### Patch Changes
+
+- 66b0708: An Alert narrower than 30rem moves its actions to their own row under the text, lined up with it and spaced from it by the same gap as the icon. Before, the actions kept their column and squeezed the title and description down to a word per line. The Alert is now an inline-size container at full width, as a responsive Field is.
+- b05922b: A Code block without a header shows its copy action floating over the code. That action now sits on a translucent, slightly blurred piece of the code surface, so the code behind it no longer mixes with the icon.
+- 6a97540: Every component and widget now ships its documentation page: `docs/components/<slug>.mdx` and `docs/widgets/<slug>.mdx`, the single source that Storybook and tweakpad.com/docs both render.
+
+  - Each page has a header (name, description and tag), the main use case and Usage.
+  - The API Reference is generated from the Custom Elements Manifest: attributes, properties and events, then methods, slots, CSS parts and CSS custom properties.
+  - Every element's JSDoc and part descriptions now fill those rows.
+  - The pages accept a `<Code>` element for standalone samples, and `parts` as a YAML block list.
+
+- 1d502dd: A Drawer swipe no longer restyles the drawer's content on every frame. Its per-frame swipe values (progress, strength, movement and snap offset) now use private property names, which the Drawer registers as non-inherited and writes only on the elements that read them. With large slotted content, a swipe move's style work drops from about 9 ms to under 1 ms in Chrome. On iOS Safari, the style data those frames produced is behind the memory growth in issue 14. Public outputs are unchanged, including `tp-drawer-indent`'s `--drawer-swipe-progress`. The library gains an internal `registerProperty` helper, so components register their own private properties without depending on `styles.css`.
+- 973305f: The Emoji picker's list no longer paints over the page's sticky headers when it scrolls under them. An inline Select list kept the popup's `z-index: 1000`, which applies to it as a flex or grid item even though it is not positioned; it now layers with the page, and its sticky group labels and scroll arrows stay inside it.
+- 88610c8: Documentation pages ship with the package: one `docs/components/<slug>.mdx` per component (widgets under `docs/widgets/`), read by both Storybook and the website, with the tooling behind them at `@tweakpad/ui/docs` (page reader, API rows from the Custom Elements Manifest, Related from `elementDependencies`, preview runtime), the Vite plugin at `@tweakpad/ui/docs/vite` and the built index at `@tweakpad/ui/docs.json`. The manifest now carries each element's `renders` (the tags it renders) and its shadow parts with the descriptions declared in its presentation family, and Badge is the first component documented this way.
+- e1f049b: New `tp-mo-text-mirror` reveals text line by line from the middle out. Each line is cut at the middle of its own text, whatever the alignment, and both halves slide out of that seam to their places.
+
+  - `orientation="vertical"` cuts each line across the middle of its text instead, so its upper and lower halves slide apart; the default `horizontal` slides them sideways. Neither changes where the text sits.
+  - It follows `stagger` and `stagger-from` line by line, and `reveal-repeat`.
+  - Setting `reveal-hold` on a revealed text slides the halves back into the seam; removing it reveals the text again.
+  - A scrubbing Scroll trigger slides the halves with the scroll.
+  - Once the reveal settles, each line shows whole, so links and selection behave as in the original text.
+  - `--tp-mo-text-mirror-duration`, `--tp-mo-text-mirror-easing` and `--tp-mo-text-mirror-mask-bleed` tune it.
+
+- e1f049b: New `tp-mo-text-stroke` draws the outline of every glyph in the text color, then fills the text in and lets the outline fade.
+
+  - The browser draws the outlines from the same font, so they sit exactly on the glyphs, and every glyph draws at once.
+  - `split` sets the pieces that draw in turn (words, or `chars`), and it follows `stagger`.
+  - Setting `reveal-hold` on a revealed text plays it backwards; a scrubbing Scroll trigger draws it with the scroll.
+  - `--tp-mo-text-stroke-width` and `--tp-mo-text-stroke-length` tune the outline, and `--tp-mo-text-stroke-duration` and `--tp-mo-text-stroke-easing` its timing. The length is the dash that draws one outline, so longer outlines draw faster.
+
+- e1f049b: Text motion is now `tp-mo-text-split` (Text split), the first element of a new Motion section beside Components and Widgets, grouped by what moves. Its Text group holds Text split, Text mirror (`tp-mo-text-mirror`) and Text stroke (`tp-mo-text-stroke`).
+
+  - `TpTextMotion` is now `TpMoTextSplit`, its custom properties are `--tp-mo-text-split-*`, and its diagnostic for joined scripts is `text-split-joined-script`.
+  - Pages ship as `docs/motion/text/<slug>.mdx`; Text split's page moves there from `docs/components/text-motion.mdx`.
+  - `src/catalog.ts` exports `catalogFolder` and `motionGroups`.
+  - The elements ship from `@tweakpad/ui` and `@tweakpad/ui/register`.
+  - In a shrink-to-fit container (a flex or grid item sized by its content), split text now lays out its lines at the width the text takes instead of breaking after every word.
+
+- b05922b: Phones no longer enlarge library text, Code block lines in particular. `styles.css` sets `text-size-adjust: 100%` on the document root, and `tp-code-block` sets it on its host, so pages without the stylesheet keep the authored size too.
+- 8819efe: A Text split or Image reveal that would start during a same-document view transition now waits for it to finish, standalone or in a group. Before, a client-side router's transition showed the first part of the reveal under its snapshots and the rest on the live page, so it looked like it played twice. Skipped and failed transitions release the reveal too. Immediate reveals (reduced motion, no intersection support) and browsers without `document.activeViewTransition` behave as before.
+- d6484a3: Table cells take their layout from ordinary CSS on the Table and its parts:
+
+  - `white-space` reaches the cells from the Table, a row or a cell. Cells still keep their text on one line by default; `white-space: normal` wraps a prose column.
+  - `inline-size`, `min-inline-size`, `max-inline-size`, `vertical-align` and `text-align` set on a `tp-table-head` or `tp-table-cell` reach its native cell, so `style="inline-size:8rem"` sizes the column.
+  - The Table is a focusable region named by `label` only while it scrolls; a Table that fits is no longer a Tab stop or a landmark, and the table keeps its name.
+  - `styles.css` lays out a Table and its parts as a table before the elements are defined, so server-rendered tables no longer show as inline text until the script loads.
+
+- 1957646: Text split with `lines` in its `split` now reveals line by line inside panels that open and close, such as an Accordion, Collapsible, tab panel or dialog:
+
+  - Text split while hidden measures its lines again when it appears, before its reveal starts. Before, each paragraph stayed one line that overflowed its box.
+  - Hiding the text no longer re-splits it. Before, closing a panel collapsed every paragraph to a single line, and on reopening it revealed as one block instead of line by line.
+
+- e1f049b: Setting `reveal-hold` on a revealed Text split hides it, playing the reveal backwards with the same duration and stagger. Removing `reveal-hold` reveals the text again.
+- 973168f: A focused Tree view item shows only its own focus ring on the row. A page-level `:focus` or `:focus-visible` outline, even an `!important` one, no longer draws a second ring around the item.
+- 79b9d10: Tree view groups in markup mode now behave like records mode:
+
+  - Groups in `default-expanded` appear at full height on first render, as documented, instead of sliding open.
+  - Pressing a row runs the group's enter and exit motion, so a collapse animates instead of hiding at once.
+  - A settled open group follows its content's height without animating when that height changes; the measured extent only drives the enter and exit transitions.
+
+- 53aad57: Handles read on every surface in both schemes:
+
+  - The Slider thumb is near-white with the ring-colored border in light and dark.
+  - The color picker's markers on the area, sliders, wheel and triangle show the color they point at, inside a near-white ring with a dark hairline. Before, they were background-colored discs that disappeared on dark tracks and dark regions of the area.
+
 ## 0.1.3
 
 ### Patch Changes
