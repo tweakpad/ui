@@ -66,6 +66,12 @@
             >Send a proof first</tp-checkbox
           >
           <tp-checkbox id="rush" variant="inline" name="rush">Rush delivery</tp-checkbox>
+          <tp-switch id="notify" variant="inline" name="notify" default-checked
+            >Email me when it ships</tp-switch
+          >
+          <tp-switch id="compact" variant="inline" size="sm" name="compact"
+            >Compact proof sheet</tp-switch
+          >
           <tp-select id="finish" variant="inline" label="Finish" placeholder="None">
             <option value="laminate">Laminate</option>
             <option value="varnish">Spot varnish</option>
@@ -99,6 +105,19 @@
         >
           <tp-checkbox variant="inline" name="recycled"></tp-checkbox>
         </tp-field>
+        <tp-field
+          id="switch-field"
+          label="Keep files on record"
+          description="Stored for twelve months."
+        >
+          <tp-switch variant="inline" name="keep"></tp-switch>
+        </tp-field>
+        <tp-switch id="switch-invalid" variant="inline" required invalid
+          >Confirm the color proof</tp-switch
+        >
+        <tp-switch id="switch-disabled" variant="inline" disabled default-checked
+          >Insured shipping</tp-switch
+        >
         <tp-checkbox id="checkbox-invalid" variant="inline" required invalid
           >Accept the print terms</tp-checkbox
         >
@@ -146,6 +165,7 @@
         </tp-select>
       </div>
       <div class="stack" dir="rtl">
+        <tp-switch id="switch-rtl" variant="inline" default-checked>إشعار بالبريد</tp-switch>
         <tp-checkbox id="checkbox-rtl" variant="inline" default-checked
           >طباعة على الوجهين</tp-checkbox
         >

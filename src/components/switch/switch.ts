@@ -1,4 +1,4 @@
-import { css, html } from 'lit';
+import { css, html, nothing } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { observeSubtree } from '../../foundation/observation.js';
@@ -33,6 +33,7 @@ const SWITCH_THUMB_MARKERS = BOOLEAN_CONTROL_MARKERS.filter((key) => key !== 'in
  *
  * @slot - The inline label; a press on it toggles the switch.
  * @slot thumb - Decorative content inside the thumb, such as a small icon.
+ * @csspart switch-row - The row of an inline Switch around its label and track.
  */
 export class TpSwitch extends TpCheckbox {
   static tagName = 'tp-switch';
@@ -110,6 +111,31 @@ export class TpSwitch extends TpCheckbox {
 
       .legacy-label[hidden] {
         display: none;
+      }
+
+      /* Inline: one row across its container, the label at the start and the track at the end. */
+      :host([variant='inline']) {
+        display: flex;
+      }
+
+      .row {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        min-inline-size: 0;
+        cursor: pointer;
+      }
+
+      .row > .legacy-label {
+        flex: 1;
+        min-inline-size: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .row > .root {
+        flex: none;
       }
 
       [data-tp-motion-driven],
@@ -195,16 +221,36 @@ export class TpSwitch extends TpCheckbox {
       // The Thumb accepts authored content; it is decorative.
       content: html`<slot name="thumb"></slot>`,
     });
-    return html`${this.renderBooleanControl(state, thumb, 'switch', 'switch', {
-        'data-size': state.size,
-        ...(this.#labelText ? { 'aria-label': this.#labelText } : {}),
-      })}<tp-label
-        class="legacy-label"
-        .for=${this.booleanControlIdentifier}
-        ?hidden=${!this.#labelText}
-        @click=${() => this.activateFromLabel()}
-        ><slot @slotchange=${this.#syncLabel}></slot
-      ></tp-label>`;
+    const inline = this.variant === 'inline';
+    // An inline row without a label of its own shows its Field's label; the Field names the switch.
+    const fieldLabel = inline && !this.#labelText ? this.fieldLabel : '';
+    const track = this.renderBooleanControl(state, thumb, 'switch', 'switch', {
+      'data-size': state.size,
+      ...(this.#labelText ? { 'aria-label': this.#labelText } : {}),
+    });
+    const label = html`<tp-label
+      class="legacy-label"
+      .for=${this.booleanControlIdentifier}
+      ?hidden=${!this.#labelText && !fieldLabel}
+      aria-hidden=${fieldLabel ? 'true' : nothing}
+      @click=${() => this.activateFromLabel()}
+      ><slot @slotchange=${this.#syncLabel}>${fieldLabel}</slot></tp-label
+    >`;
+    if (!inline) return html`${track}${label}`;
+    return this.renderPart('switch-row', state, {
+      tag: 'div',
+      properties: {
+        class: 'row',
+        part: 'switch-row',
+        'data-disabled': state.disabled,
+        'data-invalid': state.invalid,
+        // A press on the row around the label and the track toggles, as a press on either does.
+        '@click': (event: MouseEvent) => {
+          if (event.target === event.currentTarget) this.controlElement?.click();
+        },
+      },
+      content: html`${label}${track}`,
+    });
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);

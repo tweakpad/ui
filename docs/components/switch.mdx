@@ -157,3 +157,21 @@ control.addEventListener('tp-value-change', (event) => {
 />
 
 `tp-value-change` is cancelable and carries the proposed `checked` value. Calling `preventDefault()` keeps the current state, which is how you veto a change that needs confirmation first.
+
+### Inline
+
+<Preview
+  title="Inline"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:22rem;margin-inline:auto">
+  <tp-switch variant="inline" name="auto-lock" default-checked>Auto-lock</tp-switch>
+  <tp-switch variant="inline" name="bluetooth">Bluetooth</tp-switch>
+  <tp-select variant="inline" label="Lock after" name="lock-after" default-value="5">
+    <option value="1">1 minute</option>
+    <option value="5">5 minutes</option>
+    <option value="15">15 minutes</option>
+  </tp-select>
+</div>`}
+/>
+
+`variant="inline"` fits the Switch into one row the height of a control, with its label at the start and the track at the end, so it stacks with other inline controls such as an inline Select. A press anywhere on the row flips it. Inside a Field and without a label of its own, the Field's label moves into the row.

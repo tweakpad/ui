@@ -2,6 +2,11 @@ import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 import { fillColor, fillShown } from './shared/fill.js';
 import { focusRing } from './shared/focus.js';
+import {
+  inlineControlLabel,
+  inlineControlRings,
+  inlineControlSurface,
+} from './shared/inline-control.js';
 const invalidPaint = {
   'border-color':
     'light-dark(var(--tp-destructive), color-mix(in oklab, var(--tp-destructive) 50%, transparent))',
@@ -44,6 +49,29 @@ export const switchAppearance: PresentationDictionary = {
     {
       selector: '&[data-invalid]',
       declarations: invalidPaint,
+    },
+  ],
+  // Inline variant: the row is the shared inline row, its label at the start inset like a Select
+  // trigger's text and the track at the end inset like the trigger's chevron. The row carries the
+  // focus and validity rings, so the track draws neither.
+  'switch-row-variant-inline': [
+    {
+      declarations: {
+        ...inlineControlSurface,
+        'min-block-size': 'var(--tp-control-height-md)',
+        gap: 'var(--tp-space-2)',
+        'padding-inline-start': 'var(--tp-space-2-5)',
+        'padding-inline-end': 'var(--tp-space-3)',
+      },
+    },
+    { selector: '& > tp-label', declarations: inlineControlLabel },
+    ...inlineControlRings('&', ':has(> [part~="switch"]:focus-visible)'),
+  ],
+  'switch-variant-inline': [
+    {
+      // As specific as the base invalid rule for focusable parts, so the row's ring replaces it.
+      selector: '&[data-focus-visible]:focus-visible, &[data-invalid][part~="focusable"]',
+      declarations: { outline: 'none', 'border-color': 'transparent', 'box-shadow': 'none' },
     },
   ],
   'switch-thumb': [

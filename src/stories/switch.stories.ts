@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
+import type { CheckboxVariant } from '../components/checkbox/index.js';
 import type { TpSwitch } from '../components/switch/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import { libraryDocs } from './library-docs.js';
@@ -14,6 +15,7 @@ interface Args {
   readOnly: boolean;
   required: boolean;
   nativeAction: boolean;
+  variant: CheckboxVariant;
 }
 const meta: Meta<Args> = {
   title: 'Components/Switch',
@@ -27,6 +29,7 @@ const meta: Meta<Args> = {
     readOnly: false,
     required: false,
     nativeAction: false,
+    variant: 'default',
   },
   argTypes: {
     checked: { control: 'boolean' },
@@ -36,6 +39,7 @@ const meta: Meta<Args> = {
     readOnly: { control: 'boolean' },
     required: { control: 'boolean' },
     nativeAction: { control: 'boolean' },
+    variant: { control: 'select', options: ['default', 'inline'] },
   },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();
@@ -46,6 +50,7 @@ const meta: Meta<Args> = {
         name="notifications"
         .checked=${args.checked}
         .size=${args.size}
+        .variant=${args.variant}
         .disabled=${args.disabled}
         .readOnly=${args.readOnly}
         .required=${args.required}
