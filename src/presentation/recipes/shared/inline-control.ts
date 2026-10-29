@@ -37,15 +37,19 @@ export const inlineControlValue: PresentationDeclarations = {
 };
 
 /**
- * Keyboard focus and validity rings of a row surface. `owner` selects the element carrying the
- * `data-focus-visible` and `data-invalid` markers, when the row is not that element itself.
+ * Focus and validity rings of a row surface. `owner` selects the element carrying the `focus`
+ * condition and the `data-invalid` marker, when the row is not that element itself; a row around
+ * a text editor rings on `:focus-within`, as an Input group does.
  */
-export function inlineControlRings(owner = '&'): PresentationRule[] {
+export function inlineControlRings(
+  owner = '&',
+  focus = '[data-focus-visible]',
+): PresentationRule[] {
   const on = (marker: string): string => (owner === '&' ? `&${marker}` : `${owner}${marker} &`);
   return [
-    { selector: on('[data-focus-visible]'), declarations: fieldFocus },
+    { selector: on(focus), declarations: fieldFocus },
     { selector: on('[data-invalid]'), declarations: fieldInvalid },
     // Equal specificity: the later invalid paint would tint the focus ring away.
-    { selector: on('[data-invalid][data-focus-visible]'), declarations: invalidFocusRing },
+    { selector: on(`[data-invalid]${focus}`), declarations: invalidFocusRing },
   ];
 }

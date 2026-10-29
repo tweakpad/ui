@@ -27,6 +27,25 @@ export const fieldInvalid = {
   'outline-offset': '0',
 };
 export const disabledBackground = 'color-mix(in oklab, var(--tp-input) 50%, transparent)';
+
+/**
+ * A native editor joined into a surrounding boundary (Input group, inline Input): the boundary
+ * owns the border, rings and fill, so the editor paints none of them.
+ */
+export const joinedEditor = {
+  border: '0',
+  'border-radius': '0',
+  outline: '0',
+  'box-shadow': 'none',
+  background: 'transparent',
+  'font-size': 'var(--tp-text-sm)',
+  'line-height': 'var(--tp-leading-normal)',
+};
+/** A joined editor's block size: the control height inside its boundary's borders. */
+export const joinedEditorMinHeight = 'calc(var(--tp-control-height-md) - var(--tp-border-width) * 2)';
+/** Joined-editor rules win over each standalone editor state, without !important. */
+export const joinedEditorSelector =
+  '&[data-tp-presentation-part], &[data-tp-presentation-part]:is(:focus-visible, :disabled, [aria-invalid="true"])';
 export const control: readonly PresentationRule[] = [
   { declarations: fieldBoundary },
   { selector: '&::placeholder', declarations: { color: 'var(--tp-muted-foreground)' } },

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Select inline verification</title>
+    <title>Inline controls verification</title>
     <link rel="stylesheet" href="/src/styles.css" />
     <style>
       body {
@@ -27,7 +27,7 @@
   </head>
   <body>
     <main>
-      <h1>Select inline verification</h1>
+      <h1>Inline controls verification</h1>
       <section aria-labelledby="print-title">
         <h2 id="print-title">Print order</h2>
         <div class="stack" id="stack">
@@ -41,6 +41,19 @@
             <option value="a3">A3</option>
             <option value="letter">US Letter</option>
           </tp-select>
+          <tp-input
+            id="title"
+            variant="inline"
+            label="Job title"
+            default-value="Spring catalog"
+          ></tp-input>
+          <tp-input
+            id="bleed"
+            variant="inline"
+            label="Bleed (mm)"
+            type="number"
+            placeholder="0"
+          ></tp-input>
           <tp-slider
             id="copies"
             variant="inline"
@@ -72,6 +85,24 @@
           <option value="early">Monday morning before nine</option>
           <option value="late">Thursday afternoon after three</option>
         </tp-select>
+        <tp-field id="input-field" label="Reference" description="Printed on the delivery note.">
+          <tp-input variant="inline" placeholder="PO number"></tp-input>
+        </tp-field>
+        <tp-input
+          id="input-invalid"
+          variant="inline"
+          label="Contact email"
+          type="email"
+          default-value="not-an-email"
+          invalid
+        ></tp-input>
+        <tp-input
+          id="input-disabled"
+          variant="inline"
+          label="Account"
+          default-value="Studio North"
+          disabled
+        ></tp-input>
         <tp-select id="disabled" variant="inline" label="Courier" default-value="local" disabled>
           <option value="local">Local</option>
         </tp-select>

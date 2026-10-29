@@ -7,11 +7,29 @@ const definition: ComponentDefinition = {
   name: 'Input',
   tagName: 'tp-input',
   kind: 'compound-reexport',
-  axes: [],
+  axes: [
+    {
+      // inline: one compact row with the label at the start and the value at the end.
+      name: 'variant',
+      values: ['default', 'inline'],
+      default: 'default',
+    },
+  ],
   parts: [
     {
       name: 'input',
       description: "The native input, rendered in the page's own tree.",
+      axes: ['variant'],
+    },
+    {
+      name: 'input-row',
+      description: 'The row of an inline Input around its label and editor.',
+      axes: ['variant'],
+    },
+    {
+      name: 'input-label',
+      description: "The label at the start of an inline Input's row.",
+      axes: ['variant'],
     },
     {
       name: 'input-prefix',
@@ -31,6 +49,8 @@ export const inputPresentation = definePresentation({
   bindings: {
     'tp-input': {
       input: 'input',
+      '[part~="input-row"]': 'input-row',
+      '[part~="input-label"]': 'input-label',
     },
   },
   sources: [inputCoreAppearance, inputAppearance],

@@ -107,3 +107,21 @@ Native form reset restores an uncontrolled default with `form-reset`; controlled
 The native `<input>` is a real element in your tree: it renders into the Input's light DOM (`tp-input > input`), shares the Input's form owner and submits natively, so browser autofill and password managers classify and fill it like any form field. Customize semantic tokens, the presentation dictionary, `partPresentation.input`, or style `tp-input > input` directly; `::part(input)` does not apply because the editor is not in the shadow root. Keep caret, selection, autofill and type-specific affordances visible.
 
 Native form serialization follows the editable input's current representation, including type sanitization, while the controlled owner value remains its supplied value. An empty named file input submits the native empty File; unnamed inputs do not contribute data.
+
+### Inline
+
+<Preview
+  title="Inline"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:22rem;margin-inline:auto">
+  <tp-input variant="inline" label="Display name" name="display-name" default-value="Rowan"></tp-input>
+  <tp-input variant="inline" label="Time zone offset" name="offset" type="number" default-value="2"></tp-input>
+  <tp-select variant="inline" label="Language" name="language" default-value="pt">
+    <option value="en">English</option>
+    <option value="pt">Português</option>
+    <option value="ja">日本語</option>
+  </tp-select>
+</div>`}
+/>
+
+`variant="inline"` fits the Input into one row the height of a control, with `label` at the start and the value at the end, so it stacks with other inline controls such as an inline Select. A press on the label edits the value. Inside a Field, the Field's label moves into the row.

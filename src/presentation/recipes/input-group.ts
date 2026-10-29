@@ -5,6 +5,9 @@ import {
   fieldBoundary,
   fieldFocus,
   fieldInvalid,
+  joinedEditor,
+  joinedEditorMinHeight,
+  joinedEditorSelector,
 } from './shared/text-control.js';
 
 /**
@@ -69,23 +72,8 @@ export const inputGroupAppearance: PresentationDictionary = {
   'input-group-control': [
     {
       selector: '&:is(input)',
-      declarations: {
-        'min-height': 'calc(var(--tp-control-height-md) - var(--tp-border-width) * 2)',
-      },
+      declarations: { 'min-height': joinedEditorMinHeight },
     },
-    {
-      // Composition must win over each standalone editor state, without !important.
-      selector:
-        '&[data-tp-presentation-part], &[data-tp-presentation-part]:is(:focus-visible, :disabled, [aria-invalid="true"])',
-      declarations: {
-        border: '0',
-        'border-radius': '0',
-        outline: '0',
-        'box-shadow': 'none',
-        background: 'transparent',
-        'font-size': 'var(--tp-text-sm)',
-        'line-height': 'var(--tp-leading-normal)',
-      },
-    },
+    { selector: joinedEditorSelector, declarations: joinedEditor },
   ],
 };

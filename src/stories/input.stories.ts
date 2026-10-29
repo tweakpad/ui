@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
-import type { TpInput } from '../components/input/index.js';
+import type { InputVariant, TpInput } from '../components/input/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import { libraryDocs } from './library-docs.js';
 
@@ -15,6 +15,7 @@ interface Args {
   readOnly: boolean;
   required: boolean;
   mono: boolean;
+  variant: InputVariant;
 }
 const meta: Meta<Args> = {
   title: 'Components/Input',
@@ -24,6 +25,7 @@ const meta: Meta<Args> = {
     value: '',
     type: 'text',
     label: 'Project name',
+    variant: 'default',
     placeholder: 'Name your project',
     disabled: false,
     readOnly: false,
@@ -49,6 +51,7 @@ const meta: Meta<Args> = {
       ],
     },
     label: { control: 'text' },
+    variant: { control: 'select', options: ['default', 'inline'] },
     placeholder: { control: 'text' },
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
@@ -66,6 +69,7 @@ const meta: Meta<Args> = {
       .value=${args.value}
       .type=${args.type}
       .label=${args.label}
+      .variant=${args.variant}
       .placeholder=${args.placeholder}
       .disabled=${args.disabled}
       .readOnly=${args.readOnly}
