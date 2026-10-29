@@ -79,6 +79,23 @@ export const selectStyles = css`
     rotate: 90deg;
   }
 
+  /* Inline: one row across its container, the label at the start and the selection at the end. */
+  :host([variant='inline']:not([searchable])) {
+    display: block;
+  }
+
+  :host([variant='inline']:not([searchable])) .select-trigger-label {
+    flex: 0 1 auto;
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :host([variant='inline']:not([searchable])) .select-value {
+    margin-inline-start: auto;
+  }
+
   .select-content {
     position: absolute;
     z-index: 1000;

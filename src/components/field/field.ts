@@ -592,6 +592,7 @@ export class TpField extends TpElement {
         // A control may start or stop showing the Field label when its presentation changes.
         'variant',
         'orientation',
+        'searchable',
       ],
     });
   }

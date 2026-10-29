@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { useArgs } from 'storybook/preview-api';
-import type { TpSelect, SelectEntry } from '../components/select/index.js';
+import type { TpSelect, SelectEntry, SelectVariant } from '../components/select/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import type { TpSurfaceOpenChangeEvent } from '../foundation/surface-state.js';
 import { boldIcon, italicIcon, underlineIcon } from '../icons/text-formatting.js';
@@ -16,6 +16,7 @@ interface Args {
   open: boolean;
   placeholder: string;
   label: string;
+  variant: SelectVariant;
   disabled: boolean;
   readOnly: boolean;
   required: boolean;
@@ -61,6 +62,7 @@ function control(args: Args, items: readonly SelectEntry[] = fruits) {
     .open=${args.open}
     .placeholder=${args.placeholder}
     .label=${args.label}
+    .variant=${args.variant}
     .disabled=${args.disabled}
     .readOnly=${args.readOnly}
     .required=${args.required}
@@ -102,6 +104,7 @@ const meta: Meta<Args> = {
     open: false,
     placeholder: 'Choose a fruit',
     label: 'Fruit',
+    variant: 'default',
     disabled: false,
     readOnly: false,
     required: false,
@@ -132,6 +135,7 @@ const meta: Meta<Args> = {
     },
     placeholder: { control: 'text' },
     label: { control: 'text' },
+    variant: { control: 'select', options: ['default', 'inline'] },
     disabled: { control: 'boolean' },
     readOnly: { control: 'boolean' },
     required: { control: 'boolean' },

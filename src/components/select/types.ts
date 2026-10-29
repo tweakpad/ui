@@ -3,6 +3,8 @@ import type { AnchorGeometry } from '../../foundation/positioning.js';
 import type { SurfaceFocusTarget } from '../../foundation/surface-focus.js';
 
 export type SelectValue = unknown;
+/** `inline`: one compact row with the label at the start and the selection at the end. */
+export type SelectVariant = 'default' | 'inline';
 export interface SelectOption {
   value: unknown;
   index?: number;

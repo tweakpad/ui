@@ -374,3 +374,25 @@ Inline mode renders an in-flow list without its own portal, positioner or popup;
 Enter, Space or Alt+ArrowDown opens. Arrow keys move through enabled options; Home/End go to the boundaries. Typeahead appends exact keys, matches a locale lower-case prefix, and resets after 750 ms, on opening, or immediately after unmatched non-space input. Repeated-key cycling is available only when no non-null label starts with two identical characters. Printable text performs typeahead and does not filter the list. Composition input does not select. Enter/Space activates the highlighted option. Escape closes without selecting; Tab closes and continues normal traversal. Scroll controls respond only while their direction has overflow and stop repeating when the pointer leaves, the popup closes or the host detaches.
 
 Use actual `tp-field` for labels/descriptions/errors, `tp-icon` for rich choice artwork, `tp-button` for adjacent actions and `tp-dialog` for modal composition.
+
+### Inline
+
+<Preview
+  title="Inline"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:22rem;margin-inline:auto">
+  <tp-select variant="inline" label="Channel" name="channel" default-value="push">
+    <option value="email">Email</option>
+    <option value="push">Push</option>
+    <option value="sms">Text message</option>
+  </tp-select>
+  <tp-select variant="inline" label="Frequency" name="frequency" default-value="daily">
+    <option value="instant">Instantly</option>
+    <option value="daily">Daily digest</option>
+    <option value="weekly">Weekly digest</option>
+  </tp-select>
+  <tp-slider variant="inline" label="Alert volume" default-value="60"></tp-slider>
+</div>`}
+/>
+
+`variant="inline"` fits the Select into one row the height of a control, with `label` at the start and the selection at the end, so it stacks with other inline controls such as an inline Slider. The list opens below the row and selects as usual. Inside a Field, the Field's label moves into the row. A searchable Select keeps its usual look.

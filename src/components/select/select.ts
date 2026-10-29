@@ -87,6 +87,7 @@ import type {
   SelectContainer,
   SelectEntry,
   SelectFocusTarget,
+  SelectVariant,
 } from './types.js';
 import { selectPresentation } from '../../presentation/families/select.js';
 import { TpIcon } from '../icon/icon.js';
@@ -192,6 +193,7 @@ export class TpSelect extends TpFormElement<unknown> {
     items: { attribute: false },
     placeholder: { type: String },
     label: { type: String },
+    variant: { type: String, reflect: true },
     identifier: { type: String },
     autocomplete: { type: String },
     noAutofill: { type: Boolean, attribute: 'no-autofill', reflect: true },
@@ -408,8 +410,16 @@ export class TpSelect extends TpFormElement<unknown> {
   }
   /** Shown while nothing is selected, or in an empty query. */
   placeholder = '';
-  /** Accessible name of the list when no Field labels the Select. */
-  label = 'Options';
+  /**
+   * Name of the trigger and the list when no Field labels the Select, and the label an inline
+   * Select shows; without one they are named “Options”.
+   */
+  label = '';
+  /**
+   * `inline` shows the label and the selection in one compact control-height row, for stacked
+   * controls; an enclosing Field's label moves into the row. A searchable Select keeps its look.
+   */
+  variant: SelectVariant = 'default';
   /** ID of the trigger or the query; the list takes a related ID. */
   identifier = createId('tp-select');
   /** Autofill hint for the selection, such as `country`. */
@@ -447,10 +457,10 @@ export class TpSelect extends TpFormElement<unknown> {
   #providedAlignment: boolean | undefined;
   /**
    * Places the popup so the selected option sits over the trigger; off by default for a searchable
-   * Select.
+   * or inline Select, whose list opens below the trigger with the popup entrance.
    */
   get alignItemWithTrigger(): boolean {
-    return this.#providedAlignment ?? !this.searchable;
+    return this.#providedAlignment ?? !(this.searchable || this.#inline);
   }
   set alignItemWithTrigger(value: boolean | undefined) {
     const before = this.#providedAlignment;
@@ -469,7 +479,9 @@ export class TpSelect extends TpFormElement<unknown> {
   #sideOffset: GeometryOffset | undefined;
   /** Gap between the trigger and the popup, in pixels or from a function of the geometry. */
   get sideOffset(): GeometryOffset {
-    return this.#sideOffset ?? themeSpacing(this, 3);
+    // An inline Select's list opens one space-2 step below, where a stack of inline rows places
+    // the next row.
+    return this.#sideOffset ?? themeSpacing(this, this.#inline ? 2 : 3);
   }
   set sideOffset(value: GeometryOffset | undefined) {
     const previous = this.#sideOffset;
@@ -831,6 +843,14 @@ export class TpSelect extends TpFormElement<unknown> {
   protected override focusTarget(): HTMLElement | null {
     return this.#trigger;
   }
+  /** The inline variant applies to the plain trigger; a searchable Select keeps its look. */
+  get #inline(): boolean {
+    return this.variant === 'inline' && !this.searchable;
+  }
+  /** An inline Select shows its Field's label inside the trigger. */
+  override get rendersFieldLabel(): boolean {
+    return this.#inline;
+  }
   protected override associationTarget(): HTMLElement | null {
     return this.#trigger;
   }
@@ -1073,6 +1093,7 @@ export class TpSelect extends TpFormElement<unknown> {
       (value) =>
         this.#collection.selected(value)?.label ?? this.itemToLabel?.(value) ?? this.#text(value),
     );
+    const inlineLabel = this.#inline ? this.fieldLabel || this.label : '';
     const value = this.#part('select-value', state, {
       tag: 'span',
       properties: { class: 'select-value', 'data-placeholder': !selected.length },
@@ -1105,7 +1126,7 @@ export class TpSelect extends TpFormElement<unknown> {
         type: this.nativeAction ? 'button' : undefined,
         '.disabled': this.nativeAction ? this.effectiveDisabled : undefined,
         tabindex: this.effectiveDisabled ? -1 : 0,
-        'aria-label': this.label || undefined,
+        'aria-label': this.label || 'Options',
         'aria-haspopup': 'listbox',
         'aria-expanded': String(this.open),
         'aria-controls': this.#presence.mounted ? `${this.identifier}-list` : undefined,
@@ -1136,10 +1157,16 @@ export class TpSelect extends TpFormElement<unknown> {
           this.#space = false;
         },
       },
-      content: html`${value}<tp-icon
-          size="var(--tp-icon-size-sm)"
-          .icon=${chevronRightIcon}
-        ></tp-icon>`,
+      content: html`${
+          inlineLabel
+            ? this.#part('select-trigger-label', state, {
+                tag: 'span',
+                // The trigger is named by the Field or by `label`; this copy is visual.
+                properties: { class: 'select-trigger-label', 'aria-hidden': 'true' },
+                content: inlineLabel,
+              })
+            : nothing
+        }${value}<tp-icon size="var(--tp-icon-size-sm)" .icon=${chevronRightIcon}></tp-icon>`,
     });
     return html`${this.#part('select', state, { properties: { class: 'select-root', 'data-open': this.open, 'data-closed': !this.open }, content: trigger })}
       <input

@@ -7,7 +7,14 @@ const definition: ComponentDefinition = {
   name: 'Select',
   tagName: 'tp-select',
   kind: 'flattening-compound',
-  axes: [],
+  axes: [
+    {
+      // inline: one compact row with the label at the start and the selection at the end.
+      name: 'variant',
+      values: ['default', 'inline'],
+      default: 'default',
+    },
+  ],
   parts: [
     {
       name: 'select',
@@ -16,10 +23,17 @@ const definition: ComponentDefinition = {
     {
       name: 'select-trigger',
       description: 'The button that shows the selection and opens the list.',
+      axes: ['variant'],
+    },
+    {
+      name: 'select-trigger-label',
+      description: 'The label at the start of an inline trigger.',
+      axes: ['variant'],
     },
     {
       name: 'select-value',
       description: 'The selection or the placeholder inside the trigger.',
+      axes: ['variant'],
     },
     {
       name: 'select-content',
@@ -111,6 +125,7 @@ export const selectPresentation = definePresentation({
       '[part~="select-row"]': 'select-row',
       '[part~="select"]': 'select',
       '[part~="select-trigger"]': 'select-trigger',
+      '[part~="select-trigger-label"]': 'select-trigger-label',
       '[part~="select-value"]': 'select-value',
       '[part~="select-content"]': 'select-content',
       '[part~="select-list"]': 'select-list',

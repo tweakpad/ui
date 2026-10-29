@@ -8,6 +8,12 @@ import {
   commandSeparatorAppearance,
 } from './command-surface.js';
 import { inputRules } from './shared/text-control.js';
+import {
+  inlineControlLabel,
+  inlineControlSurface,
+  inlineControlValue,
+} from './shared/inline-control.js';
+import { motionTransition } from '../motion.js';
 import { controlStepDeclarations } from './shared/variant.js';
 
 /**
@@ -74,8 +80,9 @@ export const selectAppearance: PresentationDictionary = {
     {
       declarations: {
         ...controlStepDeclarations('md'),
+        // The text and the chevron line up with the options' text and check marks.
         'padding-inline-start': 'var(--tp-space-2-5)',
-        'padding-inline-end': 'var(--tp-space-2)',
+        'padding-inline-end': 'var(--tp-space-3)',
       },
     },
     {
@@ -97,6 +104,32 @@ export const selectAppearance: PresentationDictionary = {
     selector: (rule.selector ?? '&').replaceAll('&', '&:not([data-searchable])'),
   })),
   'select-value': [{ declarations: { gap: 'var(--tp-space-1-5)' } }],
+  // Inline variant: the trigger is the shared inline row; the label sits at its start and the
+  // selection at its end, brightening while the row is hovered, open or focused.
+  'select-trigger-variant-inline': [
+    {
+      declarations: {
+        ...inlineControlSurface,
+        gap: 'var(--tp-space-2)',
+      },
+    },
+    {
+      selector: '&:hover:not(:disabled, [aria-disabled="true"])',
+      declarations: { background: inlineControlSurface.background! },
+    },
+  ].map((rule) => ({
+    ...rule,
+    selector: (rule.selector ?? '&').replaceAll('&', '&:not([data-searchable])'),
+  })),
+  'select-trigger-label-variant-inline': [{ declarations: inlineControlLabel }],
+  'select-value-variant-inline': [
+    { declarations: { ...inlineControlValue, transition: motionTransition(['color'], 'fast') } },
+    {
+      selector:
+        '[part~="select-trigger"]:is(:hover, :focus-visible, [data-open]):not([data-placeholder]) &',
+      declarations: { color: 'var(--tp-foreground)' },
+    },
+  ],
   'select-content': [
     ...anchoredPresenceAppearance.map((rule) => ({
       ...rule,

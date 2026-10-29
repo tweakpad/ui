@@ -9,6 +9,7 @@ export type {
   SelectOption,
   SelectSeparator,
   SelectValue,
+  SelectVariant,
 } from './types.js';
 
 export { TpSelectTrigger, TpSelectClear, TpSelectChipRemove } from './actions.js';

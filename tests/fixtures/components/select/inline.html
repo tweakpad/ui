@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Select inline verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 560px;
+        display: grid;
+        gap: 24px;
+      }
+      .stack {
+        display: grid;
+        gap: var(--tp-space-2);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Select inline verification</h1>
+      <section aria-labelledby="print-title">
+        <h2 id="print-title">Print order</h2>
+        <div class="stack" id="stack">
+          <tp-select id="paper" variant="inline" label="Paper" name="paper" default-value="satin">
+            <option value="matte">Matte</option>
+            <option value="satin">Satin</option>
+            <option value="gloss">Gloss</option>
+          </tp-select>
+          <tp-select id="size" variant="inline" label="Size" name="size" default-value="a3">
+            <option value="a4">A4</option>
+            <option value="a3">A3</option>
+            <option value="letter">US Letter</option>
+          </tp-select>
+          <tp-slider
+            id="copies"
+            variant="inline"
+            label="Copies"
+            default-value="12"
+            min="1"
+            max="50"
+          ></tp-slider>
+          <tp-select id="finish" variant="inline" label="Finish" placeholder="None">
+            <option value="laminate">Laminate</option>
+            <option value="varnish">Spot varnish</option>
+          </tp-select>
+        </div>
+      </section>
+      <div class="stack">
+        <tp-field id="field" label="Binding" description="How the pages are held together.">
+          <tp-select variant="inline" default-value="spiral">
+            <option value="staple">Staple</option>
+            <option value="spiral">Spiral</option>
+            <option value="perfect">Perfect bound</option>
+          </tp-select>
+        </tp-field>
+        <tp-select
+          id="long"
+          variant="inline"
+          label="Delivery window for the second batch of proofs"
+          default-value="late"
+        >
+          <option value="early">Monday morning before nine</option>
+          <option value="late">Thursday afternoon after three</option>
+        </tp-select>
+        <tp-select id="disabled" variant="inline" label="Courier" default-value="local" disabled>
+          <option value="local">Local</option>
+        </tp-select>
+        <tp-select
+          id="invalid"
+          variant="inline"
+          label="Ink"
+          placeholder="Choose ink"
+          required
+          invalid
+        >
+          <option value="cmyk">CMYK</option>
+          <option value="pantone">Pantone</option>
+        </tp-select>
+        <tp-select
+          id="searchable"
+          variant="inline"
+          searchable
+          label="Search typeface"
+          placeholder="Search"
+        >
+          <option value="serif">Serif</option>
+          <option value="sans">Sans</option>
+        </tp-select>
+      </div>
+      <div class="stack" dir="rtl">
+        <tp-select id="rtl" variant="inline" label="الورق" default-value="matte">
+          <option value="matte">مطفأ</option>
+          <option value="gloss">لامع</option>
+        </tp-select>
+      </div>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(built ? '/dist/register.js' : '/src/register.ts');
+      document.documentElement.dataset.fixtureReady = 'true';
+    </script>
+  </body>
+</html>

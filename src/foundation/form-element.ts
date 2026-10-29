@@ -180,6 +180,11 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     return target && target.getRootNode() !== this.renderRoot ? this : this.renderRoot;
   }
 
+  /** The label an enclosing Field hands over, empty without one. */
+  protected get fieldLabel(): string {
+    return this.#fieldLabel;
+  }
+
   /**
    * Whether the element shows its Field's label inside its own anatomy. The Field then keeps its
    * label for naming and association but hides it visually. The default is false.
