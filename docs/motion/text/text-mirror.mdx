@@ -15,7 +15,7 @@ tag: tp-mo-text-mirror
 
 Put Text mirror inside the heading or paragraph whose text it reveals and keep typography on that element; the lines inherit it. Each line is cut at the middle of its own text, whatever the alignment, and both halves slide out of that seam to their places. Lines are measured from the original text's own layout, so the reveal never changes wrapping or height and nothing below moves. A standalone text reveals the first time it enters the viewport.
 
-Inside a [Scroll trigger](../../../components/scroll-trigger/) that coordinator owns the timing; inside a scrubbing one the scroll position slides the halves.
+Inside a [Scroll trigger](../../../components/scroll-trigger/) that coordinator owns the timing.
 
 Links and inline formatting keep working, and screen readers read the text once. At rest each line shows whole, so selection and links behave as in the original text. Under reduced motion every line appears at rest immediately and the events still fire.
 
@@ -60,5 +60,29 @@ toggle.addEventListener('click', () => {
     <tp-mo-text-mirror id="text-mirror-demo-hold" stagger="90">Every review, every comment and every release, in one shared timeline.</tp-mo-text-mirror>
   </p>
   <tp-button id="text-mirror-demo-toggle" variant="outline">Hide</tp-button>
+</div>`}
+/>
+
+### Scroll scrubbing
+
+In a Scroll trigger with `scrub`, the scroll position slides the halves in both directions. Scroll the preview down and back up.
+
+<Preview
+  title="Scrubbed by the scroll"
+  align="stretch"
+  code={`<div style="inline-size:100%;block-size:20rem;overflow:auto;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg);padding-inline:var(--tp-space-6)">
+  <div style="display:grid;gap:var(--tp-space-3);align-content:end;block-size:20rem;padding-block:var(--tp-space-6);box-sizing:border-box">
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:45%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:90%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:6rem"></tp-skeleton>
+  </div>
+  <tp-scroll-trigger scrub scrub-range="cover">
+    <p style="margin:0;text-align:center;font-size:2rem;line-height:1.15;font-weight:600"><tp-mo-text-mirror stagger="120">Every review, every comment and every release, in one shared timeline</tp-mo-text-mirror></p>
+  </tp-scroll-trigger>
+  <div style="display:grid;gap:var(--tp-space-3);block-size:20rem;padding-block:var(--tp-space-6);box-sizing:border-box">
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:80%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:6rem"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:60%"></tp-skeleton>
+  </div>
 </div>`}
 />

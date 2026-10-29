@@ -131,6 +131,30 @@ Pieces and masks are hidden from assistive technology. The original text of each
 
 Under reduced motion every piece appears at rest immediately and the events still fire.
 
+### Scroll scrubbing
+
+Scroll the preview down and back up: the lines rise behind their masks with the scroll and sink back as it returns.
+
+<Preview
+  title="Scrubbed by the scroll"
+  align="stretch"
+  code={`<div style="inline-size:100%;block-size:20rem;overflow:auto;border:var(--tp-border-width) solid var(--tp-border);border-radius:var(--tp-radius-lg);padding-inline:var(--tp-space-6)">
+  <div style="display:grid;gap:var(--tp-space-3);align-content:end;block-size:20rem;padding-block:var(--tp-space-6);box-sizing:border-box">
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:45%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:90%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:6rem"></tp-skeleton>
+  </div>
+  <tp-scroll-trigger scrub scrub-range="cover">
+    <p style="margin:0;font-size:2rem;line-height:1.1;font-weight:600"><tp-mo-text-split split="words lines" mask="lines" reveal="up" stagger="60">Quiet spaces reveal as you scroll</tp-mo-text-split></p>
+  </tp-scroll-trigger>
+  <div style="display:grid;gap:var(--tp-space-3);block-size:20rem;padding-block:var(--tp-space-6);box-sizing:border-box">
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:80%"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:6rem"></tp-skeleton>
+    <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:60%"></tp-skeleton>
+  </div>
+</div>`}
+/>
+
 ### Splitting
 
 - **Words** follow the browser's word segmentation for the text's `lang`, so Chinese, Japanese and Thai split at word boundaries. Spaces stay plain text between pieces, and words break only where the line could already break (after hyphens and dashes), so punctuation stays with its word.

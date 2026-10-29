@@ -13,10 +13,10 @@ import { scrollTriggerPresentation } from '../../presentation/families/scroll-tr
 export type ScrollTriggerStatus = 'idle' | 'loading' | 'ready';
 
 /**
- * Reveals the Images, Image groups, Text splits and nested Scroll triggers inside it as one
- * sequence. As it nears the view it asks them to prepare, so images start loading; once it is in
- * view and every member is ready, it reveals them in document order, a stagger apart. It never
- * changes its own box, so adding it moves nothing around it. With `scrub` the scroll position
+ * Reveals the Images, Image groups, Text splits, Text mirrors, Text strokes and nested Scroll
+ * triggers inside it as one sequence. As it nears the view it asks them to prepare, so images
+ * start loading; once it is in view and every member is ready, it reveals them in document order,
+ * a stagger apart. It never changes its own box, so adding it moves nothing around it. With `scrub` the scroll position
  * drives the sequence instead of time, and with `pin` the content holds in place while the page
  * scrolls on.
  *

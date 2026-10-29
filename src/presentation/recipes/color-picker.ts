@@ -1,6 +1,6 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDeclarations, PresentationDictionary } from '../resolver.js';
-import { activeRing, focusRing, ringMix, thumb, thumbRing } from './shared/handle.js';
+import { activeRing, colorThumbRing, focusRing, ringMix, thumb } from './shared/handle.js';
 import { popupBorder } from './shared/surface.js';
 import { swatchCorner, swatchFill } from './shared/swatch.js';
 
@@ -17,6 +17,12 @@ const checker = swatchFill(
   'var(--_tp-color-picker-paint, none)',
   'var(--_tp-color-picker-checker)',
 );
+
+/** Every marker shows the color it points at, from the widget's thumb paint, inside a white ring. */
+const markerRing: PresentationDeclarations = {
+  ...colorThumbRing,
+  '--_tp-handle-paint': 'var(--_tp-color-picker-thumb-paint, var(--tp-background))',
+};
 
 const surfaceFrame: PresentationDeclarations = {
   'border-radius': 'var(--tp-radius-lg)',
@@ -76,7 +82,7 @@ export const colorPickerAppearance: PresentationDictionary = {
     { declarations: { ...surfaceFrame, cursor: 'crosshair' } },
     { selector: '&[data-disabled]', declarations: { cursor: 'not-allowed' } },
   ],
-  'color-picker-area-thumb': thumb('var(--_tp-color-picker-thumb)'),
+  'color-picker-area-thumb': thumb('var(--_tp-color-picker-thumb)', markerRing),
   // Registered inside each composed Slider: the muted track becomes the widget's paint.
   'color-picker-slider-track': [
     {
@@ -110,7 +116,7 @@ export const colorPickerAppearance: PresentationDictionary = {
       declarations: {
         width: 'var(--_tp-color-picker-thumb)',
         height: 'var(--_tp-color-picker-thumb)',
-        ...thumbRing,
+        ...markerRing,
       },
     },
     { selector: '&[part~="slider-thumb"]:has(input:focus-visible)', declarations: focusRing },
@@ -304,7 +310,7 @@ export const colorPickerAppearance: PresentationDictionary = {
     },
   ],
   'color-picker-wheel-handle': [
-    ...thumb('var(--_tp-color-picker-thumb)'),
+    ...thumb('var(--_tp-color-picker-thumb)', markerRing),
     {
       selector: '&[data-primary]',
       declarations: {
@@ -339,9 +345,9 @@ export const colorPickerAppearance: PresentationDictionary = {
       },
     },
   ],
-  'color-picker-ring-thumb': thumb('var(--_tp-color-picker-thumb)'),
+  'color-picker-ring-thumb': thumb('var(--_tp-color-picker-thumb)', markerRing),
   'color-picker-triangle': [{ declarations: { 'border-radius': 'var(--tp-radius-sm)' } }],
-  'color-picker-triangle-thumb': thumb('var(--_tp-color-picker-thumb)'),
+  'color-picker-triangle-thumb': thumb('var(--_tp-color-picker-thumb)', markerRing),
 };
 
 /** Layout that is not replaceable appearance. */

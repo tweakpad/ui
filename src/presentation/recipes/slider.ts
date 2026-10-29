@@ -1,6 +1,7 @@
 import { motionTransition } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 import { focusRing } from './shared/focus.js';
+import { handleSurface } from './shared/handle.js';
 
 // Slider paint; geometry belongs to the family.
 export const sliderAppearance: PresentationDictionary = {
@@ -38,7 +39,7 @@ export const sliderAppearance: PresentationDictionary = {
         height: 'var(--tp-space-3)',
         border: 'var(--tp-border-width) var(--tp-border-style) var(--tp-ring)',
         'border-radius': 'var(--tp-radius-full)',
-        background: 'var(--tp-background)',
+        background: handleSurface,
         transition: motionTransition(['border-color'], 'fast'),
       },
     },

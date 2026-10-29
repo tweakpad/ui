@@ -55,8 +55,20 @@ installPreviewModules(
 
 /** The hero mounted in each story root, so a re-render replaces it. */
 const mountedHeroes = new WeakMap<Element, MountedPreview>();
+/** Args compared by value: Storybook copies array and object args, so identity never matches. */
 const sameArgs = (args: Record<string, unknown>, initial: Record<string, unknown>) =>
-  Object.keys({ ...args, ...initial }).every((key) => Object.is(args[key], initial[key]));
+  Object.keys({ ...args, ...initial }).every(
+    (key) =>
+      Object.is(args[key], initial[key]) ||
+      JSON.stringify(args[key]) === JSON.stringify(initial[key]),
+  );
+
+/** The inline sizing declared on the hero's root element, which places it in the preview. */
+const heroRootSizing = (code: string): string =>
+  (/<[\w-]+[^>]*?\sstyle="([^"]*)"/u.exec(code.trim().split('\n')[0] ?? '')?.[1] ?? '')
+    .split(';')
+    .filter((declaration) => /^\s*(?:min-|max-)?(?:inline-size|width)\s*:/u.test(declaration))
+    .join(';');
 
 const preview = definePreview({
   // The framework's manifest reader (Controls rows and descriptions from `custom-elements.json`)
@@ -123,14 +135,15 @@ const preview = definePreview({
     },
     // A documented element's Default story is the page's main use case: until its Controls change,
     // it renders the page's hero, whose code is the story's source. Changed Controls render the
-    // story itself, in the hero's frame and alignment, so a Control never moves the use case.
+    // story itself, in the hero's frame, alignment and root width, so a Control never moves or
+    // resizes the use case.
     (story, context) => {
       const doc = (context.parameters.docs as { library?: LibraryDoc } | undefined)?.library;
       const hero = doc?.page.hero;
       if (!hero || context.name !== 'Default') return story();
       if (!sameArgs(context.args, context.initialArgs))
         return html`<div class="tp-docs-example-preview" data-align=${hero.align ?? 'center'}>
-          ${story()}
+          <div style=${`display:flow-root;${heroRootSizing(hero.code)}`}>${story()}</div>
         </div>`;
       return html`<div
         class="tp-docs-example-preview"

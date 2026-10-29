@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Motion › Text scrub verification</title>
+    <link rel="stylesheet" href="/src/styles.css">
+    <style>
+      body { margin: 0; background: var(--tp-background); color: var(--tp-foreground); font-family: var(--tp-font-sans); }
+      main { max-width: 960px; margin: 24px auto; padding: 16px; display: grid; gap: 40px; }
+      h1.fixture { font-size: 1.25rem; margin: 0; }
+      section.case { display: grid; gap: 12px; }
+      section.case > h2.label { font-size: 0.875rem; margin: 0; color: var(--tp-muted-foreground); font-weight: 500; }
+      .display { font-size: 2.5rem; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+      .lead { font-size: 1.125rem; line-height: 1.6; margin: 0; max-inline-size: 60ch; }
+      .flow { margin: 0; padding: 8px 12px; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-md); font-size: 0.875rem; color: var(--tp-muted-foreground); }
+      .resizable { resize: horizontal; overflow: hidden; inline-size: 520px; min-inline-size: 160px; max-inline-size: 100%; border: 1px solid var(--tp-border); border-radius: var(--tp-radius-lg); padding: 12px; }
+      .spacer { block-size: 80vh; display: grid; place-items: center; color: var(--tp-muted-foreground); font-size: 0.75rem; border: 1px dashed var(--tp-border); border-radius: var(--tp-radius-lg); }
+      .row { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+      .stress { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+      tp-image { border-radius: var(--tp-radius-lg); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Motion › Text scrub verification</h1>
+      <div class="spacer">Scroll: every Motion › Text element and effect, scrubbed by one trigger</div>
+      <section class="case" id="case-scrub"><h2 class="label">One scrubbing trigger, cover range, 40 ms apart</h2>
+        <tp-scroll-trigger id="trigger" scrub scrub-range="cover" stagger="40">
+          <p class="lead"><tp-mo-text-split id="fade" split="words" reveal="fade">fade: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-split id="up" split="words" reveal="up">up: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-split id="down" split="words" reveal="down">down: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-split id="left" split="words" reveal="left">left: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-split id="right" split="words" reveal="right">right: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-split id="zoom-in" split="words" reveal="zoom-in">zoom-in: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-split id="zoom-out" split="words" reveal="zoom-out">zoom-out: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-split id="blur" split="words" reveal="blur">blur: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-split id="masked" split="words lines" mask="lines" reveal="up">masked: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-split id="chars" split="chars" reveal="fade up" stagger-from="center">chars: quiet spaces and open light</tp-mo-text-split></p>
+          <p class="lead"><tp-mo-text-mirror id="mirror" >mirror: quiet spaces and open light</tp-mo-text-mirror></p>
+          <p class="lead"><tp-mo-text-mirror id="mirror-vertical" orientation="vertical">mirror-vertical: quiet spaces and open light</tp-mo-text-mirror></p>
+          <p class="lead"><tp-mo-text-stroke id="stroke-chars" split="chars">stroke-chars: quiet spaces and open light</tp-mo-text-stroke></p>
+          <p class="lead"><tp-mo-text-stroke id="stroke-words" split="words lines">stroke-words: quiet spaces and open light</tp-mo-text-stroke></p>
+        </tp-scroll-trigger>
+      </section>
+      <div class="spacer">End</div>
+    </main>
+    <script type="module" src="./scrub.ts"></script>
+  </body>
+</html>
