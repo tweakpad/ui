@@ -135,6 +135,9 @@ export class TpTextMotion extends TpElement {
   #fontsReady = false;
   #width = -1;
   #height = -1;
+  /** The last line pass ran without a layout; it runs again once the text appears. */
+  #linesPending = false;
+  #measuredBlind = false;
   #releases: (() => void)[] = [];
   #releaseContent: (() => void)[] = [];
   #releaseStyles: (() => void) | undefined;
@@ -271,8 +274,14 @@ export class TpTextMotion extends TpElement {
   readonly #linePass: LayoutPass<DOMRect[][]> = {
     active: () => this.isConnected && this.#splitter.measuresLines,
     write: () => this.#splitter.flatten(),
-    measure: () => this.#splitter.measure(),
+    measure: () => {
+      // Without a layout (inside a hidden panel, tab or dialog) the text still gets its pieces,
+      // but every line measures as one: the pass is redone once the text appears.
+      this.#measuredBlind = this.getClientRects().length === 0;
+      return this.#splitter.measure();
+    },
     apply: (boxes) => {
+      this.#linesPending = this.#measuredBlind;
       if (this.#splitter.relayout(boxes)) this.#afterSplit();
       else this.#discardOwnRecords();
     },
@@ -426,19 +435,24 @@ export class TpTextMotion extends TpElement {
     this.#releases.push(
       observeResize(this, (entry) => {
         const { width, height } = entry.contentRect;
+        // Hidden: the lines laid out for the last visible width stay, and nothing is measured.
+        if (width === 0 && height === 0) return;
         const [previousWidth, previousHeight] = [this.#width, this.#height];
         this.#width = width;
         this.#height = height;
-        if (previousWidth < 0 || !this.#splitter.measuresLines) return;
+        if (!this.#splitter.measuresLines) return;
+        // A text split while hidden measures its lines now that it has a layout.
+        if (this.#linesPending) {
+          scheduleLayoutPass(this, this.#linePass);
+          return;
+        }
+        if (previousWidth < 0) return;
         // Recalculated inside the resize delivery, before the new layout is painted. A width
         // change matters only when it can move a word; a height change at the same width comes
         // from outside (typography, content), since a line pass never changes the height.
         const widthMoves = width !== previousWidth && !this.#splitter.fits(width);
         const heightMoved = width === previousWidth && height !== previousHeight;
-        // A text split while it had no layout (in a hidden panel, tab or dialog) measured nothing;
-        // its lines are measured once it appears, whatever the width check says.
-        const appeared = previousWidth === 0 && width > 0;
-        if (widthMoves || heightMoved || appeared) scheduleLayoutPass(this, this.#linePass);
+        if (widthMoves || heightMoved) scheduleLayoutPass(this, this.#linePass);
       }),
       observeFonts(this.ownerDocument, () => {
         if (this.#splitter.measuresLines) scheduleLayoutPass(this, this.#linePass);
