@@ -18,6 +18,22 @@ export interface SplitConfig {
   readonly units: ReadonlySet<SplitUnit>;
   readonly mask: SplitUnit | null;
   readonly staggerFrom: StaggerFrom;
+  /**
+   * Lines become two windows cut at the middle of their text, each sliding a copy of the line
+   * (the `wipe` reveal): the real line in the end window, an inert copy in the start window.
+   */
+  readonly wipe?: boolean;
+}
+
+/** One wipe window around a slide that carries `content`. */
+function wipeWindow(doc: Document, side: 'start' | 'end', content: HTMLElement): HTMLElement {
+  const window = doc.createElement('div');
+  window.dataset.tpWipeWindow = side;
+  const slide = doc.createElement('div');
+  slide.dataset.tpWipeSlide = '';
+  slide.append(content);
+  window.append(slide);
+  return window;
 }
 
 export interface SplitPieces {
@@ -452,11 +468,14 @@ export class TextSplitter {
         if (children.length === 0) line.dataset.tpFirstLine = '';
         assemble(line, group.items, pick);
         lines.push(line);
-        if (config.mask === 'lines') {
+        if (config.mask === 'lines' || config.wipe) {
           const mask = this.#doc.createElement('div');
           mask.dataset.tpPiece = 'mask';
           mask.dataset.tpMaskUnit = 'lines';
-          mask.append(line);
+          if (config.wipe) {
+            mask.dataset.tpWipe = '';
+            mask.append(wipeWindow(this.#doc, 'end', line));
+          } else mask.append(line);
           masks.push(mask);
           children.push(mask);
         } else children.push(line);
@@ -466,8 +485,33 @@ export class TextSplitter {
     this.#placed = new Set(this.host.childNodes);
     this.#pieces = { ...this.#pieces, lines, masks };
     this.#finish();
+    if (config.wipe) this.#twinLines(lines);
     this.#refocus(focused);
     return true;
+  }
+
+  /**
+   * The start window of each wipe line: an inert copy of the finished line, so its pieces carry
+   * the same stagger and effects. It is visual only: no original text, no ids, no interaction.
+   */
+  #twinLines(lines: readonly HTMLElement[]): void {
+    for (const line of lines) {
+      const mask = line.closest<HTMLElement>('[data-tp-wipe]');
+      if (!mask) continue;
+      mask.style.setProperty(
+        '--_tp-tm-wipe-order',
+        line.style.getPropertyValue('--tp-text-order') ||
+          line.style.getPropertyValue('--tp-text-index') ||
+          '0',
+      );
+      const copy = line.cloneNode(true) as HTMLElement;
+      for (const node of copy.querySelectorAll('[data-tp-text]')) node.remove();
+      for (const node of copy.querySelectorAll('[id]')) node.removeAttribute('id');
+      copy.setAttribute('aria-hidden', 'true');
+      copy.inert = true;
+      copy.dataset.tpWipeCopy = '';
+      mask.append(wipeWindow(this.#doc, 'start', copy));
+    }
   }
 
   /**

@@ -38,8 +38,11 @@ export interface RevealPlaybackOptions {
   effect(): string;
   /** Additional motion request context. */
   context?(): Readonly<Record<string, MotionValue>>;
-  /** Presents the revealed (or start) state, with a coordinator delay in milliseconds. */
-  apply(revealed: boolean, delay: number): void;
+  /**
+   * Presents the revealed (or start) state, with a coordinator delay in milliseconds; `animated`
+   * returns to the start state through the reveal's own transitions (a hide) instead of at once.
+   */
+  apply(revealed: boolean, delay: number, animated?: boolean): void;
   /** The rendered transition span in milliseconds, read after `apply`. */
   span(): number;
 }
@@ -83,6 +86,26 @@ export class RevealPlayback {
     return settled.then(() => {
       if (serial !== this.#serial || !this.#revealed) return;
       this.options.emit('tp-reveal-change-complete', { revealed: true });
+    });
+  }
+
+  /**
+   * Plays the reveal backwards to the start state, with the same duration and stagger, and resolves
+   * once it has settled (a reveal held again while visible).
+   */
+  hide(): Promise<void> {
+    if (!this.#revealed) return Promise.resolve();
+    const serial = ++this.#serial;
+    this.#revealed = false;
+    this.options.apply(false, 0, true);
+    this.options.emit('tp-reveal-change', { revealed: false, effect: this.options.effect() });
+    const view = this.options.owner.ownerDocument.defaultView;
+    return new Promise<void>((resolve) =>
+      view ? view.setTimeout(resolve, this.options.span()) : resolve(),
+    ).then(() => {
+      if (serial !== this.#serial || this.#revealed) return;
+      this.options.apply(false, 0, false);
+      this.options.emit('tp-reveal-change-complete', { revealed: false });
     });
   }
 

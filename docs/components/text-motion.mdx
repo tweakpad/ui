@@ -40,13 +40,29 @@ The mask extends a little over ascenders and descenders, so tight line heights n
 
 `reveal` combines effects such as `fade`, `blur`, `zoom-in` and the four directions. `split="chars"` animates user-perceived characters and turns off kerning from the first frame, so the text never re-wraps when it splits.
 
-Effects only change opacity, translate, scale and filter, so nothing around the text moves.
+Effects only change opacity, translate, scale and filter, so nothing around the text moves. `wipe` works on lines instead: each line is cut at the middle of its text, and both halves slide out of that seam to their places. It needs `lines` in `split`, combines with the other effects and follows `stagger` line by line.
 
 <Preview
   title="Characters from the center"
   code={`<p style="margin:0;inline-size:100%;text-align:center;font-size:2.5rem;font-weight:600;letter-spacing:-0.02em">
   <tp-text-motion split="chars" reveal="fade blur" stagger="25" stagger-from="center" reveal-repeat>Open light</tp-text-motion>
 </p>`}
+/>
+
+<Preview
+  title="Line wipe"
+  script={`const text = document.querySelector('#text-motion-demo-wipe');
+const toggle = document.querySelector('#text-motion-demo-wipe-toggle');
+toggle.addEventListener('click', () => {
+  text.revealHold = !text.revealHold;
+  toggle.textContent = text.revealHold ? 'Reveal' : 'Hide';
+});`}
+  code={`<div style="display:grid;gap:var(--tp-space-5);justify-items:center;inline-size:100%">
+  <p style="margin:0;inline-size:100%;max-inline-size:36rem;text-align:center;font-size:1.5rem;line-height:1.4;font-weight:600">
+    <tp-text-motion id="text-motion-demo-wipe" split="lines" reveal="wipe" stagger="90">Every review, every comment and every release, in one shared timeline.</tp-text-motion>
+  </p>
+  <tp-button id="text-motion-demo-wipe-toggle" variant="outline">Hide</tp-button>
+</div>`}
 />
 
 ### Stagger
@@ -64,7 +80,7 @@ Effects only change opacity, translate, scale and filter, so nothing around the 
 
 ### Holding the reveal
 
-`reveal-hold` keeps a split, visible text waiting in its start state, so you can play it at a moment of your choosing: after a loading screen, when a font arrives, or on a press as here. Removing the attribute plays the reveal if the text is in view. A reveal that would start during a same-document view transition waits for it to finish.
+`reveal-hold` keeps a split, visible text waiting in its start state, so you can play it at a moment of your choosing: after a loading screen, when a font arrives, or on a press as here. Removing the attribute plays the reveal if the text is in view. Setting it again on a revealed text hides it, playing the reveal backwards. A reveal that would start during a same-document view transition waits for it to finish.
 
 <Preview
   title="Reveal on demand"

@@ -46,7 +46,7 @@ const meta = {
     reveal: {
       control: 'text',
       description:
-        'Effect tokens: any of `fade up down left right zoom-in zoom-out blur`; empty disables.',
+        'Effect tokens: any of `fade up down left right zoom-in zoom-out blur wipe`; empty disables.',
       table: { defaultValue: { summary: 'coordinator default, or fade up' } },
     },
     stagger: {

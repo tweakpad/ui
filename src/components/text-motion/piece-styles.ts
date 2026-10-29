@@ -125,6 +125,84 @@ tp-text-motion[data-reveal]:not([data-revealed], [data-tp-scrub]) [data-tp-anima
   transition-delay: 0s;
 }
 
+/* Wipe (lines): each line is cut at the middle of its own text into two windows that stay in
+   place. Each window slides its half of the line out of that seam to its place, the real line in
+   the end window and an inert copy in the start window, and back into it when the text hides. */
+tp-text-motion [data-tp-wipe] {
+  --_tp-tm-wipe-center: calc(
+    var(--_tp-tm-wipe-start, 0px) + var(--_tp-tm-wipe-size, 100%) / 2
+  );
+  --_tp-tm-wipe-reach: calc(var(--_tp-tm-wipe-size, 100%) / 2 + var(--_tp-tm-bleed));
+  position: relative;
+  clip-path: none;
+}
+
+tp-text-motion [data-tp-wipe-window] {
+  display: block;
+}
+
+tp-text-motion [data-tp-wipe-window='end'] {
+  clip-path: inset(
+    calc(-1 * var(--_tp-tm-bleed)) -100vmax calc(-1 * var(--_tp-tm-bleed))
+      var(--_tp-tm-wipe-center)
+  );
+}
+
+tp-text-motion [data-tp-wipe-window='start'] {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(
+    calc(-1 * var(--_tp-tm-bleed)) calc(100% - var(--_tp-tm-wipe-center))
+      calc(-1 * var(--_tp-tm-bleed)) -100vmax
+  );
+}
+
+tp-text-motion [data-tp-wipe-slide] {
+  display: block;
+  transition: translate var(--_tp-tm-duration) var(--_tp-tm-easing);
+  transition-delay: calc(
+    (var(--_tp-tm-wipe-order, 0) * var(--_tp-tm-stagger, 30ms) + var(--_tp-tm-delay, 0ms)) *
+      var(--tp-motion-scale, 1)
+  );
+}
+
+tp-text-motion:not([data-revealed], [data-tp-scrub]) [data-tp-wipe-window='end'] > [data-tp-wipe-slide] {
+  translate: calc(-1 * var(--_tp-tm-wipe-reach)) 0;
+  transition-duration: 0s;
+  transition-delay: 0s;
+}
+
+tp-text-motion:not([data-revealed], [data-tp-scrub]) [data-tp-wipe-window='start'] > [data-tp-wipe-slide] {
+  translate: var(--_tp-tm-wipe-reach) 0;
+  transition-duration: 0s;
+  transition-delay: 0s;
+}
+
+/* At rest the real line shows whole and the copy steps aside, so links and selection behave as in
+   the original text. */
+tp-text-motion[data-tp-at-rest] [data-tp-wipe-window='end'] {
+  clip-path: none;
+}
+
+tp-text-motion[data-tp-at-rest] [data-tp-wipe-window='start'] {
+  visibility: hidden;
+}
+
+/* A hide plays the reveal backwards: the start state is reached through the same transitions. */
+tp-text-motion[data-reveal][data-tp-hiding]:not([data-revealed]) [data-tp-animate] {
+  transition-duration: var(--_tp-tm-duration);
+  transition-delay: calc(
+    var(--tp-text-order, 0) * var(--_tp-tm-stagger, 30ms) * var(--tp-motion-scale, 1)
+  );
+}
+
+tp-text-motion[data-tp-hiding]:not([data-revealed]) [data-tp-wipe-slide] {
+  transition-duration: var(--_tp-tm-duration);
+  transition-delay: calc(
+    var(--_tp-tm-wipe-order, 0) * var(--_tp-tm-stagger, 30ms) * var(--tp-motion-scale, 1)
+  );
+}
+
 /* Scrubbed (Foundation §18.19 tm-scrub): the scroll sets the time; each piece shows its eased
    state at that time of the timed reveal, its stagger offset included. */
 @keyframes tp-text-motion-reveal {
