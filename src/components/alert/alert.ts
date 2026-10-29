@@ -31,6 +31,8 @@ export class TpAlert extends TpElement {
       :host {
         display: block;
         min-inline-size: 0;
+        container-type: inline-size;
+        inline-size: 100%;
       }
 
       .alert {
@@ -61,6 +63,24 @@ export class TpAlert extends TpElement {
         display: flex;
         flex-wrap: wrap;
         align-items: start;
+      }
+
+      /*
+       * A narrow alert keeps its text readable: the actions leave their column and take a row of
+       * their own under the text, lined up with it.
+       */
+      @container (width < 30rem) {
+        .alert:has(.actions:not([hidden])) {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .alert:has(.mark:not([hidden])):has(.actions:not([hidden])) {
+          grid-template-columns: auto minmax(0, 1fr);
+        }
+
+        .actions {
+          grid-column: -2 / -1;
+        }
       }
 
       [hidden] {

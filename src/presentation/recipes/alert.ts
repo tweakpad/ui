@@ -4,6 +4,8 @@ import { calloutSurface, calloutTint, calloutTints } from './shared/callout-surf
 export const alertAppearance: PresentationDictionary = {
   alert: [
     { selector: '&', declarations: calloutSurface },
+    // Actions that move under the text in a narrow alert keep the surface's own gap from it.
+    { selector: '&', declarations: { 'row-gap': 'var(--tp-space-2)' } },
     {
       selector: '& > .body',
       declarations: { gap: 'var(--tp-space-0-5)' },

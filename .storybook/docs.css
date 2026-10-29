@@ -1,5 +1,6 @@
+/* A use case adds no spacing of its own (a figure's default margins indent it); the canvas has its own. */
 .tp-docs-example {
-  margin-block: var(--tp-space-8);
+  margin: 0;
 }
 
 /* A documentation page's preview: the canvas, aligned as the example asks, and its source. */

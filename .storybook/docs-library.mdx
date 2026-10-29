@@ -63,9 +63,17 @@ export function Preview(props) {
     language: props.language || 'html',
     format: false,
   };
+  // The section heading names a lone preview; a caption tells apart several in one section.
+  const parsed = context?.previews.find(
+    (candidate) => candidate.code === props.code && candidate.title === props.title,
+  );
+  const siblings = parsed
+    ? context.previews.filter((candidate) => candidate.afterHeading === parsed.afterHeading).length
+    : 1;
+  const captioned = Boolean(props.title) && siblings > 1;
   return (
     <figure className="tp-docs-example">
-      <figcaption>{props.title}</figcaption>
+      {captioned && <figcaption>{props.title}</figcaption>}
       {props.codeOnly ? (
         <Canvas withToolbar={false} source={source} sourceState="shown" />
       ) : (
@@ -157,7 +165,7 @@ export function LibraryDoc() {
   // created directly.
   return React.createElement(
     LibraryDocContext.Provider,
-    { value: { hero: page.hero } },
+    { value: { hero: page.hero, previews: page.previews } },
     <MDXProvider components={components}>
       <Content components={components} />
     </MDXProvider>,
