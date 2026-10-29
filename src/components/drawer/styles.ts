@@ -39,7 +39,10 @@ export const drawerStyles = css`
     flex-direction: column;
     overflow: hidden;
     pointer-events: auto;
-    transform: translate(var(--drawer-swipe-movement-x, 0), var(--drawer-swipe-movement-y, 0));
+    transform: translate(
+      var(--_tp-drawer-swipe-movement-x, 0),
+      var(--_tp-drawer-swipe-movement-y, 0)
+    );
   }
 
   .drawer-surface[data-swipe-direction='down'],
@@ -53,13 +56,13 @@ export const drawerStyles = css`
 
   .drawer-surface[data-swipe-axis='y'] {
     transform: translateY(
-      calc(var(--drawer-snap-point-offset, 0px) + var(--drawer-swipe-movement-y, 0px))
+      calc(var(--_tp-drawer-snap-point-offset, 0px) + var(--_tp-drawer-swipe-movement-y, 0px))
     );
   }
 
   .drawer-surface[data-swipe-axis='x'] {
     transform: translateX(
-      calc(var(--drawer-snap-point-offset, 0px) + var(--drawer-swipe-movement-x, 0px))
+      calc(var(--_tp-drawer-snap-point-offset, 0px) + var(--_tp-drawer-swipe-movement-x, 0px))
     );
   }
 

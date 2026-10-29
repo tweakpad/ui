@@ -33,18 +33,18 @@ export const drawerAppearance: PresentationDictionary = {
     }),
     ...(['down', 'up', 'left', 'right'] as const).map((direction) => {
       const sign = direction === 'down' || direction === 'right' ? '-' : '+';
-      const translate = `calc(var(--drawer-snap-point-offset, 0px) + var(--drawer-swipe-movement-${direction === 'down' || direction === 'up' ? 'y' : 'x'}, 0px) ${sign} (var(--nested-drawers) - var(--drawer-swipe-progress)) * var(--tp-space-4))`;
+      const translate = `calc(var(--_tp-drawer-snap-point-offset, 0px) + var(--_tp-drawer-swipe-movement-${direction === 'down' || direction === 'up' ? 'y' : 'x'}, 0px) ${sign} (var(--nested-drawers) - var(--_tp-drawer-swipe-progress)) * var(--tp-space-4))`;
       return {
         selector: `&[data-swipe-direction="${direction}"][data-nested-drawer-open]:not([data-ending-style])`,
         declarations: {
-          transform: `translate${direction === 'down' || direction === 'up' ? 'Y' : 'X'}(${translate}) scale(max(0,calc(1 - var(--nested-drawers) * .05 + var(--drawer-swipe-progress) * .05)))`,
+          transform: `translate${direction === 'down' || direction === 'up' ? 'Y' : 'X'}(${translate}) scale(max(0,calc(1 - var(--nested-drawers) * .05 + var(--_tp-drawer-swipe-progress) * .05)))`,
         },
       };
     }),
     {
       selector: '&[data-ending-style][data-swipe-dismiss]',
       declarations: {
-        'transition-duration': motionDuration('normal', 'var(--drawer-swipe-strength, 1)'),
+        'transition-duration': motionDuration('normal', 'var(--_tp-drawer-swipe-strength, 1)'),
       },
     },
     { selector: '&[data-swiping], &[data-tp-motion-driven]', declarations: { transition: 'none' } },
@@ -53,7 +53,7 @@ export const drawerAppearance: PresentationDictionary = {
     {
       selector: '&[data-ending-style][data-swipe-dismiss]',
       declarations: {
-        'transition-duration': motionDuration('normal', 'var(--drawer-swipe-strength, 1)'),
+        'transition-duration': motionDuration('normal', 'var(--_tp-drawer-swipe-strength, 1)'),
       },
     },
     { selector: '&[data-swiping]', declarations: { transition: 'none' } },
@@ -67,7 +67,7 @@ export const drawerAppearance: PresentationDictionary = {
     { selector: '[data-nested-drawer-open] > &', declarations: { opacity: '0' } },
     {
       selector: '[data-nested-drawer-swiping] > &',
-      declarations: { opacity: 'var(--drawer-swipe-progress)' },
+      declarations: { opacity: 'var(--_tp-drawer-swipe-progress)' },
     },
   ],
   'drawer-swipe-handle': [

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Drawer swipe restyle (issue 14)</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+    </style>
+  </head>
+  <body>
+    <tp-drawer
+      id="drawer"
+      label="Order history"
+      description="Every order this quarter."
+      show-swipe-handle
+    >
+      <tp-button slot="trigger" variant="outline">Open drawer</tp-button>
+      <div id="rows" style="display: grid; gap: var(--tp-space-2)"></div>
+      <tp-button slot="close" variant="outline">Done</tp-button>
+    </tp-drawer>
+    <script type="module" src="./swipe-restyle.ts"></script>
+  </body>
+</html>

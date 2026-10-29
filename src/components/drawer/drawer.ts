@@ -11,6 +11,7 @@ import { observeResize } from '../../foundation/observation.js';
 import type { HostProperties } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { DrawerGesture } from './gesture.js';
+import { registerProperty } from '../../foundation/register-property.js';
 import { nearestPoint, resolveSnapPoints, settleSnap, snapExtent } from './geometry.js';
 import {
   directionSign,
@@ -31,6 +32,25 @@ import type {
 } from './virtual-keyboard.js';
 import { drawerStyles } from './styles.js';
 import { drawerPresentation } from '../../presentation/families/drawer.js';
+
+/**
+ * The swipe values the Drawer writes on every gesture frame. Each is read only by the element it is
+ * written on, so they are registered non-inherited: an inherited write would restyle all of the
+ * drawer's slotted content on every frame.
+ */
+const SWIPE_PROGRESS = '--_tp-drawer-swipe-progress';
+const SWIPE_STRENGTH = '--_tp-drawer-swipe-strength';
+const SWIPE_MOVEMENT_X = '--_tp-drawer-swipe-movement-x';
+const SWIPE_MOVEMENT_Y = '--_tp-drawer-swipe-movement-y';
+const SNAP_POINT_OFFSET = '--_tp-drawer-snap-point-offset';
+for (const [name, syntax, initialValue] of [
+  [SWIPE_PROGRESS, '<number>', '0'],
+  [SWIPE_STRENGTH, '<number>', '1'],
+  [SWIPE_MOVEMENT_X, '<length>', '0px'],
+  [SWIPE_MOVEMENT_Y, '<length>', '0px'],
+  [SNAP_POINT_OFFSET, '<length>', '0px'],
+] as const)
+  registerProperty({ name, syntax, inherits: false, initialValue });
 
 const drawerModalities: readonly DialogModality[] = ['modal', 'non-modal', 'trap-focus-only'];
 const edges: readonly DrawerEdge[] = ['block-start', 'block-end', 'inline-start', 'inline-end'];
@@ -540,17 +560,22 @@ export class TpDrawer extends TpDialog {
     const nested = [...this.#nested.values()].filter((state) => state.active);
     const front = nested.at(-1);
     const height = front?.height || surface?.offsetHeight || 0;
+    const swipeProgress = String(front?.progress ?? progress);
     for (const element of [surface, this.surfaceRoot.querySelector<HTMLElement>('.overlay')]) {
       if (!element) continue;
       element.toggleAttribute('data-swiping', this.#output.swiping);
       element.toggleAttribute('data-swipe-dismiss', this.#swipeDismissed);
       element.dataset.swipeDirection = this.swipeDirection;
-      element.style.setProperty('--drawer-swipe-progress', String(front?.progress ?? progress));
+      element.style.setProperty(SWIPE_PROGRESS, swipeProgress);
       element.style.setProperty(
-        '--drawer-swipe-strength',
+        SWIPE_STRENGTH,
         String(clamp(1 / Math.max(1, Math.abs(this.#output.velocity)), 0.1, 1)),
       );
     }
+    // The content fades with a nested drawer's swipe; it reads its own copy, never an inherited one.
+    this.surfaceRoot
+      .querySelector<HTMLElement>('.drawer-content')
+      ?.style.setProperty(SWIPE_PROGRESS, swipeProgress);
     if (surface) {
       surface.toggleAttribute(
         'data-expanded',
@@ -565,13 +590,13 @@ export class TpDrawer extends TpDialog {
         '--nested-drawers',
         String(nested.reduce((sum, state) => sum + 1 + state.count, 0)),
       );
-      surface.style.setProperty('--drawer-snap-point-offset', `${offset * sign}px`);
+      surface.style.setProperty(SNAP_POINT_OFFSET, `${offset * sign}px`);
       surface.style.setProperty(
-        '--drawer-swipe-movement-x',
+        SWIPE_MOVEMENT_X,
         `${horizontal ? (translation - offset) * sign : 0}px`,
       );
       surface.style.setProperty(
-        '--drawer-swipe-movement-y',
+        SWIPE_MOVEMENT_Y,
         `${horizontal ? 0 : (translation - offset) * sign}px`,
       );
     }
