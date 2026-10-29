@@ -32,6 +32,7 @@ export class PresenceController implements ReactiveController {
   #completionStartedFor = -1;
   #destroyed = false;
   #connected = true;
+  #openAtDisconnect = false;
   #completedGeneration = -1;
   #trackedCompletions = new Set<PromiseLike<void>>();
 
@@ -124,11 +125,23 @@ export class PresenceController implements ReactiveController {
   hostConnected(): void {
     this.#connected = true;
     const requested = this.#requested;
+    // A region that was open at rest has moved, not appeared: it stays open without replaying
+    // its entry, which would collapse it for a frame and clamp the scroll position around it.
+    if (requested && this.#openAtDisconnect) {
+      this.#openAtDisconnect = false;
+      this.settle(true);
+      return;
+    }
     this.#requested = false;
     this.setPresent(requested);
   }
 
   hostDisconnected(): void {
+    this.#openAtDisconnect =
+      this.#state === 'open' &&
+      this.#pendingCompletion === null &&
+      this.#completionStartedFor === -1 &&
+      this.#frame === undefined;
     this.#connected = false;
     this.#generation += 1;
     this.#cancelWait();

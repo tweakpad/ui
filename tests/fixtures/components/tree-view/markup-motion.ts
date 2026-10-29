@@ -113,5 +113,66 @@ async function assertMarkupMotion() {
   return { pass: failures.length === 0, failures };
 }
 
-Object.assign(window, { assertMarkupMotion });
+/**
+ * Moving an expanded tree, with `moveBefore` as a client-side router carries a persisted element
+ * and with `append`, keeps its open groups settled at full height: no entry replays, so a scrolled
+ * column around the tree keeps its position where the browser keeps it (across `moveBefore`).
+ */
+async function assertMove() {
+  const failures: string[] = [];
+  const sections = ['one', 'two', 'three'];
+  const column = document.createElement('div');
+  column.style.cssText = 'block-size: 12rem; overflow: auto; max-inline-size: 20rem';
+  column.innerHTML = `<tp-tree-view label="Moved" default-expanded='${JSON.stringify(sections)}'>${sections
+    .map(
+      (section) =>
+        `<tp-tree-item value="${section}">${section}${Array.from(
+          { length: 8 },
+          (_, index) =>
+            `<tp-tree-item value="${section}-${index}">${section} ${index + 1}</tp-tree-item>`,
+        ).join('')}</tp-tree-item>`,
+    )
+    .join('')}</tp-tree-view>`;
+  const first = document.createElement('div');
+  const second = document.createElement('div');
+  document.body.append(first, second);
+  first.append(column);
+  await wait(600);
+  const groups = () =>
+    Array.from(column.querySelectorAll('tp-tree-view > tp-tree-item'), (item) =>
+      item.shadowRoot!.querySelector<HTMLElement>("[part~='group']")!,
+    );
+  const heights = () =>
+    groups().map((element) => Math.round(element.getBoundingClientRect().height));
+  const full = heights();
+  for (const how of ['moveBefore', 'append'] as const) {
+    if (how === 'moveBefore' && !('moveBefore' in Element.prototype)) continue;
+    column.scrollTop = column.scrollHeight;
+    const top = column.scrollTop;
+    const target = column.parentElement === first ? second : first;
+    if (how === 'moveBefore')
+      (target as Element & { moveBefore(node: Node, child: Node | null): void }).moveBefore(
+        column,
+        null,
+      );
+    else target.append(column);
+    for (let frame = 0; frame < 20; frame += 1) {
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      if (
+        groups().some((element) => element.hasAttribute('data-starting-style')) ||
+        heights().some((height, index) => height !== full[index])
+      ) {
+        failures.push(`${how}: an open group replayed its entry`);
+        break;
+      }
+    }
+    if (how === 'moveBefore' && column.scrollTop !== top)
+      failures.push('moveBefore: the column lost its scroll position');
+  }
+  first.remove();
+  second.remove();
+  return { pass: failures.length === 0, failures };
+}
+
+Object.assign(window, { assertMarkupMotion, assertMove });
 await import('/src/register.ts');

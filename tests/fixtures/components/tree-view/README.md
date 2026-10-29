@@ -6,6 +6,9 @@ Served by the Vite dev server (`npm run dev`), driven only through Chrome DevToo
 - `index.html`: markup, RTL, form, virtualized, disabled/read-only and empty trees; events in
   `window.treeFixture.events`.
 - `markup-motion.html` + `markup-motion.ts`: expand/collapse motion of markup items.
+  `assertMarkupMotion()` checks the first render, a collapse and an expand on a fresh load;
+  `assertMove()` moves an expanded tree in a scrolled column (`moveBefore`, then `append`) and
+  checks that no open group replays its entry and that `moveBefore` keeps the scroll position.
 - `standalone.html`: registering `tp-tree-view` alone defines its constituents (`window.standalone`).
 - `page-focus-rule.html`: page-level `:focus` and `:focus-visible` outlines (both `!important`).
 

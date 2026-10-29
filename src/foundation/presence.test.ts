@@ -154,6 +154,24 @@ describe('presence lifecycle', () => {
     await f.settle();
     expect(f.complete.mock.calls).toEqual([[true]]);
   });
+  it('keeps an open region at rest open across a move without replaying its entry', async () => {
+    const f = setup();
+    f.controller.setPresent(true);
+    await f.settle();
+    f.controller.hostDisconnected();
+    f.controller.hostConnected();
+    expect(f.controller.state).toBe('open');
+    await f.settle();
+    expect(f.complete.mock.calls).toEqual([[true]]);
+    // Opened without a transition, it moves the same way; later changes still animate.
+    const g = setup();
+    g.controller.settle(true);
+    g.controller.hostDisconnected();
+    g.controller.hostConnected();
+    expect(g.controller.state).toBe('open');
+    g.controller.setPresent(false);
+    expect(g.controller.state).toBe('ending');
+  });
   it('releases retained mounting without repeating close completion', async () => {
     const f = setup();
     f.controller.setPresent(true);
