@@ -37,3 +37,27 @@
 .tp-docs-tag {
   margin-block: 0 var(--tp-space-6);
 }
+
+/*
+ * Docs pages on a phone. The library's body minimum (400px) would make a 390px page scroll
+ * sideways, so a Docs page fills whatever width it gets. Args tables (Controls and the API
+ * Reference) and Markdown tables keep their columns and scroll inside their own box, and the page
+ * keeps a phone-sized gutter instead of Storybook's 40px.
+ */
+body:has(.sbdocs-wrapper) {
+  min-width: 0;
+}
+
+/* Args tables and the page's Markdown tables; tables inside previews are the library's own. */
+.sbdocs .docblock-argstable,
+.sbdocs-content > table {
+  display: block;
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+@media (width <= 600px) {
+  .sbdocs.sbdocs-wrapper {
+    padding-inline: var(--tp-space-4);
+  }
+}

@@ -99,6 +99,12 @@ export const KEY_ALIASES = {
   esc: 'escape',
 };
 
+export function KeyHint({ name }) {
+  // `key` is reserved by React, so the attribute is set on the element itself.
+  const set = React.useCallback((element) => element?.setAttribute('key', name), [name]);
+  return <tp-key-hint ref={set} />;
+}
+
 export function Keys({ keys }) {
   const names = keys
     .split('+')
@@ -112,12 +118,6 @@ export function Keys({ keys }) {
       ))}
     </tp-key-hint-group>
   );
-}
-
-export function KeyHint({ name }) {
-  // `key` is reserved by React, so the attribute is set on the element itself.
-  const set = React.useCallback((element) => element?.setAttribute('key', name), [name]);
-  return <tp-key-hint ref={set} />;
 }
 
 export function useLibraryDoc() {

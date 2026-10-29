@@ -160,7 +160,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:package": "npm run build && node scripts/pack-smoke.mjs",
-    "storybook": "npm run cem && storybook dev -p 6006",
+    "storybook": "npm run cem && storybook dev -p 6006 --host 0.0.0.0",
     "build-storybook": "npm run cem && storybook build",
     "cem": "cem analyze && node scripts/minify-manifest.mjs",
     "changeset": "changeset",
