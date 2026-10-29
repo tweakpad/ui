@@ -9,6 +9,7 @@ import type {
   SliderValue,
   SliderThumbCollisionBehavior,
   SliderThumbAlignment,
+  SliderVariant,
 } from '../components/slider/index.js';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import { libraryDocs } from './library-docs.js';
@@ -18,6 +19,9 @@ interface Args {
   minimum: number;
   maximum: number;
   step: number;
+  ticks: number | undefined;
+  snapToTicks: boolean;
+  variant: SliderVariant;
   largeStep: number;
   minStepsBetweenValues: number;
   thumbCollisionBehavior: SliderThumbCollisionBehavior;
@@ -41,6 +45,9 @@ const meta: Meta<Args> = {
     minimum: 0,
     maximum: 100,
     step: 1,
+    ticks: undefined,
+    snapToTicks: false,
+    variant: 'default',
     largeStep: 10,
     minStepsBetweenValues: 0,
     thumbCollisionBehavior: 'push',
@@ -63,6 +70,9 @@ const meta: Meta<Args> = {
     minimum: { control: 'number' },
     maximum: { control: 'number' },
     step: { control: 'number' },
+    ticks: { control: 'number', description: 'Tick interval in value units; empty for none.' },
+    snapToTicks: { control: 'boolean' },
+    variant: { control: 'select', options: ['default', 'bar', 'inline'] },
     largeStep: { control: 'number' },
     minStepsBetweenValues: { control: 'number' },
     thumbCollisionBehavior: { control: 'select', options: ['push', 'swap', 'none'] },
@@ -96,6 +106,9 @@ const meta: Meta<Args> = {
       .minimum=${args.minimum}
       .maximum=${args.maximum}
       .step=${args.step}
+      .ticks=${args.ticks}
+      .snapToTicks=${args.snapToTicks}
+      .variant=${args.variant}
       .largeStep=${args.largeStep}
       .minStepsBetweenValues=${args.minStepsBetweenValues}
       .thumbCollisionBehavior=${args.thumbCollisionBehavior}

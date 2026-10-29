@@ -97,6 +97,49 @@ export const sliderStyles = css`
     flex: 1;
   }
 
+  /* Ticks center on their value with the Thumb's geometry; they never take pointer input. */
+  .tick {
+    position: absolute;
+    translate: -50% -50%;
+    pointer-events: none;
+  }
+
+  /*
+   * Inline: one control-height bar. The header overlays the full-height Track; presses pass
+   * through the label and the output to the Control, which owns pointer input.
+   */
+  :host([variant='inline']:not([orientation='vertical'])) .root {
+    display: grid;
+    grid-template: 'bar' auto / minmax(0, 1fr);
+  }
+
+  :host([variant='inline']:not([orientation='vertical'])) :is(.header, .control) {
+    grid-area: bar;
+  }
+
+  :host([variant='inline']:not([orientation='vertical'])) .header {
+    position: relative;
+    z-index: 3;
+    flex-wrap: nowrap;
+    padding-inline: var(--tp-space-3);
+    pointer-events: none;
+  }
+
+  :host([variant='inline']:not([orientation='vertical'])) [part~='slider-label'] {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :host([variant='inline']:not([orientation='vertical'])) [part~='slider-output'] {
+    margin-inline-start: auto;
+  }
+
+  :host([variant='inline']:not([orientation='vertical'])) .track {
+    align-self: stretch;
+  }
+
   ::slotted(tp-slider-thumb) {
     position: absolute;
   }

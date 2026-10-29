@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Slider ticks and inline verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 700px;
+        display: grid;
+        gap: 24px;
+      }
+      .stack {
+        display: grid;
+        gap: var(--tp-space-2);
+      }
+      #inline-vertical {
+        block-size: 160px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Slider ticks and inline verification</h1>
+      <section aria-labelledby="filters-title">
+        <h2 id="filters-title">Stay filters</h2>
+        <div class="stack" id="stack">
+          <tp-slider
+            id="price"
+            variant="inline"
+            label="Price per night"
+            default-value="60 180"
+            max="300"
+            step="10"
+          ></tp-slider>
+          <tp-slider
+            id="distance"
+            variant="inline"
+            label="Distance to center"
+            default-value="7"
+            max="20"
+          ></tp-slider>
+          <tp-slider
+            id="rating"
+            variant="inline"
+            label="Guest rating"
+            default-value="8"
+            max="10"
+            ticks="1"
+            snap-to-ticks
+          ></tp-slider>
+        </div>
+      </section>
+      <tp-slider
+        id="ticks"
+        label="Balance"
+        default-value="30"
+        min="-50"
+        max="50"
+        ticks="10"
+      ></tp-slider>
+      <tp-slider
+        id="snap"
+        label="Speed"
+        default-value="1"
+        min="0"
+        max="2"
+        step="0.01"
+        ticks="0.25"
+        snap-to-ticks
+      ></tp-slider>
+      <div class="stack">
+        <tp-slider
+          id="inline-range"
+          variant="inline"
+          label="Visible range"
+          default-value="20 60"
+        ></tp-slider>
+        <tp-field
+          id="inline-field"
+          label="Check-in flexibility"
+          description="Days before or after the chosen date."
+        >
+          <tp-slider variant="inline" default-value="2" max="7"></tp-slider>
+        </tp-field>
+        <tp-slider
+          id="inline-long"
+          variant="inline"
+          label="A very long label that needs to ellipsize before it reaches the value"
+          default-value="64"
+        ></tp-slider>
+        <tp-slider
+          id="inline-disabled"
+          variant="inline"
+          label="Disabled"
+          default-value="40"
+          disabled
+        ></tp-slider>
+        <tp-slider
+          id="inline-invalid"
+          variant="inline"
+          label="Invalid"
+          default-value="70"
+          invalid
+        ></tp-slider>
+        <tp-slider
+          id="inline-readonly"
+          variant="inline"
+          label="Read only"
+          default-value="55"
+          read-only
+        ></tp-slider>
+      </div>
+      <div class="stack" dir="rtl">
+        <tp-slider
+          id="inline-rtl"
+          variant="inline"
+          label="المسافة"
+          default-value="30"
+          ticks="25"
+        ></tp-slider>
+      </div>
+      <tp-slider
+        id="inline-vertical"
+        variant="inline"
+        orientation="vertical"
+        label="Vertical"
+        default-value="50"
+      ></tp-slider>
+    </main>
+    <script type="module" src="./ticks-inline.ts"></script>
+  </body>
+</html>

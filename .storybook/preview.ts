@@ -5,7 +5,7 @@ import { html } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import DocumentationPage from './docs-page.mdx';
 import { ThemedDocsContainer } from './docs-container.mdx';
-import { applyTheme, themePreference } from './docs-theme.js';
+import { applyDensity, applyTheme, themePreference } from './docs-theme.js';
 import { manifest } from './manifest.js';
 import { elementApi } from '../src/docs/api.js';
 import {
@@ -127,9 +127,7 @@ const preview = definePreview({
   ],
   decorators: [
     (story, context) => {
-      const root = document.documentElement;
-      if (context.globals.density === 'compact') root.dataset.tpDensity = 'compact';
-      else delete root.dataset.tpDensity;
+      applyDensity(context.globals);
       applyTheme(themePreference(context.globals));
       return story();
     },

@@ -1,6 +1,7 @@
-import { css, html, nothing } from 'lit';
+import { css, html, nothing, unsafeCSS } from 'lit';
 import type { PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
+import { visuallyHiddenRule } from '../../foundation/visually-hidden.js';
 import { dispatchTpEvent } from '../../foundation/events.js';
 import { ValidationController, ValidationRun } from '../../foundation/validation.js';
 import { PresenceController } from '../../foundation/presence.js';
@@ -127,6 +128,9 @@ export class TpField extends TpElement {
       [part='field-separator'] {
         position: relative;
       }
+
+      /* The control shows this label inside its own anatomy; it still names the control. */
+      ${unsafeCSS(visuallyHiddenRule('[part~="field-label"][data-control-label]', { important: true }))}
 
       .separator-line {
         position: absolute;
@@ -475,7 +479,7 @@ export class TpField extends TpElement {
       ${this.#has('field-description', this.description, 'description') ? this.#part('field-description', 'div', html`<slot name="description" @slotchange=${this.#queue}>${this.description}</slot>`) : nothing}
       ${this.#presence.mounted ? this.#part('field-error', 'div', this.#lastErrorContent ?? errorContent, { class: 'error', role: 'alert', 'data-starting-style': this.#presence.state === 'starting', 'data-ending-style': this.#presence.state === 'ending' }) : nothing}
       ${this.validityContent?.(state) ?? nothing}`;
-    const field = html` ${this.#has('field-label', this.label, 'label') ? this.#part('field-label', 'tp-label', html`<slot name="label" @slotchange=${this.#queue}>${this.label}</slot>`, { class: 'label', '@click': this.#activate }) : nothing}
+    const field = html` ${this.#has('field-label', this.label, 'label') ? this.#part('field-label', 'tp-label', html`<slot name="label" @slotchange=${this.#queue}>${this.label}</slot>`, { class: 'label', 'data-control-label': !!this.#control?.rendersFieldLabel, '@click': this.#activate }) : nothing}
     ${this.#part('field-control-region', 'div', content, { class: 'content' })}`;
     const group = html`<slot name="group"></slot>${this.#part('field-field', 'div', field, {
         class: this.#control?.matches(
@@ -585,6 +589,9 @@ export class TpField extends TpElement {
         'required',
         'type',
         'role',
+        // A control may start or stop showing the Field label when its presentation changes.
+        'variant',
+        'orientation',
       ],
     });
   }

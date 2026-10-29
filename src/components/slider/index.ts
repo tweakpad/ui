@@ -13,4 +13,5 @@ export type {
   SliderThumbState,
   SliderValueChangeCallback,
   SliderValueCommitCallback,
+  SliderVariant,
 } from './types.js';

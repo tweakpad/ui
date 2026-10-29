@@ -5,12 +5,15 @@ import {
   normalizeSliderSegments,
   normalizeSliderValues,
   sliderBufferEnd,
+  sliderCenterDetent,
   sliderConfigurationError,
   sliderPointerRatio,
   sliderRangeIndeterminate,
   sliderRatio,
   sliderRawValueFromRatio,
   sliderSegmentStates,
+  sliderTicks,
+  sliderTicksActive,
   sliderValueFromRatio,
   snapSliderValue,
 } from './slider.js';
@@ -259,5 +262,47 @@ describe('slider media extensions (mp-slider-media)', () => {
         direction: 'ltr',
       }),
     ).toBeNull();
+  });
+});
+
+describe('slider ticks', () => {
+  it('draws ticks every interval from the minimum with a distinct center', () => {
+    const ticks = sliderTicks(0, 2, 0.25);
+    expect(ticks.map((tick) => tick.value)).toEqual([0, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]);
+    expect(ticks.filter((tick) => tick.center).map((tick) => tick.value)).toEqual([1]);
+  });
+
+  it('keeps float intervals on their decimal grid and clamps to the domain', () => {
+    const ticks = sliderTicks(0, 1, 0.1);
+    expect(ticks.map((tick) => tick.value)).toEqual([
+      0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1,
+    ]);
+    expect(sliderTicks(0, 10, 3).map((tick) => tick.value)).toEqual([0, 3, 5, 6, 9]);
+  });
+
+  it('thins drawn ticks to the minimum spacing and always keeps the center', () => {
+    const ticks = sliderTicks(0, 100, 1, 100, 6);
+    const regular = ticks.filter((tick) => !tick.center);
+    expect(regular.every((tick) => tick.value % 6 === 0)).toBe(true);
+    expect(ticks.some((tick) => tick.center && tick.value === 50)).toBe(true);
+    for (const [index, tick] of ticks.entries())
+      if (index) expect((tick.ratio - ticks[index - 1]!.ratio) * 100).toBeGreaterThanOrEqual(2);
+  });
+
+  it('draws nothing without a positive finite interval or a determinate domain', () => {
+    expect(sliderTicks(0, 1, undefined)).toEqual([]);
+    expect(sliderTicks(0, 1, 0)).toEqual([]);
+    expect(sliderTicks(0, 1, Number.NaN)).toEqual([]);
+    expect(sliderTicks(1, 1, 0.1)).toEqual([]);
+    expect(sliderTicksActive(0.5, 0, 1)).toBe(true);
+    expect(sliderConfigurationError(0, 10, 1, 10, 0, 1, -1)).toContain('ticks');
+    expect(sliderConfigurationError(0, 10, 1, 10, 0, 1, 2)).toBeNull();
+  });
+
+  it('pulls a pointer within the detent distance onto the center', () => {
+    expect(sliderCenterDetent(0.5 + 5 / 200, 200, 6)).toBe(0.5);
+    expect(sliderCenterDetent(0.5 - 6 / 200, 200, 6)).toBe(0.5);
+    expect(sliderCenterDetent(0.5 + 7 / 200, 200, 6)).toBeCloseTo(0.535);
+    expect(sliderCenterDetent(0.2, 0, 6)).toBe(0.2);
   });
 });

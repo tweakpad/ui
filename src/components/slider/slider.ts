@@ -28,6 +28,9 @@ import {
   sliderRawValueFromRatio,
   sliderSegmentStates,
   sliderValueFromRatio,
+  sliderCenterDetent,
+  sliderTicks,
+  sliderTicksActive,
 } from '../../foundation/slider.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import { createId } from '../../foundation/id.js';
@@ -115,6 +118,8 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     min: { type: Number, noAccessor: true },
     max: { type: Number, noAccessor: true },
     step: { type: Number },
+    ticks: { type: Number },
+    snapToTicks: { type: Boolean, attribute: 'snap-to-ticks' },
     largeStep: { type: Number, attribute: 'large-step' },
     minStepsBetweenValues: { type: Number, attribute: 'min-steps-between-values' },
     variant: { type: String, reflect: true },
@@ -168,11 +173,23 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   }
   /** The increment values snap to, counted from `minimum`. */
   step = 1;
+  /**
+   * Draws a tick every this many value units, counted from `minimum`; the midpoint of the range
+   * is drawn as a distinct center tick. Without `snapToTicks`, a drag near the center lands on it.
+   */
+  ticks: number | undefined;
+  /** Values snap to the ticks: the tick interval replaces `step` for pointer, keys and forms. */
+  snapToTicks = false;
   /** The increment of Page Up, Page Down and arrow keys with Shift. */
   largeStep = 10;
   /** The fewest steps kept between neighboring thumbs of a range. */
   minStepsBetweenValues = 0;
-  /** `bar` paints a thumbless track; the Thumb stays as the keyboard and accessibility input. */
+  /**
+   * `bar` paints a thumbless track; the Thumb stays as the keyboard and accessibility input.
+   * `inline` paints one compact control-height bar with the label and the value inside it, for
+   * stacked controls; the value shows without further setup and an enclosing Field's label moves
+   * into the bar.
+   */
   variant: SliderVariant = 'default';
   /**
    * Whether a thumb centers on its value or stays inside the track at the ends (`edge`);
@@ -264,8 +281,18 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   #controlReference = (node: HTMLElement | null): void => {
     if (node === this.#control) return;
     if (this.#drag) this.#cancelDrag();
+    if (this.#control) this.#resize?.unobserve(this.#control);
     this.#control = node;
+    if (node) this.#resize?.observe(node);
   };
+  /** The Control's measured length along the orientation, for tick thinning. */
+  #controlLength = 0;
+  #measureControl(control: HTMLElement): void {
+    const length = this.orientation === 'horizontal' ? control.clientWidth : control.clientHeight;
+    if (length === this.#controlLength) return;
+    this.#controlLength = length;
+    if (sliderTicksActive(this.ticks, this.minimum, this.maximum)) this.requestUpdate();
+  }
   #state = new ControllableState<SliderValue | undefined>({
     host: this,
     initialValue: undefined,
@@ -342,6 +369,20 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   get #focused(): boolean {
     return this.#thumbs.some((thumb) => thumb.inputElement?.matches(':focus'));
   }
+  /** The value lattice: the tick interval while snapping to ticks, else `step`. */
+  get #step(): number {
+    return this.snapToTicks && sliderTicksActive(this.ticks, this.minimum, this.maximum)
+      ? this.ticks
+      : this.step;
+  }
+  /** The inline variant applies to horizontal sliders; vertical ones keep the default look. */
+  get #inline(): boolean {
+    return this.variant === 'inline' && this.orientation !== 'vertical';
+  }
+  /** An inline slider shows its Field's label inside the bar. */
+  override get rendersFieldLabel(): boolean {
+    return this.#inline;
+  }
   /** Whether the application controls `value`. */
   get controlled(): boolean {
     return this.#state.controlled;
@@ -378,7 +419,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       valuesOf(value),
       this.minimum,
       this.maximum,
-      this.step,
+      this.#step,
       this.minStepsBetweenValues,
     );
     return Array.isArray(value) ? values : (values[0] ?? value);
@@ -539,7 +580,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       maximum: this.maximum,
       min: this.minimum,
       max: this.maximum,
-      step: this.step,
+      step: this.#step,
       indeterminate,
       focused: this.#focused,
       touched: this.#touched,
@@ -566,28 +607,27 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   thumbPosition(element: HTMLElement): Record<string, string> {
     const thumb = element as TpSliderThumb;
     const ratio = Math.max(0, Math.min(1, this.thumbState(thumb).percentage / 100));
-    const inset = this.#inset(thumb);
-    const offset = `${inset * (1 - 2 * ratio)}px`;
     const stacking =
       this.#activeIdentity === thumb.inputId
         ? '2'
         : this.#lastUsedIdentity === thumb.inputId
           ? '1'
           : '0';
+    return {
+      ...this.#axisPosition(ratio, this.#inset(thumb)),
+      right: 'auto',
+      bottom: 'auto',
+      'z-index': stacking,
+    };
+  }
+  /** The center point of a Thumb, or of a Tick, at a 0–1 ratio for a given edge inset. */
+  #axisPosition(ratio: number, inset: number): { left: string; top: string } {
+    const offset = inset * (1 - 2 * ratio);
     return this.orientation === 'vertical'
-      ? {
-          left: '50%',
-          top: `calc(${(1 - ratio) * 100}% - ${offset})`,
-          right: 'auto',
-          bottom: 'auto',
-          'z-index': stacking,
-        }
+      ? { left: '50%', top: `calc(${(1 - ratio) * 100}% - ${offset}px)` }
       : {
-          left: `calc(${(this.direction === 'rtl' ? 1 - ratio : ratio) * 100}% + ${this.direction === 'rtl' ? -inset * (1 - 2 * ratio) : inset * (1 - 2 * ratio)}px)`,
+          left: `calc(${(this.direction === 'rtl' ? 1 - ratio : ratio) * 100}% + ${this.direction === 'rtl' ? -offset : offset}px)`,
           top: '50%',
-          right: 'auto',
-          bottom: 'auto',
-          'z-index': stacking,
         };
   }
   #inset(thumb: TpSliderThumb): number {
@@ -683,7 +723,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       proposedValue: value,
       minimum: this.minimum,
       maximum: this.maximum,
-      step: this.step,
+      step: this.#step,
       minStepsBetweenValues: this.minStepsBetweenValues,
       collisionBehavior: this.#collision(),
       disabled: this.#orderedThumbs().map(
@@ -717,7 +757,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     if (componentHandlingPrevented(event)) return;
     const thumb = element as TpSliderThumb;
     const state = this.thumbState(thumb);
-    const large = event.shiftKey || event.metaKey || event.ctrlKey ? this.largeStep : this.step;
+    const large = event.shiftKey || event.metaKey || event.ctrlKey ? this.largeStep : this.#step;
     let value: number;
     switch (event.key) {
       case 'ArrowRight':
@@ -861,9 +901,19 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     });
   }
   #pointerValue(event: PointerEvent, thumb: TpSliderThumb, offset: number): number {
-    const ratio = this.#ratioAt(event, thumb, offset);
+    let ratio = this.#ratioAt(event, thumb, offset);
     if (ratio === null) return this.thumbState(thumb).value;
-    return sliderValueFromRatio(ratio, this.minimum, this.maximum, this.step);
+    // Free movement over ticks: the center holds the pointer within the detent distance.
+    if (!this.snapToTicks && sliderTicksActive(this.ticks, this.minimum, this.maximum))
+      ratio = sliderCenterDetent(ratio, this.#travel(thumb));
+    return sliderValueFromRatio(ratio, this.minimum, this.maximum, this.#step);
+  }
+  /** The Thumb's travel along the Control in CSS pixels. */
+  #travel(thumb: TpSliderThumb | undefined): number {
+    const control = this.#control;
+    if (!control) return 0;
+    const length = this.orientation === 'horizontal' ? control.clientWidth : control.clientHeight;
+    return Math.max(0, length - 2 * (thumb ? this.#inset(thumb) : 0));
   }
   /** Hover publication only; dragging, disabled and indeterminate sliders are not pointing. */
   #hover(event: PointerEvent): void {
@@ -1186,6 +1236,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       this.largeStep,
       this.minStepsBetweenValues,
       this.values.length,
+      this.ticks,
     );
     if (!['push', 'swap', 'none'].includes(this.thumbCollisionBehavior))
       this.#configurationError = 'Slider thumbCollisionBehavior must be push, swap, or none.';
@@ -1207,7 +1258,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       !this.controlled &&
       !this.#configurationError &&
       !indeterminate &&
-      ['minimum', 'maximum', 'step', 'minStepsBetweenValues'].some((key) =>
+      ['minimum', 'maximum', 'step', 'ticks', 'snapToTicks', 'minStepsBetweenValues'].some((key) =>
         changed.has(key as keyof TpSlider),
       )
     ) {
@@ -1252,7 +1303,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       maximum: this.maximum,
       min: this.minimum,
       max: this.maximum,
-      step: this.step,
+      step: this.#step,
       minStepsBetweenValues: this.minStepsBetweenValues,
       orientation: this.orientation,
       formattedValues: values.map((value) => this.#format(value)),
@@ -1279,9 +1330,23 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       'data-valid': !state.invalid,
       'data-focus-visible': this.#focusVisible,
     };
+    const inline = this.#inline;
+    // The Field keeps its own label for assistive technology; the copy in the bar is visual.
+    const fieldLabel =
+      inline && !this.label && !this.querySelector('[slot="label"]') && !!this.#association.label;
+    const labelText = this.label || (fieldLabel ? this.#association.label! : '');
     const label =
-      this.label || this.querySelector('[slot="label"]') || this.partContracts['slider-label'];
-    const output = this.partContracts['slider-output'] || this.querySelector('[slot="value"]');
+      labelText || this.querySelector('[slot="label"]') || this.partContracts['slider-label'];
+    const output =
+      this.partContracts['slider-output'] || this.querySelector('[slot="value"]') || inline;
+    const ordered = this.#orderedThumbs();
+    const tickInset = ordered[0] ? this.#inset(ordered[0]) : 0;
+    const ticks = sliderTicks(
+      this.minimum,
+      this.maximum,
+      this.ticks,
+      Math.max(0, this.#controlLength - 2 * tickInset),
+    );
     const first = values.length > 1 ? values[0]! : this.minimum;
     const last = values.at(-1) ?? this.minimum;
     const ratio = (value: number): number => sliderRatio(value, this.minimum, this.maximum) * 100;
@@ -1290,7 +1355,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       this.orientation === 'horizontal'
         ? { 'inset-inline-start': percent(start), 'inline-size': percent(size) }
         : { bottom: percent(start), height: percent(size) };
-    const ordered = this.#orderedThumbs();
     const startInset =
       values.length > 1 && ordered[0]
         ? this.#inset(ordered[0]) * (1 - (2 * ratio(first)) / 100)
@@ -1333,7 +1397,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       content: html`${
           label || output
             ? html`<div class="header">
-                ${this.renderPart('slider-label', state, { tag: 'span', enabled: !!label, properties: { part: `slider-label slider-label-orientation-${this.orientation}`, id: this.#labelId, ...markers, '@click': () => this.activateFromLabel() }, content: html`<slot name="label">${this.label}</slot>` })}
+                ${this.renderPart('slider-label', state, { tag: 'span', enabled: !!label, properties: { part: `slider-label slider-label-orientation-${this.orientation}`, id: this.#labelId, 'aria-hidden': fieldLabel ? 'true' : undefined, ...markers, '@click': () => this.activateFromLabel() }, content: html`<slot name="label">${labelText}</slot>` })}
                 ${this.renderPart('slider-output', state, {
                   tag: 'output',
                   enabled: !!output,
@@ -1377,7 +1441,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
                     },
                   },
                 ),
-            )}${this.renderPart('slider-range', state, { tag: 'span', properties: { part: `slider-range slider-range-orientation-${this.orientation}`, class: 'range', style: rangeStyle, ...markers } })}${repeat(
+            )}${this.renderPart('slider-range', state, { tag: 'span', properties: { part: `slider-range slider-range-orientation-${this.orientation}`, class: 'range', style: rangeStyle, ...markers, 'data-multiple': values.length > 1 } })}${repeat(
               segments,
               (segment) => `${segment.start}:${segment.end}`,
               (segment) =>
@@ -1400,6 +1464,26 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
                         '--tp-slider-segment-fill': percent(segment.fillRatio),
                         '--tp-slider-segment-buffer': percent(segment.bufferRatio),
                       },
+                    },
+                  },
+                ),
+            )}${repeat(
+              ticks,
+              (tick) => tick.value,
+              (tick, index) =>
+                this.renderPart(
+                  'slider-tick',
+                  { ...state, index, tickValue: tick.value, center: tick.center },
+                  {
+                    tag: 'span',
+                    properties: {
+                      part: `slider-tick slider-tick-orientation-${this.orientation}`,
+                      class: 'tick',
+                      'data-orientation': this.orientation,
+                      'data-center': tick.center,
+                      'data-edge': tick.ratio === 0 || tick.ratio === 1,
+                      'data-filled': tick.value >= first && tick.value <= last,
+                      style: this.#axisPosition(tick.ratio, tickInset),
                     },
                   },
                 ),
@@ -1435,11 +1519,14 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       attributeFilter: ['index', 'disabled', 'readonly', 'dir', 'lang', 'slot'],
     });
     this.#resize = new window.ResizeObserver((entries) => {
-      for (const entry of entries)
+      for (const entry of entries) {
+        if (entry.target === this.#control) this.#measureControl(this.#control);
         for (const [thumb, record] of this.#registered)
           if (record.node === entry.target) this.#measureThumb(thumb, record.node);
+      }
     });
     for (const record of this.#registered.values()) this.#resize.observe(record.node);
+    if (this.#control) this.#resize.observe(this.#control);
     this.#observeEnvironment();
     this.thumbChanged();
   }

@@ -44,8 +44,11 @@ export interface SliderThumbState extends Record<string, unknown> {
   label: string;
   valueText: string;
 }
-/** `bar`: a thumbless track for scrubbing (media timelines); the Thumb keeps its input. */
-export type SliderVariant = 'default' | 'bar';
+/**
+ * `bar`: a thumbless track for scrubbing (media timelines); the Thumb keeps its input.
+ * `inline`: one compact control-height bar with the label and the value inside it.
+ */
+export type SliderVariant = 'default' | 'bar' | 'inline';
 
 export interface SliderThumbOwner {
   readonly orientation: 'horizontal' | 'vertical';

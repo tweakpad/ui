@@ -337,3 +337,40 @@ seek.segments = [
   { start: 0, end: 60, label: 'Intro' },
   { start: 60, end: video.duration, label: 'Main' },
 ];`} language="js" />
+
+### Inline
+
+<Preview
+  title="Inline"
+  align="stretch"
+  script={`document.querySelector('#slider-demo-inline-salary').format = { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 };
+document.querySelector('#slider-demo-inline-commute').format = { style: 'unit', unit: 'minute' };`}
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:22rem;margin-inline:auto">
+  <tp-slider id="slider-demo-inline-salary" variant="inline" label="Salary" default-value="45000 90000" minimum="20000" maximum="150000" step="5000"></tp-slider>
+  <tp-slider id="slider-demo-inline-commute" variant="inline" label="Commute" default-value="35" maximum="90" step="5"></tp-slider>
+  <tp-slider variant="inline" label="Office days" default-value="2" maximum="5" ticks="1" snap-to-ticks></tp-slider>
+</div>`}
+/>
+
+`variant="inline"` fits the slider into one row the height of a control, with the label at the start and the value at the end, so several settings stack tightly. The row fills up to the value in the primary color, and a full-height edge marks the value while the row is hovered, dragged or focused. A press anywhere on the row, the label and the value included, moves the value there. Inside a Field, the Field's label moves into the row. A vertical slider keeps its usual look.
+
+<Preview
+  title="Inline in a field"
+  align="stretch"
+  code={`<tp-field label="Notice period" description="Weeks you need before you can start." style="max-inline-size:22rem;margin-inline:auto">
+  <tp-slider variant="inline" default-value="4" maximum="12"></tp-slider>
+</tp-field>`}
+/>
+
+### Ticks
+
+<Preview
+  title="Ticks"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-6);max-inline-size:22rem;margin-inline:auto">
+  <tp-slider label="Stereo balance" default-value="-20" minimum="-50" maximum="50" ticks="10"></tp-slider>
+  <tp-slider label="Playback speed" default-value="1" minimum="0" maximum="2" step="0.01" ticks="0.25" snap-to-ticks></tp-slider>
+</div>`}
+/>
+
+`ticks` draws a mark every so many value units from `minimum`, and the midpoint gets a longer center mark. Values still move freely on `step`, and a drag that passes close to the center stops on it. With `snap-to-ticks` the ticks become the steps: dragging, the arrow keys and form values all land on a tick. When ticks would crowd a short track, some are left out; the center mark always stays.

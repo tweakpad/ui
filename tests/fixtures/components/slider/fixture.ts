@@ -1158,6 +1158,8 @@ async function assertInteractionProtocol() {
       bubbles: true,
       composed: true,
       button: 0,
+      // A drag move carries the pressed button; a buttonless move settles the drag.
+      buttons: type === 'pointerdown' || type === 'pointermove' ? 1 : 0,
       pointerId,
       pointerType: 'mouse',
       clientX: rect.left + rect.width * ratio,

@@ -31,6 +31,8 @@ export type FieldControl = HTMLElement & {
   validity?: ValidityState | null;
   validationMessage?: string;
   form?: HTMLFormElement | null;
+  /** The control shows the Field's label inside its own anatomy. */
+  readonly rendersFieldLabel?: boolean;
   setFieldAssociation?: (association: {
     label?: string;
     description?: string;

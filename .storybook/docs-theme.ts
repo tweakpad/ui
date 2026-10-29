@@ -16,6 +16,16 @@ export function themePreference(
 }
 
 /**
+ * Applies the Density toolbar's preset to the preview document: `compact` scales the spacing and
+ * type seeds (`density-compact.css`), and every derived extent follows.
+ */
+export function applyDensity(globals: Record<string, unknown> | undefined): void {
+  const root = document.documentElement;
+  if (globals?.density === 'compact') root.dataset.tpDensity = 'compact';
+  else delete root.dataset.tpDensity;
+}
+
+/**
  * Applies a preference to the preview document through the library's color scheme store, so every
  * library element and every `light-dark()` token follows it.
  */

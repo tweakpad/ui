@@ -180,6 +180,14 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     return target && target.getRootNode() !== this.renderRoot ? this : this.renderRoot;
   }
 
+  /**
+   * Whether the element shows its Field's label inside its own anatomy. The Field then keeps its
+   * label for naming and association but hides it visually. The default is false.
+   */
+  get rendersFieldLabel(): boolean {
+    return false;
+  }
+
   setFieldAssociation(association: { label?: string; description?: string; error?: string }): void {
     if (
       (!('label' in association) || (association.label ?? '') === this.#fieldLabel) &&

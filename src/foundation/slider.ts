@@ -200,6 +200,7 @@ export function sliderConfigurationError(
   largeStep: number,
   minStepsBetweenValues: number,
   valueCount: number,
+  ticks?: number | null,
 ): string | null {
   // An empty or non-finite domain is the declared indeterminate state, not an error.
   const indeterminate = sliderRangeIndeterminate(minimum, maximum);
@@ -208,6 +209,8 @@ export function sliderConfigurationError(
     return 'Slider largeStep must be a positive finite number.';
   if (!Number.isInteger(minStepsBetweenValues) || minStepsBetweenValues < 0)
     return 'Slider minStepsBetweenValues must be a non-negative integer.';
+  if (ticks !== undefined && ticks !== null && (!Number.isFinite(ticks) || ticks <= 0))
+    return 'Slider ticks must be a positive finite number.';
   if (valueCount < 1) return 'Slider requires a value or defaultValue.';
   if (!indeterminate && (valueCount - 1) * minStepsBetweenValues * step > maximum - minimum)
     return 'Slider bounds cannot contain the requested values and minimum separation.';
@@ -374,6 +377,84 @@ export function moveSliderThumb(request: SliderMoveRequest): SliderMoveResult {
     identities: items.map((item) => item.identity),
     activeIndex,
   };
+}
+
+/** Pointer distance, in CSS pixels, within which a free drag lands on the center tick. */
+export const SLIDER_CENTER_DETENT = 6;
+/** Smallest distance, in CSS pixels, kept between drawn ticks. */
+export const SLIDER_TICK_SPACING = 6;
+/** Ticks drawn at most, whatever the interval. */
+const SLIDER_TICK_LIMIT = 1000;
+
+/** A tick as drawn: its value, its 0–1 ratio and whether it is the domain midpoint. */
+export interface SliderTick {
+  value: number;
+  ratio: number;
+  center: boolean;
+}
+
+/** Whether `ticks` is a usable interval for the domain. */
+export function sliderTicksActive(
+  ticks: number | null | undefined,
+  minimum: number,
+  maximum: number,
+): ticks is number {
+  return (
+    typeof ticks === 'number' &&
+    Number.isFinite(ticks) &&
+    ticks > 0 &&
+    !sliderRangeIndeterminate(minimum, maximum)
+  );
+}
+
+/**
+ * The ticks of an interval counted from `minimum`, clamped to the domain, plus the domain
+ * midpoint as the center tick. Thinned so drawn neighbors keep `spacing` pixels on a track
+ * `length` pixels long; the center tick always remains.
+ */
+export function sliderTicks(
+  minimum: number,
+  maximum: number,
+  interval: number | null | undefined,
+  length = 0,
+  spacing = SLIDER_TICK_SPACING,
+): SliderTick[] {
+  if (!sliderTicksActive(interval, minimum, maximum)) return [];
+  const span = maximum - minimum;
+  const count = Math.floor(span / interval + 1e-9) + 1;
+  const pixels = length > 0 ? (length * interval) / span : Infinity;
+  const stride = Math.max(
+    1,
+    Math.ceil(count / SLIDER_TICK_LIMIT),
+    Number.isFinite(pixels) ? Math.ceil(spacing / pixels) : 1,
+  );
+  const precision = Math.min(100, Math.max(decimalPlaces(minimum), decimalPlaces(interval)));
+  const center = Number((minimum + span / 2).toFixed(precision + 1));
+  const centerRatio = 0.5;
+  const minimumGap = length > 0 ? spacing / length : 0;
+  const ticks: SliderTick[] = [];
+  for (let index = 0; index < count; index += stride) {
+    const value = Number((minimum + index * interval).toFixed(precision));
+    const ratio = sliderRatio(value, minimum, maximum);
+    // The center tick replaces a drawn neighbor too close to it.
+    if (Math.abs(ratio - centerRatio) < Math.max(minimumGap, 1e-9)) continue;
+    ticks.push({ value, ratio, center: false });
+  }
+  ticks.push({ value: center, ratio: centerRatio, center: true });
+  return ticks.sort((left, right) => left.ratio - right.ratio);
+}
+
+/**
+ * A pointer ratio pulled onto the center when it lies within `threshold` pixels of it on a
+ * track `length` pixels long; other ratios pass through.
+ */
+export function sliderCenterDetent(
+  ratio: number,
+  length: number,
+  threshold = SLIDER_CENTER_DETENT,
+): number {
+  if (!(length > 0)) return ratio;
+  return Math.abs(ratio - 0.5) * length <= threshold + 1e-9 ? 0.5 : ratio;
 }
 
 /** Unsnapped domain value at a 0–1 ratio; used for hover pointer publication. */
