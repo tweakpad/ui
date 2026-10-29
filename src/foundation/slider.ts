@@ -407,15 +407,24 @@ export function sliderTicksActive(
   );
 }
 
+/** Whether `value` lies on the lattice of `step` counted from `minimum`, so the slider can take it. */
+export function sliderOnLattice(value: number, minimum: number, step: number): boolean {
+  if (!Number.isFinite(step) || step <= 0) return false;
+  const index = (value - minimum) / step;
+  return Math.abs(index - Math.round(index)) < 1e-9;
+}
+
 /**
  * The ticks of an interval counted from `minimum`, clamped to the domain, plus the domain
- * midpoint as the center tick. Thinned so drawn neighbors keep `spacing` pixels on a track
- * `length` pixels long; the center tick always remains.
+ * midpoint as the center tick. Every tick is a value the slider can take: ticks off the `step`
+ * lattice are left out, and the center tick is drawn only when the midpoint is on it. Thinned so
+ * drawn neighbors keep `spacing` pixels on a track `length` pixels long; the center tick remains.
  */
 export function sliderTicks(
   minimum: number,
   maximum: number,
   interval: number | null | undefined,
+  step: number = interval ?? 0,
   length = 0,
   spacing = SLIDER_TICK_SPACING,
 ): SliderTick[] {
@@ -428,19 +437,24 @@ export function sliderTicks(
     Math.ceil(count / SLIDER_TICK_LIMIT),
     Number.isFinite(pixels) ? Math.ceil(spacing / pixels) : 1,
   );
-  const precision = Math.min(100, Math.max(decimalPlaces(minimum), decimalPlaces(interval)));
+  const precision = Math.min(
+    100,
+    Math.max(decimalPlaces(minimum), decimalPlaces(interval), decimalPlaces(step)),
+  );
   const center = Number((minimum + span / 2).toFixed(precision + 1));
+  const centered = sliderOnLattice(center, minimum, step);
   const centerRatio = 0.5;
   const minimumGap = length > 0 ? spacing / length : 0;
   const ticks: SliderTick[] = [];
   for (let index = 0; index < count; index += stride) {
     const value = Number((minimum + index * interval).toFixed(precision));
+    if (!sliderOnLattice(value, minimum, step)) continue;
     const ratio = sliderRatio(value, minimum, maximum);
     // The center tick replaces a drawn neighbor too close to it.
-    if (Math.abs(ratio - centerRatio) < Math.max(minimumGap, 1e-9)) continue;
+    if (centered && Math.abs(ratio - centerRatio) < Math.max(minimumGap, 1e-9)) continue;
     ticks.push({ value, ratio, center: false });
   }
-  ticks.push({ value: center, ratio: centerRatio, center: true });
+  if (centered) ticks.push({ value: center, ratio: centerRatio, center: true });
   return ticks.sort((left, right) => left.ratio - right.ratio);
 }
 

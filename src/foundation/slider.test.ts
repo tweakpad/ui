@@ -6,6 +6,7 @@ import {
   normalizeSliderValues,
   sliderBufferEnd,
   sliderCenterDetent,
+  sliderOnLattice,
   sliderConfigurationError,
   sliderPointerRatio,
   sliderRangeIndeterminate,
@@ -277,11 +278,23 @@ describe('slider ticks', () => {
     expect(ticks.map((tick) => tick.value)).toEqual([
       0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1,
     ]);
-    expect(sliderTicks(0, 10, 3).map((tick) => tick.value)).toEqual([0, 3, 5, 6, 9]);
+    expect(sliderTicks(0, 10, 3, 1).map((tick) => tick.value)).toEqual([0, 3, 5, 6, 9]);
+  });
+
+  it('draws only values the slider can take', () => {
+    // Snapping to whole days: the midpoint 2.5 is not a value, so no center tick.
+    const days = sliderTicks(0, 5, 1);
+    expect(days.map((tick) => tick.value)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(days.some((tick) => tick.center)).toBe(false);
+    // Free movement on whole steps: quarter ticks off the step lattice are left out.
+    expect(sliderTicks(0, 2, 0.25, 1).map((tick) => tick.value)).toEqual([0, 1, 2]);
+    expect(sliderTicks(0, 2, 0.25, 1).find((tick) => tick.center)?.value).toBe(1);
+    expect(sliderOnLattice(2.5, 0, 1)).toBe(false);
+    expect(sliderOnLattice(0.3, 0, 0.1)).toBe(true);
   });
 
   it('thins drawn ticks to the minimum spacing and always keeps the center', () => {
-    const ticks = sliderTicks(0, 100, 1, 100, 6);
+    const ticks = sliderTicks(0, 100, 1, 1, 100, 6);
     const regular = ticks.filter((tick) => !tick.center);
     expect(regular.every((tick) => tick.value % 6 === 0)).toBe(true);
     expect(ticks.some((tick) => tick.center && tick.value === 50)).toBe(true);

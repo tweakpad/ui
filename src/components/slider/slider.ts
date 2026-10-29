@@ -29,6 +29,7 @@ import {
   sliderSegmentStates,
   sliderValueFromRatio,
   sliderCenterDetent,
+  sliderOnLattice,
   sliderTicks,
   sliderTicksActive,
 } from '../../foundation/slider.js';
@@ -903,8 +904,12 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
   #pointerValue(event: PointerEvent, thumb: TpSliderThumb, offset: number): number {
     let ratio = this.#ratioAt(event, thumb, offset);
     if (ratio === null) return this.thumbState(thumb).value;
-    // Free movement over ticks: the center holds the pointer within the detent distance.
-    if (!this.snapToTicks && sliderTicksActive(this.ticks, this.minimum, this.maximum))
+    // Free movement over ticks: a selectable center holds the pointer within the detent distance.
+    if (
+      !this.snapToTicks &&
+      sliderTicksActive(this.ticks, this.minimum, this.maximum) &&
+      sliderOnLattice((this.minimum + this.maximum) / 2, this.minimum, this.step)
+    )
       ratio = sliderCenterDetent(ratio, this.#travel(thumb));
     return sliderValueFromRatio(ratio, this.minimum, this.maximum, this.#step);
   }
@@ -1345,6 +1350,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
       this.minimum,
       this.maximum,
       this.ticks,
+      this.#step,
       Math.max(0, this.#controlLength - 2 * tickInset),
     );
     const first = values.length > 1 ? values[0]! : this.minimum;

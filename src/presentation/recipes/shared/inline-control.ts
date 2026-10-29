@@ -3,8 +3,9 @@ import { invalidFocusRing } from './focus.js';
 import { fieldBoundary, fieldFocus, fieldInvalid } from './text-control.js';
 
 // Inline controls: compact, stackable rows of a control's own height, with the label inside the
-// row at the inline start and the value at the inline end. Every control family's inline variant
-// paints its row with this surface and text, so stacked rows of different controls line up.
+// row at the inline start and the value at the inline end, both in the mono role. Every control
+// family's inline variant paints its row with this surface and text, so stacked rows of different
+// controls line up.
 
 /** The row surface: the muted track with the text-control border and radius. */
 export const inlineControlSurface: PresentationDeclarations = {
@@ -22,6 +23,7 @@ export const inlineControlEdge = 'var(--tp-primary)';
 
 /** The label at the row's inline start. */
 export const inlineControlLabel: PresentationDeclarations = {
+  'font-family': 'var(--tp-font-mono)',
   'font-size': 'var(--tp-text-sm)',
   'font-weight': 'var(--tp-font-normal)',
   'line-height': 'var(--tp-leading-normal)',
@@ -30,6 +32,7 @@ export const inlineControlLabel: PresentationDeclarations = {
 
 /** The value at the row's inline end; it brightens while the row is in use. */
 export const inlineControlValue: PresentationDeclarations = {
+  'font-family': 'var(--tp-font-mono)',
   'font-size': 'var(--tp-text-sm)',
   'line-height': 'var(--tp-leading-normal)',
   'font-variant-numeric': 'tabular-nums',
