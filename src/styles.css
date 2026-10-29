@@ -2,6 +2,10 @@
   color-scheme: light dark;
   text-rendering: optimizelegibility;
 
+  /* Phones keep the authored sizes: no inflation of text they judge too small, such as code lines. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+
   /* Semantic color pairs. */
   --tp-background: light-dark(#fff, #18181b);
   --tp-foreground: light-dark(#18181b, #fafafa);

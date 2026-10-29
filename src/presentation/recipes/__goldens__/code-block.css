@@ -1,6 +1,7 @@
 /* tp-code-block appearance */
 /* code-block */
 &{border:var(--tp-border-width) var(--tp-border-style) var(--tp-border);border-radius:var(--tp-radius-xl);background:color-mix(in oklab, var(--tp-card) 50%, var(--tp-muted));color:var(--tp-foreground);overflow:clip;font-family:var(--tp-font-mono);font-size:var(--tp-text-sm);line-height:var(--tp-leading-normal);font-feature-settings:"liga" 0, "calt" 0;tab-size:2}
+& > .floating{border-radius:var(--tp-radius-md);background:color-mix(in oklab, color-mix(in oklab, var(--tp-card) 50%, var(--tp-muted)) 80%, transparent);backdrop-filter:blur(var(--tp-space-1))}
 /* code-block-header */
 &{gap:var(--tp-space-2);min-block-size:var(--tp-control-height-md);padding-block:var(--tp-space-1);padding-inline:var(--tp-space-4) var(--tp-space-2);border-block-end:var(--tp-border-width) var(--tp-border-style) var(--tp-border)}
 /* code-block-title */

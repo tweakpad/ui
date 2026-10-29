@@ -31,7 +31,19 @@ const tokenColors: PresentationRule[] = [
 /** Default Code block appearance (`ucl21-code-block`): existing roles plus the syntax extension. */
 export const codeBlockAppearance: PresentationDictionary = {
   // Code figure: the code surface and code typography; the figure clips its scrolling viewport.
-  'code-block': [{ declarations: { ...codeSurface, overflow: 'clip', ...codeTypography } }],
+  'code-block': [
+    { declarations: { ...codeSurface, overflow: 'clip', ...codeTypography } },
+    // The copy action floating over the code sits on a translucent piece of the code surface, so
+    // the lines behind it read as a backdrop instead of mixing with the icon.
+    {
+      selector: '& > .floating',
+      declarations: {
+        'border-radius': 'var(--tp-radius-md)',
+        background: `color-mix(in oklab, ${codeSurfaceFill} 80%, transparent)`,
+        'backdrop-filter': 'blur(var(--tp-space-1))',
+      },
+    },
+  ],
   'code-block-header': [
     {
       declarations: {

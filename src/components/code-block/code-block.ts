@@ -111,6 +111,10 @@ export class TpCodeBlock extends TpElement {
       :host {
         display: block;
         min-inline-size: 0;
+
+        /* Unwrapped code lines are what phones inflate; the block keeps its authored size. */
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
       }
 
       .figure {

@@ -15,5 +15,7 @@ export default {
   rules: {
     'selector-class-pattern': null,
     'custom-property-pattern': null,
+    // Safari reads only the prefixed text-size-adjust, so it stays beside the standard one.
+    'property-no-vendor-prefix': [true, { ignoreProperties: [/text-size-adjust/] }],
   },
 };
