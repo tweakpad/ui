@@ -42,6 +42,7 @@ export class TpAvatar extends TpElement {
       :host {
         display: inline-grid;
         position: relative;
+        isolation: isolate;
         flex-shrink: 0;
         vertical-align: middle;
       }
@@ -74,6 +75,8 @@ export class TpAvatar extends TpElement {
         position: absolute;
         inset-inline-end: 0;
         inset-block-end: 0;
+        /* Above the outline the presentation draws on the host's ::after. */
+        z-index: 1;
         display: flex;
         align-items: center;
         justify-content: center;
