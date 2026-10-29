@@ -72,6 +72,7 @@ export class TpTreeItem extends TpElement {
       :host {
         /* Contains the row's block margins, so the item's measured extent includes them. */
         display: flow-root;
+
         /* The ring is drawn on the row; important so page focus rules cannot outline the host. */
         outline: none !important;
       }

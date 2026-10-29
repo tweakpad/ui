@@ -41,6 +41,7 @@ export class TpTable extends TpElement {
         display: block;
         min-inline-size: 0;
         max-inline-size: 100%;
+
         /* Cells inherit these, so ordinary CSS on the table, a row or a cell replaces them. */
         text-align: start;
         white-space: nowrap;
