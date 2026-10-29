@@ -5,12 +5,12 @@
 - Component(s) / public identity: Text stroke, `<tp-mo-text-stroke>`, Motion › Text (`docs/motion/text/text-stroke.mdx`, story `Motion/Text/Text stroke`)
 - Requested work / claim: complete component, split out of Text split's former `stroke` reveal token into its own element on the shared Motion › Text base
 - Scope source: user, 2026-10-29: "split inside text-effects category as different components instead", then "we should have Motion > Text, so later we can add Motion > Image, Motion > Scroll", then "lets rename tp-text-motion with tp-mo-text-split tp-mo-text-mirror tp-mo-text-stroke"
-- In-scope changes and existing gaps: new element, shared `TextRevealElement` base (`src/components/shared/text-reveal.ts`) adopted by Text split, docs page, story, fixture, website section; the Component Library spec entry is not written (Spec Blocks unreachable)
+- In-scope changes and existing gaps: new element, shared `TextRevealElement` base (`src/components/shared/text-reveal.ts`) adopted by Text split, docs page, story, fixture, website section; the Component Library definition is written (§ 21 Motion › Text)
 - Repository baseline / unrelated changes: `46ad002` on `development` with the uncommitted text split work of this session; nothing staged or committed
-- Live project / document IDs and revisions: Component Library `doc_8077bf7c-0361-48f3-ac87-53b983bd89b3`; not read in this run: `spec_whoami` returned "fetch failed" (Spec Blocks dev stack and Caddy down)
+- Live project / document IDs and revisions: UI Library `prj_c5a403a0-d1d5-4487-ac78-f4e545f46483`, Component Library `doc_8077bf7c-0361-48f3-ac87-53b983bd89b3`; read at `2cf5c25f` (0.45.9), definition added and committed as `b50a3c82` (0.45.10), version bump `bc79e887` (0.46.0)
 - Owning contracts / dependencies / vocabulary: CL Text split (`tml-*`), Foundation §18.19 (`tm-layout`, `tm-lines`, `tm-scrub`, `tm-driver`), §18.18 reveal coordination
 - Local reference evidence: none; the effect has no reference counterpart (original effect, behavior settled with the user in this session)
-- Tool readiness: Chrome DevTools MCP available; direct Spec Blocks MCP tools registered but the server is unreachable
+- Tool readiness: Chrome DevTools MCP and direct Spec Blocks MCP tools available
 - Browser / server / build under test: Chrome via DevTools MCP; library Vite server on :5199 (source), Storybook static build, website build against the packed library
 - Evidence directory: `tmp/component-verification/mo-text-stroke/2026-10-29/`
 - Durable verification fixtures / served URLs: `tests/fixtures/components/mo-text-stroke/index.html` (README steps)
@@ -33,7 +33,7 @@
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
-| G-01 | The Component Library has no Text stroke definition (it was a Text split token) | spec, docs Related | Add the definition, its custom properties and the reverse hide under CL Text split's family | Spec Blocks unreachable in this run | blocked |
+| G-01 | The Component Library has no Text stroke definition (it was a Text split token) | spec, docs Related | Add the definition, its custom properties and the reverse hide under CL Text split's family | Committed in `b50a3c82`, bumped to 0.46.0 in `bc79e887` | passed |
 
 ## Architecture and reuse
 
@@ -88,7 +88,7 @@
 
 | Gate | Status | Required exit evidence / remaining work |
 | ---- | ------ | --------------------------------------- |
-| 0. Sources and scope | blocked | Scope from the user's messages; live Component Library spec could not be read (Spec Blocks "fetch failed") |
+| 0. Sources and scope | passed | Scope from the user's messages; live Component Library read at `2cf5c25f` and the definition committed in `b50a3c82` (0.46.0 in `bc79e887`) |
 | 1. Capability mapping | passed | Capability rows below; every row maps to a scenario |
 | 2. Architecture and composition reuse | passed | Shared base and styles; Text split migrated onto them; no parallel owner |
 | 3. Behavior | passed | V-01 to V-05 in Chrome |
@@ -96,8 +96,8 @@
 | 5. Accessibility | pending | V-07 accessibility tree and reduced motion passed; automated axe analysis not run |
 | 6. Visual and interaction inspection | passed | Screenshots of mid-animation and rest states in Chrome |
 | 7. Documentation and demo reuse | passed | check-docs (91 pages), static Storybook Docs page and website page read in Chrome: sections, previews, full API, no Related in Storybook |
-| 8. Regression and reconciliation | blocked | Library tests, lint, typecheck, build pass; spec entry missing |
+| 8. Regression and reconciliation | passed | Library tests (6082), lint, typecheck, build, docs checker (91 pages) pass; spec definition matches the implementation |
 
 ## Completion / handoff
 
-Pending: the spec definition (G-01, Spec Blocks unreachable) and automated axe analysis. Evidence is local only, under `tmp/component-verification/`.
+Pending: automated axe analysis (Gate 5). Evidence is local only, under `tmp/component-verification/`.

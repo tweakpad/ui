@@ -3,6 +3,7 @@ import { html } from 'lit';
 import { libraryDocs } from './library-docs.js';
 
 interface Args {
+  orientation: 'horizontal' | 'vertical';
   stagger: number;
   staggerFrom: 'first' | 'last' | 'center';
   revealRepeat: boolean;
@@ -14,12 +15,19 @@ const meta = {
   component: 'tp-mo-text-mirror',
   parameters: { docs: libraryDocs('motion/text/text-mirror') },
   args: {
+    orientation: 'horizontal',
     stagger: 90,
     staggerFrom: 'first',
     revealRepeat: true,
     revealHold: false,
   },
   argTypes: {
+    orientation: {
+      control: 'inline-radio',
+      options: ['horizontal', 'vertical'],
+      description: 'The direction the halves slide in, from a seam down or across each line.',
+      table: { defaultValue: { summary: 'horizontal' } },
+    },
     stagger: {
       control: { type: 'range', min: 0, max: 300, step: 10 },
       description: 'Milliseconds between consecutive lines.',
@@ -47,6 +55,7 @@ const meta = {
       style="margin:0;inline-size:32rem;max-inline-size:100%;font-size:2.75rem;line-height:1.05;font-weight:600;letter-spacing:-0.02em;text-align:center"
     >
       <tp-mo-text-mirror
+        orientation=${args.orientation}
         .stagger=${args.stagger}
         stagger-from=${args.staggerFrom}
         .revealRepeat=${args.revealRepeat}

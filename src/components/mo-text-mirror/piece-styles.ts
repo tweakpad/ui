@@ -2,9 +2,10 @@ import { textDriverCss, textPieceCss } from '../shared/text-reveal-styles.js';
 
 /**
  * Light-tree styles for Text mirror lines, adopted once per root. Each line is cut at the middle
- * of its own text into two windows that stay in place. Each window slides its half of the line out
- * of that seam to its place, the real line in the end window and an inert copy in the start
- * window, and back into it when the text hides.
+ * of its own text into two windows that stay in place: down the middle by default, across it when
+ * `orientation` is `vertical`. Each window slides its half of the line out of that seam to its
+ * place, the real line in the end window and an inert copy in the start window, and back into it
+ * when the text hides.
  */
 export const moTextMirrorPieceCss = /* css */ `${textPieceCss('tp-mo-text-mirror')}
 tp-mo-text-mirror [data-tp-mirror] {
@@ -12,8 +13,20 @@ tp-mo-text-mirror [data-tp-mirror] {
     var(--_tp-tm-mirror-start, 0px) + var(--_tp-tm-mirror-size, 100%) / 2
   );
   --_tp-tm-mirror-reach: calc(var(--_tp-tm-mirror-size, 100%) / 2 + var(--_tp-tm-bleed));
+  /* How far the end window's line starts from its place; the start window's copy mirrors it. */
+  --_tp-tm-mirror-x: calc(-1 * var(--_tp-tm-mirror-reach));
+  --_tp-tm-mirror-y: 0px;
   position: relative;
   clip-path: none;
+}
+
+tp-mo-text-mirror[orientation='vertical'] [data-tp-mirror] {
+  --_tp-tm-mirror-center: calc(
+    var(--_tp-tm-mirror-block-start, 0px) + var(--_tp-tm-mirror-block-size, 100%) / 2
+  );
+  --_tp-tm-mirror-reach: calc(var(--_tp-tm-mirror-block-size, 100%) / 2 + var(--_tp-tm-bleed));
+  --_tp-tm-mirror-x: 0px;
+  --_tp-tm-mirror-y: calc(-1 * var(--_tp-tm-mirror-reach));
 }
 
 tp-mo-text-mirror [data-tp-mirror-window] {
@@ -36,6 +49,17 @@ tp-mo-text-mirror [data-tp-mirror-window='start'] {
   );
 }
 
+/* Vertical: the end window is the half below the seam, the start window the half above it. */
+tp-mo-text-mirror[orientation='vertical'] [data-tp-mirror-window='end'] {
+  clip-path: inset(var(--_tp-tm-mirror-center) -100vmax calc(-1 * var(--_tp-tm-bleed)) -100vmax);
+}
+
+tp-mo-text-mirror[orientation='vertical'] [data-tp-mirror-window='start'] {
+  clip-path: inset(
+    calc(-1 * var(--_tp-tm-bleed)) -100vmax calc(100% - var(--_tp-tm-mirror-center)) -100vmax
+  );
+}
+
 tp-mo-text-mirror [data-tp-mirror-slide] {
   display: block;
   transition: translate var(--_tp-tm-duration) var(--_tp-tm-easing);
@@ -46,13 +70,13 @@ tp-mo-text-mirror [data-tp-mirror-slide] {
 }
 
 tp-mo-text-mirror:not([data-revealed], [data-tp-scrub]) [data-tp-mirror-window='end'] > [data-tp-mirror-slide] {
-  translate: calc(-1 * var(--_tp-tm-mirror-reach)) 0;
+  translate: var(--_tp-tm-mirror-x) var(--_tp-tm-mirror-y);
   transition-duration: 0s;
   transition-delay: 0s;
 }
 
 tp-mo-text-mirror:not([data-revealed], [data-tp-scrub]) [data-tp-mirror-window='start'] > [data-tp-mirror-slide] {
-  translate: var(--_tp-tm-mirror-reach) 0;
+  translate: calc(-1 * var(--_tp-tm-mirror-x)) calc(-1 * var(--_tp-tm-mirror-y));
   transition-duration: 0s;
   transition-delay: 0s;
 }
@@ -79,13 +103,13 @@ tp-mo-text-mirror[data-tp-at-rest]:not([data-tp-scrub]) [data-tp-mirror-window='
    place at that time of the timed reveal, its line's stagger offset included. */
 @keyframes tp-mo-text-mirror-end {
   from {
-    translate: calc(-1 * var(--_tp-tm-mirror-reach)) 0;
+    translate: var(--_tp-tm-mirror-x) var(--_tp-tm-mirror-y);
   }
 }
 
 @keyframes tp-mo-text-mirror-start {
   from {
-    translate: var(--_tp-tm-mirror-reach) 0;
+    translate: calc(-1 * var(--_tp-tm-mirror-x)) calc(-1 * var(--_tp-tm-mirror-y));
   }
 }
 

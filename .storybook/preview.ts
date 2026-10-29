@@ -123,12 +123,15 @@ const preview = definePreview({
     },
     // A documented element's Default story is the page's main use case: until its Controls change,
     // it renders the page's hero, whose code is the story's source. Changed Controls render the
-    // story itself.
+    // story itself, in the hero's frame and alignment, so a Control never moves the use case.
     (story, context) => {
       const doc = (context.parameters.docs as { library?: LibraryDoc } | undefined)?.library;
       const hero = doc?.page.hero;
-      if (!hero || context.name !== 'Default' || !sameArgs(context.args, context.initialArgs))
-        return story();
+      if (!hero || context.name !== 'Default') return story();
+      if (!sameArgs(context.args, context.initialArgs))
+        return html`<div class="tp-docs-example-preview" data-align=${hero.align ?? 'center'}>
+          ${story()}
+        </div>`;
       return html`<div
         class="tp-docs-example-preview"
         data-align=${hero.align ?? 'center'}

@@ -7,7 +7,8 @@ export const moTextMirrorRoles = textRevealRoles;
 /**
  * Reveals its text line by line from the middle out: each line is cut at the middle of its own
  * text, whatever the alignment, and both halves slide out of that seam to their places, one line
- * after another as the text enters the view. A hide slides them back into the seam. Links and
+ * after another as the text enters the view. The seam runs down the middle of each line, so the
+ * halves slide sideways, or with `orientation="vertical"` across it, so they slide up and down. A hide slides them back into the seam. Links and
  * inline formatting keep working, and the text takes the same space as before. Inside a Scroll
  * trigger the trigger decides when the reveal plays.
  *
@@ -23,6 +24,13 @@ export const moTextMirrorRoles = textRevealRoles;
 export class TpMoTextMirror extends TextRevealElement {
   static tagName = 'tp-mo-text-mirror';
   static override presentation = moTextMirrorPresentation;
+
+  /**
+   * The direction the halves slide in: `horizontal` cuts each line down the middle of its text
+   * and slides the halves sideways; `vertical` cuts it across the middle and slides them up and
+   * down.
+   */
+  override orientation: 'horizontal' | 'vertical' = 'horizontal';
 
   protected readonly pieceCss = moTextMirrorPieceCss;
 
@@ -49,7 +57,7 @@ export class TpMoTextMirror extends TextRevealElement {
 
   /**
    * Each line is cut at the middle of its own text, whatever the alignment: each line's mirror
-   * wrapper carries the start and size of the text it holds.
+   * wrapper carries the start and size of the text it holds, along and across the line.
    */
   #measure(): void {
     if (this.getClientRects().length === 0) return;
@@ -70,8 +78,12 @@ export class TpMoTextMirror extends TextRevealElement {
       if (!rects.length) continue;
       const start = Math.min(...rects.map((rect) => rect.left)) - box.left;
       const end = Math.max(...rects.map((rect) => rect.right)) - box.left;
+      const top = Math.min(...rects.map((rect) => rect.top)) - box.top;
+      const bottom = Math.max(...rects.map((rect) => rect.bottom)) - box.top;
       mask.style.setProperty('--_tp-tm-mirror-start', `${start}px`);
       mask.style.setProperty('--_tp-tm-mirror-size', `${end - start}px`);
+      mask.style.setProperty('--_tp-tm-mirror-block-start', `${top}px`);
+      mask.style.setProperty('--_tp-tm-mirror-block-size', `${bottom - top}px`);
     }
   }
 }
