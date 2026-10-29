@@ -171,6 +171,8 @@ export class SelectQueryController {
     const h = this.host,
       c = this.owner.collection,
       query = this.value;
+    // A closing list keeps the results it showed; a cleared query refilters once it is gone.
+    if (!h.open && ['starting', 'open', 'ending'].includes(h.presenceState)) return;
     this.#ranges.clear();
     this.ranked = false;
     if (!h.searchable) {
@@ -336,10 +338,13 @@ export class SelectQueryController {
     this.state.set(value, 'input', event);
     this.completion = '';
     this.restore();
-    this.sync();
-    if (this.owner.selectionFree() && !value.trim() && !this.host.openOnInputClick)
+    if (this.owner.selectionFree() && !value.trim() && !this.host.openOnInputClick) {
       this.host.setOpen(false, 'input-clear', event);
-    else this.host.setOpen(true, 'input', event);
+      this.sync();
+    } else {
+      this.sync();
+      this.host.setOpen(true, 'input', event);
+    }
     this.host.requestUpdate();
   }
   selected(record: ChoiceModelRecord, event: Event): void {
