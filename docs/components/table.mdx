@@ -269,3 +269,38 @@ A Select in a cell works the same way for picking from a fixed list, such as rea
 />
 
 Constrain the Table with ordinary CSS such as `max-block-size`, and it becomes a focusable scroll region named by `label`. `sticky-header`, `sticky-footer`, `sticky-start-columns` and `sticky-end-columns` pin each edge independently and follow RTL: here the region names and the half-year totals stay in view while the months scroll between them. Use normal table/column CSS for content width. The component measures actual column geometry; it has no fixed column-width or spacing attributes. A cell spanning across a pinned/unpinned boundary stays unpinned. Column offsets update after native layout changes, resizing, inserted/removed rows or changed spans.
+
+### Wrapping text
+
+Cells keep their text on one line, so data columns stay aligned and a wide Table scrolls. For descriptions and other prose, set `white-space: normal` on the Table, a row or a cell. Sizes and alignment set on a head or cell reach its native cell: `min-inline-size` keeps a prose column readable on a narrow screen, and `inline-size` fixes a column's width.
+
+<Preview
+  title="Prose column"
+  align="stretch"
+  code={`<tp-table label="Brewing guide" style="white-space:normal">
+  <tp-table-header>
+    <tp-table-row>
+      <tp-table-head>Tea</tp-table-head>
+      <tp-table-head style="inline-size:6rem">Water</tp-table-head>
+      <tp-table-head>Notes</tp-table-head>
+    </tp-table-row>
+  </tp-table-header>
+  <tp-table-body>
+    <tp-table-row>
+      <tp-table-head scope="row">Sencha</tp-table-head>
+      <tp-table-cell>70 °C</tp-table-cell>
+      <tp-table-cell style="min-inline-size:15rem">Steep for one minute in water well below boiling. Hotter water draws out bitterness and hides the grassy sweetness, so let the kettle rest before pouring.</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Oolong</tp-table-head>
+      <tp-table-cell>90 °C</tp-table-cell>
+      <tp-table-cell style="min-inline-size:15rem">Rinse the leaves once to wake them, then brew short infusions of twenty to thirty seconds. The same leaves give five or six cups, each a little deeper than the last.</tp-table-cell>
+    </tp-table-row>
+    <tp-table-row>
+      <tp-table-head scope="row">Assam</tp-table-head>
+      <tp-table-cell>100 °C</tp-table-cell>
+      <tp-table-cell style="min-inline-size:15rem">Steep for four minutes at a full boil. The brew is strong and malty enough to take milk and sugar without losing its character.</tp-table-cell>
+    </tp-table-row>
+  </tp-table-body>
+</tp-table>`}
+/>

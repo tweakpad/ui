@@ -15,9 +15,9 @@ const parts: Record<string, string> = {
 };
 /**
  * Tabular data for reading: each constituent renders its native table element, so column layout,
- * spans and header relationships work as in plain HTML. The host is the table's focusable overflow
- * region and can pin its header, footer and edge columns while the rest scrolls. It has no grid
- * keyboard model or selection state of its own.
+ * spans and header relationships work as in plain HTML. The host is the table's overflow region,
+ * focusable while the table scrolls, and can pin its header, footer and edge columns while the
+ * rest scrolls. It has no grid keyboard model or selection state of its own.
  *
  * @slot - The caption, header, body and footer regions, or one authored native `table`.
  */
@@ -41,6 +41,9 @@ export class TpTable extends TpElement {
         display: block;
         min-inline-size: 0;
         max-inline-size: 100%;
+        /* Cells inherit these, so ordinary CSS on the table, a row or a cell replaces them. */
+        text-align: start;
+        white-space: nowrap;
       }
 
       .root {
@@ -76,6 +79,8 @@ export class TpTable extends TpElement {
   /** How many trailing columns stay pinned at the inline end; leading columns win where the counts overlap. */
   stickyEndColumns = 0;
   #native = false;
+  /** The table overflows its region, which is then a focusable named region. */
+  #scrollable = false;
   #registrations: Array<() => void> = [];
   #observer: MutationObserver | undefined;
   #resize: ResizeObserver | undefined;
@@ -184,6 +189,14 @@ export class TpTable extends TpElement {
       this.#geometry.style(section, 'z-index', '2');
       this.#geometry.marker(section, 'data-sticky', edge);
     }
+    const root = this.renderRoot.querySelector<HTMLElement>('.root');
+    const scrollable =
+      !!root &&
+      (root.scrollWidth > root.clientWidth + 1 || root.scrollHeight > root.clientHeight + 1);
+    if (scrollable !== this.#scrollable) {
+      this.#scrollable = scrollable;
+      this.requestUpdate();
+    }
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
@@ -226,7 +239,10 @@ export class TpTable extends TpElement {
       'table',
       { layout: this.layout, selectionPresentation: this.selectionPresentation },
       {
-        properties: { class: 'root', role: 'region', 'aria-label': this.label, tabindex: 0 },
+        // Only a table that scrolls is a Tab stop, so keyboard users can scroll it.
+        properties: this.#scrollable
+          ? { class: 'root', role: 'region', 'aria-label': this.label, tabindex: 0 }
+          : { class: 'root' },
         content: this.#native
           ? html`<slot @slotchange=${this.#registerParts}></slot>`
           : this.renderPart(

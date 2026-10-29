@@ -13,7 +13,6 @@ const cells = [
       'box-sizing': 'border-box',
       'text-align': 'start',
       'vertical-align': 'middle',
-      'white-space': 'nowrap',
       'border-block-end': 'var(--tp-border-width) var(--tp-border-style) var(--tp-border)',
     },
   },
@@ -47,6 +46,8 @@ export const tableAppearance: PresentationDictionary = {
         color: 'var(--tp-muted-foreground)',
         'font-size': 'var(--tp-text-sm)',
         padding: 'var(--tp-space-4)',
+        // The cells inherit the Table's `nowrap`; a caption is prose.
+        'white-space': 'normal',
       },
     },
   ],

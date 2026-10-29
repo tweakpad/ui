@@ -21,14 +21,27 @@ abstract class TablePart extends TpElement {
       :host {
         display: contents;
         background: inherit;
+        vertical-align: middle;
       }
 
       slot {
         background: inherit;
       }
 
-      [part] {
+      /*
+       * The host has no box, so ordinary CSS on it reaches the native element by inheritance.
+       * More specific than the recipe, whose cell values serve authored native tables.
+       */
+      :host [part] {
         text-align: inherit;
+      }
+
+      :host [part]:is(th, td) {
+        white-space: inherit;
+        vertical-align: inherit;
+        inline-size: inherit;
+        min-inline-size: inherit;
+        max-inline-size: inherit;
       }
     `,
   ];

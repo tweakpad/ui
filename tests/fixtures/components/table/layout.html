@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Table layout verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 32px;
+        max-inline-size: 40rem;
+      }
+      h2 {
+        font-size: 16px;
+        margin: 0 0 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section>
+        <h2>Prose column, wrapping on the table</h2>
+        <tp-table id="prose" label="Sensor properties" style="white-space: normal">
+          <tp-table-header>
+            <tp-table-row>
+              <tp-table-head>Property</tp-table-head>
+              <tp-table-head>Type</tp-table-head>
+              <tp-table-head>Description</tp-table-head>
+            </tp-table-row>
+          </tp-table-header>
+          <tp-table-body>
+            <tp-table-row>
+              <tp-table-head scope="row"><code>interval</code></tp-table-head>
+              <tp-table-cell><code>number</code></tp-table-cell>
+              <tp-table-cell
+                id="prose-description"
+                style="min-inline-size: 15rem; vertical-align: top"
+                >Seconds between two readings of the greenhouse sensor; shorter intervals drain the
+                battery faster and fill the log with near-identical values.</tp-table-cell
+              >
+            </tp-table-row>
+            <tp-table-row>
+              <tp-table-head scope="row"><code>threshold</code></tp-table-head>
+              <tp-table-cell><code>number | null</code></tp-table-cell>
+              <tp-table-cell
+                >The humidity percentage above which the vents open, or null to leave them closed
+                whatever the reading.</tp-table-cell
+              >
+            </tp-table-row>
+          </tp-table-body>
+        </tp-table>
+      </section>
+
+      <section>
+        <h2>Default nowrap, one wrapping cell, sized parts</h2>
+        <tp-table id="sized" label="Seed orders">
+          <tp-table-header>
+            <tp-table-row>
+              <tp-table-head>Variety</tp-table-head>
+              <tp-table-head id="quantity" style="inline-size: 8rem">Quantity</tp-table-head>
+              <tp-table-head>Note</tp-table-head>
+            </tp-table-row>
+          </tp-table-header>
+          <tp-table-body>
+            <tp-table-row>
+              <tp-table-cell id="nowrap-cell">Cherry tomato, early</tp-table-cell>
+              <tp-table-cell>40</tp-table-cell>
+              <tp-table-cell id="wrap-cell" style="white-space: normal; max-inline-size: 12rem"
+                >Sow indoors six weeks before the last frost and keep the trays warm.</tp-table-cell
+              >
+            </tp-table-row>
+          </tp-table-body>
+        </tp-table>
+      </section>
+
+      <section>
+        <h2>Fits: not a region</h2>
+        <tp-table id="fits" label="Watering days">
+          <tp-table-body>
+            <tp-table-row>
+              <tp-table-head scope="row">Monday</tp-table-head>
+              <tp-table-cell>Beds 1–4</tp-table-cell>
+            </tp-table-row>
+          </tp-table-body>
+        </tp-table>
+      </section>
+
+      <section>
+        <h2>Overflows: focusable region</h2>
+        <tp-table id="overflows" label="Harvest log" style="max-block-size: 6rem">
+          <tp-table-body>
+            <tp-table-row
+              ><tp-table-cell>Week 1</tp-table-cell
+              ><tp-table-cell>3 kg</tp-table-cell></tp-table-row
+            >
+            <tp-table-row
+              ><tp-table-cell>Week 2</tp-table-cell
+              ><tp-table-cell>5 kg</tp-table-cell></tp-table-row
+            >
+            <tp-table-row
+              ><tp-table-cell>Week 3</tp-table-cell
+              ><tp-table-cell>4 kg</tp-table-cell></tp-table-row
+            >
+            <tp-table-row
+              ><tp-table-cell>Week 4</tp-table-cell
+              ><tp-table-cell>6 kg</tp-table-cell></tp-table-row
+            >
+            <tp-table-row
+              ><tp-table-cell>Week 5</tp-table-cell
+              ><tp-table-cell>7 kg</tp-table-cell></tp-table-row
+            >
+          </tp-table-body>
+        </tp-table>
+      </section>
+
+      <section>
+        <h2>Before definition</h2>
+        <tp-table id="early" label="Frost dates">
+          <tp-table-caption>Average frost dates</tp-table-caption>
+          <tp-table-header>
+            <tp-table-row>
+              <tp-table-head>Zone</tp-table-head>
+              <tp-table-head>Last frost</tp-table-head>
+            </tp-table-row>
+          </tp-table-header>
+          <tp-table-body>
+            <tp-table-row>
+              <tp-table-cell>North</tp-table-cell>
+              <tp-table-cell>May 20</tp-table-cell>
+            </tp-table-row>
+          </tp-table-body>
+          <tp-table-footer>
+            <tp-table-row>
+              <tp-table-cell>All</tp-table-cell>
+              <tp-table-cell>May 1</tp-table-cell>
+            </tp-table-row>
+          </tp-table-footer>
+        </tp-table>
+      </section>
+    </main>
+    <script>
+      // Runs before the module registers the elements (classic scripts wait for the stylesheet).
+      window.preDefinition = (() => {
+        const early = document.querySelector('#early');
+        const display = (selector) =>
+          getComputedStyle(early.querySelector(selector) ?? early).display;
+        const cells = [...early.querySelectorAll('tp-table-cell')].map((cell) =>
+          cell.getBoundingClientRect(),
+        );
+        return {
+          defined: Boolean(customElements.get('tp-table')),
+          table: getComputedStyle(early).display,
+          caption: display('tp-table-caption'),
+          header: display('tp-table-header'),
+          body: display('tp-table-body'),
+          footer: display('tp-table-footer'),
+          row: display('tp-table-row'),
+          head: display('tp-table-head'),
+          cell: display('tp-table-cell'),
+          // Two cells of one row sit side by side; the next row starts below.
+          sameRow:
+            Math.round(cells[0].top) === Math.round(cells[1].top) && cells[1].left > cells[0].left,
+          nextRowBelow: cells[2].top >= cells[0].bottom - 1,
+        };
+      })();
+    </script>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      if (built) document.querySelector('link[rel="stylesheet"]').href = '/dist/styles.css';
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      window.tableLayout = await import('./layout-checks.js');
+      await customElements.whenDefined('tp-table');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

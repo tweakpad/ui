@@ -11,7 +11,7 @@ const definition: ComponentDefinition = {
     {
       name: 'table',
       description:
-        'The focusable overflow region that scrolls the table and holds its pinned edges.',
+        'The overflow region that scrolls the table and holds its pinned edges; focusable while the table scrolls.',
     },
     {
       name: 'table-table',

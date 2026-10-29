@@ -282,6 +282,37 @@ tp-cursor-zone:not(:defined) {
   display: contents;
 }
 
+/* A server-rendered Table lays out as a table before definition, scrolling when it is wide. */
+tp-table:not(:defined) {
+  display: block;
+  overflow-x: auto;
+}
+
+tp-table-caption:not(:defined) {
+  display: table-caption;
+}
+
+tp-table-header:not(:defined) {
+  display: table-header-group;
+}
+
+tp-table-body:not(:defined) {
+  display: table-row-group;
+}
+
+tp-table-footer:not(:defined) {
+  display: table-footer-group;
+}
+
+tp-table-row:not(:defined) {
+  display: table-row;
+}
+
+tp-table-head:not(:defined),
+tp-table-cell:not(:defined) {
+  display: table-cell;
+}
+
 /* Visually hidden content stays hidden before definition and while generated styles are
    suppressed (CL §22 Visually hidden); the element applies the same declarations itself. */
 tp-visually-hidden:not(:where([hidden])) {
