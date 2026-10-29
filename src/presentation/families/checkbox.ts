@@ -6,11 +6,20 @@ const definition: ComponentDefinition = {
   name: 'Checkbox',
   tagName: 'tp-checkbox',
   kind: 'compound-reexport',
-  axes: [],
+  axes: [
+    {
+      // inline: one compact row with the label at the start and the box at the end.
+      name: 'variant',
+      values: ['default', 'inline'],
+      default: 'default',
+    },
+  ],
   parts: [
     {
       name: 'checkbox',
-      description: 'The box with the checkbox role that receives focus and presses.',
+      description:
+        'The control with the checkbox role around the box and the label; it receives focus and presses, and is the row of an inline Checkbox.',
+      axes: ['variant'],
     },
     {
       name: 'checkbox-indicator',

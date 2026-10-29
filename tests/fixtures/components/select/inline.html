@@ -62,6 +62,10 @@
             min="1"
             max="50"
           ></tp-slider>
+          <tp-checkbox id="proof" variant="inline" name="proof" default-checked
+            >Send a proof first</tp-checkbox
+          >
+          <tp-checkbox id="rush" variant="inline" name="rush">Rush delivery</tp-checkbox>
           <tp-select id="finish" variant="inline" label="Finish" placeholder="None">
             <option value="laminate">Laminate</option>
             <option value="varnish">Spot varnish</option>
@@ -88,6 +92,19 @@
         <tp-field id="input-field" label="Reference" description="Printed on the delivery note.">
           <tp-input variant="inline" placeholder="PO number"></tp-input>
         </tp-field>
+        <tp-field
+          id="checkbox-field"
+          label="Recycled stock"
+          description="Adds two days to production."
+        >
+          <tp-checkbox variant="inline" name="recycled"></tp-checkbox>
+        </tp-field>
+        <tp-checkbox id="checkbox-invalid" variant="inline" required invalid
+          >Accept the print terms</tp-checkbox
+        >
+        <tp-checkbox id="checkbox-disabled" variant="inline" disabled default-checked
+          >Carbon-neutral shipping</tp-checkbox
+        >
         <tp-input
           id="input-invalid"
           variant="inline"
@@ -129,6 +146,9 @@
         </tp-select>
       </div>
       <div class="stack" dir="rtl">
+        <tp-checkbox id="checkbox-rtl" variant="inline" default-checked
+          >طباعة على الوجهين</tp-checkbox
+        >
         <tp-select id="rtl" variant="inline" label="الورق" default-value="matte">
           <option value="matte">مطفأ</option>
           <option value="gloss">لامع</option>

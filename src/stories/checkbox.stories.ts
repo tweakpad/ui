@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
-import type { TpCheckbox } from '../components/checkbox/index.js';
+import type { CheckboxVariant, TpCheckbox } from '../components/checkbox/index.js';
 import { useArgs } from 'storybook/preview-api';
 import type { TpValueChangeEvent } from '../foundation/events.js';
 import { libraryDocs } from './library-docs.js';
@@ -13,6 +13,7 @@ interface Args {
   required: boolean;
   keepMounted: boolean;
   nativeAction: boolean;
+  variant: CheckboxVariant;
 }
 const meta: Meta<Args> = {
   title: 'Components/Checkbox',
@@ -29,6 +30,7 @@ const meta: Meta<Args> = {
     required: false,
     keepMounted: false,
     nativeAction: false,
+    variant: 'default',
   },
   argTypes: {
     checked: {
@@ -41,6 +43,7 @@ const meta: Meta<Args> = {
     required: { control: 'boolean' },
     keepMounted: { control: 'boolean' },
     nativeAction: { control: 'boolean' },
+    variant: { control: 'select', options: ['default', 'inline'] },
   },
   render: (args) => {
     const [, updateArgs] = useArgs<Args>();
@@ -54,6 +57,7 @@ const meta: Meta<Args> = {
       .required=${args.required}
       .keepMounted=${args.keepMounted}
       .nativeAction=${args.nativeAction}
+      .variant=${args.variant}
       .onCheckedChange=${(event: TpValueChangeEvent<boolean>) => {
         if (event.defaultPrevented || event.detail.cancelled) return;
         if (checkbox.value) checkbox.value.checked = event.detail.value;

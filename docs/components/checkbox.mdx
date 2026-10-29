@@ -148,3 +148,21 @@ Set `checked` before first render to own the state. Each press then emits a canc
 checkbox.onCheckedChange = (event) => {
   checkbox.checked = event.detail.value;
 };`} language="typescript" />
+
+### Inline
+
+<Preview
+  title="Inline"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:22rem;margin-inline:auto">
+  <tp-checkbox variant="inline" name="reminders" default-checked>Event reminders</tp-checkbox>
+  <tp-checkbox variant="inline" name="digest">Weekly digest</tp-checkbox>
+  <tp-select variant="inline" label="Reminder time" name="reminder-time" default-value="15">
+    <option value="5">5 minutes before</option>
+    <option value="15">15 minutes before</option>
+    <option value="60">1 hour before</option>
+  </tp-select>
+</div>`}
+/>
+
+`variant="inline"` fits the Checkbox into one row the height of a control, with its label at the start and the box at the end, so it stacks with other inline controls such as an inline Select. A press anywhere on the row toggles it. Inside a Field and without a label of its own, the Field's label moves into the row.

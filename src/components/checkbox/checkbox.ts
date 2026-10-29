@@ -51,6 +51,9 @@ export const BOOLEAN_CONTROL_MARKERS = [
   'filled',
 ] as const satisfies readonly (keyof BooleanControlState)[];
 
+/** `inline`: one compact row with the label at the start and the box at the end. */
+export type CheckboxVariant = 'default' | 'inline';
+
 /**
  * A Boolean form control with an inline label: checked, unchecked or mixed, submitted with its
  * form and validated by the Field around it. Pointer and Space toggle it; Enter does not, so it
@@ -80,6 +83,7 @@ export class TpCheckbox extends TpFormElement {
     parent: { type: Boolean, reflect: true },
     keepMounted: { type: Boolean, attribute: 'keep-mounted' },
     identifier: { type: String },
+    variant: { type: String, reflect: true },
   };
   static override styles = [
     TpElement.styles,
@@ -111,6 +115,29 @@ export class TpCheckbox extends TpFormElement {
       .indicator tp-icon {
         inline-size: 100%;
         block-size: 100%;
+      }
+
+      /* Inline: one row across its container, the label at the start and the box at the end. */
+      :host([variant='inline']) {
+        display: flex;
+      }
+
+      :host([variant='inline']) .root {
+        display: flex;
+        flex: 1;
+        min-inline-size: 0;
+      }
+
+      :host([variant='inline']) .box {
+        order: 1;
+      }
+
+      :host([variant='inline']) .label {
+        flex: 1;
+        min-inline-size: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     `,
   ];
@@ -181,6 +208,15 @@ export class TpCheckbox extends TpFormElement {
   keepMounted = false;
   /** The id of the inner control, for references from outside the element; generated when empty. */
   identifier = '';
+  /**
+   * `inline` shows the label and the box in one compact control-height row, for stacked controls;
+   * without a label of its own, an enclosing Field's label moves into the row.
+   */
+  variant: CheckboxVariant = 'default';
+  /** An inline Checkbox shows its Field's label inside its row. */
+  override get rendersFieldLabel(): boolean {
+    return this.variant === 'inline';
+  }
   #state = new ControllableState({
     host: this,
     initialValue: false,
@@ -274,7 +310,11 @@ export class TpCheckbox extends TpFormElement {
     });
     return this.renderBooleanControl(
       state,
-      html`<span class="box" aria-hidden="true">${indicator}</span><span><slot></slot></span>`,
+      // An inline row without a label of its own shows its Field's label.
+      html`<span class="box" aria-hidden="true">${indicator}</span
+        ><span class="label"
+          ><slot>${this.variant === 'inline' ? this.fieldLabel : ''}</slot></span
+        >`,
     );
   }
   protected get booleanControlIdentifier(): string {
