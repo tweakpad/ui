@@ -54,6 +54,7 @@ interface Timing {
  *
  * @slot - One surface: a Card, Button, Input, Text area, Select, Input group, Toggle or any element.
  * @csspart mo-glow-border-ring - The drawing over the surface border, hidden from assistive technology.
+ * @csspart mo-glow-border-focus - The focus ring, outside the border, while keyboard focus is inside and the effect does not show it.
  * @csspart mo-glow-border-line - The border line where the glow does not light it.
  * @csspart mo-glow-border-glow - The canvas of the lit line and its wash.
  * @csspart mo-glow-border-bloom - The canvas of the blurred light around the line.
@@ -113,6 +114,7 @@ export class TpMoGlowBorder extends SurfaceBorderElement {
 
   protected readonly parts = {
     ring: 'mo-glow-border-ring',
+    focus: 'mo-glow-border-focus',
     line: 'mo-glow-border-line',
     glow: 'mo-glow-border-glow',
     bloom: 'mo-glow-border-bloom',
@@ -205,6 +207,11 @@ export class TpMoGlowBorder extends SurfaceBorderElement {
       this.#syncLoop();
       this.triggerChanged();
     }
+  }
+
+  /** With `trigger="focus"` the glow itself shows focus. */
+  protected override effectShowsFocus(): boolean {
+    return this.#trigger === 'focus';
   }
 
   protected override geometryChanged(): void {
@@ -417,8 +424,9 @@ export class TpMoGlowBorder extends SurfaceBorderElement {
     if (!geometry) return;
     let lit = false;
     if (measured) {
-      const x = measured.source.x - measured.origin.left;
-      const y = measured.source.y - measured.origin.top;
+      // The source is in screen pixels; the ring is laid out in CSS pixels.
+      const x = (measured.source.x - measured.origin.left) / geometry.scale.x;
+      const y = (measured.source.y - measured.origin.top) / geometry.scale.y;
       const { width, height } = geometry.box;
       const outside = Math.hypot(Math.max(-x, 0, x - width), Math.max(-y, 0, y - height));
       const inside = Math.min(x, width - x, y, height - y);

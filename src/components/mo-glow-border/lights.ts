@@ -6,7 +6,7 @@ export interface PointerLight {
   /** Position in the ring box. */
   readonly x: number;
   readonly y: number;
-  /** Distance in pixels at which the light fades to nothing. */
+  /** Distance in pixels from the line at which the light fades to nothing. */
   readonly reach: number;
 }
 
@@ -39,13 +39,19 @@ export interface GlowSources {
   readonly pulse?: number | null;
 }
 
-/** The core is a smaller, hotter zone than the reach. */
-const CORE_SHARE = 0.5;
-/** Share of the reach lit at full strength before the light falls off. */
-const PLATEAU = 0.3;
+/**
+ * The pointer lights a stretch of the line around its nearest point, a share of the perimeter
+ * (within bounds in pixels), so a small control lights a highlight rather than its whole outline.
+ */
+const SPOT_SHARE = 0.12;
+const SPOT_MIN = 40;
+const SPOT_MAX = 160;
+/** Share of the stretch at full strength, and the share that turns to the core color. */
+const PLATEAU = 0.2;
+const CORE_SHARE = 0.35;
 /** The rounded glow in front of a comet's head, in pixels. */
 const HEAD_PX = 6;
-const SWEEP_LEVEL = 0.9;
+const SWEEP_LEVEL = 0.65;
 
 /**
  * Head positions of `count` comets at `phase` (a fraction of the perimeter), `spacing` apart or
@@ -78,8 +84,21 @@ export function lightGlow(
   const { intensity, core, swell } = field;
   const { pointer, comets, glint, sweep, pulse } = sources;
   const length = Math.max(samples.length, 1e-6);
-  const reach = pointer ? Math.max(pointer.reach, 1e-6) : 0;
-  const coreReach = reach * CORE_SHARE;
+  // The pointer lights around the nearest point of the line, as strongly as it is close to it.
+  let nearest = 0;
+  let level = 0;
+  const spot = Math.min(SPOT_MAX, Math.max(SPOT_MIN, length * SPOT_SHARE));
+  if (pointer) {
+    let best = Infinity;
+    for (let index = 0; index < samples.count; index++) {
+      const distance = Math.hypot(samples.x[index]! - pointer.x, samples.y[index]! - pointer.y);
+      if (distance < best) {
+        best = distance;
+        nearest = samples.s[index]!;
+      }
+    }
+    level = 1 - smooth(Math.min(1, best / Math.max(pointer.reach, 1e-6)));
+  }
   const lit = Boolean(pointer || comets || glint || sweep);
   for (let index = 0; index < samples.count; index++) {
     const x = samples.x[index]!;
@@ -87,18 +106,19 @@ export function lightGlow(
     let light = 0;
     let hot = 0;
     let wide = 1;
-    if (pointer) {
-      const distance = Math.hypot(x - pointer.x, y - pointer.y);
-      if (distance < reach) {
-        // Full strength near the light, then a smooth fall to nothing at the reach.
-        const fall = Math.min(1, Math.max(0, (distance / reach - PLATEAU) / (1 - PLATEAU)));
-        const level = 1 - smooth(fall);
-        light = screen(light, level);
-        wide = Math.max(wide, 1 + 0.25 * level);
-        if (distance < coreReach) {
-          const k = (1 - distance / coreReach) ** 1.5;
-          hot = Math.max(hot, k);
-          wide = Math.max(wide, 1 + 0.25 * level + 0.6 * k);
+    if (pointer && level > 0) {
+      // Distance along the line from the nearest point, through the start of the path.
+      const along = Math.abs(samples.s[index]! - nearest);
+      const away = Math.min(along, length - along) / spot;
+      if (away < 1) {
+        const fall = Math.max(0, (away - PLATEAU) / (1 - PLATEAU));
+        const k = (1 - smooth(fall)) * level;
+        light = screen(light, k);
+        wide = Math.max(wide, 1 + 0.25 * k);
+        if (away < CORE_SHARE) {
+          const heat = (1 - away / CORE_SHARE) ** 1.5 * level * level;
+          hot = Math.max(hot, heat);
+          wide = Math.max(wide, 1 + 0.25 * k + 0.25 * heat);
         }
       }
     }

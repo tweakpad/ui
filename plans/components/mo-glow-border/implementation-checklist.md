@@ -29,6 +29,9 @@
 | C-07 | Presentation: line `--tp-mo-glow-border-color`, colors, core, angle, intensity, spread, fill, width, radius; parts `mo-glow-border`, `-ring`, `-line`, `-glow`, `-bloom` | CL `mbx-presentation` | none | `styles.ts` mapping onto `--_tp-surface-border-*`, `moGlowBorderPresentation` | Colors | V-06 | passed | V-06 |
 | C-08 | `refresh()` | CL `mbd-api` | none | `SurfaceBorderElement.refresh` (own-API base) | API Reference | V-06 | passed | V-06 |
 | C-09 | Shared foundation and base, no duplicate in either element (user: "share features in foundation") | plan | none | `foundation/border-ring/*`, `css-list.ts`, `transitionTimings`, `SurfaceBorderElement` | none (internal) | V-01 | passed | unit tests for every moved module; V-01 |
+| C-10 | Owns focus and invalid states: hides the surface's outline, draws its own focus ring (ring role, theme width and offset) unless the effect plays on focus, and an invalid line and ring in the destructive role; forced colors use system colors (user, 2026-10-30: "consider the focus override which is messing with all the visual style") | CL `sbf-states` (0.51.1, `16b387fb`) | none | `SurfaceBorderElement.syncState`, `effectShowsFocus`, `.focus` path, `HIDDEN_PAINT` | Usage | V-08 | passed | V-08 |
+| C-11 | Exact geometry under a CSS zoom or scale transform (ring and canvas), and fill-width surfaces keep filling their row | CL `sbf-states` | none | `BorderSurface.measure` scale, `inlineLevel`, `CanvasSurface` device ratio | none (internal) | V-09 | passed | V-09 |
+| C-12 | Pointer light is a local highlight along the line around its nearest point (a share of the perimeter), dimming with distance up to `track-reach`; calmer bloom and sweep (user, 2026-10-30: "all saturated and ugly") | CL `mbx-glow` (0.51.1) | none | `lights.ts` spot, `glow-renderer.ts` bloom ×1.2 and mean-per-stroke, sweep 0.65 | Usage, Controls and fields | V-10 | passed | unit test and V-10 |
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
@@ -76,6 +79,9 @@
 | V-05 | C-06; behavior | reduced motion emulated; a listener claiming `loop` on a new comet border | comets and glint dark; sweep still; pulse steady; claimed loop dark with marker | comets 0, glint 0, sweep profiles identical 600 ms apart, pulse 30473; request `loop`/`start`/`comets`, lit 0, `data-tp-motion-driven="loop"`; unclaimed 7683 | DevTools emulate, evaluate | passed | Observed values recorded in Actual result |
 | V-06 | C-07, C-08; visual | static Storybook Glow border page, dark and light, Colors hovered; API tables | warm glow, library-native compositions; `refresh()` row from the base | amber to white to pink (dark), red to pink (light); one ring-color comet on the prompt; Methods: `refresh()` | DevTools hover, screenshot, evaluate | passed | Observed values recorded in Actual result |
 | V-07 | C-01; accessibility | axe on the fixture main; drawings | no violations; drawings hidden | 0 violations; every SVG and canvas `aria-hidden` | DevTools evaluate (page-injected axe-core) | passed | Screen reader not tested |
+| V-08 | C-10; behavior and visual | staged fields: click focus on a hover-trigger field, Tab to a button, focus a `trigger="focus"` field, an invalid field | one ring outside the line; none when the effect shows focus; red line, no halo | ring visible on click and Tab focus, the surface outline `rgba(0, 0, 0, 0)`; `data-tp-focus-shown` on focus-trigger borders with no ring; invalid line `rgb(239, 68, 68)` | DevTools click, press_key, screenshot, evaluate | passed | Observed values recorded in Actual result |
+| V-09 | C-11; behavior and visual | stage under `zoom: 1.6` and `2`; docs preview zoom buttons; Field with an Input | rings and glow on the surfaces; fields fill their row | ring minus surface 0,0,0,0 for every case; glow highlight on the edge at 2×; zoomed docs preview frame on the card; Field inputs 318 px wide (were 178 px) | DevTools evaluate, screenshot | passed | Before: rings 1.6× off, glow drawn at half scale (also fixed for every `CanvasSurface` user) |
+| V-10 | C-12; visual | the reported composition (Input, Text area, two Buttons) with the pointer below the Text area; docs page in both schemes | a local highlight, no whole outlines lit, calmer bloom | highlights only near the pointer on each control; the far top edge dark (unit test); docs hero, form (one comet on the focused field), hover, fade, colors read calmly in dark and light | DevTools screenshot | passed | Observed values recorded in Actual result |
 
 ## Early integration checkpoint
 
@@ -110,6 +116,7 @@
 
 ## Completion / handoff
 
+- Revision 2, 2026-10-30 (user feedback: focus override, saturated composition): focus and invalid owned by the border, zoom-exact geometry, local pointer highlight, calmer bloom and sweep, controls example rebuilt as a form with focus comets; spec `16b387fb` (0.51.1); C-10–C-12, V-08–V-10 added
 - Change summary: Border split; Glow border keeps the glow on the shared base and foundation; spec § 21.20 Glow border
 - Actual delivery claim: complete component as specified in CL § 21.20 (0.51.0)
 - Record checker: `--stage implement`, `verify`, `complete` pass

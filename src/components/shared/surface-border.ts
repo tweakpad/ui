@@ -6,6 +6,7 @@ import {
   type RingBox,
 } from '../../foundation/border-ring/ring-path.js';
 import { TpElement } from '../../foundation/element.js';
+import { deepActiveElement } from '../../foundation/focus.js';
 import { frameLoopFor, type FrameSubscription } from '../../foundation/frame-loop.js';
 import { scheduleLayoutPass } from '../../foundation/layout-batch.js';
 import { transitionTimings, type TransitionTiming } from '../../foundation/motion.js';
@@ -15,7 +16,11 @@ import { ViewportTrigger } from '../../foundation/viewport-trigger.js';
 import { setPartComposition } from '../../presentation/controller.js';
 import { surfaceMember } from './group-members.js';
 
-const HIDDEN_BORDER = { 'border-color': 'transparent' } as const;
+/**
+ * What the border takes over from its surface: the border color and the focus or invalid
+ * outline. The surface keeps its border width, so nothing moves.
+ */
+const HIDDEN_PAINT = { 'border-color': 'transparent', 'outline-color': 'transparent' } as const;
 
 /**
  * The look every surface border resolves for its script: each element's stylesheet maps its own
@@ -29,6 +34,8 @@ const LOOK = {
   intensity: '--_tp-surface-border-intensity',
   fill: '--_tp-surface-border-fill',
   spread: '--_tp-surface-border-spread',
+  ringWidth: '--_tp-surface-border-ring-width',
+  ringOffset: '--_tp-surface-border-ring-offset',
 } as const;
 
 registerProperty({
@@ -53,6 +60,18 @@ registerProperty({ name: LOOK.angle, syntax: '<angle>', inherits: false, initial
 registerProperty({ name: LOOK.intensity, syntax: '<number>', inherits: false, initialValue: '1' });
 registerProperty({ name: LOOK.fill, syntax: '<number>', inherits: false, initialValue: '0' });
 registerProperty({ name: LOOK.spread, syntax: '<length>', inherits: false, initialValue: '12px' });
+registerProperty({
+  name: LOOK.ringWidth,
+  syntax: '<length>',
+  inherits: false,
+  initialValue: '2px',
+});
+registerProperty({
+  name: LOOK.ringOffset,
+  syntax: '<length>',
+  inherits: false,
+  initialValue: '2px',
+});
 
 /** The measured surface: its border box relative to the owner and the border it draws. */
 export interface SurfaceGeometry {
@@ -67,11 +86,17 @@ export interface SurfaceGeometry {
   readonly borderWidth: number;
   /** The wrapped child lays out inline. */
   readonly inline: boolean;
+  /**
+   * Screen pixels per CSS pixel of the owner (a CSS zoom or a scale transform above it), which
+   * client rects carry and the drawing, laid out in CSS pixels, must not.
+   */
+  readonly scale: { readonly x: number; readonly y: number };
 }
 
 /** The shadow part names of an element's drawing, from its presentation family. */
 export interface SurfaceBorderParts {
   readonly ring: string;
+  readonly focus: string;
   readonly line: string;
   readonly glow: string;
   readonly bloom: string;
@@ -83,6 +108,25 @@ export interface SurfaceBorderGeometry extends SurfaceGeometry {
   readonly stroke: number;
   /** Bloom spread in pixels. */
   readonly spread: number;
+  /** Focus ring width and its gap outside the border, in pixels. */
+  readonly ringWidth: number;
+  readonly ringOffset: number;
+}
+
+/**
+ * Whether a child lays out inline at its own size, so the border wraps it as an inline block. An
+ * inline-level child that fills its row (`inline-size: 100%`, like a text field) needs a block
+ * around it, or the percentage would resolve against a shrink-to-fit box.
+ */
+function inlineLevel(child: Element, view: Window): boolean {
+  if (!view.getComputedStyle(child).display.startsWith('inline')) return false;
+  try {
+    const size = child.computedStyleMap?.().get('inline-size');
+    const Unit = (view as Window & { CSSUnitValue?: typeof CSSUnitValue }).CSSUnitValue;
+    return !(Unit && size instanceof Unit && size.unit === 'percent' && size.value >= 100);
+  } catch {
+    return true;
+  }
 }
 
 /**
@@ -93,7 +137,10 @@ export interface SurfaceBorderGeometry extends SurfaceGeometry {
 export class BorderSurface {
   #child: Element | null = null;
   #composed: TpElement | null = null;
-  #styled: { element: HTMLElement | SVGElement; value: string; priority: string } | null = null;
+  #styled: {
+    element: HTMLElement | SVGElement;
+    previous: { name: string; value: string; priority: string }[];
+  } | null = null;
   #boundary: Element | null = null;
 
   constructor(
@@ -121,7 +168,7 @@ export class BorderSurface {
       const member = surfaceMember(child);
       if (member) {
         if (this.#composed !== member.host) {
-          setPartComposition(member.host, this, { [member.part]: { styleHook: HIDDEN_BORDER } });
+          setPartComposition(member.host, this, { [member.part]: { styleHook: HIDDEN_PAINT } });
           this.#composed = member.host;
         }
         boundary = member.element;
@@ -135,10 +182,14 @@ export class BorderSurface {
         if (this.#styled?.element !== element) {
           this.#styled = {
             element,
-            value: element.style.getPropertyValue('border-color'),
-            priority: element.style.getPropertyPriority('border-color'),
+            previous: Object.keys(HIDDEN_PAINT).map((name) => ({
+              name,
+              value: element.style.getPropertyValue(name),
+              priority: element.style.getPropertyPriority(name),
+            })),
           };
-          element.style.setProperty('border-color', 'transparent');
+          for (const [name, value] of Object.entries(HIDDEN_PAINT))
+            element.style.setProperty(name, value);
         }
         boundary = element;
       } else boundary = child;
@@ -153,9 +204,11 @@ export class BorderSurface {
     if (this.#composed) setPartComposition(this.#composed, this);
     this.#composed = null;
     if (this.#styled) {
-      const { element, value, priority } = this.#styled;
-      if (value) element.style.setProperty('border-color', value, priority);
-      else element.style.removeProperty('border-color');
+      const { element, previous } = this.#styled;
+      for (const { name, value, priority } of previous) {
+        if (value) element.style.setProperty(name, value, priority);
+        else element.style.removeProperty(name);
+      }
     }
     this.#styled = null;
     this.#child = null;
@@ -169,14 +222,18 @@ export class BorderSurface {
     const origin = this.owner.getBoundingClientRect();
     const rect = boundary.getBoundingClientRect();
     const style = view.getComputedStyle(boundary);
-    const width = rect.width;
-    const height = rect.height;
+    const scale = {
+      x: this.owner.offsetWidth > 0 ? origin.width / this.owner.offsetWidth : 1,
+      y: this.owner.offsetHeight > 0 ? origin.height / this.owner.offsetHeight : 1,
+    };
+    const width = rect.width / scale.x;
+    const height = rect.height / scale.y;
     const corner = (value: string) => parseCornerRadius(value, width, height);
     const child = this.#child;
     const rtl = view.getComputedStyle(this.owner).direction === 'rtl';
     return {
-      inlineStart: rtl ? origin.right - rect.right : rect.left - origin.left,
-      y: rect.top - origin.top,
+      inlineStart: (rtl ? origin.right - rect.right : rect.left - origin.left) / scale.x,
+      y: (rect.top - origin.top) / scale.y,
       box: {
         width,
         height,
@@ -196,7 +253,8 @@ export class BorderSurface {
               parseFloat(style.borderBottomWidth) || 0,
               parseFloat(style.borderLeftWidth) || 0,
             ),
-      inline: child ? view.getComputedStyle(child).display.startsWith('inline') : false,
+      inline: child ? inlineLevel(child, view) : false,
+      scale,
     };
   }
 }
@@ -212,6 +270,9 @@ export const surfaceBorderStyles = css`
     display: block;
     position: relative;
     border-radius: var(--_tp-surface-border-radius, var(--tp-radius-lg));
+
+    --_tp-surface-border-ring-width: var(--tp-ring-width, 2px);
+    --_tp-surface-border-ring-offset: var(--tp-ring-offset, 2px);
   }
 
   :host([data-tp-inline]) {
@@ -245,6 +306,38 @@ export const surfaceBorderStyles = css`
   .line {
     stroke: var(--_tp-surface-border-color, var(--tp-border));
     stroke-width: var(--_tp-surface-border-w, 1px);
+  }
+
+  /* The focus ring replaces the surface's own: the theme ring, outside the border. */
+  .focus {
+    stroke: var(--tp-ring);
+    stroke-width: var(--_tp-surface-border-ring-width);
+    visibility: hidden;
+  }
+
+  :host([data-tp-invalid]) .line,
+  :host([data-tp-invalid]) .focus {
+    stroke: var(--tp-destructive);
+  }
+
+  :host([data-tp-focus-visible]:not([data-tp-focus-shown])) .focus {
+    visibility: visible;
+  }
+
+  /* Forced colors keep a plain line and ring in system colors; the glow is decoration. */
+  @media (forced-colors: active) {
+    .line {
+      stroke: CanvasText;
+    }
+
+    .focus {
+      stroke: Highlight;
+    }
+
+    .glow,
+    .bloom {
+      display: none;
+    }
   }
 `;
 
@@ -284,6 +377,14 @@ export abstract class SurfaceBorderElement extends TpElement {
   /** The light-tree children changed. */
   protected childrenChanged(): void {}
 
+  /**
+   * Whether the element's own effect shows keyboard focus (it plays on focus), so the focus ring
+   * is not drawn as well.
+   */
+  protected effectShowsFocus(): boolean {
+    return false;
+  }
+
   /** Children that describe the drawing rather than being the surface. */
   protected describesDrawing(_element: Element): boolean {
     void _element;
@@ -297,6 +398,8 @@ export abstract class SurfaceBorderElement extends TpElement {
   );
   #geometry: SurfaceBorderGeometry | null = null;
   #path = '';
+  #focusPath = '';
+  #releaseInvalid: (() => void) | null = null;
   #releaseResize: (() => void)[] = [];
   #observed: Element | null = null;
   #hovered = false;
@@ -369,12 +472,23 @@ export abstract class SurfaceBorderElement extends TpElement {
     this.addEventListener('focusout', this.#focus);
     this.#hovered = this.matches(':hover');
     this.#focused = this.matches(':focus-within');
+    // Validity shows through attributes the border never writes, so observing them cannot loop.
+    const observer = new MutationObserver(() => this.syncState());
+    observer.observe(this, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['aria-invalid', 'invalid'],
+    });
+    this.#releaseInvalid = () => observer.disconnect();
+    this.syncState();
     this.#renderer?.connect();
     this.refresh();
     void this.updateComplete.then(() => this.triggerChanged());
   }
 
   override disconnectedCallback(): void {
+    this.#releaseInvalid?.();
+    this.#releaseInvalid = null;
     this.#surface.release();
     for (const release of this.#releaseResize) release();
     this.#releaseResize = [];
@@ -392,6 +506,7 @@ export abstract class SurfaceBorderElement extends TpElement {
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    this.syncState();
     this.#syncRenderer();
     this.wake();
   }
@@ -411,7 +526,7 @@ export abstract class SurfaceBorderElement extends TpElement {
         <g class="timing"></g>
         ${
           geometry
-            ? svg`<path part=${parts.line} class="line" d=${this.#path}></path>${this.ringContent(this.#path)}`
+            ? svg`<path part=${parts.focus} class="focus" d=${this.#focusPath}></path><path part=${parts.line} class="line" d=${this.#path}></path>${this.ringContent(this.#path)}`
             : nothing
         }</svg
       >${
@@ -425,6 +540,20 @@ export abstract class SurfaceBorderElement extends TpElement {
               ><canvas part=${parts.glow} class="glow" aria-hidden="true" style=${canvas}></canvas>`
           : nothing
       }`;
+  }
+
+  /**
+   * Reflects the surface's state the border draws: keyboard focus inside (the focus ring, unless
+   * the effect shows it), and an invalid control (the line in the destructive color).
+   */
+  protected syncState(): void {
+    const active = this.matches(':focus-within') ? deepActiveElement(this.ownerDocument) : null;
+    this.toggleAttribute('data-tp-focus-visible', Boolean(active?.matches(':focus-visible')));
+    this.toggleAttribute('data-tp-focus-shown', this.effectShowsFocus());
+    this.toggleAttribute(
+      'data-tp-invalid',
+      this.matches(':has([aria-invalid="true"], [invalid]:not([invalid="false"]))'),
+    );
   }
 
   /** Wakes the frame subscription; `step` runs until it reports nothing moves. */
@@ -473,6 +602,7 @@ export abstract class SurfaceBorderElement extends TpElement {
   readonly #focus = (): void => {
     // Focus moving between the surface's own parts settles before the check.
     queueMicrotask(() => {
+      this.syncState();
       const focused = this.matches(':focus-within');
       if (focused === this.#focused) return;
       this.#focused = focused;
@@ -503,6 +633,8 @@ export abstract class SurfaceBorderElement extends TpElement {
       ...surface,
       stroke: width && width !== 'auto' ? parseFloat(width) || 0 : surface.borderWidth || theme,
       spread: parseFloat(style.getPropertyValue(LOOK.spread)) || 0,
+      ringWidth: parseFloat(style.getPropertyValue(LOOK.ringWidth)) || 0,
+      ringOffset: parseFloat(style.getPropertyValue(LOOK.ringOffset)) || 0,
     };
   }
 
@@ -510,10 +642,13 @@ export abstract class SurfaceBorderElement extends TpElement {
     this.toggleAttribute('data-tp-inline', geometry.inline);
     this.style.setProperty('--_tp-surface-border-w', `${geometry.stroke}px`);
     const path = ringPath(geometry.box, geometry.stroke / 2);
+    // The focus ring's centerline, outside the border by the theme's ring offset.
+    const focus = ringPath(geometry.box, -(geometry.ringOffset + geometry.ringWidth / 2));
     const previous = this.#geometry;
     this.#geometry = geometry;
     if (
       path.d !== this.#path ||
+      focus.d !== this.#focusPath ||
       !previous ||
       previous.inlineStart !== geometry.inlineStart ||
       previous.y !== geometry.y ||
@@ -523,6 +658,7 @@ export abstract class SurfaceBorderElement extends TpElement {
       previous.stroke !== geometry.stroke
     ) {
       this.#path = path.d;
+      this.#focusPath = focus.d;
       this.#renderer?.setGeometry(
         geometry.box,
         geometry.stroke,

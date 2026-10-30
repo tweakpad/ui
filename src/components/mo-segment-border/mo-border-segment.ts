@@ -68,11 +68,17 @@ export class TpMoBorderSegment extends TpElement {
 
   /**
    * The states the segment moves through, comma-separated: each `start end`, or a single `end`
-   * starting at 0, in percent of the border or pixels. Below 0% or past 100% it wraps through the
+   * starting at 0. A position is a percentage of the border or pixels from the origin, clockwise,
+   * or a point of the box: `top-left`, `top`, `top-right`, `right`, `bottom-right`, `bottom`,
+   * `bottom-left` or `left`. A point is reached the short way round from the previous state, and
+   * a stretch ending at a point runs clockwise to it. Below 0% or past 100% it wraps through the
    * origin. Unset, `0% 0%, 0% 100%`.
    */
   draw = '';
-  /** The states it runs from where it is when its trigger turns off; unset, it plays backwards. */
+  /**
+   * The states it runs from where it is when its trigger turns off, written like `draw`; unset, it
+   * plays backwards.
+   */
   leave = '';
   /** Time of the whole run: a CSS time, a number of milliseconds, or a `var()`. */
   duration = '';

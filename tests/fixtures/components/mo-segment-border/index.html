@@ -254,6 +254,77 @@
           ></tp-mo-segment-border>
         </div>
       </section>
+      <section class="case" id="case-states">
+        <h2 class="label">Focus ring and invalid line, and a zoomed copy</h2>
+        <div class="grid">
+          <tp-mo-segment-border id="state-focus"
+            ><tp-input label="Berth" placeholder="Tab or click to focus"></tp-input
+            ><tp-mo-border-segment draw="0% 0%, 0% 30%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="state-invalid"
+            ><tp-input label="Required berth" required invalid></tp-input
+          ></tp-mo-segment-border>
+          <div style="zoom: 1.5">
+            <tp-mo-segment-border id="state-zoomed"
+              ><tp-button variant="outline">Zoomed</tp-button
+              ><tp-mo-border-segment draw="0% 0%, 0% 30%"></tp-mo-border-segment
+            ></tp-mo-segment-border>
+          </div>
+        </div>
+      </section>
+      <section class="case" id="case-points">
+        <h2 class="label">
+          Points of the box: corner-exact patterns and leave paths, narrow and wide
+        </h2>
+        <div class="grid">
+          <tp-mo-segment-border id="points-corners"
+            ><tp-button variant="outline">Corners</tp-button
+            ><tp-mo-border-segment
+              draw="top-left top-left, bottom-left top-right"
+            ></tp-mo-border-segment
+            ><tp-mo-border-segment
+              draw="bottom-right bottom-right, top-right bottom-left"
+            ></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="points-edges"
+            ><tp-button variant="outline">Edges</tp-button
+            ><tp-mo-border-segment draw="top top, top-left top-right"></tp-mo-border-segment
+            ><tp-mo-border-segment draw="right right, top-right bottom-right"></tp-mo-border-segment
+            ><tp-mo-border-segment
+              draw="bottom bottom, bottom-right bottom-left"
+            ></tp-mo-border-segment
+            ><tp-mo-border-segment draw="left left, bottom-left top-left"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="points-around"
+            ><tp-button variant="outline">Around</tp-button
+            ><tp-mo-border-segment
+              draw="top-left top-left, top-left top-right"
+              leave="top-right top-right"
+            ></tp-mo-border-segment
+            ><tp-mo-border-segment
+              draw="top-right top-right, top-right bottom-right"
+              leave="bottom-right bottom-right"
+            ></tp-mo-border-segment
+            ><tp-mo-border-segment
+              draw="bottom-right bottom-right, bottom-right bottom-left"
+              leave="bottom-left bottom-left"
+            ></tp-mo-border-segment
+            ><tp-mo-border-segment
+              draw="bottom-left bottom-left, bottom-left top-left"
+              leave="top-left top-left"
+            ></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="points-wide" style="inline-size: 24rem"
+            ><tp-card size="sm"><p style="margin: 0">A wide card, 24rem.</p></tp-card
+            ><tp-mo-border-segment
+              draw="top-left top-left, bottom-left top-right"
+            ></tp-mo-border-segment
+            ><tp-mo-border-segment
+              draw="bottom-right bottom-right, top-right bottom-left"
+            ></tp-mo-border-segment
+          ></tp-mo-segment-border>
+        </div>
+      </section>
     </main>
     <script type="module" src="./fixture.ts"></script>
   </body>

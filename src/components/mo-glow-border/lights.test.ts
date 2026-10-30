@@ -82,8 +82,30 @@ describe('lightGlow', () => {
     }
     expect(field.intensity[nearest]).toBeGreaterThan(0.95);
     expect(field.core[nearest]).toBeGreaterThan(0.9);
-    expect(field.swell[nearest]).toBeGreaterThan(1.5);
+    expect(field.swell[nearest]).toBeGreaterThan(1.3);
     expect(field.intensity[farthest]).toBe(0);
+  });
+
+  it('lights only the stretch of a thin outline nearest the pointer, not the far edge', () => {
+    const thin = { width: 300, height: 36, radii: [r(8), r(8), r(8), r(8)] as const };
+    const lineSamples = ringSamples(thin, 0.5);
+    const field = emptyField(lineSamples.count);
+    // Just below the bottom edge, a third of the way along.
+    lightGlow(field, lineSamples, thin, { pointer: { x: 100, y: 44, reach: 160 } });
+    const at = (x: number, y: number) => {
+      let best = 0;
+      for (let index = 0; index < lineSamples.count; index++)
+        if (
+          Math.hypot(lineSamples.x[index]! - x, lineSamples.y[index]! - y) <
+          Math.hypot(lineSamples.x[best]! - x, lineSamples.y[best]! - y)
+        )
+          best = index;
+      return best;
+    };
+    expect(field.intensity[at(100, 36)]).toBeGreaterThan(0.9);
+    // The top edge right above is close in space but far along the line: dark.
+    expect(field.intensity[at(100, 0)]).toBe(0);
+    expect(field.intensity[at(290, 36)]).toBe(0);
   });
 
   it('passes a glint band from the top-left corner and lights the whole line for sweep and pulse', () => {
@@ -91,7 +113,7 @@ describe('lightGlow', () => {
       0.5,
     );
     expect(light({ glint: { center: 1, half: 0.15, direction: 1 } }).intensity[0]).toBe(0);
-    expect(Math.min(...light({ sweep: true }).intensity)).toBeCloseTo(0.9);
+    expect(Math.min(...light({ sweep: true }).intensity)).toBeCloseTo(0.65);
     expect(Math.min(...light({ pulse: 0.5 }).intensity)).toBeCloseTo(0.5);
   });
 });

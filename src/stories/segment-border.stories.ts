@@ -22,21 +22,11 @@ const meta = {
   render: (args) =>
     html`<tp-mo-segment-border trigger=${args.trigger}>
       <tp-button variant="outline">Reserve a mooring</tp-button>
-      <tp-mo-border-segment
-        draw="0% 0%, 0% 50%"
-        duration="420"
-        easing="ease-out"
-      ></tp-mo-border-segment>
-      <tp-mo-border-segment
-        draw="100% 100%, 50% 100%"
-        duration="420"
-        delay="60"
-        easing="ease-out"
-      ></tp-mo-border-segment>
+      <tp-mo-border-segment origin="top" draw="0% 0%, -50% 50%"></tp-mo-border-segment>
     </tp-mo-segment-border>`,
 } satisfies Meta<Args>;
 export default meta;
 type Story = StoryObj<Args>;
 
-/** A button whose border draws in from two corners that meet while it is hovered. */
+/** A button whose border draws from the top center down both sides while it is hovered. */
 export const Default: Story = {};

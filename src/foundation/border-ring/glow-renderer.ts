@@ -149,15 +149,19 @@ export class GlowRenderer {
     const color = this.#color;
     for (let index = 0; index < count; index += SEGMENT) {
       const end = Math.min(index + SEGMENT, count);
+      // Each stroke takes the mean of its samples, so neighbouring strokes differ little and the
+      // line shows no steps where they meet.
       let light = 0;
       let hot = 0;
-      let wide = 1;
+      let wide = 0;
       for (let step = index; step < end; step++) {
         light += field.intensity[step]!;
-        hot = Math.max(hot, field.core[step]!);
-        wide = Math.max(wide, field.swell[step]!);
+        hot += field.core[step]!;
+        wide += field.swell[step]!;
       }
       light /= end - index;
+      hot /= end - index;
+      wide /= end - index;
       const alpha = light * level;
       if (alpha < VISIBLE) continue;
       this.#palette.at(angle[index]!, frame.rotation, color);
@@ -179,7 +183,7 @@ export class GlowRenderer {
       if (bloom) {
         trace(bloom);
         // The blur spreads the bloom thin; it starts brighter and wider than the line.
-        bloom.strokeStyle = cssColor([color[0], color[1], color[2], Math.min(1, color[3] * 1.6)]);
+        bloom.strokeStyle = cssColor([color[0], color[1], color[2], Math.min(1, color[3] * 1.2)]);
         bloom.lineWidth = this.#stroke * wide * 3 + this.#spread * 0.4;
         bloom.stroke();
       }

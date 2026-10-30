@@ -1,12 +1,20 @@
 import type { RingSamples } from '../../foundation/border-ring/ring-samples.js';
 import { transitionTimings } from '../../foundation/motion.js';
 import { parseEasing } from '../../foundation/motion-easing.js';
-import { parseStates, SegmentRun, type SegmentTiming, type Span } from './segment-timeline.js';
+import {
+  BOX_POINTS,
+  parseStates,
+  SegmentRun,
+  type BoxPoint,
+  type Placement,
+  type SegmentTiming,
+  type Span,
+} from './segment-timeline.js';
 
 const SEGMENT = 'tp-mo-border-segment';
 const DEFAULT_DRAW = '0% 0%, 0% 100%';
-/** Points of the box each origin keyword names, as fractions of its width and height. */
-const ORIGINS: Readonly<Record<string, readonly [number, number]>> = {
+/** Where each point of the box sits, as fractions of its width and height. */
+const POINT_AT: Readonly<Record<BoxPoint, readonly [number, number]>> = {
   'top-left': [0, 0],
   top: [0.5, 0],
   'top-right': [1, 0],
@@ -57,6 +65,8 @@ function readTiming(element: Element, style: CSSStyleDeclaration): SegmentTiming
 export class BorderSegments {
   #entries: Entry[] = [];
   #samples: RingSamples | null = null;
+  /** Each point of the box as a fraction of the line from its start: the nearest sample. */
+  #points = new Map<BoxPoint, number>();
   #width = 0;
   #height = 0;
 
@@ -156,6 +166,7 @@ export class BorderSegments {
     this.#samples = samples;
     this.#width = width;
     this.#height = height;
+    this.#points = new Map(BOX_POINTS.map((point) => [point, this.#nearest(point)]));
     for (const entry of this.#entries) entry.offset = this.#origin(entry.origin);
   }
 
@@ -167,7 +178,7 @@ export class BorderSegments {
   set(on: boolean, jump: boolean): void {
     for (const entry of this.#entries) {
       if (jump) entry.run.jump(on);
-      else entry.run.set(on, this.perimeter);
+      else entry.run.set(on, this.#placement(entry));
     }
   }
 
@@ -185,26 +196,37 @@ export class BorderSegments {
   spans(): { plain: Span[]; glow: Span[] } {
     const plain: Span[] = [];
     const glow: Span[] = [];
-    const perimeter = this.perimeter;
     for (const entry of this.#entries) {
-      const span = entry.run.span(perimeter);
+      const span = entry.run.span(this.#placement(entry));
       const placed = { start: span.start + entry.offset, end: span.end + entry.offset };
       (entry.glow ? glow : plain).push(placed);
     }
     return { plain, glow };
   }
 
-  /** The fraction of the line where an origin sits: a keyword's nearest point, or a percentage. */
+  /** Where a segment is drawn: the perimeter, and the points of the box from its origin. */
+  #placement(entry: Entry): Placement {
+    return {
+      perimeter: this.perimeter,
+      point: (point) => frac((this.#points.get(point) ?? 0) - entry.offset),
+    };
+  }
+
+  /** The fraction of the line where an origin sits: a point of the box, or a percentage. */
   #origin(origin: string): number {
     if (origin.endsWith('%')) {
       const value = Number(origin.slice(0, -1));
       return Number.isFinite(value) ? frac(value / 100) : 0;
     }
+    return this.#points.get(origin as BoxPoint) ?? this.#points.get('top-left') ?? 0;
+  }
+
+  /** The fraction of the line nearest a point of the box. */
+  #nearest(point: BoxPoint): number {
     const samples = this.#samples;
-    const point = ORIGINS[origin] ?? ORIGINS['top-left']!;
     if (!samples || !samples.count) return 0;
-    const x = point[0] * this.#width;
-    const y = point[1] * this.#height;
+    const x = POINT_AT[point][0] * this.#width;
+    const y = POINT_AT[point][1] * this.#height;
     let best = 0;
     let distance = Infinity;
     for (let index = 0; index < samples.count; index++) {

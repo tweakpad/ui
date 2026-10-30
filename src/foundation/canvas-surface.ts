@@ -175,13 +175,17 @@ export class CanvasSurface {
   }
 
   #measure(): void {
-    const rect = this.#options.canvas.getBoundingClientRect?.();
+    const canvas = this.#options.canvas;
+    const rect = canvas.getBoundingClientRect?.();
+    // The client rect carries any CSS zoom or scale above the canvas, which the device pixels
+    // need; the layout size does not, and drawing is in layout pixels.
+    const zoom = rect && canvas.offsetWidth > 0 ? rect.width / canvas.offsetWidth : 1;
     if (rect) {
-      this.#cssWidth = rect.width;
-      this.#cssHeight = rect.height;
+      this.#cssWidth = rect.width / zoom;
+      this.#cssHeight = rect.height / zoom;
     }
-    this.#deviceWidth = Math.round(this.#cssWidth * this.#pixelRatio);
-    this.#deviceHeight = Math.round(this.#cssHeight * this.#pixelRatio);
+    this.#deviceWidth = Math.round(this.#cssWidth * zoom * this.#pixelRatio);
+    this.#deviceHeight = Math.round(this.#cssHeight * zoom * this.#pixelRatio);
   }
 
   /** A pixel-ratio change that reached layout before its media query fired is adopted here. */
@@ -223,6 +227,8 @@ export class CanvasSurface {
     context.setTransform(1, 0, 0, 1, 0, 0);
     this.#dirty = false;
     this.#renders++;
-    this.#options.render(context, width, height, this.#pixelRatio);
+    // Device pixels per layout pixel: the pixel ratio, times any zoom above the canvas.
+    const ratio = this.#cssWidth > 0 ? width / this.#cssWidth : this.#pixelRatio;
+    this.#options.render(context, width, height, ratio);
   }
 }

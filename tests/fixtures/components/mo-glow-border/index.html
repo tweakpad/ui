@@ -301,6 +301,22 @@
         </div>
         <p class="flow">Below the surfaces.</p>
       </section>
+      <section class="case" id="case-states">
+        <h2 class="label">Focus ring and invalid line, and a zoomed copy</h2>
+        <div class="grid">
+          <tp-mo-glow-border id="state-focus"
+            ><tp-input label="Berth" placeholder="Tab or click to focus"></tp-input
+          ></tp-mo-glow-border>
+          <tp-mo-glow-border id="state-invalid"
+            ><tp-input label="Required berth" required invalid></tp-input
+          ></tp-mo-glow-border>
+          <div style="zoom: 1.5">
+            <tp-mo-glow-border id="state-zoomed"
+              ><tp-button variant="outline">Zoomed</tp-button></tp-mo-glow-border
+            >
+          </div>
+        </div>
+      </section>
     </main>
     <script type="module" src="./fixture.ts"></script>
   </body>

@@ -23,13 +23,15 @@ const at = (u: number) => {
 };
 
 describe('lightSpans', () => {
-  it('lights a glowing span along its stretch, through the start, hot at its ends', () => {
+  it('lights a glowing span along its stretch, through the start, fading at its ends', () => {
     const field = light([{ start: 0.9, end: 1.1 }]);
     expect(field.intensity[at(0.95)]).toBe(1);
     expect(field.intensity[at(0.05)]).toBe(1);
     expect(field.intensity[at(0.5)]).toBe(0);
-    expect(field.core[at(0.95)]).toBe(0);
-    expect(field.core[at(0.903)]).toBeGreaterThan(0.3);
+    // Soft toward the ends, never hotter there than in the middle.
+    expect(field.intensity[at(0.902)]).toBeLessThan(0.3);
+    expect(field.core[at(0.902)]).toBeLessThan(field.core[at(0.95)]!);
+    expect(field.core[at(0.95)]).toBeCloseTo(0.35);
   });
 
   it('leaves a zero-length span dark', () => {

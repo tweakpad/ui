@@ -16,6 +16,11 @@ const definition: ComponentDefinition = {
       description: 'The drawing over the surface border, hidden from assistive technology.',
     },
     {
+      name: 'mo-segment-border-focus',
+      description:
+        'The focus ring, outside the border, while keyboard focus is inside and the effect does not show it.',
+    },
+    {
       name: 'mo-segment-border-line',
       description: 'The border line under the segments.',
     },
@@ -45,6 +50,7 @@ export const moSegmentBorderPresentation = definePresentation({
     'tp-mo-segment-border': {
       ':host': 'mo-segment-border',
       "[part~='mo-segment-border-ring']": 'mo-segment-border-ring',
+      "[part~='mo-segment-border-focus']": 'mo-segment-border-focus',
       "[part~='mo-segment-border-line']": 'mo-segment-border-line',
       "[part~='mo-segment-border-segment-line']": 'mo-segment-border-segment-line',
       "[part~='mo-segment-border-glow']": 'mo-segment-border-glow',

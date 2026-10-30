@@ -160,6 +160,30 @@ const sampleSegments = (id: string, count = 6, every = 80) =>
     take();
   });
 
+/**
+ * Where each visible plain segment starts and ends, in pixels from the ring's top-left corner,
+ * with the ring's size and corner radius: ends that name a corner sit on the middle of its arc.
+ */
+const segmentEnds = (id: string) => {
+  const root = document.getElementById(id)!.shadowRoot!;
+  const line = root.querySelector<SVGPathElement>('.line')!;
+  const total = line.getTotalLength();
+  const box = line.getBBox();
+  const round = ([x, y]: number[]) => [Math.round(x! * 10) / 10, Math.round(y! * 10) / 10];
+  const at = (fraction: number) => {
+    const point = line.getPointAtLength(total * (fraction - Math.floor(fraction)));
+    return round([point.x - box.x, point.y - box.y]);
+  };
+  const segments = [...root.querySelectorAll<SVGPathElement>('path.segment')]
+    .filter((path) => path.getAttribute('visibility') === 'visible')
+    .map((path) => {
+      const length = Number(path.getAttribute('stroke-dasharray')!.split(' ')[0]);
+      const start = -Number(path.getAttribute('stroke-dashoffset'));
+      return { start: at(start), end: at(start + length) };
+    });
+  return { size: round([box.width, box.height]), segments };
+};
+
 Object.assign(window, {
   borderLog: log,
   layoutShifts: shifts,
@@ -170,4 +194,5 @@ Object.assign(window, {
   geometry,
   profile,
   sampleSegments,
+  segmentEnds,
 });

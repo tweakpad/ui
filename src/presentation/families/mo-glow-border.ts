@@ -16,6 +16,11 @@ const definition: ComponentDefinition = {
       description: 'The drawing over the surface border, hidden from assistive technology.',
     },
     {
+      name: 'mo-glow-border-focus',
+      description:
+        'The focus ring, outside the border, while keyboard focus is inside and the effect does not show it.',
+    },
+    {
       name: 'mo-glow-border-line',
       description: 'The border line where the glow does not light it.',
     },
@@ -37,6 +42,7 @@ export const moGlowBorderPresentation = definePresentation({
     'tp-mo-glow-border': {
       ':host': 'mo-glow-border',
       "[part~='mo-glow-border-ring']": 'mo-glow-border-ring',
+      "[part~='mo-glow-border-focus']": 'mo-glow-border-focus',
       "[part~='mo-glow-border-line']": 'mo-glow-border-line',
       "[part~='mo-glow-border-glow']": 'mo-glow-border-glow',
       "[part~='mo-glow-border-bloom']": 'mo-glow-border-bloom',

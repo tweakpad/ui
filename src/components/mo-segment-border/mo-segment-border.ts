@@ -31,6 +31,7 @@ const TRIGGERS: readonly SegmentBorderTrigger[] = ['none', 'always', 'hover', 'f
  *
  * @slot - One surface (a Card, Button, Input, Text area, Select, Input group, Toggle or any element), and the `tp-mo-border-segment` children that describe the pieces.
  * @csspart mo-segment-border-ring - The drawing over the surface border, hidden from assistive technology.
+ * @csspart mo-segment-border-focus - The focus ring, outside the border, while keyboard focus is inside and the effect does not show it.
  * @csspart mo-segment-border-line - The border line under the segments.
  * @csspart mo-segment-border-glow - The canvas of the glowing segments.
  * @csspart mo-segment-border-bloom - The canvas of the blurred light around the glowing segments.
@@ -60,6 +61,7 @@ export class TpMoSegmentBorder extends SurfaceBorderElement {
 
   protected readonly parts = {
     ring: 'mo-segment-border-ring',
+    focus: 'mo-segment-border-focus',
     line: 'mo-segment-border-line',
     glow: 'mo-segment-border-glow',
     bloom: 'mo-segment-border-bloom',
@@ -111,6 +113,11 @@ export class TpMoSegmentBorder extends SurfaceBorderElement {
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (changed.has('trigger')) this.triggerChanged();
+  }
+
+  /** With `trigger="focus"` the segments themselves show focus. */
+  protected override effectShowsFocus(): boolean {
+    return this.#trigger === 'focus';
   }
 
   protected override describesDrawing(element: Element): boolean {

@@ -7,14 +7,16 @@ export interface LitSpan {
   readonly end: number;
 }
 
-/** A glowing segment softens over its last pixels and is hot within a few more. */
-const SPAN_EDGE_PX = 4;
-const SPAN_CORE_PX = 10;
+/** A glowing segment fades in over a share of its length at each end, up to this many pixels. */
+const SPAN_FADE_SHARE = 0.3;
+const SPAN_FADE_PX = 28;
+/** How far the fully lit stretch turns toward the core color. */
+const SPAN_CORE = 0.35;
 
 /**
  * Lights glowing segments into `field` (CL Segment border `mbs-segments`): full strength along
- * each stretch, through the start of the line, soft at its ends and turning to the core color
- * near them.
+ * each stretch, through the start of the line, fading out softly toward both ends, with the fully
+ * lit part turned slightly toward the core color.
  */
 export function lightSpans(
   field: LightField,
@@ -35,10 +37,11 @@ export function lightSpans(
       const along = wrap(u - from);
       if (along > size) continue;
       const edge = Math.min(along, size - along) * length;
-      light = screen(light, smooth(Math.min(1, edge / SPAN_EDGE_PX)));
-      const k = Math.max(0, 1 - edge / SPAN_CORE_PX) ** 2;
-      hot = Math.max(hot, k);
-      wide = Math.max(wide, 1 + 0.3 * k);
+      const fade = Math.max(1, Math.min(SPAN_FADE_PX, size * length * SPAN_FADE_SHARE));
+      const k = smooth(Math.min(1, edge / fade));
+      light = screen(light, k);
+      hot = Math.max(hot, SPAN_CORE * k ** 3);
+      wide = Math.max(wide, 1 + 0.2 * k);
     }
     intensity[index] = light;
     core[index] = hot;

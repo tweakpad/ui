@@ -18,3 +18,4 @@ Open `/tests/fixtures/components/mo-glow-border/` on the Vite server (`npm run d
 8. Reduced motion: comets and glint are dark, sweep is still, pulse is steady. A listener that claims the `loop` role stops the glow's motion and sets `data-tp-motion-driven="loop"`.
 9. Light and dark schemes, `dir="rtl"` on `main` and a 400px viewport: rings stay on their surfaces; colors stay vivid.
 10. axe reports no violations; the accessibility tree shows only the surfaces.
+11. States (`#case-states`): keyboard or click focus in `#state-focus` shows the border's own focus ring outside the line (the field's own outline stays hidden), and none when the border's trigger is `focus`; `#state-invalid` draws the line in the destructive color with no red halo; `#state-zoomed` sits inside `zoom: 1.5` and `geometry('state-zoomed')` still reports the ring equal to the surface.

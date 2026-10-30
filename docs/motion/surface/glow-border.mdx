@@ -17,28 +17,33 @@ tag: tp-mo-glow-border
 
 ## Usage
 
-Wrap one surface in Glow border: a Card, a Button, an Input, a Text area, a Select, an Input group, a Toggle, or any element with a border. Glow border hides that surface's border color and draws its own line at exactly the same place, radius and width, so nothing around it moves. The surface keeps its focus ring, its invalid outline and its behavior; the drawing lets pointer events through and is hidden from assistive technology.
+Wrap one surface in Glow border: a Card, a Button, an Input, a Text area, a Select, an Input group, a Toggle, or any element with a border. Glow border hides that surface's border and draws its own line at exactly the same place, radius and width, so nothing around it moves. It also draws the focus ring and shows an invalid control in the destructive color; the surface keeps its behavior. The drawing lets pointer events through and is hidden from assistive technology.
 
-The glow colors each point of the line from a list of colors spread around the border, and turns it white-hot where its light is closest, with a soft bloom around it. By default the light is the pointer: the line lights up as a mouse or pen comes near and fades out after it leaves. Under reduced motion the light jumps instead of following, comets and glints rest, and fades are instant.
+The glow colors each point of the line from a list of colors spread around the border, and turns it white-hot where its light is closest, with a soft bloom around it. By default the light is the pointer: the stretch of line nearest a mouse or pen lights up as it comes near and fades out after it leaves. Under reduced motion the light jumps instead of following, comets and glints rest, and fades are instant.
 
 ### Controls and fields
 
-Glow border follows each surface's own shape, from a small pill Button to a multi-line Text area.
+Glow border follows each surface's own shape, from a small Button to a multi-line Text area. On fields, `trigger="focus"` lights only the field being edited; the glow is then the focus indicator, so no separate focus ring is drawn.
 
 <Preview
   title="Controls and fields"
-  code={`<div style="display:grid;gap:var(--tp-space-4);inline-size:min(100%, 22rem)">
-  <tp-mo-glow-border>
-    <tp-input label="Station name" placeholder="North pier"></tp-input>
-  </tp-mo-glow-border>
-  <tp-mo-glow-border>
-    <tp-text-area label="Observation notes" rows="3"></tp-text-area>
-  </tp-mo-glow-border>
-  <div style="display:flex;gap:var(--tp-space-3)">
-    <tp-mo-glow-border><tp-button variant="outline">Export readings</tp-button></tp-mo-glow-border>
-    <tp-mo-glow-border><tp-button>Calibrate</tp-button></tp-mo-glow-border>
+  code={`<tp-card style="inline-size:min(100%, 22rem)">
+  <h3 slot="header" style="margin:0">Report a sighting</h3>
+  <p slot="description" style="margin:0">Logged to the harbor master's desk.</p>
+  <div style="display:grid;gap:var(--tp-space-4)">
+    <tp-field label="Vessel">
+      <tp-mo-glow-border trigger="focus" lights="1">
+        <tp-input placeholder="Name or hull number"></tp-input>
+      </tp-mo-glow-border>
+    </tp-field>
+    <tp-field label="What you saw">
+      <tp-mo-glow-border trigger="focus" lights="1">
+        <tp-text-area rows="3" placeholder="Course, speed, flags"></tp-text-area>
+      </tp-mo-glow-border>
+    </tp-field>
   </div>
-</div>`}
+  <tp-button slot="footer">Send report</tp-button>
+</tp-card>`}
 />
 
 ### Comets
@@ -93,24 +98,19 @@ With `trigger="always"` the glow runs on its own. Comets travel around the borde
 </div>`}
 />
 
-### Hover and focus
+### Hover
 
-`trigger="hover"` runs the motion while the surface is hovered, and `trigger="focus"` while focus is inside it, fading in and out. `trigger="none"` keeps the glow off.
+`trigger="hover"` runs the motion while the surface is hovered, fading in and out, like `trigger="focus"` on the fields above. `trigger="none"` keeps the glow off.
 
 <Preview
-  title="Hover and focus"
-  align="stretch"
-  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr));gap:var(--tp-space-6);align-items:start">
-  <tp-mo-glow-border trigger="hover">
-    <tp-card>
-      <h3 slot="header">Harbor cam</h3>
-      <p style="margin:0">Hover to light the frame.</p>
-    </tp-card>
-  </tp-mo-glow-border>
-  <tp-mo-glow-border trigger="focus" motion="sweep">
-    <tp-input label="Call sign" placeholder="Focus to light the field"></tp-input>
-  </tp-mo-glow-border>
-</div>`}
+  title="Hover"
+  code={`<tp-mo-glow-border trigger="hover" style="inline-size:min(100%, 22rem)">
+  <tp-card>
+    <h3 slot="header" style="margin:0">Harbor cam</h3>
+    <p slot="description" style="margin:0">Live from the east breakwater.</p>
+    <p style="margin:0">Hover to light the frame.</p>
+  </tp-card>
+</tp-mo-glow-border>`}
 />
 
 ### Fading
