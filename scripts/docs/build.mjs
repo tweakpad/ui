@@ -46,7 +46,7 @@ const entries = [
 const entryByTag = new Map(entries.map((entry) => [entry.tagName, entry]));
 const tags = new Set(manifestTags(manifest));
 
-const folders = ['components', 'motion/text', 'widgets'];
+const folders = ['components', 'motion/text', 'motion/surface', 'widgets'];
 for (const folder of folders) {
   const directory = join(root, 'docs', folder);
   if (!existsSync(directory)) continue;

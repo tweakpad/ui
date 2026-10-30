@@ -114,7 +114,7 @@ export function slugify(text: string): string {
  * The documentation folders under `docs/`, in catalog order. A folder's first segment is its
  * section; Motion pages sit one level deeper, in the group of what they move.
  */
-export const DOC_FOLDERS = ['components', 'motion/text', 'widgets'] as const;
+export const DOC_FOLDERS = ['components', 'motion/text', 'motion/surface', 'widgets'] as const;
 export type DocFolder = (typeof DOC_FOLDERS)[number];
 
 const isDocFolder = (value: string): value is DocFolder =>

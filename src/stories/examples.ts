@@ -528,6 +528,15 @@ const examples = {
   'tp-mo-text-stroke': () => html`
     <h3><tp-mo-text-stroke split="chars">Northern lights</tp-mo-text-stroke></h3>
   `,
+  'tp-mo-border': () => html`
+    <tp-mo-border>
+      <tp-card>
+        <h3 slot="header">Tide station 7</h3>
+        <span slot="description">Move the pointer toward the edge.</span>
+        <p>Water level 2.4 m and rising.</p>
+      </tp-card>
+    </tp-mo-border>
+  `,
   'tp-scroll-trigger': () => html`
     <tp-scroll-trigger stagger="150" reveal="fade up">
       <p><tp-mo-text-split>Revealed together, in order</tp-mo-text-split></p>

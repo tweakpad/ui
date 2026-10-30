@@ -152,6 +152,16 @@ export class CanvasSurface {
     });
   }
 
+  /**
+   * Paints now and drops a pending frame, for an owner that draws from its own frame callback and
+   * must not show the change a frame late.
+   */
+  paint(): void {
+    this.#frame?.();
+    this.#frame = undefined;
+    this.#paint();
+  }
+
   #watchPixelRatio(owner: Window, scope: CleanupScope): void {
     const query = owner.matchMedia?.(`(resolution: ${this.#pixelRatio}dppx)`);
     if (!query) return;

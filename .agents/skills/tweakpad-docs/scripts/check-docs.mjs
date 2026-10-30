@@ -283,7 +283,7 @@ export function checkPage(id, options = {}) {
 export function allIds(base = root) {
   const ids = new Set();
   for (const folder of ['docs', 'plans/docs/sources/website', 'plans/docs/sources/storybook'])
-    for (const section of ['components', 'motion/text', 'widgets']) {
+    for (const section of ['components', 'motion/text', 'motion/surface', 'widgets']) {
       const path = join(base, folder, section);
       if (!existsSync(path)) continue;
       for (const file of readdirSync(path))

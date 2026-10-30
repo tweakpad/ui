@@ -102,6 +102,21 @@ describe('CanvasSurface', () => {
     expect(surface.renders).toBe(1);
   });
 
+  it('paints at once on request and drops the pending frame', () => {
+    const { owner, render, surface } = setup();
+    surface.connect();
+    expect(owner.frames).toHaveLength(1);
+    surface.paint();
+    expect(render).toHaveBeenCalledTimes(1);
+    owner.flush();
+    expect(render).toHaveBeenCalledTimes(1);
+    surface.paint();
+    expect(render).toHaveBeenCalledTimes(2);
+    surface.disconnect();
+    surface.paint();
+    expect(render).toHaveBeenCalledTimes(2);
+  });
+
   it('repaints on resize, pixel-ratio change and theme change', () => {
     const { owner, render, surface } = setup();
     surface.connect();

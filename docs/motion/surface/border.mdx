@@ -1,0 +1,301 @@
+---
+title: Border
+description: Replaces the border of the surface it wraps with a colored glow that follows a light or runs around it, with animated dashes, or with pieces of line that move on hover.
+tag: tp-mo-border
+parts: [tp-mo-border-segment]
+---
+
+<Preview
+  title="Border"
+  code={`<tp-mo-border style="inline-size:min(100%, 26rem)">
+  <tp-card>
+    <h3 slot="header">Tide station 7</h3>
+    <span slot="description">Readings every ten minutes from the north pier.</span>
+    <p style="margin:0">Water level 2.4 m and rising. Move the pointer toward the edge.</p>
+  </tp-card>
+</tp-mo-border>`}
+/>
+
+## Usage
+
+Wrap one surface in Border: a Card, a Button, an Input, a Text area, a Select, an Input group, a Toggle, or any element with a border. Border hides that surface's border color and draws its own line at exactly the same place, radius and width, so nothing around it moves. The surface keeps its focus ring, its invalid outline and its behavior; the drawing lets pointer events through and is hidden from assistive technology.
+
+The glow colors each point of the line from a list of colors spread around the border, and turns it white-hot where its light is closest, with a soft bloom around it. By default the light is the pointer: the line lights up as a mouse or pen comes near and fades out after it leaves. Under reduced motion the light jumps instead of following, comets and glints rest, and fades are instant.
+
+### Controls and fields
+
+Border follows each surface's own shape, from a small pill Button to a multi-line Text area.
+
+<Preview
+  title="Controls and fields"
+  code={`<div style="display:grid;gap:var(--tp-space-4);inline-size:min(100%, 22rem)">
+  <tp-mo-border>
+    <tp-input label="Station name" placeholder="North pier"></tp-input>
+  </tp-mo-border>
+  <tp-mo-border>
+    <tp-text-area label="Observation notes" rows="3"></tp-text-area>
+  </tp-mo-border>
+  <div style="display:flex;gap:var(--tp-space-3)">
+    <tp-mo-border><tp-button variant="outline">Export readings</tp-button></tp-mo-border>
+    <tp-mo-border><tp-button>Calibrate</tp-button></tp-mo-border>
+  </div>
+</div>`}
+/>
+
+### Comets
+
+With `trigger="always"` the glow runs on its own. Comets travel around the border continuously, always evenly spaced, each with a white-hot head and a tail that takes the colors it passes. `lights` sets how many, `light-spacing` bunches them, and `rotation` sets the way they go. `--tp-mo-border-loop-delay` fades them out between laps and `--tp-mo-border-loop-easing` eases each lap.
+
+<Preview
+  title="Comets"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr));gap:var(--tp-space-6)">
+  <tp-mo-border trigger="always">
+    <tp-card>
+      <h3 slot="header">Relay A</h3>
+      <p style="margin:0">Two comets, the default.</p>
+    </tp-card>
+  </tp-mo-border>
+  <tp-mo-border trigger="always" lights="3" rotation="ccw" style="--tp-mo-border-loop-delay:0.8s;--tp-mo-border-loop-easing:ease-in-out">
+    <tp-card>
+      <h3 slot="header">Relay B</h3>
+      <p style="margin:0">Three comets, counterclockwise, resting between laps.</p>
+    </tp-card>
+  </tp-mo-border>
+</div>`}
+/>
+
+### Sweep, pulse and glint
+
+`motion` picks what the glow does, and a named motion plays on its own. `sweep` lights the whole border and turns its colors around it, `pulse` makes the whole glow breathe, and `glint` sends a band of light across the surface once a lap, like a reflection. Motions combine: `sweep pulse` turns and breathes.
+
+<Preview
+  title="Sweep, pulse and glint"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr));gap:var(--tp-space-6)">
+  <tp-mo-border motion="sweep">
+    <tp-card>
+      <h3 slot="header">Syncing</h3>
+      <p style="margin:0">Uploading 18 of 42 readings.</p>
+    </tp-card>
+  </tp-mo-border>
+  <tp-mo-border motion="pulse">
+    <tp-card>
+      <h3 slot="header">Listening</h3>
+      <p style="margin:0">Waiting for the next buoy signal.</p>
+    </tp-card>
+  </tp-mo-border>
+  <tp-mo-border motion="glint" style="--tp-mo-border-loop-delay:1.5s">
+    <tp-card>
+      <h3 slot="header">New report</h3>
+      <p style="margin:0">Tide tables for November are ready.</p>
+    </tp-card>
+  </tp-mo-border>
+</div>`}
+/>
+
+### Hover and focus
+
+`trigger="hover"` runs the motion while the surface is hovered, and `trigger="focus"` while focus is inside it, fading in and out. `trigger="none"` keeps the glow off.
+
+<Preview
+  title="Hover and focus"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr));gap:var(--tp-space-6);align-items:start">
+  <tp-mo-border trigger="hover">
+    <tp-card>
+      <h3 slot="header">Harbor cam</h3>
+      <p style="margin:0">Hover to light the frame.</p>
+    </tp-card>
+  </tp-mo-border>
+  <tp-mo-border trigger="focus" motion="sweep">
+    <tp-input label="Call sign" placeholder="Focus to light the field"></tp-input>
+  </tp-mo-border>
+</div>`}
+/>
+
+### Segments
+
+`tp-mo-border-segment` children replace the line with pieces that move on their own, mostly for hover effects. Each segment is one stretch of the border from a start to an end, in percent of the border's length or in pixels, measured clockwise from its `origin`. `draw` lists the states it moves through: `0% 0%, 0% 100%` grows it from nothing to the whole border, `50% 50%, 0% 100%` grows it from the middle out, and `0% 10%, 90% 100%` slides a fixed piece along. Values below 0% or past 100% wrap through the origin. A Border with segments draws only them, while hovered unless `trigger` says otherwise.
+
+Each segment has its own `duration`, `delay` and `easing`, with the steps between its states sharing the duration. When the trigger turns off, a segment plays back from wherever it is, or runs its `leave` states from there and then rests. Plain segments are lines in the theme's primary color; `glow` draws one as glow instead, in the glow colors and turning to the core color at its ends.
+
+<Preview
+  title="Segments on hover"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(15rem, 1fr));gap:var(--tp-space-6);align-items:center;justify-items:center">
+  <tp-mo-border>
+    <tp-button variant="outline">Reserve a mooring</tp-button>
+    <tp-mo-border-segment draw="0% 0%, 0% 50%" duration="420" easing="ease-out"></tp-mo-border-segment>
+    <tp-mo-border-segment draw="100% 100%, 50% 100%" duration="420" delay="60" easing="ease-out"></tp-mo-border-segment>
+  </tp-mo-border>
+  <tp-mo-border style="justify-self:stretch">
+    <tp-card>
+      <h3 slot="header" style="margin:0">Night ferry</h3>
+      <p slot="description" style="margin:0">Departs 21:40 from pier 3.</p>
+      <p style="margin:0">The light opens from the top and leaves through the bottom.</p>
+    </tp-card>
+    <tp-mo-border-segment glow origin="top" draw="0% 0%, -25% 25%" leave="50% 50%" duration="600"></tp-mo-border-segment>
+  </tp-mo-border>
+</div>`}
+/>
+
+`repeat` loops a segment, a number of times or `infinite`, and `alternate` plays every other run backwards. With `trigger="always"` the segments play once the border enters the viewport.
+
+<Preview
+  title="Scanner"
+  code={`<tp-mo-border trigger="always" style="inline-size:min(100%, 22rem)">
+  <tp-input type="search" label="Search the logbook" placeholder="Vessel, berth or date"></tp-input>
+  <tp-mo-border-segment glow repeat="infinite" draw="0% 12%, 100% 112%" duration="2400" easing="linear"></tp-mo-border-segment>
+</tp-mo-border>`}
+/>
+
+### Fading
+
+The glow fades in and out over `--tp-mo-border-fade-duration` with `--tp-mo-border-fade-easing`. `--tp-mo-border-fade-out-delay` keeps it lit for a moment after the light leaves, holding where it last shone; a light that comes back fades in at once and never waits. `--tp-mo-border-glow-fill` adds a wash of the light's color inside the surface.
+
+<Preview
+  title="Lingering light"
+  code={`<tp-mo-border track-reach="200" style="inline-size:min(100%, 24rem);--tp-mo-border-fade-out-delay:600ms;--tp-mo-border-fade-duration:700ms;--tp-mo-border-fade-easing:ease-out;--tp-mo-border-glow-fill:0.12">
+  <tp-card>
+    <h3 slot="header">Lighthouse</h3>
+    <p style="margin:0">Leave the edge: the light lingers, then fades.</p>
+  </tp-card>
+</tp-mo-border>`}
+/>
+
+### Colors
+
+`--tp-mo-border-glow-colors` takes the colors to spread around the border, each blending into the next along the hue circle and the last back into the first; `--tp-mo-border-glow-angle` sets where the first one sits. Neighboring hues blend best, like the warm chart colors on the plan below; a single color, like the ring color on the prompt, lights the whole line in that color. `--tp-mo-border-glow-core` is the color the line turns toward where the light is hottest: white on dark color schemes and none on light ones by default. `--tp-mo-border-width`, `--tp-mo-border-glow-spread` and `--tp-mo-border-glow-intensity` set the line, the bloom and the strength.
+
+<Preview
+  title="Custom colors"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(15rem, 1fr));gap:var(--tp-space-6);align-items:center">
+  <tp-mo-border track-reach="220" style="--tp-mo-border-glow-colors:var(--tp-chart-4), var(--tp-chart-5), var(--tp-chart-1);--tp-mo-border-glow-fill:0.08">
+    <tp-card>
+      <h3 slot="header" style="margin:0">Observer</h3>
+      <p slot="description" style="margin:0">For crews logging every tide.</p>
+      <tp-badge slot="action" variant="secondary">Popular</tp-badge>
+      <p style="margin:0;font-size:var(--tp-text-2xl);font-weight:var(--tp-font-semibold)">$18 <span style="font-size:var(--tp-text-sm);font-weight:var(--tp-font-normal);color:var(--tp-muted-foreground)">per month</span></p>
+      <tp-button slot="footer" style="inline-size:100%">Start observing</tp-button>
+    </tp-card>
+  </tp-mo-border>
+  <tp-mo-border trigger="always" lights="1" style="--tp-mo-border-glow-colors:var(--tp-ring)">
+    <tp-input-group>
+      <tp-input label="Ask the harbor log" placeholder="When is the next high tide?"></tp-input>
+      <tp-button slot="action">Send</tp-button>
+    </tp-input-group>
+  </tp-mo-border>
+</div>`}
+/>
+
+### Light sources
+
+The light follows the pointer by default. `track-target` names an element whose center lights the border instead, followed as it moves, and the `trackPoint` property takes a point in viewport coordinates. `track-reach` sets how far the light carries.
+
+<Preview
+  title="Lit by an element"
+  code={`<div style="display:grid;grid-template-columns:auto 1fr;gap:var(--tp-space-4);align-items:center;inline-size:min(100%, 24rem)">
+  <tp-status-dot id="border-demo-beacon" variant="success" label="Beacon online"></tp-status-dot>
+  <tp-mo-border track-target="border-demo-beacon" track-reach="200">
+    <tp-card>
+      <h3 slot="header">Beacon 12</h3>
+      <p style="margin:0">Lit from the beacon beside it.</p>
+    </tp-card>
+  </tp-mo-border>
+</div>`}
+/>
+
+### Dashes
+
+`effect="dash"` draws the line as dashes instead of a glow, and naming only dash motions does the same; the two effects never combine. The dashes `march` along the border by default, and `breathe` makes them grow and shrink; both together do both. The dashes always fill the border evenly, without a seam. They run all the time unless `trigger` limits them to hover or focus, or holds them still with `none`.
+
+<Preview
+  title="Dashes"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr));gap:var(--tp-space-6)">
+  <tp-mo-border effect="dash">
+    <tp-card>
+      <h3 slot="header">Syncing</h3>
+      <p style="margin:0">Uploading 18 of 42 readings.</p>
+    </tp-card>
+  </tp-mo-border>
+  <tp-mo-border motion="breathe">
+    <tp-card>
+      <h3 slot="header">Waiting for a buoy</h3>
+      <p style="margin:0">The last signal arrived 4 minutes ago.</p>
+    </tp-card>
+  </tp-mo-border>
+</div>`}
+/>
+
+### Drawing the border in
+
+`motion="draw"` draws the whole border in, from the start of the top edge, the first time the surface enters the viewport. With `trigger="hover"` or `trigger="focus"` it draws in while the surface is hovered or holds focus, and out again after. Combined with `march` or `breathe`, the dashes appear as the border draws.
+
+`reveal-hold` keeps a ready border undrawn. Setting it on a drawn border draws it out; removing it draws the border in again.
+
+<Preview
+  title="Draw and hold"
+  script={`const border = document.querySelector('#border-demo-hold');
+const toggle = document.querySelector('#border-demo-toggle');
+toggle.addEventListener('click', () => {
+  border.revealHold = !border.revealHold;
+  toggle.textContent = border.revealHold ? 'Draw' : 'Hide';
+});`}
+  code={`<div style="display:grid;gap:var(--tp-space-4);justify-items:center;inline-size:min(100%, 22rem)">
+  <tp-mo-border id="border-demo-hold" effect="dash" motion="draw" style="justify-self:stretch">
+    <tp-card>
+      <h3 slot="header">Route ready</h3>
+      <p style="margin:0">Harbor to lighthouse, 3.2 km.</p>
+    </tp-card>
+  </tp-mo-border>
+  <tp-button id="border-demo-toggle" variant="outline">Hide</tp-button>
+</div>`}
+/>
+
+### Scroll scrubbing
+
+In a [Scroll trigger](../../../components/scroll-trigger/) with `scrub`, the scroll position draws the border in both directions, and `stagger` draws several in turn. Scroll the preview down and back up.
+
+<Preview
+  title="Scrubbed by the scroll"
+  align="stretch"
+  viewport="24rem"
+  code={`<div style="display:grid;gap:var(--tp-space-3);align-content:end;block-size:18rem;padding-block:var(--tp-space-6);box-sizing:border-box">
+  <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:40%"></tp-skeleton>
+  <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:85%"></tp-skeleton>
+</div>
+<p style="margin:0 0 var(--tp-space-4);font-weight:var(--tp-font-semibold)">Coast walk, three stops</p>
+<tp-scroll-trigger scrub stagger="300" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(9rem, 1fr));gap:var(--tp-space-4);--tp-mo-border-color:var(--tp-ring);--tp-mo-border-width:1.5px">
+  <tp-mo-border motion="draw">
+    <tp-card size="sm">
+      <h3 slot="header" style="margin:0">Harbor</h3>
+      <p style="margin:0">Start at the tide board.</p>
+    </tp-card>
+  </tp-mo-border>
+  <tp-mo-border motion="draw">
+    <tp-card size="sm">
+      <h3 slot="header" style="margin:0">Breakwater</h3>
+      <p style="margin:0">1.4 km along the wall.</p>
+    </tp-card>
+  </tp-mo-border>
+  <tp-mo-border motion="draw">
+    <tp-card size="sm">
+      <h3 slot="header" style="margin:0">Lighthouse</h3>
+      <p style="margin:0">3.2 km, at the point.</p>
+    </tp-card>
+  </tp-mo-border>
+</tp-scroll-trigger>
+<div style="display:grid;gap:var(--tp-space-3);block-size:18rem;padding-block:var(--tp-space-6);box-sizing:border-box">
+  <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:70%"></tp-skeleton>
+  <tp-skeleton motion="none" style="block-size:0.75rem;inline-size:50%"></tp-skeleton>
+</div>`}
+/>
+
+### Limits
+
+- Border draws over one surface, its first child element other than a segment.
+- The bloom reaches outside the surface, so an ancestor that clips its overflow cuts it off.
+- An element light source is measured on every frame while the border is in view.

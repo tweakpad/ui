@@ -26,7 +26,11 @@ const componentStories = [...stories.values()].filter((source) =>
 const motionStories = [...stories.values()].filter((source) => source.includes("title: 'Motion/"));
 const elementStories = [...componentStories, ...motionStories, ...widgetStories.values()];
 /** The Storybook title path of each catalog folder. */
-const FOLDER_TITLES = { components: 'Components', 'motion/text': 'Motion/Text' } as const;
+const FOLDER_TITLES = {
+  components: 'Components',
+  'motion/text': 'Motion/Text',
+  'motion/surface': 'Motion/Surface',
+} as const;
 
 describe('Storybook catalog entries', () => {
   const docsPage = read('../../.storybook/docs-page.mdx');
@@ -64,7 +68,7 @@ describe('Storybook catalog entries', () => {
     expect(read('widgets/overview.mdx')).toContain('<Meta title="Widgets/Overview" />');
     expect(preview).toContain("import '../src/register/widgets.js';");
     expect(preview).toContain(
-      "order: ['Tweakpad UI', 'Components', 'Motion', ['Text'], 'Widgets']",
+      "order: ['Tweakpad UI', 'Components', 'Motion', ['Text', 'Surface'], 'Widgets']",
     );
   });
 
@@ -131,7 +135,9 @@ describe('Storybook catalog entries', () => {
         ? 'widgets'
         : source.includes("title: 'Motion/Text/")
           ? 'motion/text'
-          : 'components';
+          : source.includes("title: 'Motion/Surface/")
+            ? 'motion/surface'
+            : 'components';
       const slug = file.replace(/^widgets\//u, '').replace(/\.stories\.ts$/u, '');
       const id = `${folder}/${slug}`;
       const uses = /libraryDocs\('([^']+)'\)/u.exec(source)?.[1];

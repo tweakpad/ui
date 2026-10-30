@@ -75,6 +75,7 @@ export const catalog = [
   ['Text split', 'tp-mo-text-split', 'compound-reexport'],
   ['Text mirror', 'tp-mo-text-mirror', 'compound-reexport'],
   ['Text stroke', 'tp-mo-text-stroke', 'compound-reexport'],
+  ['Border', 'tp-mo-border', 'compound-reexport'],
   ['Cursor', 'tp-cursor', 'compound-reexport'],
   ['Table of contents', 'tp-table-of-contents', 'compound-reexport'],
   ['Tree view', 'tp-tree-view', 'compound-reexport'],
@@ -105,7 +106,7 @@ export const catalogEntries: readonly CatalogEntry[] = catalog.map(([name, tagNa
 }));
 
 /** What a group of Motion elements moves; each group is a folder under `docs/motion/`. */
-export type MotionGroup = 'text';
+export type MotionGroup = 'text' | 'surface';
 
 /**
  * The documentation folder of a catalog entry, under `docs/`. Every entry ships from the main entry
@@ -117,6 +118,7 @@ export type CatalogFolder = 'components' | `motion/${MotionGroup}`;
 /** The catalog entries documented under Motion, by group. */
 export const motionGroups: Readonly<Record<MotionGroup, readonly string[]>> = {
   text: ['tp-mo-text-split', 'tp-mo-text-mirror', 'tp-mo-text-stroke'],
+  surface: ['tp-mo-border'],
 };
 
 export const catalogFolder = (entry: Pick<CatalogEntry, 'tagName'>): CatalogFolder => {

@@ -30,6 +30,31 @@ export function paginationMembers(element: TpElement): (GroupMember | undefined)
     return control ? groupMember(control) : undefined;
   });
 }
+// Surfaces that draw a boundary but never join a control group.
+const surfaceParts: Readonly<Record<string, string>> = {
+  'tp-card': 'card',
+};
+
+/** The boundary a wrapper draws over: a control's group boundary, or a surface such as Card's. */
+export function surfaceMember(element: Element): GroupMember | undefined {
+  const member = groupMember(element);
+  // Fields render their native editor in the light tree, beside the host's own children.
+  if (member && !member.element)
+    return {
+      ...member,
+      element: member.host.querySelector<HTMLElement>(`:scope > [part~="${member.part}"]`),
+    };
+  if (member || !(element instanceof TpElement)) return member;
+  const tag = inheritedRootTag(element.constructor as typeof TpElement) ?? element.localName;
+  const part = surfaceParts[element.localName] ?? surfaceParts[tag];
+  if (!part) return;
+  return {
+    host: element,
+    part,
+    element: element.renderRoot?.querySelector<HTMLElement>(`[part~="${part}"]`) ?? null,
+  };
+}
+
 export function groupMember(element: Element): GroupMember | undefined {
   if (!(element instanceof TpElement)) return;
   const tag = inheritedRootTag(element.constructor as typeof TpElement) ?? element.localName;

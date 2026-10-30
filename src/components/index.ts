@@ -75,6 +75,7 @@ export * from './cursor/index.js';
 export * from './mo-text-split/index.js';
 export * from './mo-text-mirror/index.js';
 export * from './mo-text-stroke/index.js';
+export * from './mo-border/index.js';
 export * from './text-transform/index.js';
 export * from './theme-switcher/index.js';
 export * from './time/index.js';
