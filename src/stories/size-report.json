@@ -1,18 +1,18 @@
 {
-  "generatedAt": "2026-10-29T11:37:32.889Z",
-  "version": "0.1.3",
+  "generatedAt": "2026-10-30T21:45:07.355Z",
+  "version": "0.1.4",
   "method": "Each row imports and registers one component or widget from its public package entry. Rolldown tree-shakes and minifies an independent production JavaScript bundle, then measures its output before and after gzip. Required dependencies and embedded styles are included; Lit, optional engines, source maps and the separate global stylesheet are excluded. Sizes use kB of 1000 bytes.",
   "lit": { "bytes": 15977, "gzip": 6060 },
-  "full": { "bytes": 1885325, "gzip": 527289 },
-  "fullWidgets": { "bytes": 1538737, "gzip": 443791 },
+  "full": { "bytes": 1949008, "gzip": 546812 },
+  "fullWidgets": { "bytes": 1553398, "gzip": 447454 },
   "components": [
     {
       "name": "Flow",
       "tagName": "tp-flow",
       "section": "widgets",
-      "bytes": 1235236,
-      "gzip": 347319,
-      "modules": 431,
+      "bytes": 1249897,
+      "gzip": 350947,
+      "modules": 432,
       "includes": [
         "tp-accordion",
         "tp-accordion-item",
@@ -82,9 +82,9 @@
       "name": "Text editor (all features)",
       "tagName": "tp-text-editor",
       "section": "widgets",
-      "bytes": 1008429,
-      "gzip": 297100,
-      "modules": 380,
+      "bytes": 1013372,
+      "gzip": 298326,
+      "modules": 381,
       "includes": [
         "tp-aspect-ratio",
         "tp-attachment",
@@ -121,8 +121,8 @@
       "name": "Text editor",
       "tagName": "tp-text-editor",
       "section": "widgets",
-      "bytes": 504504,
-      "gzip": 151873,
+      "bytes": 504690,
+      "gzip": 151936,
       "modules": 208,
       "includes": [
         "tp-badge",
@@ -148,9 +148,9 @@
       "name": "Color picker",
       "tagName": "tp-color-picker",
       "section": "widgets",
-      "bytes": 510415,
-      "gzip": 146920,
-      "modules": 206,
+      "bytes": 522077,
+      "gzip": 149862,
+      "modules": 207,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -180,9 +180,9 @@
       "name": "Easing editor",
       "tagName": "tp-easing-editor",
       "section": "widgets",
-      "bytes": 455030,
-      "gzip": 131437,
-      "modules": 191,
+      "bytes": 466233,
+      "gzip": 134299,
+      "modules": 192,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -208,9 +208,9 @@
       "name": "Emoji picker",
       "tagName": "tp-emoji-picker",
       "section": "widgets",
-      "bytes": 369533,
-      "gzip": 108561,
-      "modules": 153,
+      "bytes": 371833,
+      "gzip": 109062,
+      "modules": 154,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -232,9 +232,9 @@
       "name": "Markdown",
       "tagName": "tp-markdown",
       "section": "components",
-      "bytes": 260540,
-      "gzip": 78401,
-      "modules": 130,
+      "bytes": 264541,
+      "gzip": 79287,
+      "modules": 132,
       "includes": [
         "tp-alert",
         "tp-button",
@@ -254,9 +254,9 @@
       "name": "Command palette",
       "tagName": "tp-command-palette",
       "section": "components",
-      "bytes": 262058,
-      "gzip": 77517,
-      "modules": 123,
+      "bytes": 264358,
+      "gzip": 78060,
+      "modules": 124,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -274,8 +274,8 @@
       "name": "Tree view",
       "tagName": "tp-tree-view",
       "section": "components",
-      "bytes": 223679,
-      "gzip": 66657,
+      "bytes": 223976,
+      "gzip": 66783,
       "modules": 99,
       "includes": ["tp-button", "tp-icon", "tp-spinner", "tp-tree-item"]
     },
@@ -283,17 +283,26 @@
       "name": "Autocomplete",
       "tagName": "tp-autocomplete",
       "section": "components",
-      "bytes": 213178,
-      "gzip": 63477,
-      "modules": 104,
+      "bytes": 215476,
+      "gzip": 64023,
+      "modules": 105,
       "includes": ["tp-badge", "tp-button", "tp-icon", "tp-input-group", "tp-select", "tp-spinner"]
+    },
+    {
+      "name": "Select",
+      "tagName": "tp-select",
+      "section": "components",
+      "bytes": 213687,
+      "gzip": 63464,
+      "modules": 102,
+      "includes": ["tp-badge", "tp-button", "tp-icon", "tp-input-group", "tp-spinner"]
     },
     {
       "name": "QR code",
       "tagName": "tp-qr-code",
       "section": "components",
-      "bytes": 208642,
-      "gzip": 62950,
+      "bytes": 208763,
+      "gzip": 62981,
       "modules": 103,
       "includes": [
         "tp-button",
@@ -305,15 +314,6 @@
         "tp-menu-radio-group",
         "tp-spinner"
       ]
-    },
-    {
-      "name": "Select",
-      "tagName": "tp-select",
-      "section": "components",
-      "bytes": 211388,
-      "gzip": 62932,
-      "modules": 101,
-      "includes": ["tp-badge", "tp-button", "tp-icon", "tp-input-group", "tp-spinner"]
     },
     {
       "name": "Carousel",
@@ -337,8 +337,8 @@
       "name": "File upload",
       "tagName": "tp-file-upload",
       "section": "components",
-      "bytes": 182176,
-      "gzip": 52030,
+      "bytes": 182241,
+      "gzip": 52050,
       "modules": 101,
       "includes": [
         "tp-aspect-ratio",
@@ -356,8 +356,8 @@
       "name": "Code block",
       "tagName": "tp-code-block",
       "section": "components",
-      "bytes": 170000,
-      "gzip": 51536,
+      "bytes": 170121,
+      "gzip": 51565,
       "modules": 87,
       "includes": ["tp-button", "tp-copy-button", "tp-icon", "tp-spinner", "tp-tooltip"]
     },
@@ -365,8 +365,8 @@
       "name": "Navigation panel",
       "tagName": "tp-navigation-panel",
       "section": "components",
-      "bytes": 173827,
-      "gzip": 49915,
+      "bytes": 173948,
+      "gzip": 49945,
       "modules": 82,
       "includes": [
         "tp-button",
@@ -382,8 +382,8 @@
       "name": "Table of contents",
       "tagName": "tp-table-of-contents",
       "section": "components",
-      "bytes": 161997,
-      "gzip": 48227,
+      "bytes": 162118,
+      "gzip": 48256,
       "modules": 69,
       "includes": ["tp-button", "tp-icon", "tp-popover", "tp-spinner", "tp-table-of-contents-item"]
     },
@@ -391,8 +391,8 @@
       "name": "Menu",
       "tagName": "tp-menu",
       "section": "components",
-      "bytes": 152083,
-      "gzip": 45305,
+      "bytes": 152204,
+      "gzip": 45335,
       "modules": 64,
       "includes": ["tp-icon", "tp-menu-item", "tp-menu-radio-group"]
     },
@@ -400,8 +400,8 @@
       "name": "Message",
       "tagName": "tp-message",
       "section": "components",
-      "bytes": 145886,
-      "gzip": 45085,
+      "bytes": 146007,
+      "gzip": 45123,
       "modules": 60,
       "includes": ["tp-time", "tp-tooltip"]
     },
@@ -409,8 +409,8 @@
       "name": "Time",
       "tagName": "tp-time",
       "section": "components",
-      "bytes": 139940,
-      "gzip": 43730,
+      "bytes": 140061,
+      "gzip": 43768,
       "modules": 57,
       "includes": ["tp-tooltip"]
     },
@@ -418,8 +418,8 @@
       "name": "Text transform",
       "tagName": "tp-text-transform",
       "section": "components",
-      "bytes": 138200,
-      "gzip": 42963,
+      "bytes": 138321,
+      "gzip": 42997,
       "modules": 64,
       "includes": ["tp-tooltip"]
     },
@@ -427,8 +427,8 @@
       "name": "Citation",
       "tagName": "tp-citation",
       "section": "components",
-      "bytes": 135986,
-      "gzip": 41295,
+      "bytes": 136107,
+      "gzip": 41331,
       "modules": 67,
       "includes": ["tp-badge", "tp-icon", "tp-preview-card"]
     },
@@ -436,8 +436,8 @@
       "name": "Navigation menu",
       "tagName": "tp-navigation-menu",
       "section": "components",
-      "bytes": 135630,
-      "gzip": 40207,
+      "bytes": 135751,
+      "gzip": 40243,
       "modules": 56,
       "includes": ["tp-icon", "tp-navigation-menu-item"]
     },
@@ -445,8 +445,8 @@
       "name": "Data visualization",
       "tagName": "tp-data-visualization",
       "section": "components",
-      "bytes": 129409,
-      "gzip": 39257,
+      "bytes": 129530,
+      "gzip": 39297,
       "modules": 60,
       "includes": ["tp-icon", "tp-tooltip"]
     },
@@ -454,8 +454,8 @@
       "name": "Drawer",
       "tagName": "tp-drawer",
       "section": "components",
-      "bytes": 128522,
-      "gzip": 37981,
+      "bytes": 128643,
+      "gzip": 38010,
       "modules": 69,
       "includes": ["tp-button", "tp-dialog", "tp-drawer-indent-background", "tp-icon", "tp-spinner"]
     },
@@ -472,8 +472,8 @@
       "name": "Status dot",
       "tagName": "tp-status-dot",
       "section": "components",
-      "bytes": 122485,
-      "gzip": 37224,
+      "bytes": 122606,
+      "gzip": 37262,
       "modules": 52,
       "includes": ["tp-tooltip"]
     },
@@ -481,8 +481,8 @@
       "name": "Popover",
       "tagName": "tp-popover",
       "section": "components",
-      "bytes": 115365,
-      "gzip": 35160,
+      "bytes": 115486,
+      "gzip": 35191,
       "modules": 47,
       "includes": []
     },
@@ -490,8 +490,8 @@
       "name": "Tooltip",
       "tagName": "tp-tooltip",
       "section": "components",
-      "bytes": 114757,
-      "gzip": 35098,
+      "bytes": 114878,
+      "gzip": 35136,
       "modules": 47,
       "includes": []
     },
@@ -499,8 +499,8 @@
       "name": "Preview card",
       "tagName": "tp-preview-card",
       "section": "components",
-      "bytes": 113166,
-      "gzip": 34713,
+      "bytes": 113287,
+      "gzip": 34748,
       "modules": 47,
       "includes": []
     },
@@ -508,8 +508,8 @@
       "name": "Calendar",
       "tagName": "tp-calendar",
       "section": "components",
-      "bytes": 120597,
-      "gzip": 33838,
+      "bytes": 120662,
+      "gzip": 33856,
       "modules": 57,
       "includes": ["tp-button", "tp-icon", "tp-native-select", "tp-spinner"]
     },
@@ -517,8 +517,8 @@
       "name": "Toast",
       "tagName": "tp-toast",
       "section": "components",
-      "bytes": 107389,
-      "gzip": 33088,
+      "bytes": 107510,
+      "gzip": 33119,
       "modules": 54,
       "includes": ["tp-button", "tp-icon", "tp-spinner"]
     },
@@ -526,9 +526,9 @@
       "name": "Theme switcher",
       "tagName": "tp-theme-switcher",
       "section": "components",
-      "bytes": 113192,
-      "gzip": 31847,
-      "modules": 77,
+      "bytes": 117929,
+      "gzip": 32694,
+      "modules": 79,
       "includes": [
         "tp-button",
         "tp-checkbox",
@@ -553,8 +553,8 @@
       "name": "Alert dialog",
       "tagName": "tp-alert-dialog",
       "section": "components",
-      "bytes": 99542,
-      "gzip": 29699,
+      "bytes": 99663,
+      "gzip": 29731,
       "modules": 57,
       "includes": ["tp-button", "tp-dialog", "tp-icon", "tp-spinner"]
     },
@@ -562,10 +562,19 @@
       "name": "Dialog",
       "tagName": "tp-dialog",
       "section": "components",
-      "bytes": 98069,
-      "gzip": 29335,
+      "bytes": 98190,
+      "gzip": 29368,
       "modules": 55,
       "includes": ["tp-button", "tp-icon", "tp-spinner"]
+    },
+    {
+      "name": "Slider",
+      "tagName": "tp-slider",
+      "section": "components",
+      "bytes": 91990,
+      "gzip": 27890,
+      "modules": 42,
+      "includes": ["tp-slider-thumb"]
     },
     {
       "name": "Questionnaire",
@@ -575,15 +584,6 @@
       "gzip": 26928,
       "modules": 55,
       "includes": ["tp-button", "tp-icon", "tp-key-hint", "tp-spinner"]
-    },
-    {
-      "name": "Slider",
-      "tagName": "tp-slider",
-      "section": "components",
-      "bytes": 83085,
-      "gzip": 25558,
-      "modules": 39,
-      "includes": ["tp-slider-thumb"]
     },
     {
       "name": "Message scroller",
@@ -598,17 +598,35 @@
       "name": "Form",
       "tagName": "tp-form",
       "section": "components",
-      "bytes": 80542,
-      "gzip": 22883,
+      "bytes": 80984,
+      "gzip": 23034,
       "modules": 36,
       "includes": ["tp-field", "tp-separator"]
+    },
+    {
+      "name": "Glow border",
+      "tagName": "tp-mo-glow-border",
+      "section": "components",
+      "bytes": 66158,
+      "gzip": 22563,
+      "modules": 40,
+      "includes": []
+    },
+    {
+      "name": "Segment border",
+      "tagName": "tp-mo-segment-border",
+      "section": "components",
+      "bytes": 65961,
+      "gzip": 22379,
+      "modules": 37,
+      "includes": ["tp-mo-border-segment"]
     },
     {
       "name": "Description list",
       "tagName": "tp-description-list",
       "section": "components",
-      "bytes": 70539,
-      "gzip": 20918,
+      "bytes": 70660,
+      "gzip": 20954,
       "modules": 45,
       "includes": ["tp-button", "tp-description-list-item", "tp-icon", "tp-spinner"]
     },
@@ -622,6 +640,15 @@
       "includes": []
     },
     {
+      "name": "Field",
+      "tagName": "tp-field",
+      "section": "components",
+      "bytes": 71733,
+      "gzip": 20717,
+      "modules": 32,
+      "includes": ["tp-separator"]
+    },
+    {
       "name": "Image",
       "tagName": "tp-image",
       "section": "components",
@@ -631,13 +658,13 @@
       "includes": ["tp-aspect-ratio", "tp-icon", "tp-skeleton", "tp-spinner"]
     },
     {
-      "name": "Field",
-      "tagName": "tp-field",
+      "name": "Text mirror",
+      "tagName": "tp-mo-text-mirror",
       "section": "components",
-      "bytes": 71291,
-      "gzip": 20571,
-      "modules": 32,
-      "includes": ["tp-separator"]
+      "bytes": 62969,
+      "gzip": 20145,
+      "modules": 30,
+      "includes": []
     },
     {
       "name": "Text split",
@@ -649,29 +676,20 @@
       "includes": []
     },
     {
-      "name": "Text mirror",
-      "tagName": "tp-mo-text-mirror",
-      "section": "components",
-      "bytes": 61631,
-      "gzip": 19924,
-      "modules": 30,
-      "includes": []
-    },
-    {
       "name": "Switch",
       "tagName": "tp-switch",
       "section": "components",
-      "bytes": 63138,
-      "gzip": 18889,
-      "modules": 45,
+      "bytes": 67874,
+      "gzip": 19833,
+      "modules": 47,
       "includes": ["tp-checkbox", "tp-icon", "tp-label"]
     },
     {
       "name": "Accordion",
       "tagName": "tp-accordion",
       "section": "components",
-      "bytes": 61830,
-      "gzip": 18040,
+      "bytes": 61951,
+      "gzip": 18074,
       "modules": 44,
       "includes": ["tp-accordion-item", "tp-collapsible", "tp-icon"]
     },
@@ -679,8 +697,8 @@
       "name": "Toggle group",
       "tagName": "tp-toggle-group",
       "section": "components",
-      "bytes": 57012,
-      "gzip": 17385,
+      "bytes": 57077,
+      "gzip": 17403,
       "modules": 37,
       "includes": ["tp-toggle"]
     },
@@ -688,8 +706,8 @@
       "name": "Native select",
       "tagName": "tp-native-select",
       "section": "components",
-      "bytes": 60238,
-      "gzip": 17382,
+      "bytes": 60303,
+      "gzip": 17400,
       "modules": 34,
       "includes": ["tp-icon"]
     },
@@ -742,8 +760,8 @@
       "name": "Tabs",
       "tagName": "tp-tabs",
       "section": "components",
-      "bytes": 53296,
-      "gzip": 16426,
+      "bytes": 53417,
+      "gzip": 16463,
       "modules": 28,
       "includes": []
     },
@@ -751,35 +769,44 @@
       "name": "Collapsible",
       "tagName": "tp-collapsible",
       "section": "components",
-      "bytes": 51240,
-      "gzip": 15734,
+      "bytes": 51361,
+      "gzip": 15769,
       "modules": 39,
+      "includes": ["tp-icon"]
+    },
+    {
+      "name": "Checkbox",
+      "tagName": "tp-checkbox",
+      "section": "components",
+      "bytes": 51553,
+      "gzip": 15648,
+      "modules": 35,
       "includes": ["tp-icon"]
     },
     {
       "name": "Radio group",
       "tagName": "tp-radio-group",
       "section": "components",
-      "bytes": 48838,
-      "gzip": 15134,
+      "bytes": 49024,
+      "gzip": 15189,
       "modules": 27,
       "includes": ["tp-radio-group-item"]
     },
     {
-      "name": "Checkbox",
-      "tagName": "tp-checkbox",
+      "name": "Input",
+      "tagName": "tp-input",
       "section": "components",
-      "bytes": 48377,
-      "gzip": 14949,
-      "modules": 32,
-      "includes": ["tp-icon"]
+      "bytes": 48230,
+      "gzip": 14731,
+      "modules": 28,
+      "includes": []
     },
     {
       "name": "One-time code field",
       "tagName": "tp-one-time-code-field",
       "section": "components",
-      "bytes": 46761,
-      "gzip": 14462,
+      "bytes": 46826,
+      "gzip": 14480,
       "modules": 30,
       "includes": ["tp-icon"]
     },
@@ -796,8 +823,8 @@
       "name": "Toggle",
       "tagName": "tp-toggle",
       "section": "components",
-      "bytes": 44788,
-      "gzip": 14037,
+      "bytes": 44853,
+      "gzip": 14054,
       "modules": 28,
       "includes": []
     },
@@ -811,20 +838,11 @@
       "includes": []
     },
     {
-      "name": "Input",
-      "tagName": "tp-input",
-      "section": "components",
-      "bytes": 44623,
-      "gzip": 13713,
-      "modules": 26,
-      "includes": []
-    },
-    {
       "name": "Text area",
       "tagName": "tp-text-area",
       "section": "components",
-      "bytes": 44637,
-      "gzip": 13711,
+      "bytes": 44702,
+      "gzip": 13729,
       "modules": 26,
       "includes": []
     },
@@ -883,6 +901,15 @@
       "includes": ["tp-list-item", "tp-list-separator", "tp-separator"]
     },
     {
+      "name": "Table",
+      "tagName": "tp-table",
+      "section": "components",
+      "bytes": 32812,
+      "gzip": 10573,
+      "modules": 20,
+      "includes": ["tp-table-caption"]
+    },
+    {
       "name": "Marker",
       "tagName": "tp-marker",
       "section": "components",
@@ -892,20 +919,11 @@
       "includes": []
     },
     {
-      "name": "Table",
-      "tagName": "tp-table",
-      "section": "components",
-      "bytes": 31992,
-      "gzip": 10304,
-      "modules": 20,
-      "includes": ["tp-table-caption"]
-    },
-    {
       "name": "Input group",
       "tagName": "tp-input-group",
       "section": "components",
-      "bytes": 32095,
-      "gzip": 10213,
+      "bytes": 32113,
+      "gzip": 10230,
       "modules": 22,
       "includes": []
     },
@@ -913,8 +931,8 @@
       "name": "Avatar",
       "tagName": "tp-avatar",
       "section": "components",
-      "bytes": 31241,
-      "gzip": 10156,
+      "bytes": 31367,
+      "gzip": 10208,
       "modules": 19,
       "includes": ["tp-avatar-group"]
     },
