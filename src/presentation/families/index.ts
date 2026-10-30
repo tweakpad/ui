@@ -83,7 +83,8 @@ import { autocompletePresentation } from './autocomplete.js';
 import { moTextSplitPresentation } from './mo-text-split.js';
 import { moTextMirrorPresentation } from './mo-text-mirror.js';
 import { moTextStrokePresentation } from './mo-text-stroke.js';
-import { moBorderPresentation } from './mo-border.js';
+import { moGlowBorderPresentation } from './mo-glow-border.js';
+import { moSegmentBorderPresentation } from './mo-segment-border.js';
 import { tableOfContentsPresentation } from './table-of-contents.js';
 import { treeViewPresentation } from './tree-view.js';
 
@@ -171,7 +172,8 @@ export { autocompletePresentation } from './autocomplete.js';
 export { moTextSplitPresentation } from './mo-text-split.js';
 export { moTextMirrorPresentation } from './mo-text-mirror.js';
 export { moTextStrokePresentation } from './mo-text-stroke.js';
-export { moBorderPresentation } from './mo-border.js';
+export { moGlowBorderPresentation } from './mo-glow-border.js';
+export { moSegmentBorderPresentation } from './mo-segment-border.js';
 export { tableOfContentsPresentation } from './table-of-contents.js';
 export { treeViewPresentation } from './tree-view.js';
 
@@ -261,7 +263,8 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   moTextSplitPresentation,
   moTextMirrorPresentation,
   moTextStrokePresentation,
-  moBorderPresentation,
+  moGlowBorderPresentation,
+  moSegmentBorderPresentation,
   tableOfContentsPresentation,
   treeViewPresentation,
 ];

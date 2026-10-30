@@ -118,7 +118,7 @@ const DIAGNOSTIC_EVENT = 'tp-diagnostic';
  * Bases that hold the public API of the elements built on them, which no page of their own
  * documents: the Motion › Text elements share their splitting and reveal API through one base.
  */
-const OWN_API_BASES: ReadonlySet<string> = new Set(['TextRevealElement']);
+const OWN_API_BASES: ReadonlySet<string> = new Set(['TextRevealElement', 'SurfaceBorderElement']);
 
 /**
  * An element's table lists what it declares itself. Members and attributes it inherits from a

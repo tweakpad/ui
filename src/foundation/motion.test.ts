@@ -6,6 +6,7 @@ import {
   prepareMotion,
   resolveMotionTiming,
   resolvesReducedMotion,
+  transitionTimings,
   type TpMotionRequestEvent,
 } from './motion.js';
 
@@ -62,6 +63,18 @@ describe('motion timing roles (CL §5.3)', () => {
     expect([cssTimeMs('0.28s'), cssTimeMs(' 560ms '), cssTimeMs('.2s'), cssTimeMs('auto')]).toEqual(
       [280, 560, 200, 0],
     );
+  });
+
+  it('reads each transition of a timing probe, with commas inside easing functions', () => {
+    const style = {
+      transitionDuration: '1.2s, 0.28s',
+      transitionDelay: '0s, 120ms',
+      transitionTimingFunction: 'linear, cubic-bezier(0.2, 0, 0, 1)',
+    } as CSSStyleDeclaration;
+    expect(transitionTimings(style)).toEqual([
+      { duration: 1200, delay: 0, easing: 'linear' },
+      { duration: 280, delay: 120, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+    ]);
   });
 
   it('resolves a duration role and an easing role from the computed style', () => {

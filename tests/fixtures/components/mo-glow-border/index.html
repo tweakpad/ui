@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Glow border verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        max-width: 960px;
+        margin: 24px auto;
+        padding: 16px;
+        display: grid;
+        gap: 40px;
+      }
+      h1.fixture {
+        font-size: 1.25rem;
+        margin: 0;
+      }
+      section.case {
+        display: grid;
+        gap: 12px;
+      }
+      section.case > h2.label {
+        font-size: 0.875rem;
+        margin: 0;
+        color: var(--tp-muted-foreground);
+        font-weight: 500;
+      }
+      .flow {
+        margin: 0;
+        padding: 8px 12px;
+        border: 1px dashed var(--tp-border);
+        border-radius: var(--tp-radius-md);
+        font-size: 0.875rem;
+        color: var(--tp-muted-foreground);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 24px;
+      }
+      .plain {
+        padding: 16px;
+        border: 2px solid var(--tp-border);
+        border-radius: 12px 4px;
+      }
+      .spacer {
+        block-size: 80vh;
+        display: grid;
+        place-items: center;
+        color: var(--tp-muted-foreground);
+        font-size: 0.75rem;
+        border: 1px dashed var(--tp-border);
+        border-radius: var(--tp-radius-lg);
+      }
+      .beacon {
+        position: absolute;
+        inline-size: 12px;
+        block-size: 12px;
+        border-radius: 50%;
+        background: var(--tp-ring);
+      }
+      .orbit {
+        position: relative;
+        block-size: 220px;
+        display: grid;
+        place-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Glow border verification</h1>
+
+      <section class="case" id="case-glow">
+        <h2 class="label">Pointer glow (default): move the pointer near the edge</h2>
+        <tp-mo-glow-border id="glow" style="--tp-mo-glow-border-fill: 0.12">
+          <tp-card>
+            <h3 slot="header">Tide station 7</h3>
+            <span slot="description">Readings every ten minutes from the north pier.</span>
+            <p>Water level 2.4 m, rising. Next high tide at 14:20.</p>
+          </tp-card>
+        </tp-mo-glow-border>
+        <p class="flow">Below the glow card.</p>
+      </section>
+
+      <section class="case" id="case-comets">
+        <h2 class="label">Comets: one, two (default), three counterclockwise with a pause</h2>
+        <div class="grid">
+          <tp-mo-glow-border id="comets-1" trigger="always" lights="1"
+            ><tp-card
+              ><h3 slot="header">One comet</h3>
+              <p>Single lap.</p></tp-card
+            ></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="comets-2" trigger="always"
+            ><tp-card
+              ><h3 slot="header">Two comets</h3>
+              <p>Half a lap apart.</p></tp-card
+            ></tp-mo-glow-border
+          >
+          <tp-mo-glow-border
+            id="comets-3"
+            trigger="always"
+            lights="3"
+            rotation="ccw"
+            style="
+              --tp-mo-glow-border-loop-delay: 0.8s;
+              --tp-mo-glow-border-loop-easing: ease-in-out;
+            "
+            ><tp-card
+              ><h3 slot="header">Three comets</h3>
+              <p>Counterclockwise, pausing.</p></tp-card
+            ></tp-mo-glow-border
+          >
+        </div>
+      </section>
+
+      <section class="case" id="case-motions">
+        <h2 class="label">Sweep, pulse, glint, sweep with pulse</h2>
+        <div class="grid">
+          <tp-mo-glow-border id="sweep" trigger="always" motion="sweep"
+            ><tp-card
+              ><h3 slot="header">Sweep</h3>
+              <p>The colors turn.</p></tp-card
+            ></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="pulse" trigger="always" motion="pulse"
+            ><tp-card
+              ><h3 slot="header">Pulse</h3>
+              <p>The glow breathes.</p></tp-card
+            ></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="glint" trigger="always" motion="glint"
+            ><tp-card
+              ><h3 slot="header">Glint</h3>
+              <p>A band of light crosses.</p></tp-card
+            ></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="sweep-pulse" trigger="always" motion="sweep pulse"
+            ><tp-card
+              ><h3 slot="header">Sweep and pulse</h3>
+              <p>Both at once.</p></tp-card
+            ></tp-mo-glow-border
+          >
+        </div>
+      </section>
+
+      <section class="case" id="case-triggers">
+        <h2 class="label">Triggers: hover, focus, none; fade with an out delay</h2>
+        <div class="grid">
+          <tp-mo-glow-border id="hover" trigger="hover"
+            ><tp-card
+              ><h3 slot="header">Hover</h3>
+              <p>Comets while hovered.</p></tp-card
+            ></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="focus" trigger="focus" motion="sweep"
+            ><tp-input label="Call sign" placeholder="Focus me"></tp-input
+          ></tp-mo-glow-border>
+          <tp-mo-glow-border id="none" trigger="none"
+            ><tp-card
+              ><h3 slot="header">None</h3>
+              <p>Never lit.</p></tp-card
+            ></tp-mo-glow-border
+          >
+          <tp-mo-glow-border
+            id="fade"
+            style="
+              --tp-mo-glow-border-fade-out-delay: 600ms;
+              --tp-mo-glow-border-fade-duration: 500ms;
+              --tp-mo-glow-border-fade-easing: ease-out;
+            "
+            ><tp-card
+              ><h3 slot="header">Slow fade</h3>
+              <p>Holds 600 ms after leaving.</p></tp-card
+            ></tp-mo-glow-border
+          >
+        </div>
+      </section>
+
+      <section class="case" id="case-colors">
+        <h2 class="label">Custom colors and core</h2>
+        <div class="grid">
+          <tp-mo-glow-border
+            id="custom"
+            trigger="always"
+            motion="sweep"
+            style="
+              --tp-mo-glow-border-colors:
+                var(--tp-success), var(--tp-warning), var(--tp-destructive);
+              --tp-mo-glow-border-width: 2px;
+              --tp-mo-glow-border-spread: 20px;
+            "
+            ><tp-card
+              ><h3 slot="header">Status ring</h3>
+              <p>Green, amber, red.</p></tp-card
+            ></tp-mo-glow-border
+          >
+          <tp-mo-glow-border
+            id="single"
+            trigger="always"
+            style="
+              --tp-mo-glow-border-colors: var(--tp-ring);
+              --tp-mo-glow-border-core: var(--tp-ring);
+            "
+            ><tp-card
+              ><h3 slot="header">One color</h3>
+              <p>No white core.</p></tp-card
+            ></tp-mo-glow-border
+          >
+        </div>
+      </section>
+
+      <section class="case" id="case-sources">
+        <h2 class="label">Light sources: a point and a moving element</h2>
+        <div class="grid">
+          <tp-mo-glow-border id="point"
+            ><tp-card
+              ><h3 slot="header">Fixed point</h3>
+              <p>Lit from the top-left corner.</p></tp-card
+            ></tp-mo-glow-border
+          >
+          <div class="orbit">
+            <span class="beacon" id="beacon"></span>
+            <tp-mo-glow-border id="target" track-target="beacon" track-reach="120"
+              ><tp-card
+                ><h3 slot="header">Following</h3>
+                <p>Lit by the moving dot.</p></tp-card
+              ></tp-mo-glow-border
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="case" id="case-surfaces">
+        <h2 class="label">Compatible surfaces with a sweeping glow</h2>
+        <div class="row">
+          <tp-mo-glow-border id="s-button" trigger="always" motion="sweep"
+            ><tp-button variant="outline">Outline</tp-button></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="s-button-default" trigger="always" motion="sweep"
+            ><tp-button>Default</tp-button></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="s-button-xs" trigger="always" motion="sweep"
+            ><tp-button variant="outline" size="xs">Extra small</tp-button></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="s-button-lg" trigger="always" motion="sweep"
+            ><tp-button variant="outline" size="lg">Large</tp-button></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="s-toggle" trigger="always" motion="sweep"
+            ><tp-toggle variant="outline">Pin</tp-toggle></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="s-native-select" trigger="always" motion="sweep"
+            ><tp-native-select aria-label="Region"
+              ><option>North</option>
+              <option>South</option></tp-native-select
+            ></tp-mo-glow-border
+          >
+        </div>
+        <div class="grid">
+          <tp-mo-glow-border id="s-input" trigger="always" motion="sweep"
+            ><tp-input label="Station name" placeholder="Pier 7"></tp-input
+          ></tp-mo-glow-border>
+          <tp-mo-glow-border id="s-input-invalid" trigger="always" motion="sweep"
+            ><tp-input label="Required" required invalid></tp-input
+          ></tp-mo-glow-border>
+          <tp-mo-glow-border id="s-text-area" trigger="always" motion="sweep"
+            ><tp-text-area label="Notes"></tp-text-area
+          ></tp-mo-glow-border>
+          <tp-mo-glow-border id="s-select" trigger="always" motion="sweep"
+            ><tp-select label="Unit" placeholder="Choose"
+              ><tp-select-option value="m">Meters</tp-select-option
+              ><tp-select-option value="ft">Feet</tp-select-option></tp-select
+            ></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="s-input-group" trigger="always" motion="sweep"
+            ><tp-input-group
+              ><span slot="inline-start">m</span
+              ><tp-input aria-label="Depth"></tp-input></tp-input-group
+          ></tp-mo-glow-border>
+          <tp-mo-glow-border id="s-plain" trigger="always" motion="sweep"
+            ><div class="plain">A plain element with its own border</div></tp-mo-glow-border
+          >
+          <tp-mo-glow-border id="s-none" trigger="always" motion="sweep" style="padding: 16px"
+            >Text without a surface child</tp-mo-glow-border
+          >
+        </div>
+        <p class="flow">Below the surfaces.</p>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

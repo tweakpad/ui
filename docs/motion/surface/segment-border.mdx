@@ -1,0 +1,101 @@
+---
+title: Segment border
+description: Draws pieces of line over the border of the surface it wraps, each moving through its own states while hovered, focused or in view, as a plain line or a glow.
+tag: tp-mo-segment-border
+parts: [tp-mo-border-segment]
+---
+
+<Preview
+  title="Segment border"
+  code={`<tp-mo-segment-border>
+  <tp-button variant="outline">Reserve a mooring</tp-button>
+  <tp-mo-border-segment draw="0% 0%, 0% 50%" duration="420" easing="ease-out"></tp-mo-border-segment>
+  <tp-mo-border-segment draw="100% 100%, 50% 100%" duration="420" delay="60" easing="ease-out"></tp-mo-border-segment>
+</tp-mo-segment-border>`}
+/>
+
+## Usage
+
+Wrap one surface in Segment border, a Card, a Button, an Input, a Text area, a Select, an Input group, a Toggle or any element with a border, and add `tp-mo-border-segment` children. Segment border hides that surface's border color and draws its own line at exactly the same place, radius and width, so nothing around it moves, then draws the segments over it. The surface keeps its focus ring, its invalid outline and its behavior; the drawing lets pointer events through and is hidden from assistive technology.
+
+Each segment is one stretch of the border from a start to an end, in percent of the border's length or in pixels, measured clockwise from its `origin`, the top-left corner by default. `draw` lists the states it moves through while the border is hovered: `0% 0%, 0% 100%` grows it from nothing to the whole border, `50% 50%, 0% 100%` grows it from the middle out, and `0% 10%, 90% 100%` slides a fixed piece along. Values below 0% or past 100% wrap through the origin. Above, two pieces leave the same corner in opposite directions and meet at the far one.
+
+Each segment has its own `duration`, `delay` and `easing`, with the steps between its states sharing the duration. When the pointer leaves, a segment plays back from wherever it is. Plain segments are lines in the theme's primary color; `--tp-mo-border-segment-color`, `--tp-mo-border-segment-width` and `--tp-mo-border-segment-cap` change them, on a segment or on the border. Under reduced motion the segments jump to their last state and back.
+
+### Leaving and glowing
+
+`leave` gives a segment states to run from where it is when the trigger turns off, before it rests; without it, the segment plays back. `glow` draws a segment as glow instead of a line, in `--tp-mo-segment-border-glow-colors` and turning to the core color at its ends. Here the light opens from the top center and leaves through the bottom.
+
+<Preview
+  title="Leave path"
+  code={`<tp-mo-segment-border style="inline-size:min(100%, 24rem)">
+  <tp-card>
+    <h3 slot="header" style="margin:0">Night ferry</h3>
+    <p slot="description" style="margin:0">Departs 21:40 from pier 3.</p>
+    <p style="margin:0">Hover to light the route around the card.</p>
+  </tp-card>
+  <tp-mo-border-segment glow origin="top" draw="0% 0%, -25% 25%" leave="50% 50%" duration="600"></tp-mo-border-segment>
+</tp-mo-segment-border>`}
+/>
+
+### Drawing the border in
+
+`trigger="always"` plays the segments once the border enters the viewport and holds their last state. With `--tp-mo-segment-border-color: transparent` the line under the segments is gone, so a segment that grows to the whole border draws the border in, and delays draw several in turn.
+
+<Preview
+  title="Drawn in"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(9rem, 1fr));gap:var(--tp-space-4);--tp-mo-segment-border-color:transparent;--tp-mo-border-segment-color:var(--tp-ring);--tp-mo-border-segment-width:1.5px">
+  <tp-mo-segment-border trigger="always">
+    <tp-card size="sm">
+      <h3 slot="header" style="margin:0">Harbor</h3>
+      <p style="margin:0">Start at the tide board.</p>
+    </tp-card>
+    <tp-mo-border-segment duration="900"></tp-mo-border-segment>
+  </tp-mo-segment-border>
+  <tp-mo-segment-border trigger="always">
+    <tp-card size="sm">
+      <h3 slot="header" style="margin:0">Breakwater</h3>
+      <p style="margin:0">1.4 km along the wall.</p>
+    </tp-card>
+    <tp-mo-border-segment duration="900" delay="300"></tp-mo-border-segment>
+  </tp-mo-segment-border>
+  <tp-mo-segment-border trigger="always">
+    <tp-card size="sm">
+      <h3 slot="header" style="margin:0">Lighthouse</h3>
+      <p style="margin:0">3.2 km, at the point.</p>
+    </tp-card>
+    <tp-mo-border-segment duration="900" delay="600"></tp-mo-border-segment>
+  </tp-mo-segment-border>
+</div>`}
+/>
+
+### Focus
+
+`trigger="focus"` plays the segments while focus is inside the surface, which suits fields. `trigger="none"` keeps them at their first state.
+
+<Preview
+  title="Focus"
+  code={`<tp-mo-segment-border trigger="focus" style="inline-size:min(100%, 22rem)">
+  <tp-input label="Call sign" placeholder="Focus to draw the border"></tp-input>
+  <tp-mo-border-segment origin="bottom" draw="0% 0%, -50% 50%" duration="500"></tp-mo-border-segment>
+</tp-mo-segment-border>`}
+/>
+
+### Loops
+
+`repeat` loops a segment, a number of times or `infinite`, and `alternate` plays every other run backwards.
+
+<Preview
+  title="Scanner"
+  code={`<tp-mo-segment-border trigger="always" style="inline-size:min(100%, 22rem)">
+  <tp-input type="search" label="Search the logbook" placeholder="Vessel, berth or date"></tp-input>
+  <tp-mo-border-segment glow repeat="infinite" draw="0% 12%, 100% 112%" duration="2400" easing="linear"></tp-mo-border-segment>
+</tp-mo-segment-border>`}
+/>
+
+### Limits
+
+- Segment border draws over one surface, its first child element other than a segment.
+- The bloom of glowing segments reaches outside the surface, so an ancestor that clips its overflow cuts it off.
+- Segments play from their trigger, not from the scroll position.

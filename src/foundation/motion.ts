@@ -1,5 +1,6 @@
 import { reportDiagnostic } from './services.js';
 import { composedParent } from './focus.js';
+import { splitCssList } from './css-list.js';
 
 export type MotionKind = 'presence' | 'state' | 'ambient';
 
@@ -349,6 +350,28 @@ export function cssTimeMs(text: string): number {
   const number = Number.parseFloat(value);
   if (!Number.isFinite(number)) return 0;
   return value.endsWith('ms') ? number : number * 1000;
+}
+
+/** One transition of a computed style, in milliseconds, with its easing as written. */
+export interface TransitionTiming {
+  readonly duration: number;
+  readonly delay: number;
+  readonly easing: string;
+}
+
+/**
+ * The transitions of a computed style, in order. A timing probe declares one transition per
+ * timing it needs, so tokens, `calc()` and the motion scale resolve to times the script reads.
+ */
+export function transitionTimings(style: CSSStyleDeclaration): TransitionTiming[] {
+  const durations = splitCssList(style.transitionDuration);
+  const delays = splitCssList(style.transitionDelay);
+  const easings = splitCssList(style.transitionTimingFunction);
+  return durations.map((duration, index) => ({
+    duration: Math.max(0, cssTimeMs(duration)),
+    delay: Math.max(0, cssTimeMs(delays[index] ?? '0s')),
+    easing: easings[index] ?? 'linear',
+  }));
 }
 
 /**

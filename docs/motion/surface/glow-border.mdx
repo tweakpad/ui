@@ -1,0 +1,177 @@
+---
+title: Glow border
+description: Replaces the border of the surface it wraps with a colored glow that follows a light or runs around it.
+tag: tp-mo-glow-border
+---
+
+<Preview
+  title="Glow border"
+  code={`<tp-mo-glow-border style="inline-size:min(100%, 26rem)">
+  <tp-card>
+    <h3 slot="header">Tide station 7</h3>
+    <span slot="description">Readings every ten minutes from the north pier.</span>
+    <p style="margin:0">Water level 2.4 m and rising. Move the pointer toward the edge.</p>
+  </tp-card>
+</tp-mo-glow-border>`}
+/>
+
+## Usage
+
+Wrap one surface in Glow border: a Card, a Button, an Input, a Text area, a Select, an Input group, a Toggle, or any element with a border. Glow border hides that surface's border color and draws its own line at exactly the same place, radius and width, so nothing around it moves. The surface keeps its focus ring, its invalid outline and its behavior; the drawing lets pointer events through and is hidden from assistive technology.
+
+The glow colors each point of the line from a list of colors spread around the border, and turns it white-hot where its light is closest, with a soft bloom around it. By default the light is the pointer: the line lights up as a mouse or pen comes near and fades out after it leaves. Under reduced motion the light jumps instead of following, comets and glints rest, and fades are instant.
+
+### Controls and fields
+
+Glow border follows each surface's own shape, from a small pill Button to a multi-line Text area.
+
+<Preview
+  title="Controls and fields"
+  code={`<div style="display:grid;gap:var(--tp-space-4);inline-size:min(100%, 22rem)">
+  <tp-mo-glow-border>
+    <tp-input label="Station name" placeholder="North pier"></tp-input>
+  </tp-mo-glow-border>
+  <tp-mo-glow-border>
+    <tp-text-area label="Observation notes" rows="3"></tp-text-area>
+  </tp-mo-glow-border>
+  <div style="display:flex;gap:var(--tp-space-3)">
+    <tp-mo-glow-border><tp-button variant="outline">Export readings</tp-button></tp-mo-glow-border>
+    <tp-mo-glow-border><tp-button>Calibrate</tp-button></tp-mo-glow-border>
+  </div>
+</div>`}
+/>
+
+### Comets
+
+With `trigger="always"` the glow runs on its own. Comets travel around the border continuously, always evenly spaced, each with a white-hot head and a tail that takes the colors it passes. `lights` sets how many, `light-spacing` bunches them, and `rotation` sets the way they go. `--tp-mo-glow-border-loop-delay` fades them out between laps and `--tp-mo-glow-border-loop-easing` eases each lap.
+
+<Preview
+  title="Comets"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr));gap:var(--tp-space-6)">
+  <tp-mo-glow-border trigger="always">
+    <tp-card>
+      <h3 slot="header">Relay A</h3>
+      <p style="margin:0">Two comets, the default.</p>
+    </tp-card>
+  </tp-mo-glow-border>
+  <tp-mo-glow-border trigger="always" lights="3" rotation="ccw" style="--tp-mo-glow-border-loop-delay:0.8s;--tp-mo-glow-border-loop-easing:ease-in-out">
+    <tp-card>
+      <h3 slot="header">Relay B</h3>
+      <p style="margin:0">Three comets, counterclockwise, resting between laps.</p>
+    </tp-card>
+  </tp-mo-glow-border>
+</div>`}
+/>
+
+### Sweep, pulse and glint
+
+`motion` picks what the glow does, and a named motion plays on its own. `sweep` lights the whole border and turns its colors around it, `pulse` makes the whole glow breathe, and `glint` sends a band of light across the surface once a lap, like a reflection. Motions combine: `sweep pulse` turns and breathes.
+
+<Preview
+  title="Sweep, pulse and glint"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr));gap:var(--tp-space-6)">
+  <tp-mo-glow-border motion="sweep">
+    <tp-card>
+      <h3 slot="header">Syncing</h3>
+      <p style="margin:0">Uploading 18 of 42 readings.</p>
+    </tp-card>
+  </tp-mo-glow-border>
+  <tp-mo-glow-border motion="pulse">
+    <tp-card>
+      <h3 slot="header">Listening</h3>
+      <p style="margin:0">Waiting for the next buoy signal.</p>
+    </tp-card>
+  </tp-mo-glow-border>
+  <tp-mo-glow-border motion="glint" style="--tp-mo-glow-border-loop-delay:1.5s">
+    <tp-card>
+      <h3 slot="header">New report</h3>
+      <p style="margin:0">Tide tables for November are ready.</p>
+    </tp-card>
+  </tp-mo-glow-border>
+</div>`}
+/>
+
+### Hover and focus
+
+`trigger="hover"` runs the motion while the surface is hovered, and `trigger="focus"` while focus is inside it, fading in and out. `trigger="none"` keeps the glow off.
+
+<Preview
+  title="Hover and focus"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(14rem, 1fr));gap:var(--tp-space-6);align-items:start">
+  <tp-mo-glow-border trigger="hover">
+    <tp-card>
+      <h3 slot="header">Harbor cam</h3>
+      <p style="margin:0">Hover to light the frame.</p>
+    </tp-card>
+  </tp-mo-glow-border>
+  <tp-mo-glow-border trigger="focus" motion="sweep">
+    <tp-input label="Call sign" placeholder="Focus to light the field"></tp-input>
+  </tp-mo-glow-border>
+</div>`}
+/>
+
+### Fading
+
+The glow fades in and out over `--tp-mo-glow-border-fade-duration` with `--tp-mo-glow-border-fade-easing`. `--tp-mo-glow-border-fade-out-delay` keeps it lit for a moment after the light leaves, holding where it last shone; a light that comes back fades in at once and never waits. `--tp-mo-glow-border-fill` adds a wash of the light's color inside the surface.
+
+<Preview
+  title="Lingering light"
+  code={`<tp-mo-glow-border track-reach="200" style="inline-size:min(100%, 24rem);--tp-mo-glow-border-fade-out-delay:600ms;--tp-mo-glow-border-fade-duration:700ms;--tp-mo-glow-border-fade-easing:ease-out;--tp-mo-glow-border-fill:0.12">
+  <tp-card>
+    <h3 slot="header">Lighthouse</h3>
+    <p style="margin:0">Leave the edge: the light lingers, then fades.</p>
+  </tp-card>
+</tp-mo-glow-border>`}
+/>
+
+### Colors
+
+`--tp-mo-glow-border-colors` takes the colors to spread around the border, each blending into the next along the hue circle and the last back into the first; `--tp-mo-glow-border-angle` sets where the first one sits. Neighboring hues blend best, like the warm chart colors on the plan below; a single color, like the ring color on the prompt, lights the whole line in that color. `--tp-mo-glow-border-core` is the color the line turns toward where the light is hottest: white on dark color schemes and none on light ones by default. `--tp-mo-glow-border-width`, `--tp-mo-glow-border-spread` and `--tp-mo-glow-border-intensity` set the line, the bloom and the strength.
+
+<Preview
+  title="Custom colors"
+  align="stretch"
+  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(15rem, 1fr));gap:var(--tp-space-6);align-items:center">
+  <tp-mo-glow-border track-reach="220" style="--tp-mo-glow-border-colors:var(--tp-chart-4), var(--tp-chart-5), var(--tp-chart-1);--tp-mo-glow-border-fill:0.08">
+    <tp-card>
+      <h3 slot="header" style="margin:0">Observer</h3>
+      <p slot="description" style="margin:0">For crews logging every tide.</p>
+      <tp-badge slot="action" variant="secondary">Popular</tp-badge>
+      <p style="margin:0;font-size:var(--tp-text-2xl);font-weight:var(--tp-font-semibold)">$18 <span style="font-size:var(--tp-text-sm);font-weight:var(--tp-font-normal);color:var(--tp-muted-foreground)">per month</span></p>
+      <tp-button slot="footer" style="inline-size:100%">Start observing</tp-button>
+    </tp-card>
+  </tp-mo-glow-border>
+  <tp-mo-glow-border trigger="always" lights="1" style="--tp-mo-glow-border-colors:var(--tp-ring)">
+    <tp-input-group>
+      <tp-input label="Ask the harbor log" placeholder="When is the next high tide?"></tp-input>
+      <tp-button slot="action">Send</tp-button>
+    </tp-input-group>
+  </tp-mo-glow-border>
+</div>`}
+/>
+
+### Light sources
+
+The light follows the pointer by default. `track-target` names an element whose center lights the border instead, followed as it moves, and the `trackPoint` property takes a point in viewport coordinates. `track-reach` sets how far the light carries.
+
+<Preview
+  title="Lit by an element"
+  code={`<div style="display:grid;grid-template-columns:auto 1fr;gap:var(--tp-space-4);align-items:center;inline-size:min(100%, 24rem)">
+  <tp-status-dot id="border-demo-beacon" variant="success" label="Beacon online"></tp-status-dot>
+  <tp-mo-glow-border track-target="border-demo-beacon" track-reach="200">
+    <tp-card>
+      <h3 slot="header">Beacon 12</h3>
+      <p style="margin:0">Lit from the beacon beside it.</p>
+    </tp-card>
+  </tp-mo-glow-border>
+</div>`}
+/>
+
+### Limits
+
+- Glow border draws over one surface, its first child element.
+- The bloom reaches outside the surface, so an ancestor that clips its overflow cuts it off.
+- An element light source is measured on every frame while the border is in view.

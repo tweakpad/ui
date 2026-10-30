@@ -528,14 +528,21 @@ const examples = {
   'tp-mo-text-stroke': () => html`
     <h3><tp-mo-text-stroke split="chars">Northern lights</tp-mo-text-stroke></h3>
   `,
-  'tp-mo-border': () => html`
-    <tp-mo-border>
+  'tp-mo-glow-border': () => html`
+    <tp-mo-glow-border>
       <tp-card>
         <h3 slot="header">Tide station 7</h3>
         <span slot="description">Move the pointer toward the edge.</span>
         <p>Water level 2.4 m and rising.</p>
       </tp-card>
-    </tp-mo-border>
+    </tp-mo-glow-border>
+  `,
+  'tp-mo-segment-border': () => html`
+    <tp-mo-segment-border>
+      <tp-button variant="outline">Reserve a mooring</tp-button>
+      <tp-mo-border-segment draw="0% 0%, 0% 50%"></tp-mo-border-segment>
+      <tp-mo-border-segment draw="100% 100%, 50% 100%"></tp-mo-border-segment>
+    </tp-mo-segment-border>
   `,
   'tp-scroll-trigger': () => html`
     <tp-scroll-trigger stagger="150" reveal="fade up">

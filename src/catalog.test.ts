@@ -36,7 +36,8 @@ describe('public catalog', () => {
         ).toBe(true);
     expect(catalogFolder({ tagName: 'tp-mo-text-split' })).toBe('motion/text');
     expect(catalogFolder({ tagName: 'tp-mo-text-stroke' })).toBe('motion/text');
-    expect(catalogFolder({ tagName: 'tp-mo-border' })).toBe('motion/surface');
+    expect(catalogFolder({ tagName: 'tp-mo-glow-border' })).toBe('motion/surface');
+    expect(catalogFolder({ tagName: 'tp-mo-segment-border' })).toBe('motion/surface');
     expect(catalogFolder({ tagName: 'tp-button' })).toBe('components');
   });
 });

@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Segment border verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        max-width: 960px;
+        margin: 24px auto;
+        padding: 16px;
+        display: grid;
+        gap: 40px;
+      }
+      h1.fixture {
+        font-size: 1.25rem;
+        margin: 0;
+      }
+      section.case {
+        display: grid;
+        gap: 12px;
+      }
+      section.case > h2.label {
+        font-size: 0.875rem;
+        margin: 0;
+        color: var(--tp-muted-foreground);
+        font-weight: 500;
+      }
+      .flow {
+        margin: 0;
+        padding: 8px 12px;
+        border: 1px dashed var(--tp-border);
+        border-radius: var(--tp-radius-md);
+        font-size: 0.875rem;
+        color: var(--tp-muted-foreground);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 16px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 24px;
+      }
+      .plain {
+        padding: 16px;
+        border: 2px solid var(--tp-border);
+        border-radius: 12px 4px;
+      }
+      .spacer {
+        block-size: 80vh;
+        display: grid;
+        place-items: center;
+        color: var(--tp-muted-foreground);
+        font-size: 0.75rem;
+        border: 1px dashed var(--tp-border);
+        border-radius: var(--tp-radius-lg);
+      }
+      .beacon {
+        position: absolute;
+        inline-size: 12px;
+        block-size: 12px;
+        border-radius: 50%;
+        background: var(--tp-ring);
+      }
+      .orbit {
+        position: relative;
+        block-size: 220px;
+        display: grid;
+        place-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 class="fixture">Segment border verification</h1>
+
+      <section class="case" id="case-segments">
+        <h2 class="label">
+          Segments: hover meet, wrap at rest, glowing exit path, always scanner, focus, invalid,
+          round cap at zero
+        </h2>
+        <div class="row">
+          <tp-mo-segment-border id="seg-button">
+            <tp-button variant="outline">Join the waitlist</tp-button>
+            <tp-mo-border-segment
+              draw="0% 0%, 0% 50%"
+              duration="420ms"
+              easing="ease-out"
+            ></tp-mo-border-segment>
+            <tp-mo-border-segment
+              draw="100% 100%, 50% 100%"
+              duration="420ms"
+              delay="60"
+              easing="ease-out"
+            ></tp-mo-border-segment>
+          </tp-mo-segment-border>
+        </div>
+        <div class="grid">
+          <tp-mo-segment-border id="seg-wrap" trigger="none"
+            ><tp-card
+              ><h3 slot="header">Wrap at rest</h3>
+              <p>90% to 110%.</p></tp-card
+            ><tp-mo-border-segment
+              draw="90% 110%"
+              style="--tp-mo-border-segment-width: 2px"
+            ></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="seg-leave"
+            ><tp-card
+              ><h3 slot="header">Glowing exit</h3>
+              <p>Enters at the top, leaves at the far side.</p></tp-card
+            ><tp-mo-border-segment
+              glow
+              origin="top"
+              draw="0% 0%, -25% 25%"
+              leave="50% 50%"
+              duration="600"
+            ></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="seg-scanner" trigger="always"
+            ><tp-card
+              ><h3 slot="header">Scanner</h3>
+              <p>Loops forever.</p></tp-card
+            ><tp-mo-border-segment
+              glow
+              repeat="infinite"
+              draw="0% 12%, 100% 112%"
+              duration="2400"
+              easing="linear"
+            ></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="seg-focus" trigger="focus"
+            ><tp-input label="Harbor code" placeholder="Focus me"></tp-input
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%" duration="500"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="seg-invalid"
+            ><tp-card
+              ><h3 slot="header">Invalid</h3>
+              <p>draw="half".</p></tp-card
+            ><tp-mo-border-segment draw="half"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border
+            id="seg-round"
+            style="--tp-mo-border-segment-cap: round; --tp-mo-border-segment-width: 3px"
+            ><tp-card
+              ><h3 slot="header">Round cap</h3>
+              <p>No dot at rest.</p></tp-card
+            ><tp-mo-border-segment draw="0% 0%, 0% 40%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+        </div>
+      </section>
+
+      <section class="case" id="case-surfaces">
+        <h2 class="label">Compatible surfaces, each with a hover segment</h2>
+        <div class="row">
+          <tp-mo-segment-border id="s-button"
+            ><tp-button variant="outline">Outline</tp-button
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-button-default"
+            ><tp-button>Default</tp-button
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-button-xs"
+            ><tp-button variant="outline" size="xs">Extra small</tp-button
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-button-lg"
+            ><tp-button variant="outline" size="lg">Large</tp-button
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-toggle"
+            ><tp-toggle variant="outline">Pin</tp-toggle
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-native-select"
+            ><tp-native-select aria-label="Region"
+              ><option>North</option>
+              <option>South</option></tp-native-select
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+        </div>
+        <div class="grid">
+          <tp-mo-segment-border id="s-input"
+            ><tp-input label="Station name" placeholder="Pier 7"></tp-input
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-input-invalid"
+            ><tp-input label="Required" required invalid></tp-input
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-text-area"
+            ><tp-text-area label="Notes"></tp-text-area
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-select"
+            ><tp-select label="Unit" placeholder="Choose"
+              ><tp-select-option value="m">Meters</tp-select-option
+              ><tp-select-option value="ft">Feet</tp-select-option></tp-select
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-input-group"
+            ><tp-input-group
+              ><span slot="inline-start">m</span
+              ><tp-input aria-label="Depth"></tp-input></tp-input-group
+            ><tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-plain"
+            ><div class="plain">A plain element with its own border</div>
+            <tp-mo-border-segment draw="0% 0%, 0% 100%"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="s-none" style="padding: 16px"
+            >Text without a surface child<tp-mo-border-segment
+              draw="0% 0%, 0% 100%"
+            ></tp-mo-border-segment
+          ></tp-mo-segment-border>
+        </div>
+        <p class="flow">Below the surfaces.</p>
+      </section>
+
+      <section class="case" id="case-drawin">
+        <h2 class="label">Drawn in once in view: below a spacer, track off</h2>
+        <div class="spacer">Scroll: the cards below draw in only once they are in view</div>
+        <div
+          class="grid"
+          style="
+            --tp-mo-segment-border-color: transparent;
+            --tp-mo-border-segment-color: var(--tp-ring);
+            --tp-mo-border-segment-width: 1.5px;
+          "
+        >
+          <tp-mo-segment-border id="drawin-1" trigger="always"
+            ><tp-card size="sm"
+              ><h3 slot="header">Harbor</h3>
+              <p>Start at the tide board.</p></tp-card
+            ><tp-mo-border-segment duration="900"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+          <tp-mo-segment-border id="drawin-2" trigger="always"
+            ><tp-card size="sm"
+              ><h3 slot="header">Breakwater</h3>
+              <p>1.4 km along the wall.</p></tp-card
+            ><tp-mo-border-segment duration="900" delay="300"></tp-mo-border-segment
+          ></tp-mo-segment-border>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>
