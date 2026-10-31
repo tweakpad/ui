@@ -14,6 +14,25 @@ export interface PopupViewportState {
   readonly height: number;
 }
 
+const lengths = (style: CSSStyleDeclaration, names: readonly string[]): number =>
+  names.reduce((sum, name) => sum + (parseFloat(style.getPropertyValue(name)) || 0), 0);
+
+/** The layout border box, sub-pixel like an observer entry (offsetWidth rounds it). */
+function layoutBox(style: CSSStyleDeclaration): { width: number; height: number } | null {
+  const width = parseFloat(style.width),
+    height = parseFloat(style.height);
+  if (!Number.isFinite(width) || !Number.isFinite(height)) return null;
+  if (style.boxSizing === 'border-box') return { width, height };
+  return {
+    width:
+      width +
+      lengths(style, ['padding-left', 'padding-right', 'border-left-width', 'border-right-width']),
+    height:
+      height +
+      lengths(style, ['padding-top', 'padding-bottom', 'border-top-width', 'border-bottom-width']),
+  };
+}
+
 /** Preserve keyed payload content while the prior view finishes its actual exit. */
 export class PopupViewportController implements ReactiveController {
   current: PopupViewportEntry | null = null;
@@ -22,6 +41,7 @@ export class PopupViewportController implements ReactiveController {
   #currentElement: HTMLElement | null = null;
   #previousElement: HTMLElement | null = null;
   #observer: ResizeObserver | null = null;
+  #frame = 0;
   #width = 0;
   #height = 0;
   readonly #exit: PresenceController;
@@ -72,35 +92,53 @@ export class PopupViewportController implements ReactiveController {
   setElements(current: HTMLElement | null, previous: HTMLElement | null): void {
     this.#previousElement = previous;
     if (current === this.#currentElement) return;
-    this.#observer?.disconnect();
+    this.#disconnect();
     this.#currentElement = current;
     const view = current?.ownerDocument.defaultView;
     this.#observer =
-      view && current ? new view.ResizeObserver(([entry]) => this.measure(entry)) : null;
+      view && current ? new view.ResizeObserver(([entry]) => this.#observed(entry!)) : null;
     if (current) this.#observer?.observe(current);
     this.measure();
+  }
+  // Sizing inside the observer's delivery resizes the positioner, an ancestor of the observed view,
+  // which the positioning observer could then only see through a loop error: size it next frame.
+  #observed(entry: ResizeObserverEntry): void {
+    const view = this.#currentElement?.ownerDocument.defaultView;
+    if (!view) return;
+    view.cancelAnimationFrame(this.#frame);
+    this.#frame = view.requestAnimationFrame(() => {
+      this.#frame = 0;
+      if (entry.target === this.#currentElement) this.measure(entry);
+    });
+  }
+  #disconnect(): void {
+    this.#observer?.disconnect();
+    this.#observer = null;
+    if (this.#frame)
+      this.#currentElement?.ownerDocument.defaultView?.cancelAnimationFrame(this.#frame);
+    this.#frame = 0;
   }
   /** Reads the current view's size now; the observer keeps it current afterwards. */
   measure(entry?: ResizeObserverEntry): void {
     const element = this.#currentElement;
+    const elementStyle = element && element.ownerDocument.defaultView?.getComputedStyle(element);
     // Presence transforms change painted bounds, not the layout space required
     // by the content. Measuring them here clips the settled viewport.
     const size = entry?.borderBoxSize[0];
-    const vertical =
-      element &&
-      element.ownerDocument.defaultView
-        ?.getComputedStyle(element)
-        .writingMode.startsWith('vertical');
+    const vertical = elementStyle?.writingMode.startsWith('vertical');
     const box = size
       ? {
           width: vertical ? size.blockSize : size.inlineSize,
           height: vertical ? size.inlineSize : size.blockSize,
         }
-      : element
-        ? { width: element.offsetWidth, height: element.offsetHeight }
+      : elementStyle
+        ? layoutBox(elementStyle)
         : null;
     if (!box || (!box.width && !box.height)) return;
-    if (box.width === this.#width && box.height === this.#height) return;
+    // Observer sizes are sub-pixel: a read that rounded them would make the first notification
+    // resize the positioner again.
+    if (Math.abs(box.width - this.#width) < 0.01 && Math.abs(box.height - this.#height) < 0.01)
+      return;
     this.#width = box.width;
     this.#height = box.height;
     const viewport = this.viewport();
@@ -112,8 +150,7 @@ export class PopupViewportController implements ReactiveController {
     const view = viewport?.ownerDocument.defaultView;
     if (surface && viewport && view) {
       const style = view.getComputedStyle(viewport);
-      const extent = (...names: string[]) =>
-        names.reduce((sum, name) => sum + (parseFloat(style.getPropertyValue(name)) || 0), 0);
+      const extent = (...names: string[]) => lengths(style, names);
       const inline = extent(
         'border-left-width',
         'border-right-width',
@@ -129,11 +166,12 @@ export class PopupViewportController implements ReactiveController {
       surface.style.setProperty('--tp-positioner-width', `${box.width + inline}px`);
       surface.style.setProperty('--tp-positioner-height', `${box.height + block}px`);
     }
-    this.host.requestUpdate();
+    // A host that measures inside its own update (setElements, a late remeasure) is already
+    // rendering with this size; only an observed resize arrives between updates.
+    if (entry) this.host.requestUpdate();
   }
   hostDisconnected(): void {
-    this.#observer?.disconnect();
-    this.#observer = null;
+    this.#disconnect();
     this.#currentElement = null;
     this.#previousElement = null;
   }

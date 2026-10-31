@@ -8,6 +8,8 @@ export interface LaneChild {
   tag?: string;
   props: Record<string, unknown>;
   text?: string;
+  /** Children of the child, after its text. */
+  children?: LaneChild[];
 }
 
 export interface LaneRow {
@@ -24,6 +26,18 @@ export interface LaneRow {
   children?: LaneChild[];
   /** Milliseconds a proposal needs to settle (opening motion). */
   settle?: number;
+  /**
+   * The lane has no owner-held mode: an accepted proposal always commits, and an owner rejects it
+   * by cancelling the `tp-<lane>-change` event (Accordion, Collapsible, Description list).
+   */
+  cancelable?: boolean;
+  /**
+   * The proposal follows a link the owner routes: every owner prevents the original click, and the
+   * lane has no uncontrolled mode (Pagination).
+   */
+  routed?: boolean;
+  /** Reads the committed lane value, when it is not the lane property itself. */
+  read?: (element: HTMLElement) => unknown;
 }
 
 type Setter = Record<string, (...args: unknown[]) => unknown>;
@@ -32,6 +46,27 @@ const call =
   (element: HTMLElement) =>
     void (element as unknown as Setter)[method]!(...args);
 const trigger: LaneChild = { binding: 'Button', props: { slot: 'trigger' }, text: 'Open' };
+/** Clicks the first match of each selector, entering one shadow root per step. */
+const pressIn =
+  (...path: string[]) =>
+  (element: HTMLElement) => {
+    let node: HTMLElement | null = element;
+    for (const selector of path)
+      node = (node?.shadowRoot ?? node)?.querySelector<HTMLElement>(selector) ?? null;
+    node!.click();
+  };
+const stepSchema = {
+  nodes: [
+    {
+      type: 'step',
+      label: 'Step',
+      ports: [
+        { id: 'in', direction: 'input' },
+        { id: 'out', direction: 'output' },
+      ],
+    },
+  ],
+};
 
 export const laneRows: LaneRow[] = [
   {
@@ -206,6 +241,207 @@ export const laneRows: LaneRow[] = [
     initial: '#336699',
     propose: call('setValue', '#993366'),
     props: { label: 'Fill' },
+  },
+  {
+    entry: 'tp-accordion',
+    binding: 'Accordion',
+    lane: 'value',
+    cancelable: true,
+    initial: ['gear'],
+    propose: (element) =>
+      pressIn(
+        'tp-collapsible',
+        'button',
+      )(element.querySelectorAll<HTMLElement>('tp-accordion-item')[1]!),
+    children: [
+      {
+        binding: 'AccordionItem',
+        props: { value: 'gear' },
+        children: [{ tag: 'span', props: { slot: 'label' }, text: 'What gear do I need?' }],
+      },
+      {
+        binding: 'AccordionItem',
+        props: { value: 'permits' },
+        children: [{ tag: 'span', props: { slot: 'label' }, text: 'Do I need a permit?' }],
+      },
+    ],
+    settle: 300,
+  },
+  {
+    entry: 'tp-collapsible',
+    binding: 'Collapsible',
+    lane: 'open',
+    cancelable: true,
+    initial: false,
+    propose: pressIn('button'),
+    children: [
+      { tag: 'span', props: { slot: 'label' }, text: 'Route details' },
+      { tag: 'p', props: {}, text: '14 km, 600 m of climbing.' },
+    ],
+    settle: 300,
+  },
+  {
+    entry: 'tp-theme-switcher',
+    binding: 'ThemeSwitcher',
+    lane: 'value',
+    initial: 'light',
+    propose: pressIn('tp-switch', 'button, input, [role="switch"]'),
+    props: { storageKey: null, label: 'Dark mode' },
+  },
+  {
+    entry: 'tp-calendar',
+    binding: 'Calendar',
+    lane: 'value',
+    // `value` is the owner's selection; `selection` is the committed one in either mode.
+    read: (element) => (element as unknown as { selection: unknown }).selection,
+    initial: '2026-06-12',
+    propose: call('setValue', '2026-06-15'),
+    props: { label: 'Arrival', today: '2026-06-08' },
+  },
+  {
+    entry: 'tp-command-palette',
+    binding: 'CommandPalette',
+    lane: 'open',
+    initial: false,
+    propose: call('setOpen', true),
+    props: {
+      label: 'Commands',
+      items: [
+        { value: 'new-trip', label: 'New trip' },
+        { value: 'share', label: 'Share route' },
+      ],
+    },
+    settle: 400,
+  },
+  {
+    entry: 'tp-navigation-menu',
+    binding: 'NavigationMenu',
+    lane: 'value',
+    initial: '',
+    propose: (element) => element.querySelector<HTMLElement>('tp-button')!.click(),
+    props: { 'aria-label': 'Main' },
+    children: [
+      {
+        binding: 'NavigationMenuItem',
+        props: { value: 'guides' },
+        children: [
+          { binding: 'Button', props: { slot: 'trigger', variant: 'ghost' }, text: 'Guides' },
+          { tag: 'div', props: { slot: 'content' }, text: 'Trail guides by region' },
+        ],
+      },
+    ],
+    settle: 400,
+  },
+  {
+    entry: 'tp-pagination',
+    binding: 'Pagination',
+    lane: 'page',
+    routed: true,
+    initial: 4,
+    propose: pressIn('[part~="pagination-next"]'),
+    props: { pages: 12, label: 'Results' },
+  },
+  {
+    entry: 'tp-menubar',
+    binding: 'Menubar',
+    lane: 'value',
+    initial: '',
+    propose: (element) => element.querySelector<HTMLElement>('tp-button')!.click(),
+    props: { 'aria-label': 'Editor' },
+    children: [
+      {
+        binding: 'Menu',
+        props: { value: 'file', label: 'File' },
+        children: [
+          { binding: 'Button', props: { slot: 'trigger', variant: 'ghost' }, text: 'File' },
+          { binding: 'MenuItem', props: { value: 'export' }, text: 'Export route' },
+        ],
+      },
+    ],
+    settle: 400,
+  },
+  {
+    entry: 'tp-description-list',
+    binding: 'DescriptionList',
+    lane: 'open',
+    cancelable: true,
+    initial: false,
+    propose: pressIn('tp-button'),
+    props: { limit: 1 },
+    children: [
+      { binding: 'DescriptionListItem', props: { label: 'Distance' }, text: '14 km' },
+      { binding: 'DescriptionListItem', props: { label: 'Climb' }, text: '600 m' },
+    ],
+    settle: 300,
+  },
+  {
+    entry: 'tp-autocomplete',
+    binding: 'Autocomplete',
+    lane: 'open',
+    initial: false,
+    propose: call('setOpen', true),
+    props: {
+      label: 'Trailhead',
+      items: [
+        { value: 'alder', label: 'Alder Creek' },
+        { value: 'birch', label: 'Birch Point' },
+      ],
+    },
+    settle: 400,
+  },
+  {
+    entry: 'tp-easing-editor',
+    binding: 'EasingEditor',
+    lane: 'value',
+    initial: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+    propose: call('setValue', 'cubic-bezier(0.42, 0, 0.58, 1)'),
+    props: { label: 'Fade in' },
+  },
+  {
+    entry: 'tp-emoji-picker',
+    binding: 'EmojiPicker',
+    lane: 'value',
+    initial: '😀',
+    propose: call('setValue', '🎉'),
+    props: { label: 'Reaction' },
+  },
+  {
+    entry: 'tp-flow',
+    binding: 'Flow',
+    lane: 'value',
+    initial: { nodes: [{ id: 'a', type: 'step', position: { x: 0, y: 0 } }], edges: [] },
+    propose: call('setValue', {
+      nodes: [
+        { id: 'a', type: 'step', position: { x: 0, y: 0 } },
+        { id: 'b', type: 'step', position: { x: 240, y: 0 } },
+      ],
+      edges: [],
+    }),
+    props: {
+      label: 'Pipeline',
+      schema: stepSchema,
+      style: { display: 'block', blockSize: '240px' },
+    },
+    settle: 200,
+  },
+  {
+    entry: 'tp-map',
+    binding: 'Map',
+    lane: 'selectedPin',
+    initial: 'camp',
+    propose: call('selectPin', 'lodge'),
+    props: { label: 'Camps', style: { display: 'block', blockSize: '200px' } },
+    children: [
+      {
+        binding: 'MapPin',
+        props: { value: 'camp', latitude: 46.5, longitude: 8.0, label: 'Camp' },
+      },
+      {
+        binding: 'MapPin',
+        props: { value: 'lodge', latitude: 46.6, longitude: 8.1, label: 'Lodge' },
+      },
+    ],
+    settle: 200,
   },
 ];
 

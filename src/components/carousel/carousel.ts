@@ -380,6 +380,25 @@ export class TpCarousel<T = unknown> extends TpElement {
     super.disconnectedCallback();
   }
   #initializeQueued = false;
+  #controllerUpdate: { ownerPublication: boolean } | undefined;
+  /**
+   * The controller measures the committed render and publishes a snapshot that renders again, so
+   * an update this element asks for runs once its own update has finished; requests in one update
+   * coalesce, and a full update wins over an owner publication.
+   */
+  #queueControllerUpdate(ownerPublication = false): void {
+    const queued = this.#controllerUpdate;
+    if (queued) {
+      queued.ownerPublication &&= ownerPublication;
+      return;
+    }
+    const request = (this.#controllerUpdate = { ownerPublication });
+    queueMicrotask(() => {
+      if (this.#controllerUpdate !== request) return;
+      this.#controllerUpdate = undefined;
+      void this.#controller?.update(request.ownerPublication);
+    });
+  }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (!this.#controller) {
@@ -398,7 +417,7 @@ export class TpCarousel<T = unknown> extends TpElement {
     }
     if (changed.has('effect') || changed.has('options')) {
       this.#applyEffect();
-      if (changed.has('effect')) void this.#controller.update();
+      if (changed.has('effect')) this.#queueControllerUpdate();
     }
     if (
       [
@@ -419,8 +438,8 @@ export class TpCarousel<T = unknown> extends TpElement {
       ].some((key) => changed.has(key as keyof TpCarousel<T>))
     ) {
       this.#collect();
-      void this.#controller.update();
-    } else if (changed.has('value')) void this.#controller.update(true);
+      this.#queueControllerUpdate();
+    } else if (changed.has('value')) this.#queueControllerUpdate(true);
     if (changed.has('onControllerChange') && this.#lastCallback !== this.onControllerChange)
       this.#notify(this.controller);
     this.#bar.measure();

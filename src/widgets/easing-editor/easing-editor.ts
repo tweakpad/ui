@@ -1782,6 +1782,7 @@ export class TpEasingEditor extends TpFormElement<string> {
       ${select}<tp-input-group class="output-group" part="easing-editor-output-group"
         ><span slot="prefix" class="format">${this.#activeAdapter()?.label ?? ''}</span
         ><tp-easing-editor-expression
+          data-field-control
           class="output"
           exportparts="easing-editor-output, easing-editor-output-token"
           .text=${output}

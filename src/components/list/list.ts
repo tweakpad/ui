@@ -20,7 +20,11 @@ export class TpList extends TpElement {
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [TpListItem, TpListSeparator];
   }
-  static override properties = { ...TpElement.properties, ariaLabel: { attribute: 'aria-label' } };
+  static override properties = {
+    ...TpElement.properties,
+    // The host is the list, so a name set as a property reaches assistive technology too.
+    ariaLabel: { attribute: 'aria-label', reflect: true },
+  };
   /** The name of the list, which assistive technology reads before its rows. */
   override ariaLabel: string | null = null;
   static override styles = [TpElement.styles, stackGroupStyles];

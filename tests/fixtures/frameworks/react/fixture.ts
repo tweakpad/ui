@@ -11,6 +11,7 @@ import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import type * as Bindings from '../../../../src/react/index.js';
 import { laneRows, sameValue, type LaneChild, type LaneRow } from '../lanes.js';
+import { carries, eventProp, propRows, type PropRow } from '../props.js';
 import type { TpButton } from '../../../../src/components/button/button.js';
 import type { TpCheckbox } from '../../../../src/components/checkbox/checkbox.js';
 import type { TpDialog } from '../../../../src/components/dialog/dialog.js';
@@ -487,9 +488,12 @@ const allBindings = { ...bindings, ...widgetBindings } as unknown as Record<
 >;
 const capitalized = (name: string) => name[0]!.toUpperCase() + name.slice(1);
 const laneChild = (child: LaneChild, index: number): ReactElement =>
-  child.binding
-    ? h(allBindings[child.binding]!, { key: index, ...child.props }, child.text)
-    : h(child.tag!, { key: index, ...child.props }, child.text);
+  h(
+    child.binding ? allBindings[child.binding]! : child.tag!,
+    { key: index, ...child.props },
+    child.text,
+    ...(child.children?.map(laneChild) ?? []),
+  );
 
 /**
  * One lane row: a controlled owner that writes the proposal back publishes it, one that does
@@ -507,8 +511,13 @@ async function lane(row: LaneRow): Promise<Result> {
     await new Promise((resolve) => setTimeout(resolve, row.settle ?? 0));
     await settle();
   };
-  const read = (host: HTMLElement) =>
-    (host.querySelector(row.entry) as unknown as Record<string, unknown>)[row.lane];
+  const read = (host: HTMLElement) => {
+    const element = host.querySelector<HTMLElement>(row.entry)!;
+    return row.read ? row.read(element) : (element as unknown as Record<string, unknown>)[row.lane];
+  };
+  const route = (event: CustomEvent<{ sourceEvent?: Event | undefined }>) => {
+    if (row.routed) event.detail.sourceEvent?.preventDefault();
+  };
   try {
     let owned: unknown = row.initial;
     let calls = 0;
@@ -522,6 +531,7 @@ async function lane(row: LaneRow): Promise<Result> {
           [row.lane]: value,
           [callback]: (event: CustomEvent<{ value: unknown }>) => {
             calls++;
+            route(event);
             setValue(event.detail.value);
           },
         },
@@ -540,7 +550,18 @@ async function lane(row: LaneRow): Promise<Result> {
     await unmount(accepting);
 
     const rejecting = await mount(
-      h(Binding, { ...row.props, [row.lane]: row.initial, [callback]: () => undefined }, children),
+      h(
+        Binding,
+        {
+          ...row.props,
+          [row.lane]: row.initial,
+          // A cancelable lane is rejected by cancelling the proposal, not by ignoring it.
+          ...(row.cancelable
+            ? { [eventProp(`tp-${row.lane}-change`)]: (event: Event) => event.preventDefault() }
+            : { [callback]: route }),
+        },
+        children,
+      ),
     );
     row.propose(rejecting.host.querySelector(row.entry)!);
     await wait();
@@ -551,18 +572,20 @@ async function lane(row: LaneRow): Promise<Result> {
     );
     await unmount(rejecting);
 
-    const free = await mount(
-      h(Binding, { ...row.props, [`default${capitalized(row.lane)}`]: row.initial }, children),
-    );
-    check('default<Lane> applies', sameValue(read(free.host), row.initial), read(free.host));
-    row.propose(free.host.querySelector(row.entry)!);
-    await wait();
-    check(
-      'uncontrolled, the proposal commits',
-      !sameValue(read(free.host), row.initial),
-      read(free.host),
-    );
-    await unmount(free);
+    if (!row.routed) {
+      const free = await mount(
+        h(Binding, { ...row.props, [`default${capitalized(row.lane)}`]: row.initial }, children),
+      );
+      check('default<Lane> applies', sameValue(read(free.host), row.initial), read(free.host));
+      row.propose(free.host.querySelector(row.entry)!);
+      await wait();
+      check(
+        'uncontrolled, the proposal commits',
+        !sameValue(read(free.host), row.initial),
+        read(free.host),
+      );
+      await unmount(free);
+    }
   } catch (error) {
     check('runs without throwing', false, String(error));
   }
@@ -576,12 +599,106 @@ async function lane(row: LaneRow): Promise<Result> {
   };
 }
 
+/**
+ * One props row: the element is defined and the ref is the element, its properties arrive, a
+ * second render's properties and children reach the same element, and an event reaches its
+ * `onTp…` prop once, with no diagnostic, warning or error.
+ */
+async function prop(row: PropRow): Promise<Result> {
+  const checks: Check[] = [];
+  const check = (name: string, passed: boolean, detail?: unknown) =>
+    checks.push({ check: name, passed, ...(passed ? {} : { detail }) });
+  const before = problems.length;
+  const Binding = allBindings[row.binding]!;
+  const wait = async () => {
+    await new Promise((resolve) => setTimeout(resolve, row.settle ?? 0));
+    await settle();
+  };
+  let element: Element | null = null;
+  let events = 0;
+  const cleanup = row.setup?.();
+  let setPhase: (phase: number) => void = () => undefined;
+  function Owner(): ReactElement {
+    const [phase, set] = useState(0);
+    setPhase = set;
+    const props = phase ? { ...row.props, ...row.update?.props } : row.props;
+    const children = (phase ? row.update?.children : undefined) ?? row.children;
+    return h(
+      Binding,
+      {
+        ...props,
+        ref: (node: Element | null) => void (element = node ?? element),
+        ...(row.event ? { [eventProp(row.event.type)]: () => events++ } : {}),
+      },
+      ...(children?.map(laneChild) ?? []),
+    );
+  }
+  try {
+    const mounted = await mount(h(Owner));
+    await wait();
+    const rendered = mounted.host.querySelector<HTMLElement>(row.entry)!;
+    check('the element is defined and rendered', !!rendered && !!customElements.get(row.entry));
+    check('the ref is the element', element === rendered);
+    const missing = Object.entries(row.props).filter(
+      ([key, value]) => !carries(rendered, key, value),
+    );
+    check(
+      'props arrive as properties',
+      !missing.length,
+      missing.map(([key]) => key),
+    );
+    if (row.text?.[0])
+      check('children arrive', !!rendered.textContent?.includes(row.text[0]), rendered.textContent);
+    if (row.update) {
+      flushSync(() => setPhase(1));
+      await wait();
+      const after = mounted.host.querySelector<HTMLElement>(row.entry)!;
+      check('the update keeps the element', after === rendered);
+      const stale = Object.entries(row.update.props ?? {}).filter(
+        ([key, value]) => !carries(after, key, value),
+      );
+      check(
+        'updated props arrive',
+        !stale.length,
+        stale.map(([key]) => key),
+      );
+      if (row.text?.[1])
+        check(
+          'updated children arrive',
+          !!after.textContent?.includes(row.text[1]),
+          after.textContent,
+        );
+    }
+    if (row.event) {
+      row.event.fire(rendered);
+      await wait();
+      check(`${eventProp(row.event.type)} receives the event once`, events === 1, events);
+    }
+    await unmount(mounted);
+  } catch (error) {
+    check('runs without throwing', false, String(error));
+  }
+  cleanup?.();
+  const unexpected = problems
+    .slice(before)
+    .filter((line) => !row.expected?.some((code) => line.startsWith(`tp-diagnostic ${code}:`)));
+  if (unexpected.length)
+    checks.push({ check: 'no diagnostics, warnings or errors', passed: false, detail: unexpected });
+  return { scenario: `props ${row.entry}`, passed: checks.every((entry) => entry.passed), checks };
+}
+
 Object.assign(window, {
   reactBindings: {
     scenarios: Object.keys(scenarios),
     run,
     smoke,
     lanes: laneRows.map((row) => row.entry),
+    props: propRows.map((row) => row.entry),
+    async prop(entry: string): Promise<Result> {
+      const row = propRows.find((candidate) => candidate.entry === entry);
+      if (!row) throw new Error(`No props row ${entry}`);
+      return prop(row);
+    },
     async lane(entry: string): Promise<Result> {
       const row = laneRows.find((candidate) => candidate.entry === entry);
       if (!row) throw new Error(`No lane row ${entry}`);

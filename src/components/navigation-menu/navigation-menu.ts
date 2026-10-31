@@ -296,6 +296,8 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
       attributes: true,
       attributeFilter: ['value', 'slot', 'disabled', 'active'],
     });
+    // Removal released the items; a menu that comes back reads them again.
+    if (this.hasUpdated) this.itemChanged();
   }
   #syncMembers(): void {
     if (this.#syncing) return;
@@ -618,7 +620,8 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    this.#syncMembers();
+    // An update that runs after removal must not register the items it just released again.
+    if (this.isConnected) this.#syncMembers();
     // The surface positioned the new view before its content existed: the item renders into the
     // container in its own update. Project and style that content now, then size the positioner
     // and place it once more in this same task, so the move is a single glide from the last place.

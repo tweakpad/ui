@@ -210,7 +210,9 @@ export class TpInputGroup extends TpElement {
   #readControl = (): void => {
     const slot = this.renderRoot.querySelector<HTMLSlotElement>('slot:not([name])');
     if (!slot) return;
-    const selector = 'tp-input,tp-text-area,input,textarea,[contenteditable="true"]';
+    // An element marked as a field control is a custom editor (Field uses the same marker).
+    const selector =
+      'tp-input,tp-text-area,input,textarea,[contenteditable="true"],[data-field-control]';
     const candidates = assignedElements(slot).flatMap((element) =>
       element.matches(selector) ? [element] : [...element.querySelectorAll<HTMLElement>(selector)],
     );
