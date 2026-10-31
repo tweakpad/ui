@@ -1,5 +1,5 @@
-import { convertColor } from './convert.js';
-import type { ColorValue } from './types.js';
+import { convertColor } from '../../../foundation/color/convert.js';
+import type { ColorValue } from '../../../foundation/color/types.js';
 
 const linear = (channel: number): number =>
   channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;

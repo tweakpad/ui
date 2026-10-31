@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { convertColor } from './convert.js';
-import { inGamut } from './gamut.js';
+import { convertColor } from '../../../foundation/color/convert.js';
+import { inGamut } from '../../../foundation/color/gamut.js';
 import {
   HARMONY_RULES,
   harmonyBaseIndex,
@@ -10,7 +10,7 @@ import {
   seedCustomHandles,
 } from './harmony.js';
 import { generateSchemeRows } from './scheme.js';
-import { color } from './types.js';
+import { color } from '../../../foundation/color/types.js';
 
 const base = { h: 0, s: 100, v: 100 };
 

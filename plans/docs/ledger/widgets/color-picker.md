@@ -34,3 +34,4 @@
 
 | Kind | A text | Reason |
 | --- | --- | --- |
+| prose | `picker="popup"` puts the panel in a Popover opened from a swatch Button | The popup trigger became a Color input (`tp-color-input`), so it is no longer a swatch Button |

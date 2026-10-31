@@ -36,7 +36,7 @@ const markers = [
   'pending',
 ] as const;
 const controls =
-  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-one-time-code-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-autocomplete,tp-toggle-group,tp-calendar,tp-file-upload,input,textarea,select,[data-field-control]';
+  'tp-input,tp-text-area,tp-native-select,tp-number-field,tp-one-time-code-field,tp-slider,tp-checkbox,tp-radio-group,tp-switch,tp-select,tp-autocomplete,tp-toggle-group,tp-calendar,tp-file-upload,tp-color-input,input,textarea,select,[data-field-control]';
 
 export const fieldSubmission = Symbol('Field submission');
 /**

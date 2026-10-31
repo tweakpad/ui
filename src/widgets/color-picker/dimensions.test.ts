@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { channelDefinitions } from './color/channels.js';
+import { channelDefinitions } from '../../foundation/color/channels.js';
 import { DEFAULT_STRINGS } from './strings.js';
 import {
   applyKeyboardStep,

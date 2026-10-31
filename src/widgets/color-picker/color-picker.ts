@@ -23,6 +23,7 @@ import { colorPickerPresentation } from '../../presentation/families/color-picke
 import { TpSlider } from '../../components/slider/slider.js';
 import type { SliderValue } from '../../components/slider/types.js';
 import { TpInput } from '../../components/input/input.js';
+import { TpColorInput } from '../../components/color-input/color-input.js';
 import { TpInputGroup } from '../../components/input-group/input-group.js';
 import { TpFieldGroup } from '../../components/field-group/field-group.js';
 import { TpSelect } from '../../components/select/select.js';
@@ -45,7 +46,7 @@ import {
   clampChannel,
   formatChannelValue,
   type ChannelDefinition,
-} from './color/channels.js';
+} from '../../foundation/color/channels.js';
 import {
   HARMONY_RULES,
   harmonyBaseIndex,
@@ -57,23 +58,27 @@ import {
 } from './color/harmony.js';
 import { contrastColor } from './color/contrast.js';
 import { ringSegments } from './palette-ring.js';
-import { parseColor } from './color/parse.js';
+import { parseColor } from '../../foundation/color/parse.js';
 import { generateSchemeRows, type SchemeRowId } from './color/scheme.js';
-import { displayColor, serializeColor } from './color/serialize.js';
+import {
+  displayColor,
+  flatGradient,
+  normalizeColorText,
+  serializeColor,
+} from '../../foundation/color/serialize.js';
 import {
   COLOR_FORMATS,
   color,
   isColorFormat,
   type ColorFormat,
   type ColorValue,
-} from './color/types.js';
+} from '../../foundation/color/types.js';
 import { channelName, channelValueText, dimensionLabel, stepForKey } from './dimensions.js';
 import { pickScreenColor, supportsEyeDropper } from './eyedropper.js';
 import {
   alphaGradient,
   areaGradient,
   channelGradient,
-  flatGradient,
   hueConicGradient,
   hueGradient,
   wheelGradient,
@@ -81,7 +86,6 @@ import {
 import {
   channelDisplayValue,
   fromHsv,
-  normalizeColorText,
   stickyHsv,
   toWorkingSpace,
   withAlpha,
@@ -190,7 +194,7 @@ const NESTED_EVENT_TYPES = [
   'tp-presence-complete',
 ] as const;
 const NESTED_HOSTS =
-  'tp-slider, tp-select, tp-input, tp-input-group, tp-field-group, tp-button, tp-button-group, tp-button-group-text, tp-copy-button, tp-tooltip, tp-label, tp-tabs, tp-toggle-group, tp-toggle, tp-popover';
+  'tp-slider, tp-select, tp-color-input, tp-input, tp-input-group, tp-field-group, tp-button, tp-button-group, tp-button-group-text, tp-copy-button, tp-tooltip, tp-label, tp-tabs, tp-toggle-group, tp-toggle, tp-popover';
 const SURFACES = 'tp-color-picker-area, tp-color-picker-wheel, tp-color-picker-triangle';
 const isView = (value: unknown): value is ColorPickerView =>
   typeof value === 'string' && (COLOR_PICKER_VIEWS as readonly string[]).includes(value);
@@ -228,6 +232,7 @@ export class TpColorPicker extends TpFormElement<string> {
       TpColorPickerWheel,
       TpColorPickerTriangle,
       TpSlider,
+      TpColorInput,
       TpInput,
       TpInputGroup,
       TpFieldGroup,
@@ -386,6 +391,10 @@ export class TpColorPicker extends TpFormElement<string> {
   #composition: object | undefined;
   #panel: HTMLElement | null = null;
   #authoredTrigger = false;
+  /** An authored Color input trigger the widget keeps in sync (uwg-cp-req-ana-trigger). */
+  #colorTrigger: TpColorInput | null = null;
+  #syncingColorTrigger = false;
+  #registeredTrigger: { element: HTMLElement; popover: TpPopover; release(): void } | undefined;
   #releaseLight: (() => void) | undefined;
   /**
    * No constituent lane event leaves this shadow root (uwg-cp-req-evt-2); the inline and popup
@@ -612,6 +621,10 @@ export class TpColorPicker extends TpFormElement<string> {
     this.#numberFields.clear();
     for (const release of this.#registeredParts.values()) release();
     this.#registeredParts.clear();
+    this.#colorTrigger?.removeEventListener('tp-value-change', this.#colorTriggerChange);
+    this.#colorTrigger = null;
+    this.#registeredTrigger?.release();
+    this.#registeredTrigger = undefined;
     super.disconnectedCallback();
   }
 
@@ -647,6 +660,8 @@ export class TpColorPicker extends TpFormElement<string> {
     this.setRequiredValidity(this.required && !this.value, this.#strings.valueMissing);
     this.#syncNumberFields();
     this.#syncComposition();
+    this.#syncColorTrigger();
+    void this.#registerAuthoredTrigger();
     void this.#registerNestedParts();
   }
 
@@ -1482,13 +1497,68 @@ export class TpColorPicker extends TpFormElement<string> {
     );
   }
 
+  /**
+   * A Color input in the trigger slot shows the widget's color and never opens the browser's
+   * picker; a value its text commits becomes the widget's own proposal.
+   */
+  #syncColorTrigger(): void {
+    const authored =
+      this.picker === 'popup' ? this.querySelector(':scope > [slot="trigger"]') : null;
+    const input = authored instanceof TpColorInput ? authored : null;
+    if (input !== this.#colorTrigger) {
+      this.#colorTrigger?.removeEventListener('tp-value-change', this.#colorTriggerChange);
+      this.#colorTrigger = input;
+      input?.addEventListener('tp-value-change', this.#colorTriggerChange);
+    }
+    if (!input) return;
+    input.picker = 'none';
+    input.format = this.format;
+    input.alpha = this.alpha;
+    input.disabled = this.effectiveDisabled;
+    if (input.value === this.value) return;
+    // The author fixed the trigger's mode: a controlled trigger takes the value, an uncontrolled
+    // one is set through its lane without the change coming back as a proposal.
+    this.#syncingColorTrigger = true;
+    try {
+      if (input.controlled) input.value = this.value;
+      else input.setValue(this.value);
+    } finally {
+      this.#syncingColorTrigger = false;
+    }
+  }
+
+  /** Registers the authored trigger once it has rendered its own control. */
+  async #registerAuthoredTrigger(): Promise<void> {
+    const popover = this.picker === 'popup' ? this.#popover : null;
+    const authored = popover ? this.querySelector<HTMLElement>(':scope > [slot="trigger"]') : null;
+    const current = this.#registeredTrigger;
+    if (current?.element === authored && current?.popover === popover) return;
+    current?.release();
+    this.#registeredTrigger = undefined;
+    if (!authored || !popover) return;
+    await (authored as Partial<{ updateComplete: Promise<unknown> }>).updateComplete;
+    if (this.#registeredTrigger || !authored.isConnected || this.#popover !== popover) return;
+    this.#registeredTrigger = {
+      element: authored,
+      popover,
+      release: popover.registerTrigger(authored),
+    };
+  }
+
+  /** Re-proposes the trigger's change on the widget's lane, and cancels it when rejected. */
+  readonly #colorTriggerChange = (event: Event): void => {
+    if (this.#syncingColorTrigger || event.target !== event.currentTarget) return;
+    const { value, reason } = (event as TpValueChangeEvent<string>).detail;
+    if (!this.setValue(value, reason, event)) event.preventDefault();
+  };
+
   #firstControl(): HTMLElement | null {
     return this.#panel?.querySelector<HTMLElement>(NESTED_HOSTS) ?? null;
   }
 
   #triggerElement(): HTMLElement | null {
     return (
-      this.renderRoot.querySelector<HTMLElement>('tp-button.trigger') ??
+      this.renderRoot.querySelector<HTMLElement>('tp-color-input.trigger') ??
       this.querySelector<HTMLElement>(':scope > [slot="trigger"]')
     );
   }
@@ -1558,50 +1628,53 @@ export class TpColorPicker extends TpFormElement<string> {
 
   #renderPopup(state: Record<string, unknown>) {
     const strings = this.#strings;
+    // An authored trigger stays in the light tree and registers with the Popover itself, so the
+    // Popover finds its control (a Color input's swatch button) for the trigger semantics.
     const trigger = this.#authoredTrigger
-      ? html`<slot name="trigger" slot="trigger"></slot>`
-      : html`<tp-button
+      ? nothing
+      : html`<tp-color-input
           slot="trigger"
           class="trigger"
           part="color-picker-trigger"
-          variant="outline"
-          size="icon"
-          aria-label=${this.label || strings.viewArea}
+          picker="none"
+          label=${this.label || strings.viewArea}
+          .format=${this.format}
+          .alpha=${this.alpha}
+          .value=${this.value}
           ?disabled=${this.effectiveDisabled}
-          >${this.#renderPreview('icon-start')}</tp-button
-        >`;
+        ></tp-color-input>`;
     // The popup renders in place (native top layer, no portal): portaled content would leave
     // this shadow root and lose the widget's structural styles and generated presentation.
-    return html`<tp-popover
-      class="popup"
-      label=${this.label || strings.viewArea}
-      .portal=${false}
-      .open=${this.#providedOpen}
-      .defaultOpen=${this.defaultOpen}
-      .initialFocus=${this.#initialFocus}
-      ?disabled=${this.effectiveDisabled}
-      @tp-open-change=${this.#openChange}
-      @tp-open-change-complete=${this.#openComplete}
-      @tp-field-value=${stop}
-      >${trigger}${this.renderPart('color-picker-popup', state, {
-        tag: 'div',
-        reference: this.#panelReference,
-        properties: {
-          part: 'color-picker-popup',
-          class: 'panel popup-panel',
-          style: {
-            // Rows besides the plane (header, controls, fields, recent strip, gaps, paddings
-            // and the Popover chrome) that the plane height cap reserves, in spacing units.
-            '--_tp-color-picker-reserve': String(this.recent.length ? 66 : 56),
-            // Width the editors row needs on one line (the editors' minimums, the row gap and
-            // the panel padding), in spacing units.
-            '--_tp-color-picker-popup-min': String(this.#editorsRowUnits()),
+    return html`${this.#authoredTrigger ? html`<slot name="trigger"></slot>` : nothing}<tp-popover
+        class="popup"
+        label=${this.label || strings.viewArea}
+        .portal=${false}
+        .open=${this.#providedOpen}
+        .defaultOpen=${this.defaultOpen}
+        .initialFocus=${this.#initialFocus}
+        ?disabled=${this.effectiveDisabled}
+        @tp-open-change=${this.#openChange}
+        @tp-open-change-complete=${this.#openComplete}
+        @tp-field-value=${stop}
+        >${trigger}${this.renderPart('color-picker-popup', state, {
+          tag: 'div',
+          reference: this.#panelReference,
+          properties: {
+            part: 'color-picker-popup',
+            class: 'panel popup-panel',
+            style: {
+              // Rows besides the plane (header, controls, fields, recent strip, gaps, paddings
+              // and the Popover chrome) that the plane height cap reserves, in spacing units.
+              '--_tp-color-picker-reserve': String(this.recent.length ? 66 : 56),
+              // Width the editors row needs on one line (the editors' minimums, the row gap and
+              // the panel padding), in spacing units.
+              '--_tp-color-picker-popup-min': String(this.#editorsRowUnits()),
+            },
+            ...this.#nestedListeners,
           },
-          ...this.#nestedListeners,
-        },
-        content: html`${this.#renderHeader()}${this.#renderViews()}${this.#renderFields()}${this.#renderRecent()}`,
-      })}</tp-popover
-    >`;
+          content: html`${this.#renderHeader()}${this.#renderViews()}${this.#renderFields()}${this.#renderRecent()}`,
+        })}</tp-popover
+      >`;
   }
 
   /**
@@ -2145,8 +2218,8 @@ export class TpColorPicker extends TpFormElement<string> {
     ></tp-slider>`;
   }
 
-  /** The preview swatch; inside the icon-size trigger Button it fills the leading mark slot. */
-  #renderPreview(slot?: string) {
+  /** The preview swatch of the inline picker. */
+  #renderPreview() {
     return this.preview
       ? this.renderPart(
           'color-picker-preview',
@@ -2157,7 +2230,6 @@ export class TpColorPicker extends TpFormElement<string> {
               part: 'color-picker-preview',
               class: 'preview',
               'aria-hidden': 'true',
-              ...(slot ? { slot } : {}),
               style: {
                 '--_tp-color-picker-paint': this.#model ? flatGradient(this.#model) : 'none',
               },

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Color input verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 24px;
+        color: var(--tp-foreground);
+        background: var(--tp-background);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+      }
+      section {
+        display: grid;
+        gap: 12px;
+        align-content: start;
+        min-width: 0;
+      }
+      .stack {
+        display: grid;
+        gap: 8px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 18px;
+        margin: 0;
+      }
+      #log {
+        font: 12px/1.4 var(--tp-font-mono);
+        white-space: pre-wrap;
+        max-block-size: 160px;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <header><h1>Color input verification</h1></header>
+    <main>
+      <section>
+        <h2>Default swatch in a Field and Form</h2>
+        <form id="form">
+          <tp-field id="field" label="Accent" description="Opens the browser's color picker.">
+            <tp-color-input id="default" name="accent" default-value="#6d5dfc"></tp-color-input>
+          </tp-field>
+          <div class="row">
+            <tp-button id="submit" type="submit">Submit</tp-button>
+            <tp-button id="reset" type="reset" variant="outline">Reset</tp-button>
+          </div>
+        </form>
+        <div class="row">
+          <tp-color-input
+            id="small"
+            size="sm"
+            label="Small"
+            default-value="#e11d48"
+          ></tp-color-input>
+          <tp-color-input id="empty" label="Empty"></tp-color-input>
+          <tp-color-input
+            id="button-swatch"
+            picker="none"
+            label="Opens another picker"
+            default-value="#0ea5e9"
+          ></tp-color-input>
+        </div>
+      </section>
+      <section>
+        <h2>Inline rows</h2>
+        <div class="stack">
+          <tp-color-input
+            id="inline"
+            variant="inline"
+            label="Fill"
+            default-value="#0f766e"
+          ></tp-color-input>
+          <tp-color-input
+            id="inline-alpha"
+            variant="inline"
+            label="Overlay"
+            format="rgb"
+            alpha
+            default-value="rgb(220 38 38 / 0.5)"
+          ></tp-color-input>
+          <tp-color-input
+            id="inline-hsl"
+            variant="inline"
+            label="Stroke"
+            format="hsl"
+            default-value="#f59e0b"
+          ></tp-color-input>
+          <tp-color-input
+            id="inline-swatch-only"
+            variant="inline"
+            label="Shadow"
+            show-value="false"
+            default-value="#1e293b"
+          ></tp-color-input>
+          <tp-color-input
+            id="inline-value-only"
+            variant="inline"
+            label="Border"
+            show-swatch="false"
+            default-value="#94a3b8"
+          ></tp-color-input>
+          <tp-color-input
+            id="inline-sm"
+            variant="inline"
+            size="sm"
+            label="Small row"
+            default-value="#7c3aed"
+          ></tp-color-input>
+          <tp-input variant="inline" label="Name" default-value="Card"></tp-input>
+          <tp-field label="Text"
+            ><tp-color-input
+              id="inline-field"
+              variant="inline"
+              default-value="#111827"
+            ></tp-color-input
+          ></tp-field>
+        </div>
+      </section>
+      <section>
+        <h2>States</h2>
+        <tp-field label="Disabled"
+          ><tp-color-input id="disabled" disabled default-value="#22c55e"></tp-color-input
+        ></tp-field>
+        <tp-field label="Read only"
+          ><tp-color-input id="readonly" readonly default-value="#f97316"></tp-color-input
+        ></tp-field>
+        <tp-field label="Required" description="Choose a color before saving.">
+          <tp-color-input id="required" required variant="inline"></tp-color-input>
+        </tp-field>
+        <tp-color-input
+          id="inline-disabled"
+          variant="inline"
+          label="Disabled row"
+          disabled
+          default-value="#2563eb"
+        ></tp-color-input>
+        <tp-color-input
+          id="inline-readonly"
+          variant="inline"
+          label="Read-only row"
+          readonly
+          default-value="#db2777"
+        ></tp-color-input>
+      </section>
+      <section>
+        <h2>Controlled</h2>
+        <div id="controlled-owner" class="stack"></div>
+      </section>
+      <section dir="rtl" lang="ar">
+        <h2>Right to left</h2>
+        <tp-color-input
+          id="rtl"
+          variant="inline"
+          label="التعبئة"
+          default-value="#0891b2"
+        ></tp-color-input>
+        <tp-color-input id="rtl-default" label="اللون" default-value="#0891b2"></tp-color-input>
+      </section>
+      <section>
+        <h2>Events</h2>
+        <pre id="log"></pre>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

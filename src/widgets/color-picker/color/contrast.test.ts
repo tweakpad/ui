@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contrastColor, relativeLuminance } from './contrast.js';
-import { parseColor } from './parse.js';
+import { parseColor } from '../../../foundation/color/parse.js';
 
 describe('contrast', () => {
   it('measures relative luminance on the sRGB projection', () => {

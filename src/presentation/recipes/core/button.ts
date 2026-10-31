@@ -16,6 +16,16 @@ export const buttonSizes = [
   'icon-lg',
 ] as const;
 
+/**
+ * In dark schemes the outline variant takes the field fill and border, so an outline control sits
+ * with Input, Select and date-picker triggers instead of the page color.
+ */
+export const outlineFieldPaint: PresentationRule = rule({
+  background:
+    'light-dark(var(--tp-background), color-mix(in oklab, var(--tp-input) 30%, transparent))',
+  'border-color': 'light-dark(var(--tp-border), var(--tp-input))',
+});
+
 const button: Record<string, readonly PresentationRule[]> = {
   button: [
     rule({
@@ -32,17 +42,8 @@ for (const part of Object.keys(button)) {
   for (const variant of ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'])
     button[`${part}-variant-${variant}`] =
       part === 'button' ? variantPresentation(variant, true) : [];
-  // In dark schemes the outline variant takes the field fill and border, so an outline Button sits
-  // with Input, Select and date-picker triggers instead of the page color.
   if (part === 'button')
-    button['button-variant-outline'] = [
-      ...button['button-variant-outline']!,
-      rule({
-        background:
-          'light-dark(var(--tp-background), color-mix(in oklab, var(--tp-input) 30%, transparent))',
-        'border-color': 'light-dark(var(--tp-border), var(--tp-input))',
-      }),
-    ];
+    button['button-variant-outline'] = [...button['button-variant-outline']!, outlineFieldPaint];
   for (const size of buttonSizes)
     button[`${part}-size-${size}`] = part === 'button' ? controlSizePresentation(size) : [];
 }

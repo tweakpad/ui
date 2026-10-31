@@ -286,13 +286,6 @@ export const colorPickerStyles = css`
     display: block;
     flex: none;
   }
-
-  /* The preview is slotted into the trigger Button as a sized block. */
-  tp-button.trigger .preview {
-    inline-size: calc(var(--tp-control-height-md) - var(--tp-spacing) * 3);
-    block-size: calc(var(--tp-control-height-md) - var(--tp-spacing) * 3);
-    pointer-events: none;
-  }
 `;
 
 /** Shared structure of the render surfaces (area, wheel, triangle). */

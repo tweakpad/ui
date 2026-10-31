@@ -20,6 +20,7 @@ export * from './checkbox.js';
 export * from './citation.js';
 export * from './code-block.js';
 export * from './collapsible.js';
+export * from './color-input.js';
 export * from './command-palette.js';
 export * from './copy-button.js';
 export * from './cursor.js';

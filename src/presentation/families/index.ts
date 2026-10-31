@@ -56,6 +56,7 @@ import { citationPresentation } from './citation.js';
 import { descriptionListPresentation } from './description-list.js';
 import { emptyStatePresentation } from './empty-state.js';
 import { fileUploadPresentation } from './file-upload.js';
+import { colorInputPresentation } from './color-input.js';
 import { cursorPresentation } from './cursor.js';
 import { iconPresentation } from './icon.js';
 import { listPresentation } from './list.js';
@@ -145,6 +146,7 @@ export { citationPresentation } from './citation.js';
 export { descriptionListPresentation } from './description-list.js';
 export { emptyStatePresentation } from './empty-state.js';
 export { fileUploadPresentation } from './file-upload.js';
+export { colorInputPresentation } from './color-input.js';
 export { cursorPresentation } from './cursor.js';
 export { iconPresentation } from './icon.js';
 export { listPresentation } from './list.js';
@@ -236,6 +238,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   descriptionListPresentation,
   emptyStatePresentation,
   fileUploadPresentation,
+  colorInputPresentation,
   cursorPresentation,
   iconPresentation,
   listPresentation,

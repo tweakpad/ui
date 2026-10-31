@@ -117,6 +117,14 @@ export const laneRows: LaneRow[] = [
     ],
   },
   {
+    entry: 'tp-color-input',
+    binding: 'ColorInput',
+    lane: 'value',
+    initial: '#0f766e',
+    propose: call('setValue', '#6d5dfc'),
+    props: { label: 'Fill', variant: 'inline' },
+  },
+  {
     entry: 'tp-code-block',
     binding: 'CodeBlock',
     lane: 'expanded',

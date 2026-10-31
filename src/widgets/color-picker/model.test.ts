@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { ALPHA_CHANNEL, channelDefinitions } from './color/channels.js';
-import { convertColor } from './color/convert.js';
-import { parseColor } from './color/parse.js';
-import { serializeColor } from './color/serialize.js';
-import { color } from './color/types.js';
+import { ALPHA_CHANNEL, channelDefinitions } from '../../foundation/color/channels.js';
+import { convertColor } from '../../foundation/color/convert.js';
+import { parseColor } from '../../foundation/color/parse.js';
+import { serializeColor } from '../../foundation/color/serialize.js';
+import { color } from '../../foundation/color/types.js';
 import {
   channelDisplayValue,
   fromHsv,
   hsvOf,
-  normalizeColorText,
   stickyHsv,
   toWorkingSpace,
   withAlpha,
@@ -16,13 +15,6 @@ import {
 } from './model.js';
 
 describe('color picker model', () => {
-  it('normalizes any notation into the active format and alpha policy', () => {
-    expect(normalizeColorText('rgb(255, 0, 0)', 'hex', true)).toBe('#ff0000');
-    expect(normalizeColorText('#ff000080', 'hex', false)).toBe('#ff0000');
-    expect(normalizeColorText('#ff000080', 'rgb', true)).toBe('rgb(255 0 0 / 0.5)');
-    expect(normalizeColorText('not a color', 'hex', true)).toBe('');
-  });
-
   it('keeps the color invariant across every working space', () => {
     const start = parseColor('#6d5dfc')!;
     let current = start;

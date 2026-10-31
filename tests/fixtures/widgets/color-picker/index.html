@@ -56,6 +56,20 @@
         </section>
         <section>
           <tp-color-picker
+            id="trigger-input"
+            name="card-fill"
+            picker="popup"
+            default-value="#0f766e"
+            ><tp-color-input
+              id="trigger-row"
+              slot="trigger"
+              variant="inline"
+              label="Card fill"
+            ></tp-color-input
+          ></tp-color-picker>
+        </section>
+        <section>
+          <tp-color-picker
             id="sliders"
             label="Sliders"
             name="sliders"
@@ -98,7 +112,11 @@
           </tp-field>
         </section>
         <section id="narrow">
-          <tp-color-picker id="narrow-picker" label="Narrow" default-value="#8e24aa"></tp-color-picker>
+          <tp-color-picker
+            id="narrow-picker"
+            label="Narrow"
+            default-value="#8e24aa"
+          ></tp-color-picker>
         </section>
         <section dir="rtl">
           <tp-color-picker id="rtl" label="RTL" default-value="#00897b"></tp-color-picker>

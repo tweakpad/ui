@@ -4,7 +4,7 @@ import { stateMarkers } from '../../../foundation/state-markers.js';
 import { createId } from '../../../foundation/id.js';
 import type { ChangeReason } from '../../../foundation/types.js';
 import { colorPickerPresentation } from '../../../presentation/families/color-picker.js';
-import { channelDefinitions, type ChannelDefinition } from '../color/channels.js';
+import { channelDefinitions, type ChannelDefinition } from '../../../foundation/color/channels.js';
 import type { Hsv } from '../color/harmony.js';
 import { applyKeyboardStep, channelValueText, dimensionLabel, stepForKey } from '../dimensions.js';
 import { DEFAULT_STRINGS, resolveStrings } from '../strings.js';

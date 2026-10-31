@@ -168,6 +168,9 @@ const examples = {
     <tp-cursor></tp-cursor>
     <tp-cursor-zone state="view"><tp-button>Hover me</tp-button></tp-cursor-zone>
   `,
+  'tp-color-input': () => html`
+    <tp-color-input label="Accent" name="accent" default-value="#6d5dfc"></tp-color-input>
+  `,
   'tp-file-upload': () => html`
     <tp-file-upload
       name="files"

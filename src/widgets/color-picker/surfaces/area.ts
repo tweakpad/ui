@@ -1,7 +1,7 @@
 import { html } from 'lit';
 import { bindPart } from '../../../foundation/part.js';
 import { PointerDrag, type PointerDragPoint } from '../../../foundation/pointer-drag.js';
-import { clampChannel } from '../color/channels.js';
+import { clampChannel } from '../../../foundation/color/channels.js';
 import { areaToSv, svToArea } from './geometry.js';
 import { ColorSurfaceElement, SATURATION_CHANNEL, VALUE_CHANNEL } from './surface-element.js';
 

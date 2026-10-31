@@ -2,7 +2,7 @@ import { html } from 'lit';
 import { CanvasSurface } from '../../../foundation/canvas-surface.js';
 import { bindPart } from '../../../foundation/part.js';
 import { PointerDrag, type PointerDragPoint } from '../../../foundation/pointer-drag.js';
-import { clampChannel } from '../color/channels.js';
+import { clampChannel } from '../../../foundation/color/channels.js';
 import { dimensionLabel } from '../dimensions.js';
 import { inRingBand, ringToHue, svToTriangle, triangleToSv, triangleVertices } from './geometry.js';
 import { paintTriangle } from './paint.js';

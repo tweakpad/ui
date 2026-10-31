@@ -1,4 +1,4 @@
-import { formatChannelValue, type ChannelDefinition } from './color/channels.js';
+import { formatChannelValue, type ChannelDefinition } from '../../foundation/color/channels.js';
 import type { ColorPickerStrings } from './types.js';
 
 export type { KeyboardStep, KeyboardStepOptions } from '../../foundation/dimension-step.js';

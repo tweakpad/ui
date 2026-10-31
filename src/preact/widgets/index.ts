@@ -6,6 +6,7 @@ import type { TpEasingEditor } from '../../widgets/easing-editor/easing-editor.j
 import type { TpEmojiPicker } from '../../widgets/emoji-picker/emoji-picker.js';
 import type { TpFlow } from '../../widgets/flow/flow.js';
 import type { TpTextEditor } from '../../widgets/text-editor/text-editor.js';
+import type * as foundationColorTypes from '../../foundation/color/types.js';
 import type * as foundationEvents from '../../foundation/events.js';
 import type * as foundationFlowLayoutTypes from '../../foundation/flow/layout/types.js';
 import type * as foundationFlowModelHistory from '../../foundation/flow/model/history.js';
@@ -18,7 +19,6 @@ import type * as foundationTextEditorController from '../../foundation/text-edit
 import type * as foundationTextEditorEngine from '../../foundation/text-editor/engine.js';
 import type * as foundationTypes from '../../foundation/types.js';
 import type * as widgetsColorPickerColorHarmony from '../../widgets/color-picker/color/harmony.js';
-import type * as widgetsColorPickerColorTypes from '../../widgets/color-picker/color/types.js';
 import type * as widgetsColorPickerTypes from '../../widgets/color-picker/types.js';
 import type * as widgetsEmojiPickerTypes from '../../widgets/emoji-picker/types.js';
 import type * as widgetsFlowTypes from '../../widgets/flow/types.js';
@@ -78,7 +78,7 @@ type Tags = {
         previousValue: string;
         reason: foundationTypes.ChangeReason;
       }>;
-      'tp-format-change': foundationEvents.TpValueChangeEvent<widgetsColorPickerColorTypes.ColorFormat>;
+      'tp-format-change': foundationEvents.TpValueChangeEvent<foundationColorTypes.ColorFormat>;
       'tp-harmony-change': foundationEvents.TpValueChangeEvent<widgetsColorPickerColorHarmony.HarmonyRule>;
       'tp-open-change': foundationEvents.TpOpenChangeEvent;
       'tp-open-change-complete': CustomEvent<{ open: boolean }>;

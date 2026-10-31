@@ -1,6 +1,6 @@
-import { convertColor, mixColors, normalizeHue } from './convert.js';
-import { toGamut } from './gamut.js';
-import { color, type ColorValue } from './types.js';
+import { convertColor, mixColors, normalizeHue } from '../../../foundation/color/convert.js';
+import { toGamut } from '../../../foundation/color/gamut.js';
+import { color, type ColorValue } from '../../../foundation/color/types.js';
 
 export type SchemeRowId =
   'tints' | 'shades' | 'tones' | 'analogous' | 'complementary' | 'triad' | 'tetrad';

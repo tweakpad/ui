@@ -1,6 +1,6 @@
-import type { ChannelDefinition } from './color/channels.js';
-import { displayColor } from './color/serialize.js';
-import type { ColorValue } from './color/types.js';
+import type { ChannelDefinition } from '../../foundation/color/channels.js';
+import { displayColor } from '../../foundation/color/serialize.js';
+import type { ColorValue } from '../../foundation/color/types.js';
 import { withChannel } from './model.js';
 
 const AXIS = 'var(--_tp-color-picker-axis, to right)';
@@ -56,10 +56,4 @@ export function channelGradient(
     entries.push(`${displayColor(sample)} ${(position * 100).toFixed(2)}%`);
   }
   return `linear-gradient(${AXIS}, ${entries.join(', ')})`;
-}
-
-/** A flat fill for previews and swatches. */
-export function flatGradient(value: ColorValue): string {
-  const fill = displayColor(value);
-  return `linear-gradient(${fill}, ${fill})`;
 }

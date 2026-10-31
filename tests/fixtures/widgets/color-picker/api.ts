@@ -926,6 +926,157 @@ export async function assertPopup(): Promise<Report> {
   return report(checks, { events: captured.events });
 }
 
+/**
+ * V-98: the popup trigger is a Color input (uwg-cp-req-ana-trigger). The default trigger and an
+ * authored inline Color input follow the widget's color, never open the browser's picker, and a
+ * value typed into the authored row becomes the widget's proposal while the row's own events stay
+ * inside the widget.
+ */
+export async function assertColorInputTrigger(): Promise<Report> {
+  const checks: Check[] = [];
+  type Trigger = HTMLElement & {
+    picker: string;
+    value: string;
+    format: string;
+    alpha: boolean;
+    disabled: boolean;
+    shadowRoot: ShadowRoot;
+  };
+  const popup = picker('popup');
+  await settle(popup);
+  const fallback = popup.shadowRoot!.querySelector<Trigger>('tp-color-input.trigger');
+  checks.push(check('default trigger is a Color input', !!fallback, fallback?.localName));
+  checks.push(
+    check(
+      'default trigger never opens a native picker',
+      fallback?.picker === 'none',
+      fallback?.picker,
+    ),
+  );
+  checks.push(
+    check('default trigger shows the value', fallback?.value === popup.value, [
+      fallback?.value,
+      popup.value,
+    ]),
+  );
+  const control = fallback?.shadowRoot.querySelector('[part~="color-input-control"]');
+  checks.push(
+    check(
+      'default trigger control is a button',
+      control?.localName === 'button',
+      control?.localName,
+    ),
+  );
+  checks.push(
+    check(
+      'trigger ARIA sits on the swatch button',
+      control?.getAttribute('aria-haspopup') === 'dialog' &&
+        control?.getAttribute('aria-expanded') === 'false',
+      [control?.getAttribute('aria-haspopup'), control?.getAttribute('aria-expanded')],
+    ),
+  );
+
+  const target = picker('trigger-input');
+  await settle(target);
+  const row = document.getElementById('trigger-row') as Trigger;
+  await (row as unknown as { updateComplete: Promise<unknown> }).updateComplete;
+  checks.push(
+    check('authored trigger is synced to picker none', row.picker === 'none', row.picker),
+  );
+  checks.push(
+    check('authored trigger shows the widget value', row.value === target.value, [
+      row.value,
+      target.value,
+    ]),
+  );
+  checks.push(check('authored trigger takes the format', row.format === target.format, row.format));
+  const leaked: string[] = [];
+  const watch = (event: Event) => {
+    if (event.composedPath()[0] === row || event.target === row) leaked.push(event.type);
+  };
+  for (const type of ['tp-value-change', 'tp-value-commit', 'tp-field-value'])
+    document.addEventListener(type, watch);
+  const captured = capture(target, ['tp-value-change', 'tp-value-commit']);
+  const editor = row.shadowRoot.querySelector<HTMLElement & { inputElement: HTMLInputElement }>(
+    '[part~="color-input-value"]',
+  )!;
+  const native = editor.inputElement;
+  native.focus();
+  native.value = 'rebeccapurple';
+  native.dispatchEvent(
+    new InputEvent('input', { bubbles: true, composed: true, inputType: 'insertText' }),
+  );
+  await tick();
+  native.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }),
+  );
+  await settle(target);
+  await (row as unknown as { updateComplete: Promise<unknown> }).updateComplete;
+  checks.push(
+    check('typed text becomes the widget value', target.value === '#663399', target.value),
+  );
+  checks.push(check('the trigger follows the widget', row.value === '#663399', row.value));
+  checks.push(
+    check(
+      'the widget proposes and commits with the typed reason',
+      captured.events.some((e) => e.type === 'tp-value-change' && e.reason === 'keyboard') &&
+        captured.events.some((e) => e.type === 'tp-value-commit'),
+      captured.events,
+    ),
+  );
+  checks.push(check("the trigger's own events stay inside", leaked.length === 0, leaked));
+  // A rejected widget proposal cancels the trigger's proposal; the row shows the widget color.
+  const reject = (event: Event) => event.preventDefault();
+  target.addEventListener('tp-value-change', reject);
+  native.focus();
+  native.value = '#ff0000';
+  native.dispatchEvent(
+    new InputEvent('input', { bubbles: true, composed: true, inputType: 'insertText' }),
+  );
+  await tick();
+  native.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }),
+  );
+  await settle(target);
+  target.removeEventListener('tp-value-change', reject);
+  checks.push(
+    check('a rejected proposal keeps the widget value', target.value === '#663399', target.value),
+  );
+  checks.push(
+    check('the row text returns to the widget value', native.value === '#663399', native.value),
+  );
+  native.blur();
+  // The row's swatch opens the widget's popup, not the browser's picker.
+  const swatch = row.shadowRoot.querySelector<HTMLElement>('[part~="color-input-control"]')!;
+  checks.push(
+    check('authored swatch is a button', swatch.localName === 'button', swatch.localName),
+  );
+  checks.push(
+    check(
+      'authored trigger ARIA sits on its swatch button',
+      swatch.getAttribute('aria-haspopup') === 'dialog' &&
+        swatch.getAttribute('aria-expanded') === 'false',
+      [swatch.getAttribute('aria-haspopup'), swatch.getAttribute('aria-expanded')],
+    ),
+  );
+  swatch.click();
+  await settle(target);
+  await wait(60);
+  checks.push(check('the swatch opens the popup', target.open, target.open));
+  target.close();
+  await settle(target);
+  await wait(60);
+  // A press on the value text never toggles the popup.
+  editor.click();
+  await settle(target);
+  await wait(60);
+  checks.push(check('a press on the value text keeps the popup closed', !target.open, target.open));
+  for (const type of ['tp-value-change', 'tp-value-commit', 'tp-field-value'])
+    document.removeEventListener(type, watch);
+  captured.stop();
+  return report(checks, { events: captured.events, leaked });
+}
+
 /** V-27: removal mid-drag releases the gesture without a trailing commit. */
 export async function assertCleanup(): Promise<Report> {
   const checks: Check[] = [];

@@ -219,7 +219,7 @@ const definition: ComponentDefinition = {
       name: 'color-picker-trigger',
       axes: ['size'],
       slot: 'trigger',
-      description: 'The swatch Button that opens the popup picker.',
+      description: 'The swatch Color input that opens the popup picker.',
     },
     {
       name: 'color-picker-popup',

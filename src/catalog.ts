@@ -32,6 +32,7 @@ export const catalog = [
   ['Slider', 'tp-slider', 'compound-reexport'],
   ['Text area', 'tp-text-area', 'compound-reexport'],
   ['File upload', 'tp-file-upload', 'compound-reexport'],
+  ['Color input', 'tp-color-input', 'compound-reexport'],
   ['Command palette', 'tp-command-palette', 'preset-composition'],
   ['Select', 'tp-select', 'flattening-compound'],
   ['Alert dialog', 'tp-alert-dialog', 'flattening-compound'],

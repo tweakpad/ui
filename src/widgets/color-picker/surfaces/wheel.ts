@@ -1,10 +1,10 @@
 import { html, nothing, svg } from 'lit';
 import { bindPart } from '../../../foundation/part.js';
 import { PointerDrag, type PointerDragPoint } from '../../../foundation/pointer-drag.js';
-import { clampChannel } from '../color/channels.js';
+import { clampChannel } from '../../../foundation/color/channels.js';
 import { harmonyBaseIndex, harmonyColors, type HarmonyRule, type Hsv } from '../color/harmony.js';
-import { displayColor } from '../color/serialize.js';
-import { color } from '../color/types.js';
+import { displayColor } from '../../../foundation/color/serialize.js';
+import { color } from '../../../foundation/color/types.js';
 import { dimensionLabel } from '../dimensions.js';
 import { discToHs, hsToDisc } from './geometry.js';
 import { ColorSurfaceElement, HUE_CHANNEL, SATURATION_CHANNEL } from './surface-element.js';

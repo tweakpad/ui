@@ -1,6 +1,6 @@
-import type { ChannelKey } from './color/channels.js';
+import type { ChannelKey } from '../../foundation/color/channels.js';
 import type { HarmonyRule } from './color/harmony.js';
-import type { ColorFormat, ColorValue } from './color/types.js';
+import type { ColorFormat, ColorValue } from '../../foundation/color/types.js';
 
 export type ColorPickerView = 'area' | 'sliders' | 'wheel' | 'triangle' | 'swatches' | 'schemes';
 export const COLOR_PICKER_VIEWS: readonly ColorPickerView[] = [

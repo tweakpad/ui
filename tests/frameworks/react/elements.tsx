@@ -26,6 +26,7 @@ import {
   CitationList,
   CodeBlock,
   Collapsible,
+  ColorInput,
   CommandList,
   CommandPalette,
   CopyButton,
@@ -233,6 +234,7 @@ import type { TpCitationList as TpCitationListType } from '../../../src/componen
 import type { TpCitation as TpCitationType } from '../../../src/components/citation/citation.js';
 import type { TpCodeBlock as TpCodeBlockType } from '../../../src/components/code-block/code-block.js';
 import type { TpCollapsible as TpCollapsibleType } from '../../../src/components/collapsible/collapsible.js';
+import type { TpColorInput as TpColorInputType } from '../../../src/components/color-input/color-input.js';
 import type { TpCommandPalette as TpCommandPaletteType } from '../../../src/components/command-palette/command-palette.js';
 import type { TpCommandList as TpCommandListType } from '../../../src/components/command-palette/list.js';
 import type { TpCopyButton as TpCopyButtonType } from '../../../src/components/copy-button/copy-button.js';
@@ -459,6 +461,7 @@ export const elements: ReactElement[] = [
   <CitationList ref={(element: TpCitationListType | null) => void element} />,
   <CodeBlock ref={(element: TpCodeBlockType | null) => void element} />,
   <Collapsible ref={(element: TpCollapsibleType | null) => void element} />,
+  <ColorInput ref={(element: TpColorInputType | null) => void element} />,
   <CommandList ref={(element: TpCommandListType | null) => void element} />,
   <CommandPalette ref={(element: TpCommandPaletteType | null) => void element} />,
   <CopyButton ref={(element: TpCopyButtonType | null) => void element} />,

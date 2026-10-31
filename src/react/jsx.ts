@@ -24,6 +24,7 @@ import type { TpCitationList } from '../components/citation/citation-list.js';
 import type { TpCitation } from '../components/citation/citation.js';
 import type { TpCodeBlock } from '../components/code-block/code-block.js';
 import type { TpCollapsible } from '../components/collapsible/collapsible.js';
+import type { TpColorInput } from '../components/color-input/color-input.js';
 import type { TpCommandPalette } from '../components/command-palette/command-palette.js';
 import type { TpCommandList } from '../components/command-palette/list.js';
 import type { TpCopyButton } from '../components/copy-button/copy-button.js';
@@ -882,6 +883,40 @@ type Tags = {
       'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
       'tp-open-change': foundationEvents.TpOpenChangeEvent;
       'tp-open-change-complete': CustomEvent<{ open: boolean }>;
+    }
+  >;
+  'tp-color-input': Tag<
+    TpColorInput,
+    | 'alpha'
+    | 'defaultValue'
+    | 'disabled'
+    | 'formOwner'
+    | 'format'
+    | 'inputElementReference'
+    | 'invalid'
+    | 'label'
+    | 'motionPolicy'
+    | 'name'
+    | 'orientation'
+    | 'partContracts'
+    | 'partPresentation'
+    | 'picker'
+    | 'readOnly'
+    | 'required'
+    | 'showSwatch'
+    | 'showValue'
+    | 'size'
+    | 'value'
+    | 'variant',
+    {
+      'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
+      'tp-field-value': CustomEvent<{
+        value: string;
+        previousValue: string;
+        reason: foundationTypes.ChangeReason;
+      }>;
+      'tp-value-change': foundationEvents.TpValueChangeEvent<string>;
+      'tp-value-commit': foundationEvents.TpValueCommitEvent<string>;
     }
   >;
   'tp-command-list': Tag<

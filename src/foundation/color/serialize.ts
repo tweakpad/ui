@@ -1,7 +1,14 @@
 import { channelDefinitions, formatChannelValue, wrapHue } from './channels.js';
 import { convertColor } from './convert.js';
 import { clipToGamut, inGamut, toGamut } from './gamut.js';
-import { type ColorFormat, type ColorSpace, type ColorValue, workingSpaceOf } from './types.js';
+import { parseColor } from './parse.js';
+import {
+  color,
+  type ColorFormat,
+  type ColorSpace,
+  type ColorValue,
+  workingSpaceOf,
+} from './types.js';
 
 const SRGB_FORMATS = new Set<ColorFormat>(['hex', 'rgb', 'hsl', 'hwb', 'hsv', 'cmyk']);
 const SRGB_SPACES = new Set<ColorSpace>(['srgb', 'srgb-linear', 'hsl', 'hsv', 'hwb', 'cmyk']);
@@ -84,4 +91,17 @@ export function displayColor(value: ColorValue, alpha = value.alpha): string {
   );
   const rounded = Math.round(alpha * 1000) / 1000;
   return rounded >= 1 ? `rgb(${r} ${g} ${b})` : `rgb(${r} ${g} ${b} / ${rounded})`;
+}
+
+/** Parses any supported notation and serializes it in `format`; empty for unparsable text. */
+export function normalizeColorText(text: string, format: ColorFormat, alpha: boolean): string {
+  const parsed = parseColor(text);
+  if (!parsed) return '';
+  return serializeColor(alpha ? parsed : color(parsed.space, parsed.coords, 1), format);
+}
+
+/** A flat fill of the display color, as an `<image>`, for previews and swatches. */
+export function flatGradient(value: ColorValue): string {
+  const fill = displayColor(value);
+  return `linear-gradient(${fill}, ${fill})`;
 }

@@ -1,9 +1,8 @@
 import { html, nothing } from 'lit';
 import { styleMap } from 'lit/directives/style-map.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
-import { parseColor } from '../color/parse.js';
-import { serializeColor } from '../color/serialize.js';
-import { flatGradient } from '../gradients.js';
+import { parseColor } from '../../../foundation/color/parse.js';
+import { flatGradient, serializeColor } from '../../../foundation/color/serialize.js';
 
 /** One labelled grid or strip of swatches. */
 export interface SwatchRow {

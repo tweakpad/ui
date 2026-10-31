@@ -1,0 +1,113 @@
+---
+title: Color input
+description: A color chosen with the browser's own color picker, shown as a chip or as a compact row with the color as text.
+tag: tp-color-input
+---
+
+<Preview
+  title="Color input"
+  code={`<tp-field label="Accent color">
+  <tp-color-input name="accent" default-value="#6d5dfc"></tp-color-input>
+</tp-field>`}
+/>
+
+## Usage
+
+A Color input opens the browser's own color picker from its chip, submits with its form under `name` and joins the Field around it. Reach for the Color picker widget instead when people need precise channels, formats, harmonies or palettes.
+
+### Inline
+
+`variant="inline"` shows the label at the start of a compact row and, at the end, the chip and the color as text, so stacked rows of settings line up with inline Inputs and Selects. Type a color in any CSS notation and press Enter, or leave the text, to apply it; text that is no color goes back to the current one.
+
+<Preview
+  title="Inline"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:20rem;margin-inline:auto">
+  <tp-input variant="inline" label="Layer" default-value="Header card"></tp-input>
+  <tp-color-input variant="inline" label="Fill" default-value="#0f766e"></tp-color-input>
+  <tp-color-input variant="inline" label="Stroke" default-value="#f59e0b"></tp-color-input>
+</div>`}
+/>
+
+### Chip or text
+
+`show-value="false"` keeps only the chip at the end of the row, and `show-swatch="false"` keeps only the text, for a value people mostly type.
+
+<Preview
+  title="Chip or text"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:20rem;margin-inline:auto">
+  <tp-color-input variant="inline" label="Shadow" show-value="false" default-value="#1e293b"></tp-color-input>
+  <tp-color-input variant="inline" label="Divider" show-swatch="false" default-value="#cbd5e1"></tp-color-input>
+</div>`}
+/>
+
+### Formats and alpha
+
+`format` sets the notation of the value and of its text; any CSS color goes in. `alpha` keeps transparency: the chip shows it over a checkerboard, and a color picked in a browser picker without alpha keeps the current one.
+
+<Preview
+  title="Formats and alpha"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:20rem;margin-inline:auto">
+  <tp-color-input variant="inline" label="Overlay" format="rgb" alpha default-value="rgb(124 58 237 / 0.5)"></tp-color-input>
+  <tp-color-input variant="inline" label="Link" format="oklch" default-value="#38bdf8"></tp-color-input>
+</div>`}
+/>
+
+### Sizes
+
+`size="sm"` matches small Inputs and Buttons, for dense panels.
+
+<Preview
+  title="Sizes"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:20rem;margin-inline:auto">
+  <tp-color-input variant="inline" size="sm" label="Grid lines" default-value="#e11d48"></tp-color-input>
+  <tp-color-input variant="inline" label="Guides" default-value="#e11d48"></tp-color-input>
+</div>`}
+/>
+
+### In a form
+
+`required` asks for a color before the form submits, and a form reset brings back `default-value`. An input with no color shows an empty checkerboard.
+
+<Preview
+  title="In a form"
+  align="stretch"
+  code={`<form style="display:grid;gap:var(--tp-space-3);max-inline-size:20rem;margin-inline:auto">
+  <tp-field label="Brand color" description="Used for buttons and links.">
+    <tp-color-input name="brand" variant="inline" required></tp-color-input>
+  </tp-field>
+  <tp-button type="reset" variant="outline" style="justify-self:start">Reset</tp-button>
+</form>`}
+/>
+
+### Disabled and read-only
+
+`disabled` takes the input out of the form and the tab order. `readonly` keeps it focusable and submitted, but the chip no longer opens the picker and the text cannot change.
+
+<Preview
+  title="Disabled and read-only"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:20rem;margin-inline:auto">
+  <tp-color-input variant="inline" label="Theme color" disabled default-value="#2563eb"></tp-color-input>
+  <tp-color-input variant="inline" label="Locked color" readonly default-value="#db2777"></tp-color-input>
+</div>`}
+/>
+
+### Another picker
+
+`picker="none"` turns the chip into a button that never opens the browser's picker, so another picker can open instead. The Color picker widget uses it for its popup trigger, and takes an inline Color input in its `trigger` slot to show the color as a row.
+
+### Right-to-left
+
+The row follows the writing direction: the label sits at the start and the chip and text at the end.
+
+<Preview
+  title="Right-to-left"
+  align="stretch"
+  code={`<div dir="rtl" lang="ar" style="max-inline-size:20rem;margin-inline:auto">
+  <tp-color-input variant="inline" label="التعبئة" default-value="#0891b2"></tp-color-input>
+</div>`}
+/>

@@ -3,7 +3,7 @@ import { channelDefinitions, clampChannel, formatChannelValue, wrapHue } from '.
 import { colorEquals, hueDistance } from './equality.js';
 import { deltaEOK, inGamut, toGamut } from './gamut.js';
 import { parseColor } from './parse.js';
-import { displayColor, serializeColor } from './serialize.js';
+import { displayColor, flatGradient, normalizeColorText, serializeColor } from './serialize.js';
 import { COLOR_FORMATS, color } from './types.js';
 
 const parse = (input: string) => parseColor(input)!;
@@ -121,5 +121,22 @@ describe('gamut and equality', () => {
     expect(colorEquals(parse('#ff0000'), color('srgb', [1, 0, 0], 0.5))).toBe(false);
     expect(colorEquals(parse('#ff0000'), parse('#ff0001'), 1 / 255)).toBe(true);
     expect(hueDistance(10, 350)).toBe(20);
+  });
+});
+
+describe('normalizeColorText', () => {
+  it('normalizes any notation into the active format and alpha policy', () => {
+    expect(normalizeColorText('rgb(255, 0, 0)', 'hex', true)).toBe('#ff0000');
+    expect(normalizeColorText('#ff000080', 'hex', false)).toBe('#ff0000');
+    expect(normalizeColorText('#ff000080', 'rgb', true)).toBe('rgb(255 0 0 / 0.5)');
+    expect(normalizeColorText('not a color', 'hex', true)).toBe('');
+  });
+});
+
+describe('flatGradient', () => {
+  it('paints the display color as a flat image', () => {
+    expect(flatGradient(color('srgb', [1, 0, 0], 0.5))).toBe(
+      'linear-gradient(rgb(255 0 0 / 0.5), rgb(255 0 0 / 0.5))',
+    );
   });
 });

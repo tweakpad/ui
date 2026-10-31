@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { channelDefinitions } from './color/channels.js';
-import { parseColor } from './color/parse.js';
-import { color } from './color/types.js';
+import { channelDefinitions } from '../../foundation/color/channels.js';
+import { parseColor } from '../../foundation/color/parse.js';
+import { color } from '../../foundation/color/types.js';
 import {
   alphaGradient,
   areaGradient,
   channelGradient,
-  flatGradient,
   hueConicGradient,
   hueGradient,
   wheelGradient,
@@ -33,7 +32,6 @@ describe('color picker gradients', () => {
     expect(alphaGradient(red)).toBe(
       'linear-gradient(var(--_tp-color-picker-axis, to right), rgb(255 0 0 / 0), rgb(255 0 0))',
     );
-    expect(flatGradient(red)).toBe('linear-gradient(rgb(255 0 0 / 0.5), rgb(255 0 0 / 0.5))');
   });
 
   it('varies exactly one channel across its domain with a bounded stop count', () => {

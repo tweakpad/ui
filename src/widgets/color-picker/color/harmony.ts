@@ -1,4 +1,4 @@
-import { normalizeHue } from './convert.js';
+import { normalizeHue } from '../../../foundation/color/convert.js';
 
 export type HarmonyRule = 'none' | 'complementary' | 'analogous' | 'triad' | 'compound' | 'custom';
 

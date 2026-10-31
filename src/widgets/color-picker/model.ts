@@ -1,9 +1,12 @@
-import { clampChannel, type ChannelDefinition } from './color/channels.js';
-import { convertColor, normalizeHue } from './color/convert.js';
+import { clampChannel, type ChannelDefinition } from '../../foundation/color/channels.js';
+import { convertColor, normalizeHue } from '../../foundation/color/convert.js';
 import type { Hsv } from './color/harmony.js';
-import { parseColor } from './color/parse.js';
-import { serializeColor } from './color/serialize.js';
-import { color, type ColorFormat, type ColorValue, workingSpaceOf } from './color/types.js';
+import {
+  color,
+  type ColorFormat,
+  type ColorValue,
+  workingSpaceOf,
+} from '../../foundation/color/types.js';
 
 const ACHROMATIC = 1e-6;
 
@@ -22,13 +25,6 @@ export function stickyHsv(previous: Hsv, next: ColorValue): Hsv {
   if (current.v <= ACHROMATIC) return { h: previous.h, s: previous.s, v: 0 };
   if (current.s <= ACHROMATIC) return { h: previous.h, s: 0, v: current.v };
   return current;
-}
-
-/** Parses any supported notation and serializes it in `format`; empty for unparsable text. */
-export function normalizeColorText(text: string, format: ColorFormat, alpha: boolean): string {
-  const parsed = parseColor(text);
-  if (!parsed) return '';
-  return serializeColor(alpha ? parsed : color(parsed.space, parsed.coords, 1), format);
 }
 
 /** Converts a color into the working space of a format. */

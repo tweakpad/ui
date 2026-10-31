@@ -7,11 +7,13 @@ export {
   type ColorSpace,
   type ColorValue,
   type Coords,
-} from './types.js';
-export { convertColor, mixColors, normalizeHue } from './convert.js';
-export { detectColorFormat, parseColor } from './parse.js';
-export { displayColor, serializeColor } from './serialize.js';
-export {
+  convertColor,
+  mixColors,
+  normalizeHue,
+  detectColorFormat,
+  parseColor,
+  displayColor,
+  serializeColor,
   ALPHA_CHANNEL,
   channelDefinitions,
   clampChannel,
@@ -19,9 +21,14 @@ export {
   wrapHue,
   type ChannelDefinition,
   type ChannelKey,
-} from './channels.js';
-export { clipToGamut, deltaEOK, inGamut, toGamut } from './gamut.js';
-export { colorEquals, hueDistance } from './equality.js';
+  clipToGamut,
+  deltaEOK,
+  inGamut,
+  toGamut,
+  colorEquals,
+  hueDistance,
+  namedColorHex,
+} from '../../../foundation/color/index.js';
 export {
   HARMONY_HANDLES,
   HARMONY_HANDLE_COUNT,
@@ -35,4 +42,3 @@ export {
   type Hsv,
 } from './harmony.js';
 export { generateSchemeRows, type SchemeRow, type SchemeRowId } from './scheme.js';
-export { namedColorHex } from './named.js';

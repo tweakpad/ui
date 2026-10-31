@@ -17,7 +17,7 @@ The default composition is the saturation/brightness area with hue and alpha Sli
 
 ### Popup
 
-`picker="popup"` puts the panel in a Popover opened from a swatch Button. The popup header compares the original and current colors, copies the value and offers the eyedropper; pressing the original restores it.
+`picker="popup"` puts the panel in a Popover opened from a Color input swatch. The popup header compares the original and current colors, copies the value and offers the eyedropper; pressing the original restores it.
 
 <Preview
   title="Popup in a field"
@@ -27,6 +27,16 @@ The default composition is the saturation/brightness area with hue and alpha Sli
 />
 
 `formatSelect`, `preview` and `eyedropper` hide their header items as they hide the inline ones. Author `slot="trigger"` content to replace the default trigger. `open` / `defaultOpen`, `setOpen(open, reason?)` and `close()` forward to the Popover, which remains the state owner; its `tp-open-change` and `tp-open-change-complete` events are re-dispatched from the widget with the Popover's reasons. Opening moves focus to the first dimension of the active view and closing returns it to the trigger.
+
+A Color input in the `trigger` slot opens the popup instead of the browser's picker and always shows the picker's color. An inline one shows the color as a row with its text: a color typed there becomes the picker's value.
+
+<Preview
+  title="Color input trigger"
+  align="stretch"
+  code={`<tp-color-picker picker="popup" name="card-fill" default-value="#0f766e" style="display:block;max-inline-size:20rem;margin-inline:auto">
+  <tp-color-input slot="trigger" variant="inline" label="Card fill"></tp-color-input>
+</tp-color-picker>`}
+/>
 
 ### In a form
 
