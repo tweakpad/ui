@@ -77,6 +77,8 @@ export class GeneratedStyleResource {
       : (this.target as ShadowRoot);
   }
   setText(css: string): void {
+    // Applied text stays current through `connect` and the policy subscription.
+    if (css === this.#css && css === this.#applied) return;
     this.#css = css;
     this.refresh();
   }

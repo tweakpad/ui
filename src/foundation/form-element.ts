@@ -1,6 +1,7 @@
 import { formOptsOutOfAutofill } from './autofill.js';
 import type { PropertyDeclarations, PropertyValues } from 'lit';
 import { createId } from './id.js';
+import { OwnedAttributes } from './owned-attributes.js';
 import type { ElementReference } from './part.js';
 import { TpElement } from './element.js';
 import { hideVisually } from './visually-hidden.js';
@@ -68,7 +69,9 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
   #inputReference: ElementReference | undefined;
   #inputTarget: HTMLElement | null = null;
   #associationTarget: HTMLElement | null = null;
-  #associationAttributes = new Map<string, { previous: string | null; applied: string | null }>();
+  /** The association written to the target; unchanged values are not rewritten. */
+  #association: OwnedAttributes | null = null;
+  #associationNames = new Set<string>();
   protected readonly internals: ElementInternals | null;
   readonly #fieldDescriptionId = createId('tp-field-description');
   readonly #fieldErrorId = createId('tp-field-error');
@@ -320,20 +323,9 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
     else if (this.#inputReference) this.#inputReference.current = element;
   }
   #restoreAssociation(): void {
-    const target = this.#associationTarget;
-    if (target)
-      for (const [name, { previous, applied }] of this.#associationAttributes) {
-        if (target.getAttribute(name) !== applied) continue;
-        if (previous === null) target.removeAttribute(name);
-        else target.setAttribute(name, previous);
-      }
-    this.#associationAttributes.clear();
-  }
-  #associationAttribute(name: string, value: string | null): void {
-    const target = this.#associationTarget!;
-    this.#associationAttributes.set(name, { previous: target.getAttribute(name), applied: value });
-    if (value === null) target.removeAttribute(name);
-    else target.setAttribute(name, value);
+    this.#association?.dispose();
+    this.#association = null;
+    this.#associationNames.clear();
   }
 
   /** The association this pass would write, before any merge with the target's own values. */
@@ -351,15 +343,14 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
   }
 
   #syncFieldAssociation(): void {
-    this.#restoreAssociation();
     const target = this.associationTarget();
+    if (target !== this.#associationTarget) this.#restoreAssociation();
     this.#associationTarget = target;
     const attributes = this.#fieldAssociationAttributes();
     const applied = this.applyFieldAssociation(attributes);
-    if (!applied && !target) return;
     const written = applied ? null : target;
-    const label = attributes['aria-label'];
-    if (written && label !== null) this.#associationAttribute('aria-label', label);
+    if (!written) this.#restoreAssociation();
+    if (!applied && !target) return;
     this.#descriptionNode = this.#syncAssociationNode(
       this.#descriptionNode,
       this.#fieldDescriptionId,
@@ -371,20 +362,33 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
       this.#fieldError,
     );
     if (!written) return;
+    // The target's own references come first; its own value is what it had before ours.
+    const owned = (this.#association ??= new OwnedAttributes(written));
+    const names = new Set<string>();
+    const write = (name: string, value: string): void => {
+      names.add(name);
+      owned.set(name, value);
+    };
+    const label = attributes['aria-label'];
+    if (label !== null) write('aria-label', label);
     const describedBy = attributes['aria-describedby'];
     if (describedBy !== null)
-      this.#associationAttribute(
+      write(
         'aria-describedby',
-        [written.getAttribute('aria-describedby'), describedBy].filter(Boolean).join(' '),
+        [owned.original('aria-describedby'), describedBy].filter(Boolean).join(' '),
       );
     const errorMessage = attributes['aria-errormessage'];
     if (errorMessage !== null)
-      this.#associationAttribute(
+      write(
         'aria-errormessage',
-        [written.getAttribute('aria-errormessage'), errorMessage].filter(Boolean).join(' '),
+        [owned.original('aria-errormessage'), errorMessage].filter(Boolean).join(' '),
       );
     const invalid = attributes['aria-invalid'];
-    if (invalid !== null) this.#associationAttribute('aria-invalid', invalid);
+    if (invalid !== null) write('aria-invalid', invalid);
+    // A value this pass no longer writes goes back to the target's own.
+    for (const name of this.#associationNames)
+      if (!names.has(name)) owned.set(name, owned.original(name));
+    this.#associationNames = names;
   }
 
   #syncAssociationNode(
@@ -397,15 +401,18 @@ export abstract class TpFormElement<TValue = string> extends TpElement {
       return null;
     }
     const next = node ?? this.ownerDocument.createElement('span');
-    next.id = id;
-    next.className = 'visually-hidden';
-    next.hidden = false;
-    next.textContent = text;
+    // Unchanged values are not rewritten: each write reaches the label observers of the tree.
+    if (next.id !== id) next.id = id;
+    if (next.className !== 'visually-hidden') next.className = 'visually-hidden';
+    if (next.hidden) next.hidden = false;
+    if (next.textContent !== text) next.textContent = text;
     // IDREFs resolve within one tree: keep the node beside the association target. A light-DOM
     // native editor gets a light-DOM node, hidden inline since shadow styles do not reach it.
     const container = this.associationContainer();
-    if (container === this) hideVisually(next);
-    if (next.parentNode !== container) container.append(next);
+    if (next.parentNode !== container) {
+      if (container === this) hideVisually(next);
+      container.append(next);
+    }
     return next;
   }
 

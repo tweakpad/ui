@@ -73,6 +73,7 @@
 | V-05 | C-07; regression | `selectAPI.apiChecks()` vs clean HEAD copy | same results | 27/31 both; the same 4 fail on HEAD | DevTools fixtures | passed | The 4 failures predate this change. |
 | V-07 | C-08; motion | open and close `#paper`, sample opacity per frame | entrance and exit transitions run | as expected | DevTools evaluate + screenshot | passed | Same presence recipe as searchable Select and menus. |
 | V-06 | C-02, C-03; accessibility automation | axe on `inline.html` dark and light | no violations | none | injected axe-core | passed | Both schemes clean. |
+| V-08 | C-02, C-08; update cost regression | `inline-update-cost` fixture: 40 inline selects in one shadow root, controlled value, hook on instance 0; 20 value changes and 30 updates per frame; dist from 3eeb6b4 vs this tree | no presentation refresh and no attribute rewritten to its own value per value change; hook kept; forced refresh changes nothing | 82.6 → 3 records per change (75 → 0 no-op), updates 3 → 1, querySelectorAll 69.2 → 0.1; 120 → 83 µs per update, frame 13.2 → 5.2 ms; safety 0 differences; real input: open, choose, reopen shows the check on the new value; select fixture 27/31 | DevTools MCP, `tests/fixtures/components/inline-update-cost/` (`counters`, `startTiming`, `safety`), baseline `tmp/inline-update-cost/baseline.json` | passed | Shared fix for tweakpad/ui#26; options that are not rendered settle their indicator presence. The 4 failing select checks fail on the 3eeb6b4 package too. |
 
 ## Early integration checkpoint
 

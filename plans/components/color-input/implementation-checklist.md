@@ -105,6 +105,7 @@
 | V-15 | C-15; regression | widget helpers in file order | all pass | 15/15 | DevTools fixture | passed | Observed in the session; recorded above. |
 | V-16 | C-07, C-16; accessibility automation | injected axe-core, dark and light | no violations | none | evaluate | passed | Observed in the session; recorded above. |
 | V-17 | C-01, C-08, C-12, C-14, C-16, C-17; non-browser | `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, `check-docs`, `npm run size:report`, `npm run test:package` | pass | pass; lint only reports the pre-existing `text-control.ts` | commands | passed | Observed in the session; recorded above. |
+| V-18 | C-10, C-16; update cost regression | `inline-update-cost` fixture: 40 inline color inputs in one shadow root, controlled value, hook on instance 0; 20 value changes and 30 updates per frame; dist from 3eeb6b4 vs this tree | no presentation refresh and no attribute rewritten to its own value per value change; hook kept; forced refresh changes nothing | 62.2 → 5 records per change (57 → 0 no-op), refresh 2 → 0; 120 → 90 µs per update, frame 9.2 → 7.4 ms; safety 0 differences; color picker fixture 107/107 | DevTools MCP, `tests/fixtures/components/inline-update-cost/` (`counters`, `startTiming`, `safety`), baseline `tmp/inline-update-cost/baseline.json` | passed | Shared fix for tweakpad/ui#26. |
 
 ## Early integration checkpoint
 

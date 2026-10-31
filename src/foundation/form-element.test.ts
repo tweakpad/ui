@@ -11,15 +11,18 @@ class FakeNode {
   className = '';
   hidden = false;
   textContent = '';
-  readonly style = { setProperty() {}, removeProperty() {} };
+  readonly style = { getPropertyValue: () => '', setProperty() {}, removeProperty() {} };
+  readonly writes: string[] = [];
   constructor(readonly tree: FakeTree | null = null) {}
   getAttribute(name: string): string | null {
     return this.attributes.get(name) ?? null;
   }
   setAttribute(name: string, value: string): void {
+    this.writes.push(name);
     this.attributes.set(name, value);
   }
   removeAttribute(name: string): void {
+    this.writes.push(`-${name}`);
     this.attributes.delete(name);
   }
   hasAttribute(name: string): boolean {
@@ -180,6 +183,28 @@ describe('TpFormElement Field association hook', () => {
       'aria-describedby': 'own',
       'aria-errormessage': 'own-error',
     });
+  });
+
+  it('rewrites nothing on the element target while the association is unchanged', () => {
+    const { element } = probe({ target: true });
+    const target = element.target!;
+    target.setAttribute('aria-describedby', 'own');
+    element.setFieldAssociation({ label: 'Crew log', description: 'Shared', error: 'Missing' });
+    element.invalid = true;
+    element.sync();
+    const attributes = Object.fromEntries(target.attributes);
+    target.writes.length = 0;
+    element.sync();
+    expect(target.writes).toEqual([]);
+    expect(Object.fromEntries(target.attributes)).toEqual(attributes);
+    // A value the pass stops writing goes back to the target's own.
+    element.invalid = false;
+    element.sync();
+    expect(target.writes).toEqual(['-aria-invalid']);
+    // The target's own value changed by its owner is kept and merged again.
+    target.setAttribute('aria-describedby', 'replaced');
+    element.sync();
+    expect(target.getAttribute('aria-describedby')?.startsWith('replaced ')).toBe(true);
   });
 
   it('creates no nodes without an element target when the hook does not apply', () => {

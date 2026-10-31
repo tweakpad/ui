@@ -115,13 +115,28 @@ export function mergePartProperties(
   return result;
 }
 
+const tokens = (value: unknown): Set<string> =>
+  new Set(
+    value === undefined || value === null || value === false || value === nothing
+      ? []
+      : String(value).split(/\s+/).filter(Boolean),
+  );
+
+/**
+ * Writes only what differs from the element: an unchanged value queues no mutation record for
+ * the observers in the tree. `part` and `class` reconcile the tokens this binding owns, so tokens
+ * added by the presentation layer (bound parts, class hooks) survive a re-render.
+ */
 class BindPartDirective extends AsyncDirective {
   #element?: HTMLElement;
   #keys = new Set<string>();
-  #events = new Map<string, EventListener>();
+  /** The latest handler per event; one listener per event name calls it. */
+  #handlers = new Map<string, unknown>();
+  #listeners = new Map<string, EventListener>();
   #refs: (ElementReference | undefined)[] = [];
   #properties: HostProperties = {};
   #styles = new Set<string>();
+  #tokens = new Map<string, Set<string>>();
   constructor(info: PartInfo) {
     super(info);
     if (info.type !== PartType.ELEMENT) throw new Error('bindPart belongs on an element.');
@@ -138,6 +153,8 @@ class BindPartDirective extends AsyncDirective {
     const element = part.element as HTMLElement;
     if (this.#element !== element) {
       this.#release();
+      this.#tokens.clear();
+      this.#styles.clear();
       this.#element = element;
     }
     const keys = new Set(Object.keys(properties));
@@ -160,17 +177,30 @@ class BindPartDirective extends AsyncDirective {
     if (key === 'ref') return;
     if (key.startsWith('@')) {
       const name = key.slice(1);
-      const previous = this.#events.get(name);
-      if (previous) element.removeEventListener(name, previous);
       if (value) {
-        const listener = (event: Event) => callHandler(value, element, event);
-        this.#events.set(name, listener);
-        element.addEventListener(name, listener);
-      } else this.#events.delete(name);
+        this.#handlers.set(name, value);
+        if (!this.#listeners.has(name)) {
+          const listener = (event: Event) => callHandler(this.#handlers.get(name), element, event);
+          this.#listeners.set(name, listener);
+          element.addEventListener(name, listener);
+        }
+      } else {
+        this.#handlers.delete(name);
+        const listener = this.#listeners.get(name);
+        if (listener) element.removeEventListener(name, listener);
+        this.#listeners.delete(name);
+      }
     } else if (key.startsWith('.')) {
       const name = key.slice(1);
-      if ((element as unknown as HostProperties)[name] !== value)
-        (element as unknown as HostProperties)[name] = value;
+      const current = (element as unknown as HostProperties)[name];
+      // A fresh array with the same items (`ariaControlsElements`) would re-reflect its attribute.
+      const same =
+        current === value ||
+        (Array.isArray(current) &&
+          Array.isArray(value) &&
+          current.length === value.length &&
+          current.every((item, index) => item === value[index]));
+      if (!same) (element as unknown as HostProperties)[name] = value;
     } else if (key === 'style' && typeof value === 'object' && value !== null) {
       const next = new Set<string>();
       for (const [name, entry] of Object.entries(value)) {
@@ -178,28 +208,45 @@ class BindPartDirective extends AsyncDirective {
           ? name
           : name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
         next.add(property);
-        element.style.setProperty(property, String(entry));
+        const text = String(entry);
+        if (element.style.getPropertyValue(property) !== text)
+          element.style.setProperty(property, text);
       }
       for (const property of this.#styles)
         if (!next.has(property)) element.style.removeProperty(property);
       this.#styles = next;
     } else {
       const name = key === 'className' ? 'class' : key.replace(/^\?/, '');
-      if (
-        typeof value === 'boolean' &&
-        ['spellcheck', 'draggable', 'contenteditable'].includes(name)
-      )
-        element.setAttribute(name, String(value));
-      else if (value === undefined || value === null || value === false || value === nothing)
-        element.removeAttribute(name);
-      else element.setAttribute(name, value === true ? '' : String(value));
+      if (name === 'part' || name === 'class') {
+        const list = name === 'part' ? element.part : element.classList;
+        const next = tokens(value);
+        for (const token of this.#tokens.get(name) ?? [])
+          if (!next.has(token) && list.contains(token)) list.remove(token);
+        for (const token of next) if (!list.contains(token)) list.add(token);
+        this.#tokens.set(name, next);
+        if (!list.length && element.hasAttribute(name)) element.removeAttribute(name);
+        return;
+      }
+      const text =
+        typeof value === 'boolean' && ['spellcheck', 'draggable', 'contenteditable'].includes(name)
+          ? String(value)
+          : value === undefined || value === null || value === false || value === nothing
+            ? null
+            : value === true
+              ? ''
+              : String(value);
+      if (element.getAttribute(name) === text) return;
+      if (text === null) element.removeAttribute(name);
+      else element.setAttribute(name, text);
     }
   }
   #release(clear = true): void {
     for (const ref of this.#refs) detachPartReference(this, ref);
-    for (const [name, listener] of this.#events) this.#element?.removeEventListener(name, listener);
+    for (const [name, listener] of this.#listeners)
+      this.#element?.removeEventListener(name, listener);
     if (clear) this.#refs = [];
-    this.#events.clear();
+    this.#listeners.clear();
+    this.#handlers.clear();
   }
   override disconnected(): void {
     this.#release(false);

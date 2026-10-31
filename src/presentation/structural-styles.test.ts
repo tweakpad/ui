@@ -253,6 +253,7 @@ describe('shared generated resource policy', () => {
       partPresentation: {},
       part: { add: vi.fn(), remove: vi.fn(), contains: () => false },
       matches: () => false,
+      getAttribute: () => null,
       setAttribute: vi.fn(),
       removeAttribute: vi.fn(),
       dispatchEvent: vi.fn(),
@@ -272,5 +273,161 @@ describe('shared generated resource policy', () => {
     policy.update({ disableStyleElements: true });
     expect(state.sheets()).toHaveLength(0);
     policy.dispose();
+  });
+});
+
+/** A rendered part double: token lists and inline style, with every write logged. */
+function partElement(root: unknown, part: string) {
+  const writes: string[] = [];
+  const tokens = (name: string, initial: string[] = []) => {
+    const set = new Set(initial);
+    return {
+      contains: (token: string) => set.has(token),
+      add: (token: string) => {
+        writes.push(`${name}+${token}`);
+        set.add(token);
+      },
+      remove: (token: string) => {
+        writes.push(`${name}-${token}`);
+        set.delete(token);
+      },
+      get length() {
+        return set.size;
+      },
+    };
+  };
+  const style = new Map<string, string>();
+  const attributes = new Map<string, string>();
+  return {
+    writes,
+    part: tokens('part', [part]),
+    classList: tokens('class'),
+    style: {
+      getPropertyValue: (name: string) => style.get(name) ?? '',
+      setProperty: (name: string, value: string) => {
+        writes.push(`style ${name}`);
+        style.set(name, value);
+      },
+      removeProperty: (name: string) => {
+        writes.push(`style -${name}`);
+        style.delete(name);
+      },
+    },
+    getAttribute: (name: string) => attributes.get(name) ?? null,
+    setAttribute: (name: string, value: string) => attributes.set(name, value),
+    removeAttribute: (name: string) => attributes.delete(name),
+    getRootNode: () => root,
+  };
+}
+
+/** A connected Badge host whose style writes are counted. */
+function badgeHost(family = badgePresentation) {
+  const state = fixture(environment('updates'));
+  const host = state.host as typeof state.host & Record<string, unknown>;
+  (host.constructor as Record<string, unknown>)['presentation'] = family;
+  const element = partElement(state.root, 'badge');
+  let open = false;
+  Object.assign(host, {
+    localName: 'tp-badge',
+    isConnected: true,
+    variant: 'default',
+    partPresentation: {},
+    part: { add: vi.fn(), remove: vi.fn(), contains: () => true },
+    matches: (condition: string) => condition === '[data-open]' && open,
+    getAttribute: () => null,
+    setAttribute: vi.fn(),
+    removeAttribute: vi.fn(),
+    dispatchEvent: vi.fn(),
+  });
+  (
+    state.root as unknown as { querySelectorAll: (selector: string) => unknown[] }
+  ).querySelectorAll = (selector) =>
+    selector === '.badge' || selector === '[part~="badge"]' ? [element] : [];
+  state.controller.createRenderRoot();
+  const writes = vi.spyOn(GeneratedStyleResource.prototype, 'setText');
+  return {
+    ...state,
+    host,
+    element,
+    writes,
+    setOpen: (value: boolean) => {
+      open = value;
+    },
+  };
+}
+
+describe('style pass of an update', () => {
+  it('skips the style pass when no presentation input changed', () => {
+    const state = badgeHost();
+    state.controller.hostUpdated();
+    expect(state.writes).toHaveBeenCalled();
+    state.writes.mockClear();
+    state.controller.hostUpdated();
+    expect(state.writes).not.toHaveBeenCalled();
+    state.writes.mockRestore();
+  });
+
+  it('runs it again for an axis change, read from the host or from its owner', () => {
+    const state = badgeHost();
+    state.controller.hostUpdated();
+    state.writes.mockClear();
+    state.host['variant'] = 'outline';
+    state.controller.hostUpdated();
+    expect(state.writes).toHaveBeenCalled();
+    // An axis a constituent reads from its owner through a getter, not a reactive property.
+    const owner = { variant: 'outline' };
+    state.host['presentationOwner'] = owner;
+    state.controller.hostUpdated();
+    state.writes.mockClear();
+    owner.variant = 'ghost';
+    state.controller.hostUpdated();
+    expect(state.writes).toHaveBeenCalled();
+    state.writes.mockRestore();
+  });
+
+  it('runs it again when an owner condition of a registered part flips', async () => {
+    const family = {
+      ...badgePresentation,
+      structure: {
+        badge: [{ selector: ':host([data-open]) &', declarations: { outline: '1px solid' } }],
+      },
+    };
+    const state = badgeHost(family);
+    const member = partElement(state.root, 'badge');
+    state.controller.registerPart('badge', member as unknown as HTMLElement);
+    await Promise.resolve();
+    state.controller.hostUpdated();
+    state.writes.mockClear();
+    state.controller.hostUpdated();
+    expect(state.writes).not.toHaveBeenCalled();
+    state.setOpen(true);
+    state.controller.hostUpdated();
+    expect(state.writes.mock.calls.some(([css]) => css.includes('outline:1px solid'))).toBe(true);
+    state.writes.mockRestore();
+  });
+
+  it('always runs it for an explicit refresh', () => {
+    const state = badgeHost();
+    state.controller.hostUpdated();
+    state.writes.mockClear();
+    state.controller.refresh();
+    expect(state.writes).toHaveBeenCalled();
+    state.writes.mockRestore();
+  });
+
+  it('keeps hooks in place without rewriting them, and removes them when dropped', () => {
+    const state = badgeHost();
+    state.host['partPresentation'] = {
+      badge: { classHook: 'accent', styleHook: { 'outline-offset': '3px' } },
+    };
+    state.controller.hostUpdated();
+    expect(state.element.writes).toEqual(['class+accent', 'style outline-offset']);
+    state.element.writes.length = 0;
+    state.controller.hostUpdated();
+    expect(state.element.writes).toEqual([]);
+    state.host['partPresentation'] = {};
+    state.controller.hostUpdated();
+    expect(state.element.writes).toEqual(['class-accent', 'style -outline-offset']);
+    state.writes.mockRestore();
   });
 });

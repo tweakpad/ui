@@ -1051,8 +1051,17 @@ export class TpSelect extends TpFormElement<unknown> {
     }
     this.#wasOpen = this.open;
     this.#presence.setPresent(this.open && this.isConnected);
-    for (const record of this.#model.records)
-      record.presence.setPresent(this.#selected(record.value));
+    for (const record of this.#model.records) {
+      const selected = this.#selected(record.value);
+      // An option that is not rendered (a closed list) has no indicator transition to wait for.
+      if (this.presentationController.partElement(record.id)?.isConnected)
+        record.presence.setPresent(selected);
+      else if (
+        record.presence.state !==
+        (selected ? 'open' : record.option.indicatorKeepMounted ? 'retained' : 'absent')
+      )
+        record.presence.settle(selected);
+    }
   }
   protected renderQueryPrefix(): unknown {
     return nothing;

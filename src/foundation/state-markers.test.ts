@@ -82,11 +82,17 @@ describe('marker values', () => {
 describe('applyMarkers', () => {
   function element() {
     const attributes = new Map<string, string>();
+    const writes: string[] = [];
     return {
       attributes,
-      setAttribute: (name: string, value: string) => attributes.set(name, value),
+      writes,
+      getAttribute: (name: string) => attributes.get(name) ?? null,
+      setAttribute: (name: string, value: string) => {
+        writes.push(name);
+        attributes.set(name, value);
+      },
       removeAttribute: (name: string) => attributes.delete(name),
-    } as unknown as Element & { attributes: Map<string, string> };
+    } as unknown as Element & { attributes: Map<string, string>; writes: string[] };
   }
   it('writes present markers, removes absent ones and prunes stale names', () => {
     const host = element();
@@ -99,5 +105,12 @@ describe('applyMarkers', () => {
     previous = applyMarkers(host, { 'data-open': false, 'data-size': null }, previous);
     expect([...host.attributes]).toEqual([]);
     expect([...previous]).toEqual(['data-open', 'data-size']);
+  });
+  it('does not rewrite a marker whose text is unchanged', () => {
+    const host = element();
+    const previous = applyMarkers(host, { 'data-valid': true, 'data-index': 1 });
+    host.writes.length = 0;
+    applyMarkers(host, { 'data-valid': true, 'data-index': 2 }, previous);
+    expect(host.writes).toEqual(['data-index']);
   });
 });

@@ -81,8 +81,10 @@ export function applyMarkers(
   const names = new Set(Object.keys(markers));
   for (const name of previous) if (!names.has(name)) element.removeAttribute(name);
   for (const [name, value] of Object.entries(markers)) {
-    if (markerPresent(value)) element.setAttribute(name, markerText(value));
-    else element.removeAttribute(name);
+    if (!markerPresent(value)) element.removeAttribute(name);
+    // An unchanged marker is not rewritten, so it queues no mutation record.
+    else if (element.getAttribute(name) !== markerText(value))
+      element.setAttribute(name, markerText(value));
   }
   return names;
 }

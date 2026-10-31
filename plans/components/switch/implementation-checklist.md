@@ -66,6 +66,7 @@
 | V-03 | C-04; accessibility | accessibility snapshot | each switch named once; Field-hosted named by the Field | as expected | DevTools snapshot | passed | Tree recorded in the session. |
 | V-04 | C-02; regression | `switchAPI.runAssertions()` | same as HEAD | 92/93; `scoped-primary-token` fails on HEAD too | DevTools fixture | passed | The failure predates this change. |
 | V-05 | C-02; accessibility automation | axe, dark and light | no violations | none | injected axe-core | passed | Both schemes clean. |
+| V-06 | C-02; update cost regression | `inline-update-cost` fixture: 40 inline switches in one shadow root, controlled value, hook on instance 0; 20 value changes and 30 updates per frame; dist from 3eeb6b4 vs this tree | no presentation refresh and no attribute rewritten to its own value per value change; hook kept; forced refresh changes nothing | 30.2 → 9 records per change (19 → 0 no-op), refresh 1 → 0; µs per update unchanged (370 vs 430, rising each round on both builds); safety 0 differences; switch fixture 92/93 | DevTools MCP, `tests/fixtures/components/inline-update-cost/` (`counters`, `startTiming`, `safety`), baseline `tmp/inline-update-cost/baseline.json` | passed | Shared fix for tweakpad/ui#26. Per-update cost is the thumb motion (`prepareMotion` measures on every toggle) and grows under per-frame toggling on both builds; `scoped-primary-token` fails on HEAD too. |
 
 ## Early integration checkpoint
 

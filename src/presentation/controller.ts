@@ -22,6 +22,11 @@ const dictionaries = new WeakMap<Document, PresentationDictionary>();
 const subscribers = new WeakMap<Document, Set<PresentationController>>();
 const compositions = new WeakMap<HTMLElement, Map<object, PartPresentation>>();
 const controllers = new WeakMap<HTMLElement, PresentationController>();
+/** Hook classes and styles this adapter wrote to an element, to undo exactly those. */
+interface AppliedHooks {
+  classes: Set<string>;
+  styles: Map<string, { previous: string; applied: string; value: string }>;
+}
 let registrationId = 0;
 const isDocument = (node: Node): node is Document => node.nodeType === 9;
 /** A rule's selector bound to its part target; an ampersand in the rule stands for the target. */
@@ -32,6 +37,101 @@ const selectorFor = (rule: PresentationRule, target: string): string =>
 const ruleCss = (rule: PresentationRule, selector: string): string =>
   `${selector}{${serializeDeclarations(rule.declarations)}}`;
 const isShadowRoot = (node: Node): node is ShadowRoot => node.nodeType === 11 && 'host' in node;
+
+/** One resolved recipe: merged part rules and their shadow-root CSS. Pure, so instances share it. */
+interface Recipe {
+  readonly parts: Readonly<Record<string, readonly PresentationRule[]>>;
+  readonly css: string;
+  readonly missingKeys: readonly string[];
+  /** The `:host(...)` conditions of each part's rules, evaluated against the owner. */
+  readonly conditions: Map<string, readonly string[]>;
+}
+// Keyed by family, then dictionary (the family itself stands for its own appearance), then the
+// member families and axis values; a replaced dictionary releases its recipes.
+const recipes = new WeakMap<PresentationFamily, WeakMap<object, Map<string, Recipe>>>();
+const familyIds = new WeakMap<PresentationFamily, number>();
+let familyCount = 0;
+const familyId = (family: PresentationFamily): number => {
+  let id = familyIds.get(family);
+  if (id === undefined) familyIds.set(family, (id = ++familyCount));
+  return id;
+};
+function recipeFor(
+  family: PresentationFamily,
+  members: readonly PresentationFamily[],
+  custom: PresentationDictionary | undefined,
+  axes: Record<string, unknown>,
+): Recipe {
+  let dictionaries = recipes.get(family);
+  if (!dictionaries) recipes.set(family, (dictionaries = new WeakMap()));
+  let cached = dictionaries.get(custom ?? family);
+  if (!cached) dictionaries.set(custom ?? family, (cached = new Map()));
+  const key = JSON.stringify([
+    members.map(familyId),
+    Object.values(axes).map((value) => (value === undefined ? { unset: true } : value)),
+  ]);
+  let recipe = cached.get(key);
+  if (!recipe) cached.set(key, (recipe = resolveRecipe(family, members, custom, axes)));
+  return recipe;
+}
+function resolveRecipe(
+  family: PresentationFamily,
+  members: readonly PresentationFamily[],
+  custom: PresentationDictionary | undefined,
+  axes: Record<string, unknown>,
+): Recipe {
+  let resolved = resolveComponentPresentation(family.definition, axes, custom ?? family.appearance);
+  const structures: PresentationDictionary[] = [family.structure];
+  for (const member of members) {
+    structures.push(member.structure);
+    const contribution = resolveComponentPresentation(
+      member.definition,
+      axes,
+      custom ?? member.appearance,
+    );
+    resolved = {
+      parts: { ...resolved.parts, ...contribution.parts },
+      missingKeys: [...new Set([...resolved.missingKeys, ...contribution.missingKeys])],
+    };
+  }
+  const parts = Object.fromEntries(
+    Object.entries(resolved.parts).map(([part, rules]) => [
+      part,
+      [
+        ...rules,
+        ...structures.flatMap((structure): readonly PresentationRule[] => structure[part] ?? []),
+      ],
+    ]),
+  );
+  const css = Object.entries(parts)
+    .flatMap(([part, rules]) =>
+      rules.map((rule) => ruleCss(rule, selectorFor(rule, `[part~="${part}"]`))),
+    )
+    .join('\n');
+  const conditions = new Map(
+    Object.entries(parts).map(([part, rules]) => [
+      part,
+      rules.flatMap((rule) =>
+        [...selectorFor(rule, '').matchAll(/:host\(([^)]+)\)/g)].map((match) => match[1]!),
+      ),
+    ]),
+  );
+  return { parts, css, missingKeys: resolved.missingKeys, conditions };
+}
+// A `[part~="x"]` binding to `x` matches only elements that already carry the part.
+const shadowBindings = new WeakMap<Record<string, string>, readonly [string, string][]>();
+function bindingEntries(set: Record<string, string>, shadow: boolean): readonly [string, string][] {
+  if (!shadow) return Object.entries(set);
+  let entries = shadowBindings.get(set);
+  if (!entries)
+    shadowBindings.set(
+      set,
+      (entries = Object.entries(set).filter(
+        ([selector, part]) => selector !== `[part~="${part}"]`,
+      )),
+    );
+  return entries;
+}
 
 /** A compound's contribution precedes the member's terminal consumer overrides. */
 export function setPartComposition(
@@ -67,6 +167,9 @@ export class PresentationController implements ReactiveController {
   #document?: Document;
   #lastMissing = '';
   #refreshQueued = false;
+  /** Inputs of the last style pass; an update with the same inputs skips it. */
+  #signature: readonly unknown[] = [];
+  #registrations = 0;
   #hostParts = new Map<string, () => void>();
   #lightParts = new Map<HTMLElement, Map<string, () => void>>();
   #scheduleRefresh(): void {
@@ -77,10 +180,7 @@ export class PresentationController implements ReactiveController {
       if (this.host.isConnected) this.refresh();
     });
   }
-  #hooks = new Map<
-    HTMLElement,
-    { classes: string[]; styles: Map<string, { previous: string; applied: string }> }
-  >();
+  #hooks = new Map<HTMLElement, AppliedHooks>();
   constructor(private host: Host) {
     host.addController(this);
     controllers.set(host, this);
@@ -162,9 +262,11 @@ export class PresentationController implements ReactiveController {
     );
     tokens.add(token);
     element.setAttribute('data-tp-presentation-part', [...tokens].join(' '));
+    this.#registrations++;
     this.#scheduleRefresh();
     return () => {
       members.delete(element);
+      this.#registrations++;
       const current = (element.getAttribute('data-tp-presentation-part') ?? '')
         .split(/\s+/)
         .filter((value) => value && value !== token);
@@ -195,9 +297,13 @@ export class PresentationController implements ReactiveController {
     this.#restoreHooks();
   }
   hostUpdated(): void {
-    this.refresh();
+    this.#update(false);
   }
+  /** Re-resolves and rewrites everything, including after structure changed outside an update. */
   refresh(): void {
+    this.#update(true);
+  }
+  #update(force: boolean): void {
     // A public constituent consumes its family's definition and dictionary, not
     // a second visual catalog identity. A class that extends a family's root element under
     // another tag (a Navigation panel button, a Select action) also inherits the root's
@@ -224,6 +330,7 @@ export class PresentationController implements ReactiveController {
       const member = presentationFamilyFor(this.host, tagName);
       return member ? [member] : [];
     });
+    const shadow = isShadowRoot(this.host.renderRoot);
     const bindings = [
       family.bindings[this.host.localName] ??
         (inheritedTag ? family.bindings[inheritedTag] : undefined) ??
@@ -231,16 +338,16 @@ export class PresentationController implements ReactiveController {
       ...members.map((member) => member.bindings[this.host.localName] ?? {}),
     ];
     const lightParts = new Map<HTMLElement, Map<string, boolean>>();
-    for (const [selector, part] of bindings.flatMap((set) => Object.entries(set))) {
+    for (const [selector, part] of bindings.flatMap((set) => bindingEntries(set, shadow))) {
       if (selector === ':host') {
-        this.host.part.add(part);
+        if (!this.host.part.contains(part)) this.host.part.add(part);
         if (!this.#hostParts.has(part))
           this.#hostParts.set(part, this.registerPart(part, this.host));
       } else
         for (const element of this.host.renderRoot.querySelectorAll<HTMLElement>(selector)) {
           const authoredPart = element.part.contains(part);
-          element.part.add(part);
-          if (!isShadowRoot(this.host.renderRoot)) {
+          if (!authoredPart) element.part.add(part);
+          if (!shadow) {
             const names = lightParts.get(element) ?? new Map<string, boolean>();
             names.set(part, authoredPart);
             lightParts.set(element, names);
@@ -269,8 +376,6 @@ export class PresentationController implements ReactiveController {
         }
       this.#lightParts.set(element, parts);
     }
-    const custom = dictionaries.get(this.host.ownerDocument);
-    const dictionary = custom ?? family.appearance;
     const axes = Object.fromEntries(
       (definition.axes ?? []).map((axis) => [
         axis.name,
@@ -279,34 +384,31 @@ export class PresentationController implements ReactiveController {
         ] ?? (this.host as unknown as Record<string, unknown>)[axis.name],
       ]),
     );
-    let resolved = resolveComponentPresentation(definition, axes, dictionary);
-    const structures: PresentationDictionary[] = [family.structure];
-    for (const member of members) {
-      structures.push(member.structure);
-      const contribution = resolveComponentPresentation(
-        member.definition,
-        axes,
-        custom ?? member.appearance,
-      );
-      resolved = {
-        parts: { ...resolved.parts, ...contribution.parts },
-        missingKeys: [...new Set([...resolved.missingKeys, ...contribution.missingKeys])],
-      };
+    const recipe = recipeFor(family, members, dictionaries.get(this.host.ownerDocument), axes);
+    const signature = this.#signatureOf(recipe);
+    if (
+      force ||
+      signature.length !== this.#signature.length ||
+      signature.some((value, index) => value !== this.#signature[index])
+    ) {
+      this.#signature = signature;
+      this.#writeStyles(recipe, definition.name);
     }
-    const mergedParts = Object.fromEntries(
-      Object.entries(resolved.parts).map(([part, rules]) => [
-        part,
-        [
-          ...rules,
-          ...structures.flatMap((structure): readonly PresentationRule[] => structure[part] ?? []),
-        ],
-      ]),
-    );
-    const css = Object.entries(mergedParts)
-      .flatMap(([part, rules]) =>
-        rules.map((rule) => ruleCss(rule, selectorFor(rule, `[part~="${part}"]`))),
-      )
-      .join('\n');
+    this.#applyHooks();
+  }
+  /** Everything the style pass reads besides the recipe: registered parts, their roots, owner state. */
+  #signatureOf(recipe: Recipe): unknown[] {
+    const signature: unknown[] = [recipe, this.host.isConnected, this.#registrations];
+    if (this.host.isConnected)
+      for (const [part, elements] of this.#registered) {
+        if (!elements.size) continue;
+        for (const element of elements) signature.push(element.getRootNode());
+        for (const condition of recipe.conditions.get(part) ?? [])
+          signature.push(this.host.matches(condition));
+      }
+    return signature;
+  }
+  #writeStyles(recipe: Recipe, component: string): void {
     if (isShadowRoot(this.host.renderRoot)) {
       if (!this.#recipeResource) {
         this.#recipeResource = new GeneratedStyleResource(this.host, this.host.renderRoot);
@@ -314,11 +416,12 @@ export class PresentationController implements ReactiveController {
         // would hold the removed element for good; the reconnection subscribes (`hostConnected`).
         if (!this.host.isConnected) this.#recipeResource.disconnect();
       }
-      this.#recipeResource.setText(css);
+      this.#recipeResource.setText(recipe.css);
     }
-    const missing = resolved.missingKeys.join(',');
+    const missing = recipe.missingKeys.join(',');
     if (this.host.isConnected) {
-      this.host.setAttribute('data-tp-presentation-owner', this.#id);
+      if (this.host.getAttribute('data-tp-presentation-owner') !== this.#id)
+        this.host.setAttribute('data-tp-presentation-owner', this.#id);
       const roots = new Map<Document | ShadowRoot, string[]>();
       for (const [part, elements] of this.#registered) {
         const partRoots = new Set([...elements].map((element) => element.getRootNode()));
@@ -326,7 +429,7 @@ export class PresentationController implements ReactiveController {
           if (!(isDocument(root) || isShadowRoot(root))) continue;
           const rules = roots.get(root) ?? [];
           roots.set(root, rules);
-          for (const rule of mergedParts[part] ?? []) {
+          for (const rule of recipe.parts[part] ?? []) {
             // The owning component may be outside this shadow tree. Evaluate owner
             // conditions here; do not accidentally bind :host to the member's host.
             let applies = true;
@@ -358,28 +461,34 @@ export class PresentationController implements ReactiveController {
     if (missing && missing !== this.#lastMissing)
       this.host.dispatchEvent(
         new CustomEvent('tp-presentation-diagnostic', {
-          detail: { component: definition.name, missingKeys: resolved.missingKeys },
+          detail: { component, missingKeys: recipe.missingKeys },
           bubbles: true,
           composed: true,
         }),
       );
     this.#lastMissing = missing;
-    this.#applyHooks();
   }
   #restoreHooks(): void {
     // Undo only values still owned by this adapter; preserve later consumer writes.
-    for (const [element, hook] of this.#hooks) {
-      for (const token of hook.classes) element.classList.remove(token);
-      for (const [property, state] of hook.styles)
-        if (element.style.getPropertyValue(property) === state.applied) {
-          if (state.previous) element.style.setProperty(property, state.previous);
-          else element.style.removeProperty(property);
-        }
-    }
+    for (const [element, hook] of this.#hooks) this.#undoHooks(element, hook);
     this.#hooks.clear();
   }
+  #undoHooks(element: HTMLElement, hook: AppliedHooks, keep?: AppliedHooks): void {
+    for (const token of hook.classes)
+      if (!keep?.classes.has(token) && element.classList.contains(token))
+        element.classList.remove(token);
+    for (const [property, state] of hook.styles)
+      if (
+        !keep?.styles.has(property) &&
+        element.style.getPropertyValue(property) === state.applied
+      ) {
+        if (state.previous) element.style.setProperty(property, state.previous);
+        else element.style.removeProperty(property);
+      }
+  }
+  /** Brings hook classes and styles to what the layers ask for, writing only the differences. */
   #applyHooks(): void {
-    this.#restoreHooks();
+    const wanted = new Map<HTMLElement, { classes: Set<string>; styles: Map<string, string> }>();
     const layers = [...(compositions.get(this.host)?.values() ?? []), this.host.partPresentation];
     for (const layer of layers)
       for (const [part, hook] of Object.entries(layer)) {
@@ -388,21 +497,49 @@ export class PresentationController implements ReactiveController {
           ...this.host.renderRoot.querySelectorAll<HTMLElement>(`[part~="${part}"]`),
           ...(this.#registered.get(part) ?? []),
         ])) {
-          const classes = (hook.classHook ?? '')
-            .split(/\s+/)
-            .filter((token) => token && !element.classList.contains(token));
-          element.classList.add(...classes);
-          const existing = this.#hooks.get(element);
-          const styles =
-            existing?.styles ?? new Map<string, { previous: string; applied: string }>();
-          for (const [property, value] of Object.entries(hook.styleHook ?? {})) {
-            const previous =
-              styles.get(property)?.previous ?? element.style.getPropertyValue(property);
-            element.style.setProperty(property, String(value));
-            styles.set(property, { previous, applied: element.style.getPropertyValue(property) });
-          }
-          this.#hooks.set(element, { classes: [...(existing?.classes ?? []), ...classes], styles });
+          let entry = wanted.get(element);
+          if (!entry) wanted.set(element, (entry = { classes: new Set(), styles: new Map() }));
+          for (const token of (hook.classHook ?? '').split(/\s+/))
+            if (token) entry.classes.add(token);
+          for (const [property, value] of Object.entries(hook.styleHook ?? {}))
+            entry.styles.set(property, String(value));
         }
       }
+    if (!wanted.size && !this.#hooks.size) return;
+    const applied = new Map<HTMLElement, AppliedHooks>();
+    for (const [element, next] of wanted) {
+      const previous = this.#hooks.get(element);
+      const hook: AppliedHooks = { classes: new Set(), styles: new Map() };
+      for (const token of next.classes)
+        if (previous?.classes.has(token)) {
+          hook.classes.add(token);
+          if (!element.classList.contains(token)) element.classList.add(token);
+        } else if (!element.classList.contains(token)) {
+          // A class the element already had is not the hook's to remove later.
+          element.classList.add(token);
+          hook.classes.add(token);
+        }
+      for (const [property, value] of next.styles) {
+        const state = previous?.styles.get(property);
+        if (
+          state &&
+          state.value === value &&
+          element.style.getPropertyValue(property) === state.applied
+        ) {
+          hook.styles.set(property, state);
+          continue;
+        }
+        const before = state?.previous ?? element.style.getPropertyValue(property);
+        element.style.setProperty(property, value);
+        hook.styles.set(property, {
+          previous: before,
+          applied: element.style.getPropertyValue(property),
+          value,
+        });
+      }
+      applied.set(element, hook);
+    }
+    for (const [element, hook] of this.#hooks) this.#undoHooks(element, hook, applied.get(element));
+    this.#hooks = applied;
   }
 }

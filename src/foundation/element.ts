@@ -178,6 +178,7 @@ export class TpElement extends LitElement {
     this.toggleAttribute('data-disabled', this.disabled);
     this.toggleAttribute('data-readonly', this.readOnly);
     this.toggleAttribute('data-invalid', this.invalid);
-    this.setAttribute('data-orientation', this.orientation);
+    if (this.getAttribute('data-orientation') !== this.orientation)
+      this.setAttribute('data-orientation', this.orientation);
   }
 }
