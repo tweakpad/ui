@@ -211,6 +211,26 @@ test('allows justified non-applicability and a resolved complete record', () => 
     [],
   );
 });
+test('requires a concrete framework bindings impact at complete when the record states one', () => {
+  const placeholder = record().replace(
+    '- Scope source:',
+    '- Framework bindings: [generated binding impact]\n- Scope source:',
+  );
+  assert.deepEqual(checkGates(placeholder, 'implement'), []);
+  assert.ok(
+    checkGates(placeholder, 'complete').includes('Missing concrete Framework bindings impact'),
+  );
+  assert.deepEqual(
+    checkGates(
+      placeholder.replace(
+        '[generated binding impact]',
+        'regenerated; npm test, typecheck and the React/Vue scenarios pass; ledger row updated',
+      ),
+      'complete',
+    ),
+    [],
+  );
+});
 test('rejects unsupported stages and an empty record', () => {
   assert.ok(checkGates(record(), 'skip').length);
   assert.ok(checkGates('', 'implement').length);

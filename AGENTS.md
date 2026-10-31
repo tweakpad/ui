@@ -19,11 +19,16 @@ rules are mandatory and its checker must pass.
   graphs) follow the same skill under `src/widgets/<widget>/`, ship only through
   `@tweakpad/ui/widgets` and `@tweakpad/ui/register/widgets`, use the widget reference
   implementation under `../specification/external/` as parity evidence, and keep their records
-  under `plans/widgets/<widget>/`. Never add a widget to the main index or `/register`.
+  under `plans/widgets/<widget>/`. Never add a widget to the main index or `/register`;
+  its generated framework bindings ship through `@tweakpad/ui/widgets/<framework>`.
 - Investigate the supplied local references in `../specification/external/`.
   Implement with LitElement and shared internal infrastructure, without a UI framework
   or external runtime dependencies. Code, comments, tests, samples and docs never name
   the third-party libraries these references come from (license notice files excepted).
+  The framework bindings (`src/react/`, `src/vue/`, `src/preact/`, `src/solid/`,
+  `src/svelte/`) are the only modules that reference a framework, as an optional peer;
+  they are generated from the manifest by `scripts/bindings/` and follow the skill's
+  framework projection rules.
 - Use Google Chrome DevTools MCP exclusively for browser verification; the fixtures
   under `tests/fixtures/components/` and `tests/fixtures/widgets/` are driven through
   it, never through another driver.

@@ -200,6 +200,16 @@ contract-required native anatomy, and deliberate interoperability tests remain
 valid; record the reason when they could be confused with a component substitute.
 Do not hide a deficient existing component behind a local replacement.
 
+**Framework projection:** the React and Vue bindings and the Preact, Solid and Svelte tag
+types (`src/react/`, `src/vue/`, `src/preact/`, `src/solid/`, `src/svelte/`) are generated from
+the manifest by `scripts/bindings/`; never edit them by hand, and never add a framework-specific
+definition of a control (`ucl24-no-branch`). A change to an element's public surface changes them:
+settable properties, events and their detail types (read from the dispatch, so dispatch typed
+details), `on<Lane>Change` lane callbacks, slots and how the element treats the children a
+framework renders. An element that moves or rewrites consumer-owned light DOM must keep the owner's
+child-list methods working (`OwnedPortal`), or a framework that reconciles those children throws.
+Record the impact in the checklist's Framework bindings line.
+
 **Exit:** module responsibilities, shared owners, affected consumers, and a
 composition reuse map are recorded. The proposed design has no unjustified parallel
 owner. If existing code violates this, pass the design gate only after specifying
@@ -292,7 +302,12 @@ were read in Chrome as the docs skill describes.
 
 Run applicable unit tests, lint, type/build and Storybook build checks, plus MCP
 browser checks for the target and affected shared consumers. Check built exports
-and registration when changed. Reconcile the matrix, code, definitions, catalog,
+and registration when changed. Keep the framework bindings in sync: `npm run cem` regenerates
+them, `npm test` fails on a stale binding or an untyped event, `npm run typecheck` compiles every
+framework's type tests, and `npm run size:report` holds the binding budgets. When the public
+surface changed, run the entry's scenario and `smoke` in `tests/fixtures/frameworks/react/` and
+`tests/fixtures/frameworks/vue/` through MCP, then update its row in
+`plans/frameworks/ledger.md` and run `node scripts/bindings/check-ledger.mjs`. Reconcile the matrix, code, definitions, catalog,
 docs, reuse map, and evidence. Reopen gates affected by subsequent changes; do not
 carry an earlier pass across a change that invalidates its evidence.
 

@@ -9,7 +9,7 @@ import {
   parseKeyPattern,
   type KeyBindingOptions,
 } from './key-bindings.js';
-import type { ResolvedKeyHintPlatform } from './key-notation.js';
+import type { ResolvedKbdPlatform } from './key-notation.js';
 import { preventComponentHandling } from './part.js';
 import { CleanupScope } from './services.js';
 
@@ -70,7 +70,7 @@ function owner(host = element(), options: ConstructorParameters<typeof KeyBindin
   return new KeyBindingOwner(host, { platform: 'windows', ...options });
 }
 /** Whether the first chord of `pattern`, parsed for `platform`, matches `event` there. */
-function matches(pattern: string, platform: ResolvedKeyHintPlatform, event: KeyboardEvent) {
+function matches(pattern: string, platform: ResolvedKbdPlatform, event: KeyboardEvent) {
   return matchesKeyChord(parseKeyPattern(pattern, platform)[0]!, event, platform);
 }
 function bind(target: KeyBindingOwner, options: Partial<KeyBindingOptions> & { keys: string }) {
@@ -241,7 +241,7 @@ describe('Key chord matching across keyboard layouts', () => {
   });
 
   it('matches no Mod chord without Alt while AltGraph is active (mp-kb-pattern, uwg-te-req-key-2)', () => {
-    const cases: [string, ResolvedKeyHintPlatform, KeyEventInit][] = [
+    const cases: [string, ResolvedKbdPlatform, KeyEventInit][] = [
       ['Mod+]', 'windows', { key: ']', code: 'Digit9', ...controlAlt }],
       ['Mod+[', 'windows', { key: '[', code: 'Digit8', ...controlAlt }],
       ['Mod+\\', 'windows', { key: '\\', code: 'Minus', ...controlAlt }],
@@ -675,7 +675,7 @@ describe('Shortcut publication', () => {
     });
     expect(target.shortcut('missing')).toBeUndefined();
   });
-  it('uses macOS Key Hint notation for display and Meta for Mod', () => {
+  it('uses macOS Kbd notation for display and Meta for Mod', () => {
     const target = owner(element(), { platform: 'mac' });
     bind(target, { keys: 'Mod+Shift+f', action: 'toggle-fullscreen' });
     bind(target, { keys: 'Alt+ArrowLeft', action: 'seek' });

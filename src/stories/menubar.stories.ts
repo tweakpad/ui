@@ -19,21 +19,21 @@ interface Args {
 const menuContent = `
   <tp-menu value="file" label="File actions">
     <tp-button slot="trigger" variant="ghost">File</tp-button>
-    <tp-menu-item value="new"><tp-icon data-menubar-icon="plus"></tp-icon>New document<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="N"></tp-key-hint></tp-key-hint-group></tp-menu-item>
-    <tp-menu-item value="open"><tp-icon data-menubar-icon="folder"></tp-icon>Open<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="O"></tp-key-hint></tp-key-hint-group></tp-menu-item>
+    <tp-menu-item value="new"><tp-icon data-menubar-icon="plus"></tp-icon>New document<tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="command"></tp-kbd><tp-kbd value="N"></tp-kbd></tp-kbd-group></tp-menu-item>
+    <tp-menu-item value="open"><tp-icon data-menubar-icon="folder"></tp-icon>Open<tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="command"></tp-kbd><tp-kbd value="O"></tp-kbd></tp-kbd-group></tp-menu-item>
     <tp-separator></tp-separator>
     <tp-menu label="Share document">
       <tp-button slot="trigger" variant="ghost"><tp-icon slot="icon-start" data-menubar-icon="share"></tp-icon>Share</tp-button>
       <tp-menu-item value="invite"><tp-icon data-menubar-icon="account"></tp-icon>Invite people</tp-menu-item>
-      <tp-menu-item value="link"><tp-icon data-menubar-icon="share"></tp-icon>Copy link<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="shift"></tp-key-hint><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="C"></tp-key-hint></tp-key-hint-group></tp-menu-item>
+      <tp-menu-item value="link"><tp-icon data-menubar-icon="share"></tp-icon>Copy link<tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="shift"></tp-kbd><tp-kbd value="command"></tp-kbd><tp-kbd value="C"></tp-kbd></tp-kbd-group></tp-menu-item>
     </tp-menu>
     <tp-separator></tp-separator>
-    <tp-menu-item value="delete" variant="destructive"><tp-icon data-menubar-icon="trash"></tp-icon>Delete document<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="⌫"></tp-key-hint></tp-key-hint-group></tp-menu-item>
+    <tp-menu-item value="delete" variant="destructive"><tp-icon data-menubar-icon="trash"></tp-icon>Delete document<tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="command"></tp-kbd><tp-kbd value="⌫"></tp-kbd></tp-kbd-group></tp-menu-item>
   </tp-menu>
   <tp-menu value="edit" label="Edit actions">
     <tp-button slot="trigger" variant="ghost">Edit</tp-button>
-    <tp-menu-item value="settings"><tp-icon data-menubar-icon="settings"></tp-icon>Preferences<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key=","></tp-key-hint></tp-key-hint-group></tp-menu-item>
-    <tp-menu-item disabled value="paste">Paste<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="V"></tp-key-hint></tp-key-hint-group></tp-menu-item>
+    <tp-menu-item value="settings"><tp-icon data-menubar-icon="settings"></tp-icon>Preferences<tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="command"></tp-kbd><tp-kbd value=","></tp-kbd></tp-kbd-group></tp-menu-item>
+    <tp-menu-item disabled value="paste">Paste<tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="command"></tp-kbd><tp-kbd value="V"></tp-kbd></tp-kbd-group></tp-menu-item>
     <tp-separator></tp-separator>
     <tp-menu-checkbox-item default-checked>Word wrap</tp-menu-checkbox-item>
     <tp-menu-checkbox-item>Show ruler</tp-menu-checkbox-item>
@@ -47,7 +47,7 @@ const menuContent = `
   <tp-menu value="help" label="Help actions">
     <tp-button slot="trigger" variant="ghost">Help</tp-button>
     <tp-menu-item value="docs"><tp-icon data-menubar-icon="book"></tp-icon>Documentation</tp-menu-item>
-    <tp-menu-item value="shortcuts"><tp-icon data-menubar-icon="terminal"></tp-icon>Keyboard shortcuts<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="/"></tp-key-hint></tp-key-hint-group></tp-menu-item>
+    <tp-menu-item value="shortcuts"><tp-icon data-menubar-icon="terminal"></tp-icon>Keyboard shortcuts<tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="command"></tp-kbd><tp-kbd value="/"></tp-kbd></tp-kbd-group></tp-menu-item>
   </tp-menu>`;
 const setupIcons = (element: Element | undefined): void => {
   queueMicrotask(() => {

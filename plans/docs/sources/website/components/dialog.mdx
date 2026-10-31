@@ -55,9 +55,9 @@ The corner Close stays visible unless another named close action is reachable, s
   code={`<tp-dialog modality="non-modal" label="Keyboard shortcuts" description="Available anywhere in the editor.">
   <tp-button slot="trigger" variant="outline">Keyboard shortcuts</tp-button>
   <dl style="display:grid;grid-template-columns:1fr auto;gap:var(--tp-space-2) var(--tp-space-6);margin:0">
-    <dt>Search</dt><dd style="margin:0"><tp-key-hint-group><tp-key-hint key="mod"></tp-key-hint><tp-key-hint>K</tp-key-hint></tp-key-hint-group></dd>
-    <dt>New document</dt><dd style="margin:0"><tp-key-hint-group><tp-key-hint key="mod"></tp-key-hint><tp-key-hint>N</tp-key-hint></tp-key-hint-group></dd>
-    <dt>Toggle sidebar</dt><dd style="margin:0"><tp-key-hint-group><tp-key-hint key="mod"></tp-key-hint><tp-key-hint>B</tp-key-hint></tp-key-hint-group></dd>
+    <dt>Search</dt><dd style="margin:0"><tp-kbd-group><tp-kbd value="mod"></tp-kbd><tp-kbd>K</tp-kbd></tp-kbd-group></dd>
+    <dt>New document</dt><dd style="margin:0"><tp-kbd-group><tp-kbd value="mod"></tp-kbd><tp-kbd>N</tp-kbd></tp-kbd-group></dd>
+    <dt>Toggle sidebar</dt><dd style="margin:0"><tp-kbd-group><tp-kbd value="mod"></tp-kbd><tp-kbd>B</tp-kbd></tp-kbd-group></dd>
   </dl>
 </tp-dialog>`}
 />

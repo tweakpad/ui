@@ -1,7 +1,7 @@
 import { rect, type AnchorGeometry, type VirtualAnchor } from '../../foundation/positioning.js';
 import { componentHandlingPrevented } from '../../foundation/part.js';
 import { deepActiveElement, composedContains } from '../../foundation/focus.js';
-import { keyHintPlatform } from '../../foundation/key-notation.js';
+import { kbdPlatform } from '../../foundation/key-notation.js';
 
 interface ContextInvocationOptions {
   document(): Document;
@@ -95,7 +95,7 @@ export class ContextInvocation {
    */
   #targetPress(event: PointerEvent): void {
     if (!this.options.isOpen() || this.options.inside(event)) return;
-    const mac = keyHintPlatform('auto', this.options.document().defaultView?.navigator) === 'mac';
+    const mac = kbdPlatform('auto', this.options.document().defaultView?.navigator) === 'mac';
     if (event.button === 2 || (event.button === 0 && event.ctrlKey && mac)) return;
     this.options.dismiss(event);
   }

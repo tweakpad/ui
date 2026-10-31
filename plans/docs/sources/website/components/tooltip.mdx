@@ -38,16 +38,16 @@ Put the control in the `trigger` slot and the description in the default slot. H
 
 ### Keyboard hints
 
-Descriptions can include an Icon or Key Hint. Links, buttons and inputs cannot go inside; use Popover for interactive content.
+Descriptions can include an Icon or Kbd. Links, buttons and inputs cannot go inside; use Popover for interactive content.
 
 <Preview
   title="With a shortcut"
   code={`<tp-tooltip>
   <tp-button slot="trigger" variant="outline">New issue</tp-button>
   Create an issue
-  <tp-key-hint-group separator="none" platform="mac">
-    <tp-key-hint key="command"></tp-key-hint><tp-key-hint key="I"></tp-key-hint>
-  </tp-key-hint-group>
+  <tp-kbd-group separator="none" platform="mac">
+    <tp-kbd value="command"></tp-kbd><tp-kbd value="I"></tp-kbd>
+  </tp-kbd-group>
 </tp-tooltip>`}
 />
 

@@ -65,6 +65,60 @@ export class OwnedPortal {
       }
     }
   }
+  #guarded = false;
+  /**
+   * The owner's child-list methods keep working while its children are projected, so code that
+   * owns those children (an application, or a framework reconciling them) can still insert
+   * before, replace and remove them: a projected child's return marker stands in for it.
+   */
+  #guardOwner(): void {
+    if (this.#guarded) return;
+    this.#guarded = true;
+    const owner = this.owner;
+    const native = Node.prototype;
+    const standIn = (node: Node | null): Node | null => (node && this.#projected.get(node)) ?? node;
+    Object.defineProperties(owner, {
+      insertBefore: {
+        configurable: true,
+        writable: true,
+        value: <T extends Node>(node: T, child: Node | null): T => {
+          const reference = standIn(child);
+          this.#release(node);
+          return native.insertBefore.call(owner, node, reference) as T;
+        },
+      },
+      removeChild: {
+        configurable: true,
+        writable: true,
+        value: <T extends Node>(child: T): T => {
+          if (!this.#projected.has(child)) return native.removeChild.call(owner, child) as T;
+          this.#release(child);
+          return child;
+        },
+      },
+      replaceChild: {
+        configurable: true,
+        writable: true,
+        value: <T extends Node>(node: Node, child: T): T => {
+          const marker = this.#projected.get(child);
+          if (!marker) return native.replaceChild.call(owner, node, child) as T;
+          this.#release(node);
+          native.replaceChild.call(owner, node, marker);
+          this.#projected.delete(child);
+          child.parentNode?.removeChild(child);
+          return child;
+        },
+      },
+    });
+  }
+  /** Takes a projected node out of the portal, with its return marker. */
+  #release(node: Node): void {
+    const marker = this.#projected.get(node);
+    if (!marker) return;
+    this.#projected.delete(node);
+    marker.remove();
+    if (this.#host && node.parentNode === this.#host) this.#host.removeChild(node);
+  }
   #restoreNode(node: Node): void {
     const marker = this.#projected.get(node);
     if (!marker) return;
@@ -77,18 +131,17 @@ export class OwnedPortal {
     this.#pruneProjection();
     const wanted = new Set(nodes);
     for (const node of this.#projected.keys()) if (!wanted.has(node)) this.#restoreNode(node);
-    for (const node of nodes) {
-      if (
-        this.#projected.has(node) ||
-        !node.parentNode ||
-        (!external && node.parentNode !== this.owner)
-      )
-        continue;
+    nodes.forEach((node, index) => {
+      const parent = node.parentNode;
+      if (this.#projected.has(node) || !parent || (!external && parent !== this.owner)) return;
+      if (!external) this.#guardOwner();
       const marker = this.owner.ownerDocument.createComment('tp-portal-projection');
-      node.parentNode.replaceChild(marker, node);
+      Node.prototype.replaceChild.call(parent, marker, node);
       this.#projected.set(node, marker);
-      this.#host!.append(node);
-    }
+      // In the owner's order: before the next node that is already projected.
+      const next = nodes.slice(index + 1).find((later) => this.#projected.has(later));
+      this.#host!.insertBefore(node, next && next.parentNode === this.#host ? next : null);
+    });
   }
   /** Relocate an externally projected node's owned return marker after layout movement. */
   relocateProjection(node: Node, before: Node): void {

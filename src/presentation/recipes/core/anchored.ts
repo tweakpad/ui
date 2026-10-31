@@ -37,7 +37,7 @@ export const tooltipCoreAppearance: PresentationDictionary = {
       'line-height': 'var(--tp-leading-normal)',
       'box-shadow': 'none',
     }),
-    // The content is one centered row: an icon, the label and its key hints side by side.
+    // The content is one centered row: an icon, the label and its Kbd elements side by side.
     rule({ 'flex-direction': 'row', 'align-items': 'center' }, '& .body'),
   ],
   'tooltip-arrow': [rule({ fill: 'var(--tp-foreground)' })],

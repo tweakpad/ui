@@ -9,8 +9,8 @@ import { styleMap } from 'lit/directives/style-map.js';
 import { TpButtonGroup } from '../../components/button-group/button-group.js';
 import { TpButton } from '../../components/button/button.js';
 import { TpIcon } from '../../components/icon/icon.js';
-import { TpKeyHintGroup } from '../../components/key-hint/key-hint-group.js';
-import { TpKeyHint } from '../../components/key-hint/key-hint.js';
+import { TpKbdGroup } from '../../components/kbd/kbd-group.js';
+import { TpKbd } from '../../components/kbd/kbd.js';
 import { TpMenuCheckboxItem } from '../../components/menu/menu-checkbox-item.js';
 import { TpMenuItem } from '../../components/menu/menu-item.js';
 import { TpMenuRadioGroup } from '../../components/menu/menu-radio-group.js';
@@ -620,8 +620,8 @@ export class TpTextEditor extends TpFormElement<TextEditorSnapshot | null> {
       TpMenuRadioGroup,
       TpMenuRadioItem,
       TpTooltip,
-      TpKeyHint,
-      TpKeyHintGroup,
+      TpKbd,
+      TpKbdGroup,
       TpIcon,
     ];
   }

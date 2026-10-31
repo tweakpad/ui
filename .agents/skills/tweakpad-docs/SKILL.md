@@ -71,13 +71,13 @@ rows from `elementApi` and `docs.json`. Never one HTML template, component or st
   - `Canvas` for every other preview, and the `Source` block for `<Code>`.
   - Storybook-styled API tables (`.tp-docs-api`).
   - **No library elements** (`tp-table`, `tp-code-block`, …) in the docs chrome. Library elements
-    appear only inside previews, and in the key hints inside the Keyboard `<Keys>` cells.
+    appear only inside previews, and in the Kbd elements inside the Keyboard `<Keys>` cells.
 - **The website** renders with library components for every part:
   - `Preview.astro` for the canvas, its toolbar (`tp-toggle-group`, `tp-button`, `tp-tooltip`)
     and its code (`tp-code-block`);
   - `Code.astro` (`tp-code-block`);
   - API and Markdown tables as `tp-table`;
-  - `Keys.astro` (`tp-key-hint-group`);
+  - `Keys.astro` (`tp-kbd-group`);
   - Related cards.
 
   No native `<table>`, `<pre>` or `<button>` appears in the page chrome.

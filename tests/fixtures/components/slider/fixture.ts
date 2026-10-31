@@ -450,21 +450,21 @@ async function assertParts() {
   slider.partContracts = {
     'slider-output': {
       content: (state: Readonly<Record<string, unknown>>) =>
-        html`<tp-key-hint>⇧</tp-key-hint>
+        html`<tp-kbd>⇧</tp-kbd>
           ${String((state.formattedValues as string[]).join(' – '))}`,
     },
-    'slider-thumb': { content: html`<tp-key-hint>⇧</tp-key-hint>` },
+    'slider-thumb': { content: html`<tp-kbd>⇧</tp-kbd>` },
   };
   await settle(slider);
   check(
     'C16 rich Output uses actual component',
-    !!slider.shadowRoot!.querySelector('tp-key-hint'),
+    !!slider.shadowRoot!.querySelector('tp-kbd'),
     slider.shadowRoot!.querySelector('[part~="slider-output"]')?.textContent,
   );
   const currentThumb = slider.shadowRoot!.querySelector<TpSliderThumb>('tp-slider-thumb')!;
   check(
     'C21 Thumb custom content retains its native input',
-    !!currentThumb.shadowRoot!.querySelector('tp-key-hint') &&
+    !!currentThumb.shadowRoot!.querySelector('tp-kbd') &&
       (currentThumb.inputElement as HTMLInputElement)?.type === 'range' &&
       (currentThumb.inputElement as HTMLInputElement)?.value === '20',
     currentThumb.shadowRoot!.innerHTML.slice(0, 200),

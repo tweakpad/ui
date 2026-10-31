@@ -60,6 +60,11 @@ export function checkGates(source, stage) {
     const line = source.split(/\r?\n/).find((entry) => entry.startsWith(`- ${label}:`));
     if (!line || empty(line.slice(line.indexOf(':') + 1))) errors.push(`Missing concrete ${label}`);
   }
+  // Records from the current template state what the work changed in the generated framework
+  // bindings (regenerated, checks run, ledger row) or why nothing did; a complete record needs it.
+  const bindings = source.split(/\r?\n/).find((entry) => entry.startsWith('- Framework bindings:'));
+  if (stage === 'complete' && bindings && unattested(bindings.slice(bindings.indexOf(':') + 1)))
+    errors.push('Missing concrete Framework bindings impact');
   const gates = table(source, 'Gate record', errors);
   const capabilities = table(source, 'Capability and interface mapping', errors);
   const scenarios = table(source, 'Verification scenarios', errors);

@@ -107,10 +107,8 @@ export const KEY_ALIASES = {
   esc: 'escape',
 };
 
-export function KeyHint({ name }) {
-  // `key` is reserved by React, so the attribute is set on the element itself.
-  const set = React.useCallback((element) => element?.setAttribute('key', name), [name]);
-  return <tp-key-hint ref={set} />;
+export function Kbd({ name }) {
+  return <tp-kbd value={name} />;
 }
 
 export function Keys({ keys }) {
@@ -120,11 +118,11 @@ export function Keys({ keys }) {
     .filter(Boolean)
     .map((key) => KEY_ALIASES[key.toLowerCase()] ?? (key.length === 1 ? key.toUpperCase() : key));
   return (
-    <tp-key-hint-group>
+    <tp-kbd-group>
       {names.map((name, index) => (
-        <KeyHint key={index} name={name} />
+        <Kbd key={index} name={name} />
       ))}
-    </tp-key-hint-group>
+    </tp-kbd-group>
   );
 }
 

@@ -232,7 +232,7 @@ questionnaire.addEventListener('tp-submit', (event) => event.preventDefault());`
 
 ### Shortcuts
 
-`shortcut-mode="letters"` or `"numbers"` assigns a key to each enabled choice and shows it as a key hint. Pressing the key selects the answer; Enter confirms and moves on.
+`shortcut-mode="letters"` or `"numbers"` assigns a key to each enabled choice and shows it as a Kbd. Pressing the key selects the answer; Enter confirms and moves on.
 
 Text entry retains normal editing. Native radio navigation and input editing remain native. Outside those paths, Up/Down move answer focus, the backward inline arrow (Left in left-to-right, Right in right-to-left writing) moves back, the forward inline arrow advances an answered valid question, and Enter on a filled answer or modified Enter validates and confirms. Shortcuts focus and activate enabled choices. Repeated commands, composition, consumed keys and arrows carrying Alt, Ctrl or Meta do not trigger navigation. New questions receive the selected/filled answer, first enabled control, or fieldset focus, in that order. Invalid filled inputs receive native feedback when enabled.
 

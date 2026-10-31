@@ -136,13 +136,13 @@ describe('flow controls bar', () => {
     ]);
   });
 
-  it('shows each zoom and run command’s shortcut as one menu Key hint group (`uwg-fl-req-key-4`, `ucl20-menu-q3`, `mp-kb-publish`)', () => {
+  it('shows each zoom and run command’s shortcut as one menu Kbd group (`uwg-fl-req-key-4`, `ucl20-menu-q3`, `mp-kb-publish`)', () => {
     const text = rendered(['zoom', 'execute']);
     const hint = (...keys: string[]) =>
-      `<tp-key-hint-group data-menu-shortcut separator="none">${keys
-        .map((key) => `<tp-key-hint key=${key}></tp-key-hint>`)
-        .join('')}</tp-key-hint-group>`;
-    expect(text.match(/<tp-key-hint-group[^>]*>.*?<\/tp-key-hint-group>/g)).toEqual([
+      `<tp-kbd-group data-menu-shortcut separator="none">${keys
+        .map((key) => `<tp-kbd value=${key}></tp-kbd>`)
+        .join('')}</tp-kbd-group>`;
+    expect(text.match(/<tp-kbd-group[^>]*>.*?<\/tp-kbd-group>/g)).toEqual([
       hint('+'),
       hint('-'),
       hint('shift', '1'),

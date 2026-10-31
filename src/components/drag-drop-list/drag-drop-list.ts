@@ -53,7 +53,7 @@ import { TpEmptyState } from '../empty-state/empty-state.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { TpButton } from '../button/button.js';
 
-const eventNames: Record<DragEventName, string> = {
+const eventNames = {
   beforedragstart: 'tp-before-drag-start',
   dragstart: 'tp-drag-start',
   dragmove: 'tp-drag-move',
@@ -61,7 +61,7 @@ const eventNames: Record<DragEventName, string> = {
   dragover: 'tp-drag-over',
   dragend: 'tp-drag-end',
   settled: 'tp-drag-settled',
-};
+} as const satisfies Record<DragEventName, `tp-${string}`>;
 const complexProperties = Object.fromEntries(
   [
     'getItemId',

@@ -1,5 +1,5 @@
 import { parseKeyPattern, type KeyChord } from '../../foundation/key-bindings.js';
-import type { ResolvedKeyHintPlatform } from '../../foundation/key-notation.js';
+import type { ResolvedKbdPlatform } from '../../foundation/key-notation.js';
 import { MEDIA_REQUEST_ACTIONS, type MediaRequestAction } from '../../foundation/media/requests.js';
 import type { MediaState } from '../../foundation/media/state.js';
 
@@ -146,7 +146,7 @@ export function resolveMediaHotkeys(options: {
   readonly defaults: boolean;
   readonly config: MediaStepConfig;
   readonly authored?: readonly MediaHotkeyInput[];
-  readonly platform: ResolvedKeyHintPlatform;
+  readonly platform: ResolvedKbdPlatform;
 }): MediaHotkeyResolution {
   const specs: MediaHotkeySpec[] = [];
   const problems: MediaHotkeyProblem[] = [];

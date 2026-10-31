@@ -391,10 +391,10 @@ const examples = {
   `,
   'tp-empty-state': () => renderEmptyStateExample(),
   'tp-icon': () => html`<tp-icon .icon=${plusIcon} label="Add"></tp-icon>`,
-  'tp-key-hint': () =>
-    html`<tp-key-hint-group separator="none" platform="mac"
-      ><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="K"></tp-key-hint
-    ></tp-key-hint-group>`,
+  'tp-kbd': () =>
+    html`<tp-kbd-group separator="none" platform="mac"
+      ><tp-kbd value="command"></tp-kbd><tp-kbd value="K"></tp-kbd
+    ></tp-kbd-group>`,
   'tp-label': () => html`
     <div>
       <tp-label id="story-name-label" for="story-name">Name</tp-label>

@@ -33,9 +33,9 @@ const meta = {
         .invalid=${args.invalid}
         ><span slot="prefix">https://</span
         ><tp-input name="website" placeholder="example.com"></tp-input
-        ><tp-key-hint-group slot="suffix" separator="none" platform="mac"
-          ><tp-key-hint key="command"></tp-key-hint
-          ><tp-key-hint key="K"></tp-key-hint></tp-key-hint-group></tp-input-group
+        ><tp-kbd-group slot="suffix" separator="none" platform="mac"
+          ><tp-kbd value="command"></tp-kbd
+          ><tp-kbd value="K"></tp-kbd></tp-kbd-group></tp-input-group
     ></tp-field>`,
 } satisfies Meta<Args>;
 export default meta;

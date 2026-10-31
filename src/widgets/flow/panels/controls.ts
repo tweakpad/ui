@@ -9,9 +9,9 @@ import { TpButtonGroup } from '../../../components/button-group/button-group.js'
 import { TpIcon } from '../../../components/icon/icon.js';
 import { TpInput } from '../../../components/input/input.js';
 import { TpInputGroup } from '../../../components/input-group/input-group.js';
-import { TpKeyHint } from '../../../components/key-hint/key-hint.js';
-import { TpKeyHintGroup } from '../../../components/key-hint/key-hint-group.js';
-import { renderShortcutHint } from '../../../components/key-hint/shortcut-hint.js';
+import { TpKbd } from '../../../components/kbd/kbd.js';
+import { TpKbdGroup } from '../../../components/kbd/kbd-group.js';
+import { renderShortcutHint } from '../../../components/kbd/shortcut-hint.js';
 import { TpMenu } from '../../../components/menu/menu.js';
 import { TpMenuItem } from '../../../components/menu/menu-item.js';
 import { TpSeparator } from '../../../components/separator/separator.js';
@@ -282,8 +282,8 @@ export class TpFlowControls extends TpElement {
       TpMenu,
       TpMenuItem,
       TpSeparator,
-      TpKeyHintGroup,
-      TpKeyHint,
+      TpKbdGroup,
+      TpKbd,
     ];
   }
   static override properties = {

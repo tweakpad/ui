@@ -82,7 +82,7 @@ export const catalog = [
   ['Tree view', 'tp-tree-view', 'compound-reexport'],
   ['Empty state', 'tp-empty-state', 'presentational-primitive'],
   ['Icon', 'tp-icon', 'presentational-primitive'],
-  ['Key hint', 'tp-key-hint', 'presentational-primitive'],
+  ['Kbd', 'tp-kbd', 'presentational-primitive'],
   ['Label', 'tp-label', 'preset-composition'],
   ['List', 'tp-list', 'preset-composition'],
   ['Drag Drop List', 'tp-drag-drop-list', 'preset-composition'],

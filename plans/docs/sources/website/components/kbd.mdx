@@ -1,0 +1,148 @@
+---
+title: Kbd
+description: Keycaps that describe a keyboard shortcut in platform notation, without registering it.
+tag: tp-kbd
+parts: [tp-kbd-group]
+---
+
+import Preview from '../../../components/Preview.astro';
+
+<Preview
+  title="Kbd"
+  code={`<p style="margin:0">
+  Press
+  <tp-kbd-group separator="none">
+    <tp-kbd value="mod"></tp-kbd>
+    <tp-kbd>K</tp-kbd>
+  </tp-kbd-group>
+  to search commands and files.
+</p>`}
+/>
+
+## Usage
+
+A Kbd only describes a shortcut; your application implements it. Compose one `tp-kbd` per key inside a `tp-kbd-group`, which owns spacing and separators.
+
+### Generated notation
+
+`key` renders platform notation and a readable accessible name. `mod` is Command on macOS and Ctrl elsewhere; `platform` pins a platform, otherwise it is detected.
+
+<Preview
+  title="Modifiers"
+  code={`<div style="display:grid;gap:var(--tp-space-3);justify-items:start">
+  <tp-kbd-group platform="mac" separator="none">
+    <tp-kbd value="control"></tp-kbd>
+    <tp-kbd value="alt"></tp-kbd>
+    <tp-kbd value="shift"></tp-kbd>
+    <tp-kbd value="command"></tp-kbd>
+  </tp-kbd-group>
+  <tp-kbd-group platform="windows">
+    <tp-kbd value="control"></tp-kbd>
+    <tp-kbd value="shift"></tp-kbd>
+    <tp-kbd>P</tp-kbd>
+  </tp-kbd-group>
+</div>`}
+/>
+
+### Separators and sequences
+
+`separator` is `plus` by default, `none` for adjacent keycaps, and `then` for a sequence. Nest groups to describe a chord followed by another chord.
+
+<Preview
+  title="Sequence"
+  code={`<tp-kbd-group separator="then" label="Comment on selection">
+  <tp-kbd-group separator="none">
+    <tp-kbd value="mod"></tp-kbd>
+    <tp-kbd>K</tp-kbd>
+  </tp-kbd-group>
+  <tp-kbd-group separator="none">
+    <tp-kbd value="mod"></tp-kbd>
+    <tp-kbd>C</tp-kbd>
+  </tp-kbd-group>
+</tp-kbd-group>`}
+/>
+
+### In controls
+
+Place a hint inside a Button's `icon-end` slot, an Input group addon or a Tooltip. The owning control keeps focus and activation; the hint stays informative.
+
+<Preview
+  title="Button and tooltip"
+  code={`<tp-button variant="outline">
+  Accept invite
+  <tp-kbd slot="icon-end" value="enter"></tp-kbd>
+</tp-button>
+<tp-tooltip>
+  <tp-button slot="trigger" variant="outline">Save</tp-button>
+  Save changes
+  <tp-kbd-group separator="none">
+    <tp-kbd value="mod"></tp-kbd>
+    <tp-kbd>S</tp-kbd>
+  </tp-kbd-group>
+</tp-tooltip>`}
+/>
+
+In an Input group, put the shortcut in an addon slot such as `inline-end`; the group lays out the addon and the Kbd group spaces the keys.
+
+<Preview
+  title="Input group"
+  align="stretch"
+  code={`<tp-input-group style="max-inline-size:22rem;margin-inline:auto;inline-size:100%">
+  <tp-input label="Search" type="search" placeholder="Jump to a project"></tp-input>
+  <tp-kbd-group slot="inline-end" separator="none">
+    <tp-kbd value="mod"></tp-kbd>
+    <tp-kbd>P</tp-kbd>
+  </tp-kbd-group>
+</tp-input-group>`}
+/>
+
+### Icon keys
+
+A key's content replaces the generated notation, so it can hold a `tp-icon`, which takes the key's icon size. Give icon-only keys a `label` for their accessible name.
+
+<Preview
+  title="Icon keys"
+  code={`<p id="kbd-icons" style="margin:0;display:flex;align-items:center;gap:var(--tp-space-2)">
+  Move between results with
+  <tp-kbd-group separator="none">
+    <tp-kbd label="Up arrow"><tp-icon data-icon="up"></tp-icon></tp-kbd>
+    <tp-kbd label="Down arrow"><tp-icon data-icon="down"></tp-icon></tp-kbd>
+  </tp-kbd-group>
+  and open with
+  <tp-kbd label="Return"><tp-icon data-icon="return"></tp-icon></tp-kbd>
+</p>`}
+  script={`const icons = {
+  up: { viewBox: '0 0 24 24', paths: [{ d: 'm18 15-6-6-6 6', strokeWidth: 2 }] },
+  down: { viewBox: '0 0 24 24', paths: [{ d: 'm6 9 6 6 6-6', strokeWidth: 2 }] },
+  return: { viewBox: '0 0 24 24', paths: [{ d: 'M20 4v7a4 4 0 0 1-4 4H4M9 10l-5 5 5 5', strokeWidth: 2 }] },
+};
+for (const icon of document.querySelectorAll('#kbd-icons tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+/>
+
+### Localization and direction
+
+`keyLabels` on a group replaces the visible text and spoken name of generated keys, and the `then` entry translates the sequence word; children inherit it. Spacing is logical, so hints follow right-to-left text. Set `dir="ltr"` on a group when the notation must keep left-to-right order.
+
+<Preview
+  title="Localized and right-to-left"
+  code={`<div style="display:grid;gap:var(--tp-space-4);justify-items:start">
+  <p style="margin:0">
+    Commenter :
+    <tp-kbd-group id="kbd-french" separator="then" platform="windows" label="Commenter la sélection">
+      <tp-kbd-group separator="none"><tp-kbd value="control"></tp-kbd><tp-kbd>K</tp-kbd></tp-kbd-group>
+      <tp-kbd-group separator="none"><tp-kbd value="control"></tp-kbd><tp-kbd>C</tp-kbd></tp-kbd-group>
+    </tp-kbd-group>
+  </p>
+  <div dir="rtl" lang="ar" style="display:flex;align-items:center;gap:var(--tp-space-3)">
+    <span>اضغط
+      <tp-kbd-group separator="none"><tp-kbd value="mod"></tp-kbd><tp-kbd>K</tp-kbd></tp-kbd-group>
+      للبحث</span>
+    <tp-button variant="outline">إرسال<tp-kbd slot="icon-end" value="enter" label="إدخال"></tp-kbd></tp-button>
+  </div>
+</div>`}
+  script={`await customElements.whenDefined('tp-kbd-group');
+document.querySelector('#kbd-french').keyLabels = {
+  control: { text: 'Ctrl', label: 'Contrôle' },
+  then: 'puis',
+};`}
+/>

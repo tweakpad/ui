@@ -22,7 +22,7 @@ import { markdownPresentation } from '../../presentation/families/markdown.js';
 import { TpAlert } from '../alert/alert.js';
 import { TpCheckbox } from '../checkbox/checkbox.js';
 import { TpCodeBlock } from '../code-block/code-block.js';
-import { TpKeyHint } from '../key-hint/key-hint.js';
+import { TpKbd } from '../kbd/kbd.js';
 import { TpSeparator } from '../separator/separator.js';
 import { TpTable } from '../table/table.js';
 import { collectHeadings, MarkdownTreeRenderer } from './render.js';
@@ -67,7 +67,7 @@ const DEFINITION_LINE = /^ {0,3}\[\^?[^\]\n]+\]:.*$/gm;
 export class TpMarkdown extends TpElement {
   static tagName = 'tp-markdown';
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpCodeBlock, TpTable, TpSeparator, TpCheckbox, TpAlert, TpKeyHint];
+    return [TpCodeBlock, TpTable, TpSeparator, TpCheckbox, TpAlert, TpKbd];
   }
   static override presentation = markdownPresentation;
   static override properties = {

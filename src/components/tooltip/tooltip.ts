@@ -12,7 +12,7 @@ export type TooltipDescribes = 'trigger' | 'none';
  * once. The text becomes the control's accessible description, never its name; anything
  * interactive belongs in a Popover.
  *
- * @slot - The description: text, with an Icon or a Key Hint.
+ * @slot - The description: text, with an Icon or a Kbd.
  * @slot trigger - The focusable control the tooltip describes.
  */
 export class TpTooltip extends TpHoverSurface {
@@ -69,19 +69,19 @@ export class TpTooltip extends TpHoverSurface {
         ...this.contentNodes.flatMap((node) =>
           node instanceof Element
             ? [
-                ...(node.matches('tp-key-hint') ? [node as TpElement] : []),
-                ...node.querySelectorAll<TpElement>('tp-key-hint'),
+                ...(node.matches('tp-kbd') ? [node as TpElement] : []),
+                ...node.querySelectorAll<TpElement>('tp-kbd'),
               ]
             : [],
         ),
         // Content rendered from a payload (`content`) lives in the popup, not among the children.
-        ...(this.popupElement?.querySelectorAll<TpElement>('tp-key-hint') ?? []),
+        ...(this.popupElement?.querySelectorAll<TpElement>('tp-kbd') ?? []),
       ].filter((hint) => !hint.closest('[slot=trigger]')),
     );
     for (const hint of this.#hints) if (!hints.has(hint)) setPartComposition(hint, this);
     for (const hint of hints)
       setPartComposition(hint, this, {
-        'key-hint': {
+        kbd: {
           styleHook: {
             color: 'var(--tp-background)',
             background: 'color-mix(in srgb, currentColor 15%, transparent)',

@@ -1,6 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import type { ComponentPartContract } from '../../foundation/part.js';
-import { renderShortcutHint } from '../key-hint/shortcut-hint.js';
+import { renderShortcutHint } from '../kbd/shortcut-hint.js';
 import type { CommandItem } from './model.js';
 
 /** The text of a command item: its `text`, else a string label, else its value. */

@@ -1,6 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { shortcutAria } from '../../../components/key-hint/shortcut-hint.js';
+import { shortcutAria } from '../../../components/kbd/shortcut-hint.js';
 import type { TpMenu } from '../../../components/menu/menu.js';
 import type { TpToggle } from '../../../components/toggle/toggle.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';

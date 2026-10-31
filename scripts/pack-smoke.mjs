@@ -40,7 +40,7 @@ const forbidden = [...files].filter(
   (path) =>
     /^(src|tmp|plans|external|scripts|tests|\.storybook)\/|^\.env|stylesheet\.js/u.test(path) ||
     (/^docs\//u.test(path) &&
-      !/^docs\/(?:components|motion\/text|widgets)\/[^/]+\.mdx$/u.test(path)),
+      !/^docs\/(?:components|motion\/[^/]+|widgets)\/[^/]+\.mdx$/u.test(path)),
 );
 if (forbidden.length) fail(`unexpected files in the package: ${forbidden.slice(0, 10).join(', ')}`);
 const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
@@ -154,6 +154,44 @@ const bareImports = [...scanned].flatMap(([file, specifiers]) =>
 );
 if (bareImports.length)
   fail(`packages other than lit are imported: ${bareImports.slice(0, 10).join(', ')}`);
+// The React bindings are client modules that import only React, Lit and the library itself.
+const reactFiles = [...files].filter((path) => /^dist\/react\/.*\.js$/u.test(path));
+const reactSpecifier = /^react(?:\/|$)/u;
+for (const path of reactFiles) {
+  const text = readFileSync(join(root, path), 'utf8');
+  // Leaf modules are the client boundary; the barrels only re-export them (`export *` is not
+  // allowed inside a client boundary).
+  if (!path.endsWith('/index.js') && !text.startsWith('"use client";'))
+    fail(`${path} lost its "use client" directive`);
+  const foreign = moduleSpecifiers(text).filter(
+    (specifier) =>
+      specifier === null ||
+      !(
+        relativeSpecifier.test(specifier) ||
+        litSpecifier.test(specifier) ||
+        reactSpecifier.test(specifier)
+      ),
+  );
+  if (foreign.length) fail(`${path} imports ${foreign.join(', ')}`);
+}
+if (reactFiles.length < 90) fail(`only ${reactFiles.length} React binding modules are published`);
+console.log(
+  `pack-smoke: ${reactFiles.length} React binding modules are client modules importing only react, lit and the library`,
+);
+// The Vue bindings import only Vue, Lit and the library.
+const vueFiles = [...files].filter((path) => /^dist\/vue\/.*\.js$/u.test(path));
+for (const path of vueFiles) {
+  const foreign = moduleSpecifiers(readFileSync(join(root, path), 'utf8')).filter(
+    (specifier) =>
+      specifier === null ||
+      !(relativeSpecifier.test(specifier) || litSpecifier.test(specifier) || specifier === 'vue'),
+  );
+  if (foreign.length) fail(`${path} imports ${foreign.join(', ')}`);
+}
+if (vueFiles.length < 90) fail(`only ${vueFiles.length} Vue binding modules are published`);
+console.log(
+  `pack-smoke: ${vueFiles.length} Vue binding modules import only vue, lit and the library`,
+);
 const elementsManifest = JSON.parse(readFileSync(join(root, 'dist/custom-elements.json'), 'utf8'));
 const elements = new Map(
   elementsManifest.modules
@@ -195,6 +233,9 @@ run(
     '--ignore-scripts',
     join(work, pack.filename),
     `lit@${manifest.peerDependencies.lit}`,
+    ...['react', 'react-dom', '@types/react', '@types/react-dom', 'vue'].map(
+      (name) => `${name}@${manifest.devDependencies[name]}`,
+    ),
   ],
   consumer,
 );
@@ -237,6 +278,32 @@ export const used = [TpIcon, editor, plusIcon.viewBox, createId(), carousel, dra
 `,
 );
 writeFileSync(join(consumer, 'css.d.ts'), "declare module '*.css';\n");
+// The React bindings as an application writes them: typed props, lane callbacks and events.
+writeFileSync(
+  join(consumer, 'react-consumer.tsx'),
+  `import { useState, type ReactElement } from 'react';
+import { Button, Checkbox, Dialog, Select } from '@tweakpad/ui/react';
+import { Flow } from '@tweakpad/ui/widgets/react';
+import type { TpSelect } from '@tweakpad/ui';
+
+export function Panel(): ReactElement {
+  const [checked, setChecked] = useState(false);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Checkbox checked={checked} onCheckedChange={(event) => setChecked(event.detail.value)} />
+      <Select items={[{ value: 'a', label: 'A' }]} ref={(element: TpSelect | null) => void element} />
+      <Dialog open={open} onOpenChange={(event) => setOpen(event.detail.value)} label="Rename">
+        <Button slot="trigger" variant="outline">Rename</Button>
+      </Dialog>
+      <Flow onTpHistoryChange={(event) => event.detail.canUndo} />
+      {/* @ts-expect-error A Checkbox lane value is a boolean. */}
+      <Checkbox onCheckedChange={(event) => event.detail.value.trim()} />
+    </>
+  );
+}
+`,
+);
 writeFileSync(
   join(consumer, 'tsconfig.json'),
   JSON.stringify(
@@ -250,8 +317,9 @@ writeFileSync(
         noEmit: true,
         skipLibCheck: false,
         resolveJsonModule: true,
+        jsx: 'react-jsx',
       },
-      files: ['consumer.ts', 'css.d.ts'],
+      files: ['consumer.ts', 'react-consumer.tsx', 'css.d.ts'],
     },
     null,
     2,
@@ -361,6 +429,45 @@ console.log(
   `pack-smoke: the engine factories run in Node from their entries without an engine package: ${engineFactories}`,
 );
 
+// The React bindings import in Node and server-render: a framework renders client modules on
+// the server first. Primitive props become attributes; objects and functions wait for the client.
+writeFileSync(
+  join(consumer, 'react-ssr.mjs'),
+  `import { createElement as h } from 'react';
+import { renderToString } from 'react-dom/server';
+import { Button, Select } from '@tweakpad/ui/react';
+process.stdout.write(
+  renderToString(h('div', null, h(Button, { variant: 'outline', onClick() {} }, 'Save'), h(Select, { items: [{ value: 'a', label: 'A' }], label: 'Fruit' }))),
+);
+`,
+);
+const serverRendered = execFileSync(process.execPath, ['react-ssr.mjs'], {
+  cwd: consumer,
+  encoding: 'utf8',
+});
+if (
+  !serverRendered.includes('<tp-button variant="outline">Save</tp-button>') ||
+  !serverRendered.includes('<tp-select label="Fruit"></tp-select>')
+)
+  fail(`the React bindings server-render unexpected markup: ${serverRendered}`);
+console.log('pack-smoke: the React bindings import in Node and server-render their elements');
+writeFileSync(
+  join(consumer, 'vue-ssr.mjs'),
+  `import { createSSRApp, h } from 'vue';
+import { renderToString } from 'vue/server-renderer';
+import { Button, Checkbox } from '@tweakpad/ui/vue';
+const app = createSSRApp(() => h('div', null, [h(Button, { variant: 'outline' }, () => 'Save'), h(Checkbox, { checked: true })]));
+process.stdout.write(await renderToString(app));
+`,
+);
+const vueRendered = execFileSync(process.execPath, ['vue-ssr.mjs'], {
+  cwd: consumer,
+  encoding: 'utf8',
+});
+if (!vueRendered.includes('<tp-button') || !vueRendered.includes('<tp-checkbox'))
+  fail(`the Vue bindings server-render unexpected markup: ${vueRendered}`);
+console.log('pack-smoke: the Vue bindings import in Node and server-render their elements');
+
 // 4. Type-check against the published declarations, including the library's own.
 run(join(root, 'node_modules/.bin/tsc'), ['-p', consumer]);
 console.log('pack-smoke: consumer type check passed (skipLibCheck: false)');
@@ -402,6 +509,12 @@ const bundle = (name, entry) => {
 };
 bundle('full', 'consumer.ts');
 const iconOnly = bundle('icon-only', 'icon-only.js');
+// One React binding from the barrel ships its element, not the other components'.
+writeFileSync(join(consumer, 'react-one.js'), "export { Switch } from '@tweakpad/ui/react';\n");
+const reactOne = bundle('react-one', 'react-one.js');
+if (!reactOne.includes('tp-switch')) fail('the single React binding bundle is missing tp-switch');
+if (reactOne.includes('tp-select') || reactOne.includes('tp-dialog'))
+  fail('the single React binding bundle includes unrelated components');
 if (!iconOnly.includes('M12 5v14M5 12h14')) fail('the icon-only bundle is missing the plus icon');
 if (iconOnly.includes('tp-button')) fail('the icon-only bundle includes unrelated components');
 // One definition of a module that holds several ships without its siblings.

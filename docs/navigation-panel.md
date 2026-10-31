@@ -117,7 +117,7 @@ A persistence adapter implements `load(key)` and `save(key, expanded)`, synchron
 | `tp-navigation-panel-input`                                   | Actual Input with its complete Field/form/editing behavior                                                              |
 | `tp-navigation-panel-separator`                               | Actual decorative Separator                                                                                             |
 
-Links preserve native navigation attributes; author `href` on Link and Sublink. Triggers, rails, group actions and commands use the action channel and omit `href`. Tooltip string or Lit content uses the actual Tooltip and is enabled only for collapsed wide `compact` presentation; rich descriptive Icon or KeyHint content remains supported. Controls and fields support their component's applicable public API and terminal customization hooks.
+Links preserve native navigation attributes; author `href` on Link and Sublink. Triggers, rails, group actions and commands use the action channel and omit `href`. Tooltip string or Lit content uses the actual Tooltip and is enabled only for collapsed wide `compact` presentation; rich descriptive Icon or Kbd content remains supported. Controls and fields support their component's applicable public API and terminal customization hooks.
 
 ## Public parts and customization
 

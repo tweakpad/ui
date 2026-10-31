@@ -1,6 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
-import { renderShortcutHint } from '../../../components/key-hint/shortcut-hint.js';
+import { renderShortcutHint } from '../../../components/kbd/shortcut-hint.js';
 import type { TpMenu } from '../../../components/menu/menu.js';
 import type { TpOverflowList } from '../../../components/overflow-list/overflow-list.js';
 import { TooltipProvider } from '../../../components/tooltip/handle.js';
@@ -64,7 +64,7 @@ export interface TextEditorToolbarHost {
   requestUpdate(): void;
 }
 
-/** What a tooltip shows for a control: its label and its shortcut's key hint. */
+/** What a tooltip shows for a control: its label and its shortcut's Kbd. */
 interface TooltipPayload {
   readonly label: string;
   readonly shortcut: KeyShortcut | undefined;
@@ -78,7 +78,7 @@ interface TooltipRecord {
 const MORE_TOOL = 'more';
 
 /**
- * What a toolbar's one Tooltip shows for a control: its label and its shortcut's key hint. The
+ * What a toolbar's one Tooltip shows for a control: its label and its shortcut's Kbd. The
  * Tooltip renders before any control is active, without a payload: then nothing.
  */
 export function toolbarTooltipContent(payload: unknown): TemplateResult | typeof nothing {
@@ -561,7 +561,7 @@ export class TextEditorToolbarControls {
 
   /**
    * Registers every row control, Toggle group member and the More trigger with the one tooltip,
-   * again whenever its label, key hint or the widget's disabled state changes (`uwg-te-req-prop-3`).
+   * again whenever its label, Kbd or the widget's disabled state changes (`uwg-te-req-prop-3`).
    */
   #syncTooltips(
     root: HTMLElement,

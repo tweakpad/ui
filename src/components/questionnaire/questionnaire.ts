@@ -30,7 +30,7 @@ import { checkIcon } from '../../icons/check.js';
 import { questionnaireStyles } from './styles.js';
 import { questionnairePresentation } from '../../presentation/families/questionnaire.js';
 import { TpIcon } from '../icon/icon.js';
-import { TpKeyHint } from '../key-hint/key-hint.js';
+import { TpKbd } from '../kbd/kbd.js';
 import { TpButton } from '../button/button.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
@@ -83,7 +83,7 @@ export class TpQuestionnaire extends TpElement {
   static tagName = 'tp-questionnaire';
   /** Library elements this element renders; defining it defines them too. */
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpIcon, TpKeyHint, TpButton];
+    return [TpIcon, TpKbd, TpButton];
   }
   static override presentation = questionnairePresentation;
   static override properties = {
@@ -546,7 +546,7 @@ export class TpQuestionnaire extends TpElement {
                   ><span>${choice.label}</span
                   >${choice.description ? html`<span class="choice-description">${choice.description}</span>` : nothing}</span
                 >
-                ${shortcut ? html`<tp-key-hint class="shortcut" aria-hidden="true">${shortcut}</tp-key-hint>` : nothing}
+                ${shortcut ? html`<tp-kbd class="shortcut" aria-hidden="true">${shortcut}</tp-kbd>` : nothing}
               `,
             },
             {

@@ -79,9 +79,9 @@ import { TpMenu } from '../../components/menu/menu.js';
 import { TpMenuItem } from '../../components/menu/menu-item.js';
 import { TpSeparator } from '../../components/separator/separator.js';
 import { TpIcon } from '../../components/icon/icon.js';
-import { TpKeyHint } from '../../components/key-hint/key-hint.js';
-import { TpKeyHintGroup } from '../../components/key-hint/key-hint-group.js';
-import { renderShortcutHint } from '../../components/key-hint/shortcut-hint.js';
+import { TpKbd } from '../../components/kbd/kbd.js';
+import { TpKbdGroup } from '../../components/kbd/kbd-group.js';
+import { renderShortcutHint } from '../../components/kbd/shortcut-hint.js';
 import { TpOpenChangeEvent } from '../../foundation/events.js';
 import { TpButton } from '../../components/button/button.js';
 import { TpAlertDialog } from '../../components/alert-dialog/alert-dialog.js';
@@ -480,8 +480,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       TpMenuItem,
       TpSeparator,
       TpIcon,
-      TpKeyHint,
-      TpKeyHintGroup,
+      TpKbd,
+      TpKbdGroup,
       TpButton,
       TpAlertDialog,
       TpDialog,

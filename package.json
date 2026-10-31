@@ -114,6 +114,41 @@
       "import": "./dist/register.js",
       "default": "./dist/register.js"
     },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "default": "./dist/react/index.js"
+    },
+    "./react/jsx": {
+      "types": "./dist/react/jsx.d.ts"
+    },
+    "./react/*": {
+      "types": "./dist/react/*.d.ts",
+      "import": "./dist/react/*.js",
+      "default": "./dist/react/*.js"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue/index.js",
+      "default": "./dist/vue/index.js"
+    },
+    "./vue/elements": {
+      "types": "./dist/vue/elements.d.ts"
+    },
+    "./vue/*": {
+      "types": "./dist/vue/*.d.ts",
+      "import": "./dist/vue/*.js",
+      "default": "./dist/vue/*.js"
+    },
+    "./preact": {
+      "types": "./dist/preact/index.d.ts"
+    },
+    "./solid": {
+      "types": "./dist/solid/index.d.ts"
+    },
+    "./svelte": {
+      "types": "./dist/svelte/index.d.ts"
+    },
     "./register/icon": {
       "types": "./dist/register/icon.d.ts",
       "import": "./dist/register/icon.js",
@@ -128,6 +163,25 @@
       "types": "./dist/register/widgets.d.ts",
       "import": "./dist/register/widgets.js",
       "default": "./dist/register/widgets.js"
+    },
+    "./widgets/react": {
+      "types": "./dist/react/widgets/index.d.ts",
+      "import": "./dist/react/widgets/index.js",
+      "default": "./dist/react/widgets/index.js"
+    },
+    "./widgets/vue": {
+      "types": "./dist/vue/widgets/index.d.ts",
+      "import": "./dist/vue/widgets/index.js",
+      "default": "./dist/vue/widgets/index.js"
+    },
+    "./widgets/preact": {
+      "types": "./dist/preact/widgets/index.d.ts"
+    },
+    "./widgets/solid": {
+      "types": "./dist/solid/widgets/index.d.ts"
+    },
+    "./widgets/svelte": {
+      "types": "./dist/svelte/widgets/index.d.ts"
     },
     "./docs": {
       "types": "./dist/docs/index.d.ts",
@@ -150,24 +204,26 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run clean && tsc -p tsconfig.build.json && vite build && npm run cem && npm run docs:build",
+    "build": "npm run clean && npm run cem && tsc -p tsconfig.build.json && vite build && npm run docs:build",
     "clean": "node scripts/clean.mjs",
     "format": "prettier --write \"src/**/*.{ts,css}\" \".storybook/**/*.{ts,css,mdx}\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,css}\" \".storybook/**/*.{ts,css,mdx}\" \"scripts/**/*.mjs\" \"*.{js,ts,json,css,html,md}\"",
     "lint": "npm run format:check && npm run lint:ts && npm run lint:css",
     "lint:ts": "eslint .",
     "lint:css": "stylelint \"src/**/*.{css,ts}\" \".storybook/**/*.css\"",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && npm run typecheck:frameworks",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:package": "npm run build && node scripts/pack-smoke.mjs",
     "storybook": "npm run cem && storybook dev -p 6006 --host 0.0.0.0",
     "build-storybook": "npm run cem && storybook build",
-    "cem": "cem analyze && node scripts/minify-manifest.mjs",
+    "cem": "cem analyze && node scripts/minify-manifest.mjs && npm run bindings",
     "changeset": "changeset",
     "release": "changeset publish",
     "size:report": "npm run build && node scripts/size-report.mjs",
-    "docs:build": "node scripts/docs/build.mjs"
+    "docs:build": "node scripts/docs/build.mjs",
+    "bindings": "node scripts/bindings/generate.mjs",
+    "typecheck:frameworks": "tsc -p tests/frameworks/react && tsc -p tests/frameworks/preact && tsc -p tests/frameworks/solid && vue-tsc -p tests/frameworks/vue && cd tests/frameworks/svelte && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",
@@ -194,6 +250,8 @@
     "@tiptap/pm": "3.32.0",
     "@tiptap/starter-kit": "3.32.0",
     "@types/node": "^22.20.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "eslint": "^10.10.0",
     "eslint-plugin-lit": "^2.3.1",
     "eslint-plugin-lit-a11y": "^5.1.1",
@@ -202,21 +260,39 @@
     "lit": "^3.3.3",
     "maplibre-gl": "^6.13.0",
     "postcss-lit": "^1.4.1",
+    "preact": "^11.1.0",
     "prettier": "^3.9.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "remark-gfm": "^4.0.1",
     "rolldown": "^1.2.8",
     "shiki": "^4.5.0",
+    "solid-js": "^1.9.18",
     "storybook": "^10.6.0",
     "stylelint": "^17.15.0",
     "stylelint-config-standard": "^40.0.0",
+    "svelte": "^5.57.3",
+    "svelte-check": "^4.7.7",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.0",
     "vite": "^8.3.0",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "vue": "^3.5.44",
+    "vue-tsc": "^3.3.14"
   },
   "customElements": "dist/custom-elements.json",
   "peerDependencies": {
-    "lit": "^3.3.0"
+    "lit": "^3.3.0",
+    "react": ">=19",
+    "vue": ">=3.4"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
   },
   "devEngines": {
     "runtime": {

@@ -31,7 +31,7 @@ for (const id of ['trigger', 'overview'])
 (document.querySelector('#overview') as TpNavigationPanelLink).tooltip = html`<tp-icon
     .icon=${chevronRightIcon}
   ></tp-icon>
-  Overview <tp-key-hint>O</tp-key-hint>`;
+  Overview <tp-kbd>O</tp-kbd>`;
 const events: { type: string; value: unknown; reason: string; target: string }[] = [];
 for (const type of ['tp-value-change', 'tp-open-change'])
   panel.addEventListener(type, (event) => {

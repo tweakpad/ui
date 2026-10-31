@@ -17,6 +17,7 @@ export * from './state-markers.js';
 export * from './events.js';
 export * from './focus.js';
 export { createId } from './id.js';
+export { TpShortcutChangeEvent } from './key-bindings.js';
 export * from './motion.js';
 export * from './meter.js';
 export * from './number-field/index.js';

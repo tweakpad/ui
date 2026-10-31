@@ -19,8 +19,8 @@ import { dialogPresentation } from '../../presentation/families/dialog.js';
 import { projectCommandItem } from './item.js';
 import { TpCommandList } from './list.js';
 import { TpIcon } from '../icon/icon.js';
-import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
-import { TpKeyHint } from '../key-hint/key-hint.js';
+import { TpKbdGroup } from '../kbd/kbd-group.js';
+import { TpKbd } from '../kbd/kbd.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 /**
@@ -39,7 +39,7 @@ export class TpCommandPalette extends TpDialog {
   static override tagName = 'tp-command-palette';
   /** Library elements this element renders; defining it defines them too. */
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpCommandList, TpIcon, TpKeyHintGroup, TpKeyHint];
+    return [TpCommandList, TpIcon, TpKbdGroup, TpKbd];
   }
   static override presentation = commandPalettePresentation;
   static override presentationFamilies = [dialogPresentation];

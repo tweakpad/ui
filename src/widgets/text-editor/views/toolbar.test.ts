@@ -783,7 +783,7 @@ describe('text editor fixed toolbar', () => {
     ]);
   });
 
-  it('registers one visual-only tooltip trigger per control with its label and key hint, again when they change (uwg-te-tab-anatomy-r2, uwg-te-req-a11y-2)', () => {
+  it('registers one visual-only tooltip trigger per control with its label and Kbd, again when they change (uwg-te-tab-anatomy-r2, uwg-te-req-a11y-2)', () => {
     const t = setup();
     const markup = templateMarkup(t.update());
     expect(markup).toContain('<tp-tooltip class="toolbar-tooltip" describes="none"');

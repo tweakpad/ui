@@ -1,12 +1,12 @@
-export type KeyHintPlatform = 'auto' | 'mac' | 'windows' | 'linux';
-export type KeyHintSeparator = 'plus' | 'then' | 'none';
-export type KeyHintLabels = Record<string, string | { text: string; label?: string }>;
-export type ResolvedKeyHintPlatform = Exclude<KeyHintPlatform, 'auto'>;
+export type KbdPlatform = 'auto' | 'mac' | 'windows' | 'linux';
+export type KbdSeparator = 'plus' | 'then' | 'none';
+export type KbdLabels = Record<string, string | { text: string; label?: string }>;
+export type ResolvedKbdPlatform = Exclude<KbdPlatform, 'auto'>;
 
-export function keyHintPlatform(
-  platform: KeyHintPlatform,
+export function kbdPlatform(
+  platform: KbdPlatform,
   navigator?: Pick<Navigator, 'platform' | 'userAgent'>,
-): ResolvedKeyHintPlatform {
+): ResolvedKbdPlatform {
   if (platform === 'mac' || platform === 'windows' || platform === 'linux') return platform;
   const source = `${navigator?.platform ?? ''} ${navigator?.userAgent ?? ''}`;
   return /Mac|iPhone|iPad|iPod/i.test(source) ? 'mac' : /Win/i.test(source) ? 'windows' : 'linux';
@@ -69,10 +69,10 @@ export function canonicalKeyName(key: string): string {
   return Object.hasOwn(aliases, normalized) ? aliases[normalized]! : normalized;
 }
 
-export function keyHintNotation(
+export function kbdNotation(
   key: string,
-  platform: ResolvedKeyHintPlatform,
-  labels: KeyHintLabels = {},
+  platform: ResolvedKbdPlatform,
+  labels: KbdLabels = {},
 ): { text: string; label: string } {
   let name = canonicalKeyName(key);
   if (name === 'mod') name = platform === 'mac' ? 'command' : 'control';

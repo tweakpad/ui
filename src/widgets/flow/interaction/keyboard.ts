@@ -40,7 +40,7 @@ export interface FlowShortcutRow {
   description: string;
 }
 
-/** The documented shortcut table (docs Keyboard section renders it through `tp-key-hint`). */
+/** The documented shortcut table (docs Keyboard section renders it through `tp-kbd`). */
 export const FLOW_SHORTCUTS: readonly FlowShortcutRow[] = [
   {
     action: 'focus-next',

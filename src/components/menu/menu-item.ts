@@ -20,7 +20,7 @@ export interface MenuItemOwner extends HTMLElement {
  * A command in a Menu. Activating it fires the menu's `tp-action` with its `value` and closes the
  * menu.
  *
- * @slot - The label, with an optional leading Icon and a trailing Key Hint group marked
+ * @slot - The label, with an optional leading Icon and a trailing Kbd group marked
  *   `data-menu-shortcut`.
  */
 export class TpMenuItem extends TpElement {

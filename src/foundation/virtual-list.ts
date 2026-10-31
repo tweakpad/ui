@@ -186,6 +186,9 @@ export class VirtualList implements ReactiveController {
     this.#compute();
   }
 
+  /** Set while binding from `hostUpdated`, inside the host's update. */
+  #deferRequest = false;
+
   hostConnected(): void {
     this.#connected = true;
   }
@@ -196,7 +199,15 @@ export class VirtualList implements ReactiveController {
     if (this.#viewport?.isConnected && !this.#stale) return;
     this.#stale = false;
     const viewport = this.#resolveViewport();
-    if (viewport !== this.#viewport) this.#bind(viewport);
+    if (viewport === this.#viewport) return;
+    // The range measured from the DOM the host just rendered renders in the next update,
+    // requested once this one completes rather than from inside it.
+    this.#deferRequest = true;
+    try {
+      this.#bind(viewport);
+    } finally {
+      this.#deferRequest = false;
+    }
   }
 
   hostDisconnected(): void {
@@ -323,7 +334,9 @@ export class VirtualList implements ReactiveController {
       next.to !== previous.to ||
       next.before !== previous.before ||
       next.after !== previous.after
-    )
-      this.#host.requestUpdate();
+    ) {
+      if (this.#deferRequest) queueMicrotask(() => this.#host.requestUpdate());
+      else this.#host.requestUpdate();
+    }
   }
 }

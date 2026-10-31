@@ -323,7 +323,8 @@ describe('custom elements manifest: tp-text-editor', () => {
     );
     const problems = await descriptionCheck();
     expect(problems(await manifestOf(sources))).toEqual([]);
-  });
+    // Real sources: the event types come from a type-checked program over their import graph.
+  }, 30_000);
 
   it('uwg-te-req-prop-2: the description check reports a settable or attribute value, an attribute on a property-only member, a missing or extra attribute and a missing event', async () => {
     const problems = await descriptionCheck();

@@ -9,8 +9,8 @@ import { navigationIcons } from '../../icons/navigation.js';
 import { commandPalettePresentation } from '../../presentation/families/command-palette.js';
 import { selectPresentation } from '../../presentation/families/select.js';
 import { TpIcon } from '../icon/icon.js';
-import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
-import { TpKeyHint } from '../key-hint/key-hint.js';
+import { TpKbdGroup } from '../kbd/kbd-group.js';
+import { TpKbd } from '../kbd/kbd.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 import { renderCommandItemContent } from './item.js';
 import type { CommandItem } from './model.js';
@@ -32,7 +32,7 @@ export class TpCommandList extends TpSelect {
   static override tagName = 'tp-command-list';
   /** Library elements this element renders; defining it defines them too. */
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpIcon, TpKeyHintGroup, TpKeyHint];
+    return [TpIcon, TpKbdGroup, TpKbd];
   }
   static override presentation = commandPalettePresentation;
   static override presentationFamilies = [selectPresentation];

@@ -15,9 +15,9 @@ export const navigationPanelExampleMarkup = `
         </tp-navigation-panel-action>
         <div role="group" aria-label="Teams">
           <span data-menu-label>Teams</span>
-          <tp-menu-item value="acme-inc" label="Acme Inc"><tp-icon data-example-icon="frame"></tp-icon> Acme Inc <tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="1"></tp-key-hint></tp-key-hint-group></tp-menu-item>
-          <tp-menu-item value="acme-corp" label="Acme Corp."><tp-icon data-example-icon="chart"></tp-icon> Acme Corp. <tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="2"></tp-key-hint></tp-key-hint-group></tp-menu-item>
-          <tp-menu-item value="studio" label="Studio"><tp-icon data-example-icon="terminal"></tp-icon> Studio <tp-key-hint-group data-menu-shortcut separator="none" platform="mac"><tp-key-hint key="command"></tp-key-hint><tp-key-hint key="3"></tp-key-hint></tp-key-hint-group></tp-menu-item>
+          <tp-menu-item value="acme-inc" label="Acme Inc"><tp-icon data-example-icon="frame"></tp-icon> Acme Inc <tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="command"></tp-kbd><tp-kbd value="1"></tp-kbd></tp-kbd-group></tp-menu-item>
+          <tp-menu-item value="acme-corp" label="Acme Corp."><tp-icon data-example-icon="chart"></tp-icon> Acme Corp. <tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="command"></tp-kbd><tp-kbd value="2"></tp-kbd></tp-kbd-group></tp-menu-item>
+          <tp-menu-item value="studio" label="Studio"><tp-icon data-example-icon="terminal"></tp-icon> Studio <tp-kbd-group data-menu-shortcut separator="none" platform="mac"><tp-kbd value="command"></tp-kbd><tp-kbd value="3"></tp-kbd></tp-kbd-group></tp-menu-item>
         </div>
         <tp-separator></tp-separator>
         <tp-menu-item value="add-team"><tp-icon data-example-icon="plus"></tp-icon> Add team</tp-menu-item>

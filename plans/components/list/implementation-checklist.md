@@ -4,7 +4,7 @@
 
 - Component(s) / public identity: List (`tp-list`) with its members List item (`tp-list-item`) and List separator (`tp-list-separator`); catalog `['List', 'tp-list', 'preset-composition']`. Replaces the List item family (`tp-list-item`, `tp-list-item-group`, `tp-list-item-separator`).
 - Requested work / claim: Bounded rename and contract repair. The container is named for the collection (`tp-list`, parent of `tp-list-item`); the Storybook, catalog and docs entry becomes List; list semantics move to the List host; and a tag-naming rule is added to the Component Library.
-- Scope source: User request 2026-10-14 (parent/child naming `tp-list` → `tp-list-item`, Storybook entry "List"). User decisions in plan review: rename List only, leaving the Attachment, Bubble, Message, Avatar, Image and Key hint groups unchanged; add a tag-naming rule to the CL. The plan was approved (`we-need-to-introduce-parsed-tide.md`).
+- Scope source: User request 2026-10-14 (parent/child naming `tp-list` → `tp-list-item`, Storybook entry "List"). User decisions in plan review: rename List only, leaving the Attachment, Bubble, Message, Avatar, Image and Kbd groups unchanged; add a tag-naming rule to the CL. The plan was approved (`we-need-to-introduce-parsed-tide.md`).
 - In-scope changes and existing gaps:
   - CL List section and naming law.
   - Drag Drop List and Flow references.
@@ -172,5 +172,5 @@ Record spec/reference conflicts here before dependent implementation:
 - Documentation and demo composition reuse: Storybook Docs examples render real components; 19 named lists on the docs page; no undefined tags.
 - Shared-consumer regressions / package boundaries: Flow inspector, Menu rows, Drag drop list, workspace, Map and Marker; the package fixture uses dist `register.js` and `styles.css`.
 - Required failures or blocked checks: none.
-- Older out-of-scope gaps: the other `-group` families (Attachment, Bubble, Message, Avatar, Image, Key hint) keep their names by user decision; Media player, Command palette, Resizable panel group and Tree view keep their member tags under declared prefixes.
+- Older out-of-scope gaps: the other `-group` families (Attachment, Bubble, Message, Avatar, Image, Kbd) keep their names by user decision; Media player, Command palette, Resizable panel group and Tree view keep their member tags under declared prefixes.
 - Changed source revisions / reopened gates: spec v0.23.5 → v0.24.0; no gate reopened after verification.

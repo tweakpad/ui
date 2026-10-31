@@ -7,7 +7,7 @@ import {
   type KeyBindingGuards,
   type KeyShortcut,
 } from '../../foundation/key-bindings.js';
-import { keyHintPlatform, type KeyHintPlatform } from '../../foundation/key-notation.js';
+import { kbdPlatform, type KbdPlatform } from '../../foundation/key-notation.js';
 import { allowedUrl, imageProtocols, linkProtocols } from '../../foundation/markdown/url.js';
 import type {
   TextEditorAction,
@@ -175,13 +175,13 @@ export interface TextEditorRouterConfig {
 
 export interface TextEditorRouterOptions {
   /** The platform of `Mod` and of the matching rules; `auto` (default) reads the widget's window. */
-  readonly platform?: KeyHintPlatform | undefined;
+  readonly platform?: KbdPlatform | undefined;
 }
 
 /** The capture owner of the widget's keys, pastes and drops (`uwg-te-req-key-1`, `uwg-te-kb-req-capture`). */
 export class TextEditorRouter {
   readonly #host: TextEditorRouterHost;
-  readonly #platform: KeyHintPlatform;
+  readonly #platform: KbdPlatform;
   #root: ShadowRoot | null = null;
   #owner: KeyBindingOwner | null = null;
   #config: TextEditorRouterConfig | null = null;
@@ -491,7 +491,7 @@ export class TextEditorRouter {
     const click = event as MouseEvent;
     if (click.button !== 0 || click.altKey || click.shiftKey || !this.#editable()) return;
     const view = this.#root?.ownerDocument?.defaultView;
-    const mac = keyHintPlatform(this.#platform, view?.navigator) === 'mac';
+    const mac = kbdPlatform(this.#platform, view?.navigator) === 'mac';
     if (!(mac ? click.metaKey && !click.ctrlKey : click.ctrlKey && !click.metaKey)) return;
     if (this.#zoneOf(event) !== 'editing') return;
     const href = linkHref(event.composedPath(), this.#host.parts().content);

@@ -392,11 +392,11 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
               .icon=${navigationIcons.search}
               tooltip="Search workspace"
               @click=${() => this.open('commands')}
-              >Search workspace<tp-key-hint-group slot="icon-end" separator="none" platform="mac"
-                ><tp-key-hint key="command"></tp-key-hint
-                ><tp-key-hint
-                  key="K"
-                ></tp-key-hint></tp-key-hint-group></tp-navigation-panel-action></tp-navigation-panel-item
+              >Search workspace<tp-kbd-group slot="icon-end" separator="none" platform="mac"
+                ><tp-kbd value="command"></tp-kbd
+                ><tp-kbd
+                  value="K"
+                ></tp-kbd></tp-kbd-group></tp-navigation-panel-action></tp-navigation-panel-item
           ><tp-navigation-panel-item
             ><tp-navigation-panel-action
               .icon=${navigationIcons.settings}

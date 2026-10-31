@@ -33,7 +33,7 @@ export * from './icon/index.js';
 export * from './image/index.js';
 export * from './input/index.js';
 export * from './input-group/index.js';
-export * from './key-hint/index.js';
+export * from './kbd/index.js';
 export * from './label/index.js';
 export * from './list/index.js';
 export * from './map/index.js';

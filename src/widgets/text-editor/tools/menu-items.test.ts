@@ -120,7 +120,7 @@ describe('text editor tool menu entries', () => {
     );
     expect(markup).toMatch(/^<tp-menu-item value=undo data-tool=undo variant=\S* \?inset=false/);
     expect(markup).toContain(
-      '<tp-icon .icon=[object Object]></tp-icon>Undo<tp-key-hint-group data-menu-shortcut',
+      '<tp-icon .icon=[object Object]></tp-icon>Undo<tp-kbd-group data-menu-shortcut',
     );
   });
 

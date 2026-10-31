@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import ts from 'typescript';
+import { analyzeEventTypes } from './scripts/manifest/event-types.mjs';
 
 /**
  * Custom elements manifest for consumers' editors and tooling (`customElements` in package.json).
@@ -148,7 +149,9 @@ const tweakpadEvents = ({ eventClasses, controllers }) => ({
         child.expression.expression.kind === ts.SyntaxKind.ThisKeyword &&
         child.expression.name.text === 'emit' &&
         child.arguments[0] &&
-        ts.isStringLiteralLike(child.arguments[0])
+        ts.isStringLiteralLike(child.arguments[0]) &&
+        // Only `tp-*` names are public events; others coordinate a widget's own internals.
+        child.arguments[0].text.startsWith('tp-')
       )
         found.set(child.arguments[0].text, 'CustomEvent');
       if (ts.isNewExpression(child) && ts.isIdentifier(child.expression)) {
@@ -193,6 +196,65 @@ const tweakpadEvents = ({ eventClasses, controllers }) => ({
           );
   },
 });
+
+/**
+ * Event types, read by the type checker from each dispatch (`scripts/manifest/event-types.mjs`):
+ * every event of an element gets the type of the event object it dispatches, with the named
+ * types it references, so editors and the generated framework bindings type `event.detail`
+ * exactly. An event is looked up on the class that dispatches it, up the class chain from the
+ * element (or from the class it is inherited from); an event that only a related element
+ * dispatches (a panel's resize, dispatched by its group) takes the type that every dispatch of
+ * that name shares. A JSDoc `@fires {Type} name` type is kept where no dispatch is found.
+ */
+const tweakpadEventTypes = () => {
+  return {
+    name: 'tweakpad-event-types',
+    packageLinkPhase({ customElementsManifest }) {
+      // In-memory analyses of modules that are not on disk (the config's tests) find none.
+      const classes = analyzeEventTypes({
+        root: import.meta.dirname,
+        modules: customElementsManifest.modules.map((module) => module.path),
+      });
+      const shared = new Map();
+      for (const entry of classes.values())
+        for (const [name, type] of entry.events) {
+          const texts = shared.get(name) ?? new Map();
+          texts.set(type.text, type);
+          shared.set(name, texts);
+        }
+      const lookup = (key, name) => {
+        const visited = new Set();
+        for (let entry = classes.get(key); entry && !visited.has(entry);) {
+          visited.add(entry);
+          const type = entry.events.get(name);
+          if (type) return type;
+          entry = classes.get(entry.superclass);
+        }
+        return undefined;
+      };
+      for (const module of customElementsManifest.modules)
+        for (const declaration of module.declarations ?? []) {
+          if (declaration.kind !== 'class' || !declaration.events) continue;
+          const own = `${module.path}#${declaration.name}`;
+          for (const event of declaration.events) {
+            const inherited = event.inheritedFrom
+              ? `${event.inheritedFrom.module ?? ''}#${event.inheritedFrom.name}`
+              : undefined;
+            const unique = shared.get(event.name);
+            const type =
+              (inherited && lookup(inherited, event.name)) ??
+              lookup(own, event.name) ??
+              (unique?.size === 1 ? [...unique.values()][0] : undefined);
+            if (type)
+              event.type = {
+                text: type.text,
+                ...(type.references.length ? { references: type.references } : {}),
+              };
+          }
+        }
+    },
+  };
+};
 
 /**
  * Consumers' tooling only needs the public surface: private/protected members (and `#private`
@@ -610,6 +672,7 @@ export default {
   plugins: [
     tweakpadTagNames(),
     tweakpadEvents(scanEventSources('src/components', 'src/widgets', 'src/foundation')),
+    tweakpadEventTypes(),
     tweakpadRedeclaredPrivacy(),
     tweakpadPublicMembers(),
     tweakpadRedeclaredAttributes(),

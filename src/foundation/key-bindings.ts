@@ -8,13 +8,13 @@ import {
 } from './interactive-target.js';
 import { componentHandlingPrevented } from './part.js';
 import { CleanupScope } from './services.js';
-// Shortcut notation is shared with the Key Hint control's display.
+// Shortcut notation is shared with the Kbd control's display.
 import {
   canonicalKeyName,
-  keyHintNotation,
-  keyHintPlatform,
-  type KeyHintPlatform,
-  type ResolvedKeyHintPlatform,
+  kbdNotation,
+  kbdPlatform,
+  type KbdPlatform,
+  type ResolvedKbdPlatform,
 } from './key-notation.js';
 
 /** The lowercased `KeyboardEvent.key` an authored key matches: aliases resolved, `Space` a space. */
@@ -44,7 +44,7 @@ export interface KeyChordInit {
  */
 export interface PlatformKeyPattern {
   readonly pattern: string;
-  readonly platforms: readonly ResolvedKeyHintPlatform[];
+  readonly platforms: readonly ResolvedKbdPlatform[];
 }
 
 /** A pattern string (`Mod+Shift+f`, `Space`, `0-9`, `k, Space`), a chord or a list. */
@@ -123,7 +123,7 @@ export interface KeyBindingOwnerOptions {
   /** Consumer-specific nested ownership: true means the target owns this key. */
   ownsKey?: (event: KeyboardEvent) => boolean;
   /** Platform used for `Mod`, the platform matching rules and display notation. Default `auto`. */
-  platform?: KeyHintPlatform;
+  platform?: KbdPlatform;
   /** Dispatch `tp-shortcut-change` on the owner. Default true. */
   dispatch?: boolean;
   /** Dispose this owner with an enclosing lifetime. */
@@ -135,7 +135,7 @@ export interface KeyShortcut {
   readonly aria: string;
   /** Display form for tooltips, e.g. `Ctrl+Shift+F` or `⇧⌘F` on macOS. */
   readonly display: string;
-  /** Preferred chord as Key Hint `key` values, e.g. `['Control', 'Shift', 'F']`. */
+  /** Preferred chord as Kbd `value`s, e.g. `['Control', 'Shift', 'F']`. */
   readonly keys: readonly string[];
 }
 
@@ -194,7 +194,7 @@ function splitPatterns(input: string): string[] {
 }
 
 /** Parse one or more key patterns into chords. Throws on an empty key or unknown modifier. */
-export function parseKeyPattern(input: string, platform: ResolvedKeyHintPlatform): KeyChord[] {
+export function parseKeyPattern(input: string, platform: ResolvedKbdPlatform): KeyChord[] {
   const chords: KeyChord[] = [];
   for (const pattern of splitPatterns(input)) {
     let key: string;
@@ -228,7 +228,7 @@ export function parseKeyPattern(input: string, platform: ResolvedKeyHintPlatform
   return chords;
 }
 
-function chordsFor(keys: KeyBindingKeys, platform: ResolvedKeyHintPlatform): KeyChord[] {
+function chordsFor(keys: KeyBindingKeys, platform: ResolvedKbdPlatform): KeyChord[] {
   const list = typeof keys === 'string' || !Array.isArray(keys) ? [keys] : keys;
   return (list as readonly (string | KeyChordInit | PlatformKeyPattern)[]).flatMap((entry) => {
     if (typeof entry === 'string') return parseKeyPattern(entry, platform);
@@ -275,7 +275,7 @@ function physicalCode(key: string): string | undefined {
 export function matchesKeyChord(
   chord: KeyChord,
   event: KeyboardEvent,
-  platform: ResolvedKeyHintPlatform,
+  platform: ResolvedKbdPlatform,
 ): boolean {
   const key = event.key;
   if (typeof key !== 'string' || key === 'Unidentified') return false;
@@ -432,7 +432,7 @@ export class KeyBindingOwner {
   readonly #scope = new CleanupScope();
   readonly #bindings: Binding[] = [];
   readonly #listeners = new Set<(owner: KeyBindingOwner) => void>();
-  readonly #platform: ResolvedKeyHintPlatform;
+  readonly #platform: ResolvedKbdPlatform;
   #router: DocumentRouter | undefined;
   #activity = 0;
   #locks = 0;
@@ -447,7 +447,7 @@ export class KeyBindingOwner {
     this.#host = host;
     this.#options = options;
     const view = (host as Node).ownerDocument?.defaultView;
-    this.#platform = keyHintPlatform(
+    this.#platform = kbdPlatform(
       options.platform ?? 'auto',
       view?.navigator ?? (globalThis as { navigator?: Navigator }).navigator,
     );
@@ -474,7 +474,7 @@ export class KeyBindingOwner {
     return this.#disposed;
   }
   /** Platform resolved for `Mod`, the platform matching rules and display notation. */
-  get platform(): ResolvedKeyHintPlatform {
+  get platform(): ResolvedKbdPlatform {
     return this.#platform;
   }
   /** Monotonic activity stamp used for document routing (0 = never active). */
@@ -604,7 +604,7 @@ export class KeyBindingOwner {
     const range = chord.pattern.endsWith('0-9');
     const keys = [...this.#modifierTokens(chord), range ? '0-9' : displayKey(chord.label)];
     const text = keys.map((key) =>
-      key === '0-9' || key.length === 1 ? key : keyHintNotation(key, this.#platform).text,
+      key === '0-9' || key.length === 1 ? key : kbdNotation(key, this.#platform).text,
     );
     return {
       aria,

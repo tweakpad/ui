@@ -40,6 +40,33 @@ import '@tweakpad/ui/register';
 
 Widgets are opt-in: neither `@tweakpad/ui` nor `@tweakpad/ui/register` includes them.
 
+## Frameworks
+
+The elements work in any framework that renders custom elements. For React and Vue the package
+also ships components that wrap them, typed from each element, and for Preact, Solid, Svelte and
+Vue templates, types for the elements' own tags.
+
+| Import                                                        | Contents                                         |
+| ------------------------------------------------------------- | ------------------------------------------------ |
+| `@tweakpad/ui/react`, `@tweakpad/ui/widgets/react`            | React 19 components, one per element             |
+| `@tweakpad/ui/vue`, `@tweakpad/ui/widgets/vue`                | Vue 3 components with `v-model`, one per element |
+| `@tweakpad/ui/react/jsx`                                      | Types for `<tp-…>` tags in React                 |
+| `@tweakpad/ui/vue/elements`                                   | Types for `<tp-…>` tags in Vue templates         |
+| `@tweakpad/ui/preact`, `/solid`, `/svelte` (and `/widgets/…`) | Types for `<tp-…>` tags in those frameworks      |
+
+```tsx
+import '@tweakpad/ui/styles.css';
+import { Checkbox, Dialog, Button } from '@tweakpad/ui/react';
+
+<Checkbox checked={checked} onCheckedChange={(event) => setChecked(event.detail.value)}>
+  Snap to grid
+</Checkbox>;
+```
+
+A component defines its element when it first renders, and importing one bundles only that
+element. [docs/frameworks.md](docs/frameworks.md) covers events, controlled values, slots and
+server rendering in each framework.
+
 ## Browser support
 
 Current versions of Chrome, Edge, Firefox and Safari. The text editor needs Chrome or Edge 137 or

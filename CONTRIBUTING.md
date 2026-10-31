@@ -12,6 +12,7 @@ npm test
 npm run typecheck
 npm run test:package
 npm run size:report
+npm run bindings
 npm run lint
 npm run build
 npm run build-storybook
@@ -35,6 +36,12 @@ Foundational components live in `src/components/<name>/` and ship through `@twea
 6. For a companion entry `@tweakpad/ui/<name>`, which publishes the widget's model, engine contract or data layer for use without the element (as `@tweakpad/ui/emoji` and `@tweakpad/ui/flow` do): `src/foundation/<name>/index.ts`, whose modules import only relative modules and `lit` and touch no DOM when imported, with export names that stay unique across `@tweakpad/ui/widgets`; the `./<name>` export in `package.json` beside the other companion entries (`types` from `./dist/foundation/<name>/index.d.ts`, `import` and `default` from `./dist/<name>.js`); the `<name>` entry in `vite.config.ts`; in `scripts/pack-smoke.mjs` the consumer import, its `used` entry and a Node run of the entry; and the folder in the companion patterns of `src/widgets/catalog.test.ts`, `scripts/size-report.mjs` and `scripts/pack-smoke.mjs`. The widget's `index.ts` re-exports the entry (`export * from '../../foundation/<name>/index.js'`); `src/foundation/index.ts` never does. An adapter for a third-party engine ships as its own sub-entry `@tweakpad/ui/<name>/adapters/<engine>` from `src/foundation/<name>/adapters/<engine>/index.ts`, exporting only that adapter's factory and types: the `./<name>/adapters/<engine>` export (`types` from `./dist/foundation/<name>/adapters/<engine>/index.d.ts`, `import` and `default` from `./dist/<name>/adapters/<engine>.js`), the `<name>/adapters/<engine>` Vite entry, the consumer import and a single-engine bundle check in `scripts/pack-smoke.mjs`; the companion entry and the widget's `index.ts` never re-export an adapter.
 
 The tests enforce this structure: `src/widgets/catalog.test.ts` (catalog, families, folders, registration, that widget sources import only Lit and relative modules, and that the main entries never reach a widget or a companion entry), the extended source scanners, and `src/stories/stories.test.ts`. `node scripts/size-report.mjs` measures each widget from `@tweakpad/ui/widgets` and fails if `@tweakpad/ui/register` ships a widget or companion module; `npm run test:package` checks the same boundaries in the packed files.
+
+## Framework bindings
+
+`npm run cem` writes the Custom Elements Manifest and, from it, the framework bindings (`scripts/bindings/generate.mjs`): a React and a Vue component for every element that `src/register.ts` or `src/register/widgets.ts` defines (`src/react/`, `src/vue/`, with `widgets/` beside each), and the tag types for writing the elements in React, Preact, Solid, Svelte and Vue templates (`src/react/jsx.ts`, `src/preact/`, `src/solid/`, `src/svelte/`, `src/vue/elements.ts`). They are generated, never edited: only `src/react/adapter.ts` and `src/vue/adapter.ts` are written by hand. Each event's type is read from its dispatch (`scripts/manifest/event-types.mjs`), so dispatch typed details (`this.emit<Detail>(…)`, a typed event class) and export the types they use.
+
+After changing an element's properties, events, `on<Lane>Change` callbacks, slots or how it treats its children, run `npm run cem` and commit the regenerated files. `npm test` fails on a stale binding or an untyped event (`src/bindings.test.ts`); `npm run typecheck` compiles the type tests in `tests/frameworks/` with tsc, vue-tsc and svelte-check; `npm run size:report` holds each adapter to 1 kB gzip and each binding to 350 B beyond it; `npm run test:package` installs the tarball, type-checks a React consumer, server-renders both frameworks in Node and bundles a single binding. Browser scenarios live in `tests/fixtures/frameworks/react/` and `tests/fixtures/frameworks/vue/`; `plans/frameworks/ledger.md` records each catalog entry's verification (`node scripts/bindings/check-ledger.mjs`).
 
 ## Documentation
 

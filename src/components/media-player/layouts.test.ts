@@ -67,7 +67,7 @@ describe('video layout variant (automatic from the stream type)', () => {
   });
 });
 
-describe('layout tooltips (visual label and key hint of each button)', () => {
+describe('layout tooltips (visual label and Kbd of each button)', () => {
   it('shows the button’s state-dependent name and its published binding', () => {
     expect(mediaLayoutTooltip('play', state({ paused: true }), context, 10)).toEqual({
       label: 'Play',
@@ -131,18 +131,18 @@ describe('layout elements', () => {
   });
 });
 
-describe('layout tooltip key hints', () => {
-  it('shows the published binding of a layout tooltip as Key hints (`mp-kb-publish`)', () => {
+describe('layout tooltip Kbd elements', () => {
+  it('shows the published binding of a layout tooltip as Kbd elements (`mp-kb-publish`)', () => {
     const layout = new HintLayout();
     const label = (text: string) =>
       `<span data-media-tooltip-label style="display: inline-flex; align-items: center; gap: var(--tp-space-2)">${text}`;
     published = { aria: 'k Space', display: 'K', keys: ['K'] };
     expect(templateMarkup(layout.tooltip('play'))).toBe(
-      `${label('Play')}<tp-key-hint key=K></tp-key-hint></span>`,
+      `${label('Play')}<tp-kbd value=K></tp-kbd></span>`,
     );
     published = { aria: 'Shift+p', display: 'Shift+P', keys: ['Shift', 'P'] };
     expect(templateMarkup(layout.tooltip('play'))).toBe(
-      `${label('Play')}<tp-key-hint-group><tp-key-hint key=Shift></tp-key-hint><tp-key-hint key=P></tp-key-hint></tp-key-hint-group></span>`,
+      `${label('Play')}<tp-kbd-group><tp-kbd value=Shift></tp-kbd><tp-kbd value=P></tp-kbd></tp-kbd-group></span>`,
     );
     expect(templateMarkup(layout.tooltip('settings'))).toBe(`${label('Settings')}</span>`);
     published = undefined;

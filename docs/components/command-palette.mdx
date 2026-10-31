@@ -52,10 +52,10 @@ Leave `inline` off and put a Button in the `trigger` slot to present the palette
   code={`<tp-command-palette id="command-palette-demo-modal" label="Go to" placeholder="Jump to a page…">
   <tp-button slot="trigger" variant="outline">
     Go to…
-    <tp-key-hint-group slot="icon-end" aria-hidden="true">
-      <tp-key-hint key="mod"></tp-key-hint>
-      <tp-key-hint>J</tp-key-hint>
-    </tp-key-hint-group>
+    <tp-kbd-group slot="icon-end" aria-hidden="true">
+      <tp-kbd value="mod"></tp-kbd>
+      <tp-kbd>J</tp-kbd>
+    </tp-kbd-group>
   </tp-button>
   <option value="dashboard">Dashboard</option>
   <option value="projects">Projects</option>

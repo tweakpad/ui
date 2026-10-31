@@ -54,6 +54,7 @@ inventory; matching names or catalog totals do not prove coverage.
 
 - Component folder and responsibility boundaries: [design]
 - Supported exports / registration / constituent API impact: [changes or none]
+- Framework bindings: [regenerated with `npm run cem`; `npm test`, `npm run typecheck` and the React/Vue fixture scenarios run; `plans/frameworks/ledger.md` row; or why the public surface did not change]
 - Public vocabulary / tokens / parts / presentation review: [source-backed choices]
 
 ### Family dependency map
@@ -136,7 +137,7 @@ at the work boundaries specified in SKILL.md.
 | 5. Accessibility                      | pending | Semantic, keyboard/focus and automated results separately evidenced.                  |
 | 6. Visual and interaction inspection  | pending | States, themes, layouts, motion and integration inspected.                            |
 | 7. Documentation and demo reuse       | pending | Base example, complete API, curated Docs and real component composition verified.     |
-| 8. Regression and reconciliation      | pending | Target, affected consumers, build/package boundaries and final records reconcile.     |
+| 8. Regression and reconciliation      | pending | Target, affected consumers, build/package and framework binding boundaries reconcile. |
 
 ## Documentation synchronization
 

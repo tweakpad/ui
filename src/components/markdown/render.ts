@@ -287,10 +287,10 @@ export class MarkdownTreeRenderer {
     return `${this.options.idPrefix}fnref-${index}${occurrence > 1 ? `-${occurrence}` : ''}`;
   }
 
-  /** Elements admitted by the element policy; `kbd` composes Key hint. */
+  /** Elements admitted by the element policy; `kbd` composes Kbd. */
   #element(node: MarkdownElement): unknown {
     const children = this.nodes(node.children as MarkdownContent[]);
-    if (node.tagName === 'kbd') return html`<tp-key-hint>${children}</tp-key-hint>`;
+    if (node.tagName === 'kbd') return html`<tp-kbd>${children}</tp-kbd>`;
     const element = this.options.host.ownerDocument.createElement(node.tagName);
     for (const [name, value] of Object.entries(node.attributes)) element.setAttribute(name, value);
     if (node.children.some((child) => isBlock(child))) element.setAttribute('data-flow', '');

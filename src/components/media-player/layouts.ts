@@ -15,9 +15,9 @@ import {
 } from './layout-state.js';
 import { DEFAULT_SEEK_STEP } from './player.js';
 
-import { TpKeyHint } from '../key-hint/key-hint.js';
-import { TpKeyHintGroup } from '../key-hint/key-hint-group.js';
-import { renderShortcutHint } from '../key-hint/shortcut-hint.js';
+import { TpKbd } from '../kbd/kbd.js';
+import { TpKbdGroup } from '../kbd/kbd-group.js';
+import { renderShortcutHint } from '../kbd/shortcut-hint.js';
 import { TpMediaPoster } from './poster.js';
 import { TpMediaTitle } from './title.js';
 import { TpMediaBufferingIndicator } from './feedback.js';
@@ -104,13 +104,13 @@ const layoutStyles = css`
  *
  * Every built-in button is wrapped in a visual-only `tp-tooltip` (`describes="none"`: the
  * button's name already carries the text, and its shortcut is published as `aria-keyshortcuts`)
- * that shows the button's state-dependent label and its key binding as a `tp-key-hint`. All
+ * that shows the button's state-dependent label and its key binding as a `tp-kbd`. All
  * tooltips of a layout share one `TooltipProvider` (600 ms delay, 400 ms group rest).
  */
 export abstract class TpMediaLayoutElement extends TpMediaElement {
   /** Library elements this element renders; defining it defines them too. */
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
-    return [TpKeyHint, TpKeyHintGroup];
+    return [TpKbd, TpKbdGroup];
   }
   static override properties: PropertyDeclarations = {
     ...TpMediaElement.properties,

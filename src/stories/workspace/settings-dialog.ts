@@ -342,8 +342,8 @@ function security(host: SettingsHost) {
 }
 
 const shortcut = (...keys: string[]) =>
-  html`<tp-key-hint-group separator="none" platform="mac"
-    >${keys.map((key) => html`<tp-key-hint key=${key}></tp-key-hint>`)}</tp-key-hint-group
+  html`<tp-kbd-group separator="none" platform="mac"
+    >${keys.map((key) => html`<tp-kbd value=${key}></tp-kbd>`)}</tp-kbd-group
   >`;
 function shortcuts() {
   const groups = [

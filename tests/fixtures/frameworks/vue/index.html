@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Vue bindings verification</title>
+    <style>
+      body {
+        margin: 24px;
+        color: var(--tp-foreground);
+        background: var(--tp-background);
+        font-family: var(--tp-font-sans);
+      }
+      .showcase {
+        display: grid;
+        gap: 16px;
+        max-inline-size: 360px;
+      }
+      #stage {
+        margin-block-start: 32px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div id="showcase"></div>
+      <div id="stage"></div>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

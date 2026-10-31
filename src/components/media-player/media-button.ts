@@ -15,7 +15,7 @@ import type {
 import { TpMediaElement, type MediaPlayerApi } from './context.js';
 import { TpButton } from '../button/button.js';
 import { TpIcon } from '../icon/icon.js';
-import { shortcutAria } from '../key-hint/shortcut-hint.js';
+import { shortcutAria } from '../kbd/shortcut-hint.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
 export type MediaButtonVariant = TpButton['variant'];

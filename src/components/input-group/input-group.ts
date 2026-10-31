@@ -22,7 +22,7 @@ export function editorTrees(control: HTMLElement): Node[] {
  *
  * @slot - The one editor: an Input, a Text area or a native input or textarea.
  * @slot inline-start - Text, an Icon or a small control before the editor.
- * @slot inline-end - Text, an Icon, a key hint or a small control after the editor.
+ * @slot inline-end - Text, an Icon, a Kbd or a small control after the editor.
  * @slot block-start - A line above the editor, across the whole group.
  * @slot block-end - A line below the editor, across the whole group, such as a count and actions.
  * @slot prefix - Short text before the editor, such as a currency sign; placed at `addon-position`.

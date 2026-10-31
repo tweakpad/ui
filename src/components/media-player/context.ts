@@ -510,7 +510,7 @@ export abstract class TpMediaElement extends TpElement {
   }
 
   /**
-   * The published shortcut for an action, for `aria-keyshortcuts` (`.aria`) and Key Hint/tooltip
+   * The published shortcut for an action, for `aria-keyshortcuts` (`.aria`) and Kbd/tooltip
    * display (`.display`, `.keys`). The element re-renders when the player's bindings change.
    */
   shortcut(action: MediaRequestAction, value?: unknown): KeyShortcut | undefined {

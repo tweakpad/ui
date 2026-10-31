@@ -65,6 +65,12 @@ export default defineConfig({
         // The widgets section ships through its own entries; `index` and `register` never reach it.
         widgets: resolve(import.meta.dirname, 'src/widgets/index.ts'),
         'register/widgets': resolve(import.meta.dirname, 'src/register/widgets.ts'),
+        // Framework bindings, generated from the manifest; the framework stays the consumer's own
+        // copy. The Preact, Solid and Svelte entries and the tag types are declarations only.
+        'react/index': resolve(import.meta.dirname, 'src/react/index.ts'),
+        'react/widgets/index': resolve(import.meta.dirname, 'src/react/widgets/index.ts'),
+        'vue/index': resolve(import.meta.dirname, 'src/vue/index.ts'),
+        'vue/widgets/index': resolve(import.meta.dirname, 'src/vue/widgets/index.ts'),
         // The documentation tooling: page reader, API rows and preview runtime, plus the Vite
         // plugin the renderings compile the pages with. Both are DOM-free on import.
         'docs/index': resolve(import.meta.dirname, 'src/docs/index.ts'),
@@ -75,7 +81,14 @@ export default defineConfig({
       cssFileName: 'styles',
     },
     rollupOptions: {
-      external: ['lit', /^lit\//, /^@lit\//],
+      external: ['lit', /^lit\//, /^@lit\//, 'react', /^react\//, 'vue'],
+      onwarn(warning, warn) {
+        // Modules stay separate (`preserveModules`), so the React bindings keep their
+        // `'use client'` directive; the warning is about merging modules, which never happens.
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE' && warning.message.includes('use client'))
+          return;
+        warn(warning);
+      },
       output: {
         // One output module per source module: with package `sideEffects`, consumer bundlers
         // drop every module a page does not import, so one component ships only its own graph.

@@ -11,10 +11,10 @@ tag: tp-input-group
   <tp-input-group>
     <tp-icon slot="inline-start" data-icon="search"></tp-icon>
     <tp-input type="search" placeholder="Search docs, issues and people"></tp-input>
-    <tp-key-hint-group slot="inline-end" separator="none">
-      <tp-key-hint key="mod"></tp-key-hint>
-      <tp-key-hint>K</tp-key-hint>
-    </tp-key-hint-group>
+    <tp-kbd-group slot="inline-end" separator="none">
+      <tp-kbd value="mod"></tp-kbd>
+      <tp-kbd>K</tp-kbd>
+    </tp-kbd-group>
   </tp-input-group>
 </tp-field>`}
   script={`document.querySelector('#input-group-hero tp-icon').icon = {

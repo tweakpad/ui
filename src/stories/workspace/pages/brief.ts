@@ -15,8 +15,8 @@ const outline = 'New release brief\n\nDescribe the problem, audience and success
 
 /** A Mac shortcut hint rendered in a menu item's Shortcut position. */
 const shortcut = (...keys: string[]) =>
-  html`<tp-key-hint-group data-menu-shortcut separator="none" platform="mac"
-    >${keys.map((key) => html`<tp-key-hint key=${key}></tp-key-hint>`)}</tp-key-hint-group
+  html`<tp-kbd-group data-menu-shortcut separator="none" platform="mac"
+    >${keys.map((key) => html`<tp-kbd value=${key}></tp-kbd>`)}</tp-kbd-group
   >`;
 
 function download(host: WorkspaceHost, text: string) {

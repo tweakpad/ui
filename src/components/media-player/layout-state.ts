@@ -96,7 +96,7 @@ export type MediaLayoutTooltipControl =
 export interface MediaLayoutTooltip {
   /** The visible tooltip text: the button's current accessible name. */
   readonly label: string;
-  /** The request whose published key binding the tooltip shows as a Key hint. */
+  /** The request whose published key binding the tooltip shows as a Kbd. */
   readonly shortcut?: MediaButtonRequest | undefined;
 }
 

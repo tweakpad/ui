@@ -483,6 +483,10 @@ export class TpEmojiPicker extends TpFormElement<string> {
       (!this.#loadKey || this.#loadKey.data !== key.data || this.#loadKey.locale !== key.locale)
     )
       this.#load();
+    // Before rendering, so the first render of a dataset already hides what the platform cannot
+    // draw; detecting after it would schedule a second update from `updated()`.
+    if (this.isConnected && this.#dataset && this.#support?.dataset !== this.#dataset)
+      this.#detectSupport();
     this.#authoredTrigger = this.querySelector(':scope > [slot="trigger"]') !== null;
     const duplicates = this.#pickerModel().duplicates.join(',');
     if (duplicates && duplicates !== this.#reportedDuplicates)
@@ -495,7 +499,6 @@ export class TpEmojiPicker extends TpFormElement<string> {
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    if (this.#dataset && this.#support?.dataset !== this.#dataset) this.#detectSupport();
     this.toggleAttribute('data-empty', !this.value);
     this.setAttribute('data-picker', this.picker);
     this.setAttribute('data-status', this.#status);
@@ -620,7 +623,6 @@ export class TpEmojiPicker extends TpFormElement<string> {
       dataset,
       support: detectEmojiSupport(dataset.emojis, this.ownerDocument, font),
     };
-    this.requestUpdate();
   }
 
   #filteredData(): EmojiData | null {

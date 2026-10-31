@@ -1,5 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
-import { renderShortcutHint } from '../../../components/key-hint/shortcut-hint.js';
+import { renderShortcutHint } from '../../../components/kbd/shortcut-hint.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { activationMovesFocus } from '../focus.js';
 import type { TextEditorToolHandlers } from './controls.js';

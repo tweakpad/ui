@@ -1,5 +1,5 @@
 import { frameLoopFor } from './frame-loop.js';
-import { keyHintPlatform } from './key-notation.js';
+import { kbdPlatform } from './key-notation.js';
 import { resolveMotionTiming } from './motion.js';
 import { parseEasing } from './motion-easing.js';
 import { componentHandlingPrevented } from './part.js';
@@ -255,7 +255,7 @@ export class PanZoomController {
 
   constructor(options: PanZoomOptions) {
     this.#options = options;
-    this.#mac = keyHintPlatform('auto', this.#owner?.navigator) === 'mac';
+    this.#mac = kbdPlatform('auto', this.#owner?.navigator) === 'mac';
   }
 
   get #owner(): Window | undefined {

@@ -108,8 +108,7 @@ export const RichContent: Story = {
     html`<tp-tooltip
       ><tp-button slot="trigger" variant="outline">Add item</tp-button
       ><tp-icon .icon=${plusIcon} size="var(--tp-icon-size-sm)"></tp-icon> Add item
-      <tp-key-hint-group separator="none" platform="mac"
-        ><tp-key-hint key="command"></tp-key-hint
-        ><tp-key-hint key="K"></tp-key-hint></tp-key-hint-group
+      <tp-kbd-group separator="none" platform="mac"
+        ><tp-kbd value="command"></tp-kbd><tp-kbd value="K"></tp-kbd></tp-kbd-group
     ></tp-tooltip>`,
 };
