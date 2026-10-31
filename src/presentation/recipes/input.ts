@@ -41,5 +41,26 @@ export const inputAppearance: PresentationDictionary = {
       },
     },
     { selector: '&:is(:hover, :focus)', declarations: { color: 'var(--tp-foreground)' } },
+    // A number value sits centered between the Stepper's Buttons, in place of the browser's spin
+    // buttons; tabular digits keep its width, and with it the Buttons, steady while it steps.
+    {
+      selector: '&[type="number"]',
+      declarations: {
+        appearance: 'textfield',
+        flex: 'none',
+        'box-sizing': 'border-box',
+        'inline-size': 'calc(var(--_tp-input-chars, 3) * 1ch + var(--tp-space-1) * 2)',
+        'padding-inline': 'var(--tp-space-1)',
+        'text-align': 'center',
+        'font-variant-numeric': 'tabular-nums',
+      },
+    },
+    {
+      selector:
+        '&[type="number"]::-webkit-inner-spin-button, &[type="number"]::-webkit-outer-spin-button',
+      declarations: { appearance: 'none', margin: '0' },
+    },
   ],
+  // The Stepper sits at the row's end, inset like the Select trigger's chevron.
+  'input-stepper-variant-inline': [{ declarations: { 'padding-inline-end': 'var(--tp-space-1)' } }],
 };

@@ -32,6 +32,22 @@ const definition: ComponentDefinition = {
       axes: ['variant'],
     },
     {
+      name: 'input-stepper',
+      description:
+        "The decrement and increment Buttons at the end of an inline number Input's row, in place of the browser's spin buttons.",
+      axes: ['variant'],
+    },
+    {
+      name: 'input-decrement',
+      description: 'The Button that steps an inline number Input down.',
+      axes: ['variant'],
+    },
+    {
+      name: 'input-increment',
+      description: 'The Button that steps an inline number Input up.',
+      axes: ['variant'],
+    },
+    {
       name: 'input-prefix',
       description:
         'Reserved for content before the editor; the Input renders none, so such content goes in an Input group.',
@@ -51,6 +67,9 @@ export const inputPresentation = definePresentation({
       input: 'input',
       '[part~="input-row"]': 'input-row',
       '[part~="input-label"]': 'input-label',
+      '[part~="input-stepper"]': 'input-stepper',
+      '[part~="input-decrement"]': 'input-decrement',
+      '[part~="input-increment"]': 'input-increment',
     },
   },
   sources: [inputCoreAppearance, inputAppearance],

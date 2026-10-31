@@ -34,6 +34,7 @@ export const Input = /*#__PURE__*/ createBinding(TpInput, 'Input', {
   | 'partPresentation'
   | 'pattern'
   | 'placeholder'
+  | 'precision'
   | 'readOnly'
   | 'required'
   | 'selectionDirection'

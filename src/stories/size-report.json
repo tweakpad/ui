@@ -1,21 +1,21 @@
 {
-  "generatedAt": "2026-10-31T01:21:28.476Z",
+  "generatedAt": "2026-10-31T09:47:44.916Z",
   "version": "0.1.5",
   "method": "Each row imports and registers one component or widget from its public package entry. Rolldown tree-shakes and minifies an independent production JavaScript bundle, then measures its output before and after gzip. Required dependencies and embedded styles are included; Lit, optional engines, source maps and the separate global stylesheet are excluded. Each row's React and Vue sizes import its binding from @tweakpad/ui/react and @tweakpad/ui/vue the same way (the framework excluded); each adapter is measured alone. Sizes use kB of 1000 bytes.",
   "lit": { "bytes": 15977, "gzip": 6060 },
   "reactAdapter": { "bytes": 1100, "gzip": 603 },
   "vueAdapter": { "bytes": 1440, "gzip": 779 },
-  "full": { "bytes": 1978236, "gzip": 557126 },
-  "fullWidgets": { "bytes": 1567538, "gzip": 451309 },
+  "full": { "bytes": 1981068, "gzip": 558020 },
+  "fullWidgets": { "bytes": 1570383, "gzip": 452151 },
   "components": [
     {
       "name": "Flow",
       "tagName": "tp-flow",
       "section": "widgets",
-      "react": { "bytes": 1265476, "gzip": 355392 },
-      "vue": { "bytes": 1265282, "gzip": 355427 },
-      "bytes": 1264087,
-      "gzip": 354763,
+      "react": { "bytes": 1268321, "gzip": 356255 },
+      "vue": { "bytes": 1268127, "gzip": 356276 },
+      "bytes": 1266928,
+      "gzip": 355601,
       "modules": 435,
       "includes": [
         "tp-accordion",
@@ -87,8 +87,8 @@
       "name": "Text editor (all features)",
       "tagName": "tp-text-editor",
       "section": "widgets",
-      "bytes": 1014094,
-      "gzip": 298584,
+      "bytes": 1016864,
+      "gzip": 299501,
       "modules": 381,
       "includes": [
         "tp-aspect-ratio",
@@ -126,11 +126,11 @@
       "name": "Color picker",
       "tagName": "tp-color-picker",
       "section": "widgets",
-      "react": { "bytes": 537632, "gzip": 154371 },
-      "vue": { "bytes": 537710, "gzip": 154470 },
-      "bytes": 536441,
-      "gzip": 153743,
-      "modules": 210,
+      "react": { "bytes": 540610, "gzip": 155284 },
+      "vue": { "bytes": 540688, "gzip": 155384 },
+      "bytes": 539419,
+      "gzip": 154587,
+      "modules": 212,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -161,8 +161,8 @@
       "name": "Text editor",
       "tagName": "tp-text-editor",
       "section": "widgets",
-      "react": { "bytes": 506476, "gzip": 152519 },
-      "vue": { "bytes": 506499, "gzip": 152618 },
+      "react": { "bytes": 506472, "gzip": 152509 },
+      "vue": { "bytes": 506495, "gzip": 152603 },
       "bytes": 505301,
       "gzip": 152167,
       "modules": 208,
@@ -190,10 +190,10 @@
       "name": "Easing editor",
       "tagName": "tp-easing-editor",
       "section": "widgets",
-      "react": { "bytes": 468223, "gzip": 134240 },
-      "vue": { "bytes": 468378, "gzip": 134358 },
-      "bytes": 467111,
-      "gzip": 134578,
+      "react": { "bytes": 470992, "gzip": 135050 },
+      "vue": { "bytes": 471147, "gzip": 135180 },
+      "bytes": 469880,
+      "gzip": 135403,
       "modules": 192,
       "includes": [
         "tp-badge",
@@ -367,10 +367,10 @@
       "name": "File upload",
       "tagName": "tp-file-upload",
       "section": "components",
-      "react": { "bytes": 183424, "gzip": 52441 },
-      "vue": { "bytes": 183430, "gzip": 52539 },
+      "react": { "bytes": 183424, "gzip": 52443 },
+      "vue": { "bytes": 183430, "gzip": 52540 },
       "bytes": 182247,
-      "gzip": 52053,
+      "gzip": 52048,
       "modules": 101,
       "includes": [
         "tp-aspect-ratio",
@@ -580,6 +580,17 @@
       "includes": ["tp-button", "tp-icon", "tp-native-select", "tp-spinner"]
     },
     {
+      "name": "Color input",
+      "tagName": "tp-color-input",
+      "section": "components",
+      "react": { "bytes": 108432, "gzip": 33735 },
+      "vue": { "bytes": 108696, "gzip": 33943 },
+      "bytes": 107423,
+      "gzip": 33224,
+      "modules": 64,
+      "includes": ["tp-button", "tp-icon", "tp-input", "tp-spinner"]
+    },
+    {
       "name": "Toast",
       "tagName": "tp-toast",
       "section": "components",
@@ -615,9 +626,9 @@
       "tagName": "tp-map",
       "section": "components",
       "react": { "bytes": 104158, "gzip": 31516 },
-      "vue": { "bytes": 104235, "gzip": 31641 },
-      "bytes": 102999,
-      "gzip": 31198,
+      "vue": { "bytes": 104235, "gzip": 31640 },
+      "bytes": 103006,
+      "gzip": 31213,
       "modules": 63,
       "includes": ["tp-button", "tp-button-group", "tp-icon", "tp-map-control", "tp-spinner"]
     },
@@ -666,17 +677,6 @@
       "includes": ["tp-button", "tp-icon", "tp-kbd", "tp-spinner"]
     },
     {
-      "name": "Color input",
-      "tagName": "tp-color-input",
-      "section": "components",
-      "react": { "bytes": 83332, "gzip": 26479 },
-      "vue": { "bytes": 83596, "gzip": 26627 },
-      "bytes": 82319,
-      "gzip": 25997,
-      "modules": 46,
-      "includes": ["tp-input"]
-    },
-    {
       "name": "Message scroller",
       "tagName": "tp-message-scroller",
       "section": "components",
@@ -697,6 +697,17 @@
       "gzip": 23038,
       "modules": 36,
       "includes": ["tp-field", "tp-separator"]
+    },
+    {
+      "name": "Input",
+      "tagName": "tp-input",
+      "section": "components",
+      "react": { "bytes": 78730, "gzip": 23173 },
+      "vue": { "bytes": 79025, "gzip": 23336 },
+      "bytes": 77788,
+      "gzip": 22805,
+      "modules": 49,
+      "includes": ["tp-button", "tp-icon", "tp-spinner"]
     },
     {
       "name": "Glow border",
@@ -928,17 +939,6 @@
       "gzip": 15189,
       "modules": 27,
       "includes": ["tp-radio-group-item"]
-    },
-    {
-      "name": "Input",
-      "tagName": "tp-input",
-      "section": "components",
-      "react": { "bytes": 49178, "gzip": 15066 },
-      "vue": { "bytes": 49473, "gzip": 15204 },
-      "bytes": 48230,
-      "gzip": 14731,
-      "modules": 28,
-      "includes": []
     },
     {
       "name": "One-time code field",

@@ -31,6 +31,7 @@ export type InputProps = ElementProps<
   | 'partPresentation'
   | 'pattern'
   | 'placeholder'
+  | 'precision'
   | 'readOnly'
   | 'required'
   | 'selectionDirection'

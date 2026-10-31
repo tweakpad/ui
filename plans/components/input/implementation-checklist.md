@@ -26,15 +26,19 @@
 | C-04 | `input-label` aria-hidden; press on it edits the value | `inin-q1` | Field label activation | row click focuses the editor | ### Inline | V-02, V-03 | passed | label press focused the editor |
 | C-05 | Field label moves into the row | `sltk-f2` | Slider, Select | `rendersFieldLabel` | ### Inline | V-03 | passed | Reference row |
 | C-06 | Value muted at rest, foreground while hovered or focused, like other inline values | `inin-prop-1` | `inlineControlValue` | `input-variant-inline` | ### Inline | V-01 | passed | screenshots |
+| C-07 | Inline number: `‹ value ›` arrow Buttons around the centered value (as wide as its widest bound) replace the browser's spin buttons; Buttons and Arrow keys step onto the step grid within min and max, repeat while held, Shift ×10, reason `input`; arrows out of the tab order and the accessibility tree; mirrored in RTL; disabled while disabled or read-only | `inst-q1`, `inst-pub-0…2` (v0.52.2) | native spin buttons; NumberField actions (`PressAndHold`) and numeric normalization (`normalizeNumberFieldValue`) | `#stepper`, `#step`, `#numberKeyDown`, `compositeControl` tabIndex -1, recipe hides `::-webkit-inner-spin-button` | ### Inline | V-06, V-07, V-08 | passed | real clicks and keys, hold, axe |
+| C-08 | `precision` (default: decimals of `step`): stepped and committed (blur, Enter) values round to it; the value shows that many decimals at rest; typed text shows as typed | `inst-prop-0`, `inst-q2` (v0.52.2) | NumberField format rounding | `#precision`, `#format`, `editingValue`, `#commitNumber` | ### Inline (Number steps) | V-09 | passed | decimals matrix |
 
 | Issue | Concrete missing/conflicting contract | Affected dependencies | Proposed resolution | Authority / resolution evidence | Status |
 | ----- | ------------------------------------- | --------------------- | ------------------- | ------------------------------- | ------ |
 | S-1 | No Input variant, label or row part | Input | Add Label and Variant rows, Row and Label parts | Spec v0.47.8 | passed |
+| S-2 | Native spin buttons in the inline number row: tiny, unthemed, and their reserved space pushed the value off the row end | Input inline number | `‹ value ›` arrow Buttons in place of the spin buttons, plus Precision (user request 2026-10-31) | Spec v0.52.1, v0.52.2 (`inst-q1`, `inst-q2`, `inst-prop-0`) | passed |
 
 ## Architecture and reuse
 
 - Component folder and responsibility boundaries: `input.ts` renders the row; paint in `recipes/input.ts` from `shared/inline-control.ts` and `shared/text-control.ts`.
 - Supported exports / registration / constituent API impact: new `InputVariant` export; default Input renders unchanged.
+- Framework bindings: `npm run cem` regenerated with 0 binding changes (new CSS parts only); `npm test` and `npm run typecheck` pass.
 - Public vocabulary / tokens / parts / presentation review: `input-row`, `input-label`; no new tokens; spacing uses the scale steps the Select trigger uses.
 
 ### Family dependency map
@@ -43,6 +47,7 @@
 | -------------- | ------------------------------------------ | --------------------------------- | ------------------------------------------------- | ------------------------------------------ |
 | Editor inside a shared boundary | Input group joined editor | `recipes/input-group.ts` | extracted to `joinedEditor` in `shared/text-control.ts`, used by both | Input group, Input / V-05 |
 | Inline row paint | Slider and Select inline | `shared/inline-control.ts` | reused; rings take a focus condition | Slider, Select, Input / V-01 |
+| Stepping actions and hold to repeat | NumberField increment and decrement | `foundation/press-and-hold.ts`, `tp-button`, `compositeControl` | reused; steps the native editor (`stepUp`/`stepDown`) instead of a numeric model, so type semantics stay native | NumberField, Input / V-06, V-07 |
 | Field label hand-off | Foundation `sltk-f2` | `rendersFieldLabel` | reused | Slider, Select, Input / V-03 |
 
 ### Presentation source map
@@ -69,6 +74,10 @@
 | V-03 | C-04, C-05; accessibility | accessibility snapshot; label press | each textbox named once; label press focuses the editor | as expected | DevTools snapshot and evaluate | passed | Tree recorded in the session. |
 | V-04 | C-02; accessibility automation | axe, dark and light | no violations | none | injected axe-core | passed | Both schemes clean. |
 | V-05 | C-03; regression | `inputGroupContract` checks | single boundary, action inheritance | both pass | DevTools fixture | passed | Shared joined editor unchanged. |
+| V-06 | C-07; real input | decimals rows on `select/inline.html`: Line height (0.1) ArrowUp, ArrowDown ×2; Scale (0.25, precision 2) › ×3; Opacity (0.01) › ‹ ‹, Shift+ArrowUp ×3; Tolerance (0.005), Offset (any), empty Bleed; Tab | 1.6, 1.5, 1.4; 1.25, 1.50, 1.75; 0.81, 0.80, 0.79, then 0.89, 0.99, 1.00 (max); 0.015; −1.4; −1; Tab skips the arrows | as expected, no float noise, each step `tp-value-change` (input) | DevTools click (aria-hidden lifted for the click only), press_key | passed | Hold measured with dispatched pointer events (V-07). |
+| V-07 | C-07; API | 640 ms hold on ‹ from 3.50 (step 0.25); read-only; disabled | 2.25; Buttons disabled | as expected | evaluate | passed | DevTools cannot hold a real press. |
+| V-09 | C-08; real input | Scale (0.25, precision 2): type 2.5 Tab; type 1.237 Tab; ArrowUp from 1.24; type 3.5 Enter in a form | 2.50; 1.24 with stepMismatch; 1.25; 3.50 submitted | as expected | DevTools type_text, press_key | passed | Native step validity kept for off-grid typed values. |
+| V-08 | C-07; visual and accessibility | dark, light, RTL, disabled, focus; axe | ‹ value › at the row end, value centered, arrows steady while stepping, mirrored in RTL; no violations | as expected | screenshots, injected axe-core | passed | `aria-hidden-focus` found first, fixed with `compositeControl`. |
 
 ## Early integration checkpoint
 
@@ -85,10 +94,10 @@
 | 0. Sources and scope                  | passed | Spec §17.4 read and amended (v0.47.8). |
 | 1. Capability mapping                 | passed | C-01…C-06. |
 | 2. Architecture and composition reuse | passed | Joined editor shared with Input group. |
-| 3. Behavior                           | passed | V-02. |
+| 3. Behavior                           | passed | V-02, V-06, V-07. |
 | 4. Presentation and customization     | passed | `input-inline.test.ts`. |
-| 5. Accessibility                      | passed | V-03, V-04. |
-| 6. Visual and interaction inspection  | passed | V-01. |
+| 5. Accessibility                      | passed | V-03, V-04, V-08. |
+| 6. Visual and interaction inspection  | passed | V-01, V-08. |
 | 7. Documentation and demo reuse       | passed | input.mdx ### Inline; check-docs passes; story `variant` control. |
 | 8. Regression and reconciliation      | passed | unit tests, Input group fixture. |
 

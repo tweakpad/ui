@@ -406,6 +406,7 @@ export const NavigationPanelInput = /*#__PURE__*/ createBinding(
   | 'partPresentation'
   | 'pattern'
   | 'placeholder'
+  | 'precision'
   | 'readOnly'
   | 'required'
   | 'selectionDirection'

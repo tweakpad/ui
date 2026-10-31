@@ -125,3 +125,14 @@ Native form serialization follows the editable input's current representation, i
 />
 
 `variant="inline"` fits the Input into one row the height of a control, with `label` at the start and the value at the end, so it stacks with other inline controls such as an inline Select. A press on the label edits the value. Inside a Field, the Field's label moves into the row.
+
+A number value sits between a decrement and an increment arrow in place of the browser's spin buttons. Hold an arrow to keep stepping; the Arrow keys step the focused value too, ten steps at a time with Shift. `step` sets how far each step moves, and `precision` how many decimals the value keeps and shows, which defaults to the decimals of `step`.
+
+<Preview
+  title="Number steps"
+  align="stretch"
+  code={`<div style="display:grid;gap:var(--tp-space-2);max-inline-size:22rem;margin-inline:auto">
+  <tp-input variant="inline" label="Line height" name="line-height" type="number" step="0.1" min="1" max="3" default-value="1.5"></tp-input>
+  <tp-input variant="inline" label="Opacity" name="opacity" type="number" step="0.05" precision="2" min="0" max="1" default-value="0.8"></tp-input>
+</div>`}
+/>
