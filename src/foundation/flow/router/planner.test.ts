@@ -547,7 +547,8 @@ describe('planner route index', () => {
     }
     expect(checked).toBeGreaterThan(100);
     planner.dispose();
-  });
+    // About 1.5 s alone; the full suite shares the cores, which can stretch it past the 5 s default.
+  }, 30_000);
 });
 
 /** Route segments that pass through the inside of a node (half a pixel in from its border). */
