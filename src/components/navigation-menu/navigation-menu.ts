@@ -513,6 +513,16 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
       );
     const index = controls.findIndex((element) => event.composedPath().includes(element));
     if (index < 0) return;
+    // The open panel follows its trigger in sequential focus order, wherever it is rendered.
+    const active = this.open ? this.#active : undefined;
+    if (event.key === 'Tab' && !event.shiftKey && active && active.trigger === controls[index]) {
+      const first = this.popupElement && focusableElements(this.popupElement)[0];
+      if (first) {
+        event.preventDefault();
+        first.focus();
+        return;
+      }
+    }
     const { next: forward, previous: backward } = arrowKeys(this.orientation, this.direction);
     const next =
       event.key === forward
@@ -551,12 +561,12 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
       event.key !== 'Tab' ||
       event.defaultPrevented ||
       componentHandlingPrevented(event) ||
-      !this.portal ||
       !this.popupElement
     )
       return;
-    // Item portals introduce separate focus scopes. Keep sequential navigation
-    // within the flattened content; shared surface policy owns leaving it.
+    // Item portals introduce separate focus scopes, and the panel is not next to its trigger in
+    // document order. Keep sequential navigation within the flattened content; leaving its start
+    // returns to the trigger and leaving its end moves past the trigger.
     const items = focusableElements(this.popupElement);
     const index = items.indexOf(deepActiveElement(this.ownerDocument) as HTMLElement);
     const next = index < 0 ? undefined : items[index + (event.shiftKey ? -1 : 1)];
@@ -622,6 +632,10 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
     super.updated(changed);
     // An update that runs after removal must not register the items it just released again.
     if (this.isConnected) this.#syncMembers();
+    // Items render the menu's orientation and viewport mode into their own parts.
+    if (changed.has('orientation') || changed.has('showViewport'))
+      for (const member of this.#members)
+        if (member.host instanceof TpNavigationMenuItem) member.host.requestUpdate();
     // The surface positioned the new view before its content existed: the item renders into the
     // container in its own update. Project and style that content now, then size the positioner
     // and place it once more in this same task, so the move is a single glide from the last place.

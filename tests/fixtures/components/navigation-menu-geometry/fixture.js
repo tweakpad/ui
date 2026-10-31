@@ -13,14 +13,32 @@ menu.innerHTML = template.content.querySelector('tp-navigation-menu').innerHTML;
 document.querySelector('main').append(menu);
 const wait = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms));
 const records = [];
+// Packed controls take the theme's control extent; a coarse pointer raises them to the target size.
+function extent(token) {
+  const coarse = matchMedia('(pointer: coarse)').matches;
+  const probe = document.createElement('div');
+  probe.style.position = 'absolute';
+  probe.style.blockSize = coarse
+    ? `max(var(${token}), var(--tp-target-size-min))`
+    : `var(${token})`;
+  document.body.append(probe);
+  const size = probe.getBoundingClientRect().height;
+  probe.remove();
+  return size;
+}
 function check(name, pass, actual) {
   records.push({ name, pass, actual });
   if (!pass) throw new Error(`${name}: ${JSON.stringify(actual)}`);
 }
+// The checks flip direction and orientation: keep the pointer off the menu, or a trigger that lands
+// under it opens by hover. A switch between triggers glides; measure once the glide has ended.
 async function select(value) {
   menu.value = value;
   await menu.updateComplete;
   await wait();
+  await Promise.all(
+    (menu.positioner?.getAnimations() ?? []).map((animation) => animation.finished.catch(() => {})),
+  );
 }
 async function stable(value, samples = 8) {
   await select(value);
@@ -122,6 +140,8 @@ async function geometry() {
 }
 async function alignment() {
   records.length = 0;
+  const control = extent('--tp-control-height-lg');
+  const row = extent('--tp-control-height-md');
   for (const portal of [false, true]) {
     menu.portal = portal;
     for (const showViewport of [false, true]) {
@@ -141,28 +161,37 @@ async function alignment() {
           const boxes = top.map((element) => element.getBoundingClientRect());
           check(
             'top-level controls share target and cross-axis alignment',
-            boxes.every((box) => box.height >= 44 && Math.abs(box.height - boxes[0].height) <= 1) &&
+            boxes.every(
+              (box) => box.height >= control - 0.5 && Math.abs(box.height - boxes[0].height) <= 0.5,
+            ) &&
               (orientation === 'horizontal'
-                ? boxes.every((box) => Math.abs(box.top - boxes[0].top) <= 1)
+                ? boxes.every((box) => Math.abs(box.top - boxes[0].top) <= 0.5)
                 : boxes.every(
                     (box) =>
-                      Math.abs(box.left - boxes[0].left) <= 1 &&
-                      Math.abs(box.width - boxes[0].width) <= 1,
+                      Math.abs(box.left - boxes[0].left) <= 0.5 &&
+                      Math.abs(box.width - boxes[0].width) <= 0.5,
                   )),
-            { portal, showViewport, dir, orientation, boxes: boxes.map((box) => box.toJSON()) },
+            {
+              portal,
+              showViewport,
+              dir,
+              orientation,
+              control,
+              boxes: boxes.map((box) => box.toJSON()),
+            },
           );
           const links = [...items[0].contentElement.getRootNode().host.querySelectorAll('a[href]')];
           const rows = links.map((link) => link.getBoundingClientRect());
           check(
             'popup destination rows share height and text inset',
             rows.every(
-              (row) =>
-                row.height >= 44 &&
-                Math.abs(row.height - rows[0].height) <= 1 &&
-                Math.abs(row.left - rows[0].left) <= 1 &&
-                Math.abs(row.width - rows[0].width) <= 1,
+              (box) =>
+                box.height >= row - 0.5 &&
+                Math.abs(box.height - rows[0].height) <= 1 &&
+                Math.abs(box.left - rows[0].left) <= 1 &&
+                Math.abs(box.width - rows[0].width) <= 1,
             ),
-            rows.map((row) => row.toJSON()),
+            { row, rows: rows.map((box) => box.toJSON()) },
           );
         }
       }

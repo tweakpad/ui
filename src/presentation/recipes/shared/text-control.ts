@@ -42,7 +42,8 @@ export const joinedEditor = {
   'line-height': 'var(--tp-leading-normal)',
 };
 /** A joined editor's block size: the control height inside its boundary's borders. */
-export const joinedEditorMinHeight = 'calc(var(--tp-control-height-md) - var(--tp-border-width) * 2)';
+export const joinedEditorMinHeight =
+  'calc(var(--tp-control-height-md) - var(--tp-border-width) * 2)';
 /** Joined-editor rules win over each standalone editor state, without !important. */
 export const joinedEditorSelector =
   '&[data-tp-presentation-part], &[data-tp-presentation-part]:is(:focus-visible, :disabled, [aria-invalid="true"])';

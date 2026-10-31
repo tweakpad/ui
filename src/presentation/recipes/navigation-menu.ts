@@ -114,6 +114,16 @@ export const navigationMenuAppearance: PresentationDictionary = {
       },
     },
     {
+      // A top-level link sits in the list beside the triggers and takes their extent and weight.
+      selector: '&:not([slot="content"], [slot="content"] *)',
+      declarations: {
+        'block-size': packedExtent('var(--tp-control-height-lg)'),
+        'min-block-size': packedExtent('var(--tp-control-height-lg)'),
+        'border-radius': 'var(--tp-radius-lg)',
+        'font-weight': 'var(--tp-font-medium)',
+      },
+    },
+    {
       selector: '&[aria-current="page"]',
       declarations: { background: 'color-mix(in oklab, var(--tp-muted) 50%, transparent)' },
     },

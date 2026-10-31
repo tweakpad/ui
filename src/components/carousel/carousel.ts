@@ -1450,9 +1450,12 @@ export class TpCarousel<T = unknown> extends TpElement {
           index < firstMain ? firstMain - index : index > lastMain ? index - lastMain : 0;
         const bulletClass = `bullet${config.dynamic && distance ? (distance === 1 ? ' bullet-near' : ' bullet-far') : ''}`;
         const label = this.#config.messages.position(index + 1, count);
+        // An icon-size Button hides its label: the mark is its icon, and the label names it.
+        const custom = config.renderIndicator?.(context);
         const inner =
-          config.renderIndicator?.(context) ??
-          html`<span class=${bulletClass} aria-hidden="true"></span>`;
+          custom === undefined || custom === null
+            ? html`<span slot="icon-start" class=${bulletClass} aria-hidden="true"></span>`
+            : html`<span slot="icon-start" aria-hidden="true">${custom}</span>`;
         return config.clickable
           ? this.renderPart(
               'carousel-indicator',
