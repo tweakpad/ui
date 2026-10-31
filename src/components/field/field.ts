@@ -129,8 +129,10 @@ export class TpField extends TpElement {
         position: relative;
       }
 
-      /* The control shows this label inside its own anatomy; it still names the control. */
-      ${unsafeCSS(visuallyHiddenRule('[part~="field-label"][data-control-label]', { important: true }))}
+      ${unsafeCSS(
+        // The control shows this label inside its own anatomy; it still names the control.
+        visuallyHiddenRule('[part~="field-label"][data-control-label]', { important: true }),
+      )}
 
       .separator-line {
         position: absolute;

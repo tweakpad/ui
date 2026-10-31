@@ -1,0 +1,4 @@
+#!/bin/sh
+# Runs CI's lint, type check and tests before anything leaves this machine (about two minutes).
+# Skip once with `git push --no-verify`.
+exec npm run --silent check

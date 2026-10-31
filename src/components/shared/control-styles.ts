@@ -50,6 +50,7 @@ export function rangeHandleStyles(handles: string): CSSResult {
     .split(',')
     .map((selector) => `${selector.trim()}::after`)
     .join(',');
+  // postcss-lit-disable-next-line -- only interpolations, nothing for stylelint to read.
   return css`
     ${unsafeCSS(
       `${hit}{content:'';position:absolute;` +

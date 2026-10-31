@@ -75,6 +75,7 @@ export class TpAvatar extends TpElement {
         position: absolute;
         inset-inline-end: 0;
         inset-block-end: 0;
+
         /* Above the outline the presentation draws on the host's ::after. */
         z-index: 1;
         display: flex;

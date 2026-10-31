@@ -121,6 +121,7 @@ export const sliderStyles = css`
     position: relative;
     z-index: 3;
     flex-wrap: nowrap;
+
     /* Text inset like the Select trigger: past the row border, then space-2-5. */
     padding-inline: calc(var(--tp-border-width) + var(--tp-space-2-5));
     pointer-events: none;

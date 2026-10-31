@@ -14,9 +14,13 @@ npm run test:package
 npm run size:report
 npm run bindings
 npm run lint
+npm run check
+npm run verify
 npm run build
 npm run build-storybook
 ```
+
+`npm install` points git at the hooks in `.githooks`. Before a commit, `pre-commit` runs Prettier, ESLint and stylelint on the staged files with the file sets of `npm run lint`. Before a push, `pre-push` runs `npm run check` (lint, type check and tests, about two minutes). `npm run verify` adds CI's remaining steps, the package test and the size report. `--no-verify` skips a hook once.
 
 `npm run build` ends with the documentation index (`npm run docs:build`), which fails on a documented element whose public API has an undescribed row. `npm run lint` checks Prettier formatting, TypeScript and Lit templates, Lit accessibility, standalone CSS, and CSS embedded in Lit `css` templates. `npm run typecheck` type-checks `src` with its tests and stories, `.storybook` and the configs, which the build's `tsconfig.build.json` leaves out. `npm run test:package` packs the library and checks the tarball as a consumer would install it. `npm run size:report` measures each catalog component and widget as published and guards tree-shaking.
 

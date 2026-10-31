@@ -1,0 +1,3 @@
+#!/bin/sh
+# Lints the staged files as CI's lint step would. Skip once with `git commit --no-verify`.
+exec node scripts/hooks/pre-commit.mjs
