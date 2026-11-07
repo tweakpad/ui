@@ -1,5 +1,21 @@
 # @tweakpad/ui
 
+## 0.3.0
+
+### Minor Changes
+
+- 61f766c: Add the Plot widget for static and streaming numeric lines and areas, including signed fills, optional axes, grids, guides, legends and sample inspection. Bounded streams support synchronized push frames and latest-value revisions; eligible histories shift cached Canvas pixels and redraw only affected columns. Sampling and painting have independent limits, with an optional shared dashboard scheduler.
+- 3e76a46: Add `--tp-selection` and `--tp-selection-foreground` for native text and option selection, defaulting to the primary color pair. Apply the theme across document text, shadow-root text controls and editable content, normalize focused Native Select listbox selection, and use shared list and row spacing. Preserve original text colors beneath editor cell-range overlays. Forced colors retains system selection colors and native keyboard, form and accessibility behavior.
+- 1bcde24: Add opt-in content fades, enabled with `scroll-edge-fade`, at hidden native scroll edges across scroll areas, collections, surfaces, panels and editor documents. Configure the inherited `--tp-scroll-edge-fade-size` token (24px maximum fade width by default). Scrollbars, sticky controls and focused content stay visible; forced colors disables fades. Updates follow scroll and content changes without idle animation loops.
+
+  Keep Select fades clear of its scroll arrows and the selected option visible when reopening. Restore the Tree View record, virtualized, controlled and lazy-loading examples, and theme Native Select's multiple-selection options and selected states.
+
+- 5dd34a7: Make scroll-edge fades opt-in with the Boolean `scroll-edge-fade` attribute (`scrollEdgeFade` property). Fades are off by default, with no fade observers or measurements until enabled. Remove the attribute to disable the effect and release its resources. Keep theme tokens for appearance customization rather than normal feature configuration.
+
+### Patch Changes
+
+- 68d69e8: Improve Plot frame pacing and clock scrolling. A bounded raster atlas avoids copying the complete history on every frame, and solid backgrounds avoid an extra canvas composite. The live example collects at 10 Hz while scrolling independently at up to 60 Hz.
+
 ## 0.2.4
 
 ### Patch Changes
