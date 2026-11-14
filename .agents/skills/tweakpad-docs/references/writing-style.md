@@ -1,12 +1,13 @@
 # Writing style
 
 Every page is written in the same register. This governs **new pages and new sections**. It is
-never a reason to reword existing text during a merge (see merge.md).
+never a reason to reword existing text (see the parity rule in SKILL.md).
 
 ## The register: between a tutorial and a technical reference
 
-- The page gives the reader the component's **full capabilities and features**. Each one is shown
-  by a **small example** with a few sentences on when and why to use it.
+- The page teaches the component through its **most common, familiar scenarios**, each a small
+  example with a few sentences on when and why. Its full surface lives in the Properties table and
+  the API Reference, not in one section per property.
 - It is **not a tutorial**:
   - no step-by-step walkthroughs, no "first we…, then we…";
   - no multi-step flows;
@@ -19,14 +20,15 @@ never a reason to reword existing text during a merge (see merge.md).
     enumerates what the element lacks;
   - if a sentence could be a table row, it belongs in the element's JSDoc, which the generated API
     Reference prints.
-- **Length follows complexity.**
-  - A primitive (Separator, Label, Spinner, Visually hidden) gets a hero and a few short sections.
-  - A rich component or widget (Select, Table, Slider, Flow, Text editor) gets as many sections as
-    it has features worth seeing.
-  - Never pad a simple page or squeeze a complex one.
-- **One feature, one place.** Each capability appears once, in the section that shows it. Order the
-  sections from the most common and simplest to the rarer and more involved. A later section never
-  depends on a feature that no earlier section has shown.
+- **Less is better.** A primitive (Separator, Label, Spinner) gets a hero and a few short
+  sections; a rich component or widget gets one section per scenario a developer will meet, not
+  one per property. Never pad a page.
+- **Showcase features, not properties.** A section shows several properties working together in a
+  real scenario. A single property gets its own section only when it changes behavior
+  substantially (a mode, a layout, a selection model); otherwise its table row is enough.
+- **One feature, one place, simple to complex.** Each capability appears once. A section never
+  re-introduces what the hero or an earlier section shows, and never depends on a feature no
+  earlier section has shown.
 
 ## Sections and examples
 

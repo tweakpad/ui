@@ -278,16 +278,15 @@ Storybook blocks, through the story's `libraryDocs()`. The website renders it wi
 components, from the installed package. **Follow the
 [tweakpad-docs skill](../tweakpad-docs/SKILL.md) for every documentation change.** It covers:
 
-- the mandatory structure: header, main use case, Usage, generated API Reference, and Related on
-  the website only;
-- the writing style;
-- the minimal-diff merge of the former website and Storybook material;
-- the checks.
+- the page's purpose (a guide and a reference, never a dump) and the structure: header, main use
+  case, generated Properties table, Usage, generated API Reference, Related on the website only;
+- the parity rule against churn, the writing style and the checks.
 
-The generated API Reference is only as complete as the element's JSDoc (summary, every public
-attribute, property and method, `@fires`, `@slot`, `@cssprop`) and the family's part
-descriptions. Prose never restates it. Controls expose real APIs, with fixture setup kept
-separate.
+A new property or feature gets a JSDoc line, which becomes its Properties row; it never adds a
+use case or rewords existing sections by itself. The generated tables are only as complete as the
+element's JSDoc (summary, every public attribute, property and method, `@fires`, `@slot`,
+`@cssprop`) and the family's part descriptions. Prose never restates them. Controls expose real
+APIs, with fixture setup kept separate.
 
 Keep exhaustive verification fixtures outside the page and hidden from Docs. Audit both rendered
 previews and copyable code for library-component reuse. Code, comments, tests, samples and docs

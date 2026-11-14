@@ -1,175 +1,125 @@
 ---
 name: tweakpad-docs
-description: 'Write, merge, change or review the documentation page of a Tweakpad component or widget: the single page in docs/components/<slug>.mdx or docs/widgets/<slug>.mdx that Storybook and tweakpad.com/docs both render, its previews, its story pairing, the JSDoc that feeds its API Reference, and the website/Storybook renderings of it. Enforces the fixed page structure, the website-first minimal merge, the shared writing style and the checks that fail a non-conforming page. Applies to the library and the tweakpad.github.io site.'
+description: 'Write, merge, change or review the documentation page of a Tweakpad component or widget: the single page in docs/components/<slug>.mdx or docs/widgets/<slug>.mdx that Storybook and tweakpad.com/docs both render, its previews, its story pairing, the JSDoc that feeds its Properties table and API Reference, and the website/Storybook renderings of it. Enforces the page purpose, the fixed structure, the parity rule against churn, the shared writing style and the checks that fail a non-conforming page. Applies to the library and the site repo.'
 ---
 
 # Tweakpad documentation pages
 
-Every published component and widget has exactly one documentation page. It is written once in
-the library and rendered by two systems, each in its own style:
+## Purpose: a guide and a reference, never a dump
 
-- **Storybook** (internal developer docs) renders it with Storybook's own blocks.
-- **The website** (`tweakpad.github.io`, served at tweakpad.com/docs) renders it with library
-  components.
+A page is what a developer reads while building an app: it teaches the component through the
+scenarios they will actually meet, and it is the reference they come back to. Every addition must
+make the page easier to learn from or to look things up in, or it does not go in.
 
-The page is the single source of truth for content. Rendering is never shared. A page that
-breaks a rule below fails `npm test`, `npm run build` or `check-docs.mjs`. A failing page is an
-unfinished task, whatever else was done.
+- **The page is not a garbage bin.** Adding a feature or a property never adds a use case by
+  itself: the property gets one JSDoc line, which becomes its row in the Properties table. A new
+  section is justified only by a prominent capability that changes behavior substantially, or
+  when the user asks for one.
+- **Existing sections are not churned.** Never reword, re-illustrate or reorder a section because
+  something new was added. A page changes only where it is wrong, broken or bloated.
+- **Use cases are familiar scenarios,** the most common ones a developer needs, ordered from simple
+  to complex. Each showcases a feature, several properties working together, never one property
+  at a time like a machine. A section never re-introduces what the hero or an earlier section
+  already shows.
 
-## Where things live
+## One page, two renderings
 
-| What                                   | Where                                                                                                                                         |
-| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| The page (authored)                    | `docs/components/<slug>.mdx`, `docs/motion/<group>/<slug>.mdx`, `docs/widgets/<slug>.mdx` (library)                                                                           |
-| API Reference data (generated)         | JSDoc on the element → Custom Elements Manifest → `elementApi` (`src/docs/api.ts`)                                                            |
-| Related data (generated, website only) | manifest `renders` → `relatedPages` → `dist/docs.json`, plus pattern frontmatter `components` (pattern pages: tweakpad-pattern skill) |
-| Storybook rendering                    | `.storybook/docs-page.mdx`, `.storybook/docs-library.mdx`, `src/stories/<slug>.stories.ts`                                                    |
-| Website rendering                      | `src/pages/docs/[...slug].astro`, `src/components/{Preview,Code,Keys,ApiTable}.astro` (site repo)                                             |
-| Design tokens list (both systems)      | `src/docs/token-catalog.ts` → `dist/docs.json` `tokens`; Storybook's Design tokens page, the website's Design tokens page (`TokenList.astro`) |
-| Merge sources (frozen)                 | `plans/docs/sources/website/…` (A), `plans/docs/sources/storybook/…` (B)                                                                      |
-| Merge ledger                           | `plans/docs/ledger/<section>/<slug>.md`                                                                                                       |
+Every published component and widget has exactly one page, written once in the library:
 
-The website never authors component or widget pages. It reads them from the installed
-`@tweakpad/ui` package (`docs/**/*.mdx` and `dist/docs.json`), the same package its API tables
-come from, so content and API always describe one version. To change a page, edit it in the
-library. The site picks it up on the next release and dependency bump; use `npm link` to preview
-it locally.
+- **Storybook** renders it with Storybook's own blocks.
+- **The website** (site repo, served at tweakpad.com/docs) renders it with library components.
 
-## The structure (mandatory, both systems)
+The page is the single source of truth for content; rendering is never shared. A page that breaks
+a rule below fails `npm test`, `npm run build` or `check-docs.mjs`, and a failing page is an
+unfinished task.
 
-1. **Header:** name, description, tag, from the frontmatter `title`, `description` and `tag`.
-2. **Main use case:** the hero `<Preview>`, a minimal demo placed before any heading.
-3. **Usage:** `## Usage`, with its `###` sections presenting variants, attributes and
-   configuration options as short examples. Keyboard is a `###` section of Usage (or `## Keyboard`)
-   only when the element handles keys beyond native behavior.
-4. **API Reference** (generated, never authored), in this order:
-   1. Attributes
-   2. Properties
-   3. Events
-   4. Methods, Slots, CSS parts and CSS custom properties, each only when the element has rows
-      for it.
+| What                                   | Where                                                                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| The page (authored)                    | `docs/components/<slug>.mdx`, `docs/motion/<group>/<slug>.mdx`, `docs/widgets/<slug>.mdx`               |
+| Properties and API data (generated)    | JSDoc → Custom Elements Manifest → `elementApi` (`src/docs/api.ts`)                                     |
+| Related data (generated, website only) | manifest `renders` → `dist/docs.json`, plus pattern frontmatter `components`                            |
+| Storybook rendering                    | `.storybook/docs-page.mdx`, `.storybook/docs-library.mdx`, `src/stories/<slug>.stories.ts`              |
+| Website rendering                      | site repo `src/pages/docs/[...slug].astro`, `src/components/{Preview,Code,Keys,ApiTable}.astro`         |
+| Frozen sources and ledgers             | `plans/docs/sources/…`, `plans/docs/ledger/<section>/<slug>.md`                                         |
 
-   The same tables repeat for every tag in the frontmatter `parts`. Each fact appears once: values
-   in the type (a named type with its values or its definition), the default in Default, meaning
-   in the description; Controls only controls. `check-docs.mjs` fails a row that breaks this.
+The website never authors component pages; it reads them and the manifest from the installed
+`@tweakpad/ui` package. Preview site changes with `npm link`.
 
-5. **Related** (generated, **website only**): the components and widgets that render this element,
-   and the patterns built from it. At most four cards show; the rest open from a library
-   Collapsible labelled "Show more". When nothing uses the element, the section, its heading and
-   its table-of-contents entry are left out entirely. Storybook never shows Related.
+## The structure (both systems)
 
-[references/structure.md](references/structure.md) has the page grammar, the allowed elements and
-how each system renders each section.
+1. **Header:** frontmatter `title`, `description`, `tag`.
+2. **Main use case:** the hero `<Preview>`, before any heading.
+3. **Properties** (generated): one table, one row per property, right under the hero. A row names
+   the property (and its attribute, when it has one), says what it does, shows its type and its
+   default, and, in Storybook, a control when the value is controllable. Attribute-backed rows
+   come first, JavaScript-only rows after. No sections.
+4. **Usage:** `## Usage` and its `###` use cases. Keyboard is a `###` (or `## Keyboard`) only when
+   the element handles keys beyond native behavior.
+5. **API Reference** (generated): only what the Properties table does not cover — Events,
+   Methods, Slots, CSS parts and CSS custom properties, each only when it has rows. Every tag in
+   frontmatter `parts` gets its own Properties table and API groups here. Attributes and
+   properties are never repeated.
+6. **Related** (generated, website only).
 
-## Rendering is not shared
+[references/structure.md](references/structure.md) has the grammar, the elements, the table and
+type rules, and how each system renders each section.
 
-The two systems share **content and DOM-free data only**: the page text and preview code, and the
-rows from `elementApi` and `docs.json`. Never one HTML template, component or stylesheet for both.
+## Parity: one source of truth, no churn
 
-- **Storybook** renders with Storybook blocks and Storybook styling:
-  - `Title` and `Description`, with the tag in a code chip.
-  - `Primary`: the Default story with its `Controls`. Its source is the hero code, and its
-    default args render the hero markup.
-  - `Canvas` for every other preview, and the `Source` block for `<Code>`.
-  - Storybook's args table for the API tables, and the same design for Markdown tables
-    (`DocsTable`, `.storybook/docs-table.ts`); code samples, `<Code>` included, are dark like every
-    Canvas source.
-  - **No library elements** (`tp-table`, `tp-code-block`, …) in the docs chrome. Library elements
-    appear only inside previews, and in the Kbd elements inside the Keyboard `<Keys>` cells.
-- **The website** renders with library components for every part:
-  - `Preview.astro` for the canvas, its toolbar (`tp-toggle-group`, `tp-button`, `tp-tooltip`)
-    and its code (`tp-code-block`);
-  - `Code.astro` (`tp-code-block`);
-  - API and Markdown tables as `tp-table`;
-  - `Keys.astro` (`tp-kbd-group`);
-  - Related cards.
+89 pages came from a website page (A). The checker compares each against its frozen A: headings,
+paragraphs and previews stay unchanged and in order. That rule exists to stop churn, not to
+freeze mistakes: a change to A content is allowed only as a **forced edit** with a ledger row and
+its reason, from the closed list in [references/merge.md](references/merge.md):
 
-  No native `<table>`, `<pre>` or `<button>` appears in the page chrome.
+- a preview that does not work is repaired;
+- an API that no longer exists is removed from text and previews;
+- **`removed`:** a section or preview that duplicates the hero or an earlier section, or exists
+  only to introduce one non-prominent property that the Properties table documents;
+- the mechanical cases of the merge (icons, renamed tags, generated-section names, stale imports).
+
+Nothing else rewrites A. Never rephrase, reorder or "improve" it.
 
 ## Writing
 
-Follow [references/writing-style.md](references/writing-style.md). In short:
-
-- The register sits between a tutorial and a technical reference. A reader learns everything the
-  component can do through small, focused examples, each in a short section.
-- Never write a step-by-step walkthrough or a full-page scenario. Never write prose that walks the
-  API.
-- Length follows complexity: a primitive gets a few sections, a rich component or widget gets
-  many.
-
-## Merging the two former sources (minimal diff, never a rewrite)
-
-Follow [references/merge.md](references/merge.md) for every page that still has a website page (A)
-or Storybook material (B) not yet merged. The rules:
-
-- **A is moved, not rewritten.** Its frontmatter, hero, headings, previews and prose are copied
-  byte for byte.
-- **B extends A verbatim** where A lacks something.
-- **Overlaps keep A's wording** and gain only B's missing sentences or previews.
-- **Changing wording is not the goal.** Never rephrase, reorder, shorten or "improve" text from
-  either side.
-- **Never invent** a use case, a demo or sample content.
-- **Every B item and every forced edit is a ledger row.**
+Follow [references/writing-style.md](references/writing-style.md): the register sits between a
+tutorial and a reference, prose explains intent and choice, and a sentence that could be a table
+row belongs in JSDoc.
 
 ## Workflow
 
-1. **Read first.**
-   - The page, if it exists.
-   - The element's source and JSDoc, and its family's part descriptions
-     (`src/presentation/families/<slug>.ts`).
-   - When merging: the frozen A and B sources under `plans/docs/sources/`.
-2. **Write or change the page.**
-   - Keep the structure.
-   - Fill missing JSDoc instead of writing API prose: a class summary, one line per public
-     attribute, property and method, `@fires {Type} tp-name - …`, `@slot`, `@cssprop`, and
-     `PartDefinition.description` per part.
-3. **Pair the story.**
-   - `src/stories/<slug>.stories.ts` declares `parameters: { docs: libraryDocs('<section>/<slug>') }`.
-   - It has one `Default` story with real Controls.
-   - Every other story is a fixture tagged `!autodocs`.
-   - No `docs/<slug>.md?raw`, `examples:` or `*.examples.ts` for documentation.
-4. **Check.** Run these in the library:
+1. **Read first:** the page, the element's source and JSDoc, its family's part descriptions, and
+   its ledger.
+2. **Write the least change.** Prefer a JSDoc line over prose, prose over a new section, and an
+   existing section over a new one. Fill missing JSDoc instead of writing API prose.
+3. **Pair the story:** `src/stories/<slug>.stories.ts` declares
+   `parameters: { docs: libraryDocs('<section>/<slug>') }`, has one `Default` story whose default
+   args render the hero and whose Controls are real, and tags every other story `!autodocs`.
+4. **Check:**
    ```sh
    node .agents/skills/tweakpad-docs/scripts/check-docs.mjs <section>/<slug>   # or --all
    npm test && npm run build
    ```
-   `check-docs.mjs` runs:
-   - the page grammar and the skeleton;
-   - A parity: every A heading, preview and paragraph is unchanged and in order, except listed
-     forced edits;
-   - ledger completeness: every captured B item has a disposition;
-   - API completeness: no undescribed Attribute, Property or Event row.
-5. **Read it rendered.**
-   - Open both renderings in Chrome through the `chrome-devtools` MCP server, never headless and
-     never `claude-in-chrome`:
-     - Storybook on a static build (`npm run build-storybook`, then serve `storybook-static`);
-     - the website (`npm link` the library, then `npm run dev` in the site).
-   - Read the page as a developer would. Check that:
-     - the sections are in order;
-     - frontmatter is not printed as text;
-     - every preview runs at full width and its script works;
-     - Keyboard tables render;
-     - API tables carry descriptions;
-     - Storybook has no Related and no `tp-*` chrome;
-     - the website has Related.
-   - Use one tab, reload between pages, and close the tabs you opened.
+5. **Read it rendered** in Chrome through the `chrome-devtools` MCP server (never headless):
+   Storybook, and the website through `npm link` and the site's dev server. Read it as a developer
+   would: sections in order, previews run, the Properties table has a description, type and
+   default on every row, one-line types sit in the cell and structured ones open in a modal
+   without widening the table, the API Reference repeats nothing. Use one tab
+   and close the tabs you opened.
 
-**Done** means:
-
-- `check-docs.mjs`, `npm test` and `npm run build` pass in the library, and `npm run build`
-  passes in the site.
-- Both renderings were read in Chrome.
-- The ledger is complete.
-
-A page that passes only the build is not done.
+**Done** means the checks pass in the library, `npm run build` passes in the site, both renderings
+were read, and every forced edit is a ledger row.
 
 ## Never
 
-- Author a component or widget page, or an API or Related section, in the website repo.
-- Put Related in Storybook.
-- Use library elements in Storybook's docs chrome.
-- Share a rendering component or HTML between the two systems.
-- Reword, reorder or trim existing A text, or invent previews or samples during a merge.
-- Restate API rows in prose, or name third-party reference libraries, specifications, `plans/`
-  records, Storybook or design rationale in a page (see writing-style.md).
-- Leave a captured B item without a ledger row, or a forced edit unlisted.
+- Add a use case, a preview or a paragraph just because a property or feature was added.
+- Reword, reorder or trim existing text outside the forced-edit list.
+- Restate a Properties or API row in prose, or repeat attributes and properties in the API
+  Reference.
+- Print a flattened, truncated or multi-line type definition inside the table (structured types
+  open in a modal; only one-line ones sit in the cell), or give a callback or object a
+  "Set object" control.
+- Author a page, a Properties table or an API section in the website repo, or put Related in
+  Storybook.
+- Use library elements in Storybook's docs chrome, or share a rendering between the two systems.
+- Name third-party reference libraries, specifications, `plans/` records, Storybook or design
+  rationale in a page.

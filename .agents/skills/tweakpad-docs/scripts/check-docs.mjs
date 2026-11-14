@@ -35,7 +35,28 @@ export const DISPOSITIONS = new Set([
   'dropped-api',
   'dropped-storybook',
 ]);
-const FORCED_KINDS = new Set(['preview', 'prose', 'heading', 'frontmatter']);
+const FORCED_KINDS = new Set(['preview', 'prose', 'heading', 'frontmatter', 'removed']);
+
+/**
+ * The frozen page without the sections a `removed` forced edit names: each named heading and
+ * everything under it, up to the next heading of the same or a higher level.
+ */
+export function withoutSections(source, headings) {
+  if (!headings.size) return source;
+  const lines = source.split('\n');
+  const kept = [];
+  let cut = 0;
+  for (const line of lines) {
+    const heading = /^(#{1,6})\s+(.*?)\s*$/.exec(line);
+    if (heading) {
+      const depth = heading[1].length;
+      if (cut && depth <= cut) cut = 0;
+      if (!cut && headings.has(heading[2])) cut = depth;
+    }
+    if (!cut) kept.push(line);
+  }
+  return kept.join('\n');
+}
 
 /** The mechanical edits every moved A page gets: no Astro imports, no rendering-hint fields. */
 export function normalizeWebsitePage(source) {
@@ -162,7 +183,7 @@ export function checkPage(id, options = {}) {
   for (const edit of forced)
     if (!FORCED_KINDS.has(edit.kind))
       problems.push(
-        `${id}: ledger forced edit kind "${edit.kind}" is not preview, prose, heading or frontmatter`,
+        `${id}: ledger forced edit kind "${edit.kind}" is not preview, prose, heading, frontmatter or removed`,
       );
   // A preview's A text is its title, or `old → new` when a renamed element renames the preview.
   const forcedPreview = new Map(
@@ -178,11 +199,24 @@ export function checkPage(id, options = {}) {
   );
   const forcedHeading = new Set(forced.filter((e) => e.kind === 'heading').map((e) => e.text));
   const forcedProse = forced.filter((e) => e.kind === 'prose').map((e) => e.text);
+  // A removed section (named by its heading) or a removed preview (named by its title).
+  const removed = new Set(forced.filter((e) => e.kind === 'removed').map((e) => e.text));
 
   // A parity.
   const websitePath = join(base, 'plans/docs/sources/website', `${id}.mdx`);
   if (existsSync(websitePath)) {
-    const websiteSource = normalizeWebsitePage(readFileSync(websitePath, 'utf8'));
+    const frozen = normalizeWebsitePage(readFileSync(websitePath, 'utf8'));
+    const websiteSource = withoutSections(frozen, removed);
+    for (const text of removed)
+      if (
+        !frozen
+          .split('\n')
+          .some((line) => /^#{1,6}\s/.test(line) && line.replace(/^#+\s+/, '').trim() === text) &&
+        !frozen.includes(`title="${text}"`)
+      )
+        problems.push(
+          `${id}: removed forced edit "${text}" names no heading or preview of the website page`,
+        );
     let website;
     try {
       website = parseDoc(websiteSource, id);
@@ -204,6 +238,7 @@ export function checkPage(id, options = {}) {
       });
       let cursor = 0;
       for (const preview of website.previews) {
+        if (removed.has(preview.title)) continue;
         const forcedEdit = forcedPreview.has(preview.title);
         const at = page.previews.findIndex(
           (candidate, index) =>

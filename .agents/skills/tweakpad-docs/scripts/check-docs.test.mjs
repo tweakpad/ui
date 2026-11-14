@@ -130,6 +130,23 @@ test('a renamed element renames its tag, title and previews through forced edits
   assert.deepEqual(fixture(renamed, { ledger }), []);
 });
 
+test('a removed A section passes only when a removed forced edit names it', () => {
+  const start = MERGED.indexOf('### Variants');
+  const end = MERGED.indexOf('### Counts in buttons');
+  const page = MERGED.slice(0, start) + MERGED.slice(end);
+  const problems = fixture(page);
+  assert.ok(
+    problems.some((problem) => problem.includes('Variants')),
+    problems.join('\n'),
+  );
+  const ledger = `${LEDGER}| removed | Variants | only introduces variant, which its Properties row documents |\n`;
+  assert.deepEqual(fixture(page, { ledger }), []);
+  const stray = `${LEDGER}| removed | Sizes | none |\n`;
+  assert.ok(
+    fixture(MERGED, { ledger: stray }).some((problem) => problem.includes('names no heading')),
+  );
+});
+
 test('a B section placed before an A section fails', () => {
   const page = normalizeWebsitePage(WEBSITE).replace(
     '### Variants',

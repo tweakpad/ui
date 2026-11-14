@@ -63,6 +63,12 @@ Always work from these files, not from memory of the old pages.
      (`frontmatter` rows naming the field), every preview that uses it (a preview named after the
      element lists `old title → new title`) and every paragraph that names it.
 
+   - a preview that does not work (it renders nothing or throws) is repaired with the least change;
+   - an API removed from the element is removed from text and previews;
+   - `removed` (kind): a section or preview that duplicates the hero or an earlier section, or
+     exists only to introduce one non-prominent property the Properties table documents, is
+     removed. The reason names which, and the property's row.
+
    Anything else is not a forced edit. If a check fails on A content for another reason, stop and
    report it. Do not edit A to make the check pass.
 
@@ -108,8 +114,10 @@ Always work from these files, not from memory of the old pages.
 
 - **Item** is the B item id exactly as captured. Every captured item has one row.
 - **Kind** is `preview` (A text = the preview title, or `old → new` when a rename retitles it),
-  `prose` (A text = the paragraph's first words), `heading` (A text = the heading) or
-  `frontmatter` (A text = the field: `title`, `description` or `tag`).
+  `prose` (A text = the paragraph's first words), `heading` (A text = the heading),
+  `frontmatter` (A text = the field: `title`, `description` or `tag`) or `removed` (A text = the
+  heading of a removed section, with every preview and paragraph under it, or the title of a
+  removed preview).
 - When a page has no forced edits, keep the section with the header row only.
 
 ## What the checker verifies

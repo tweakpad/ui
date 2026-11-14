@@ -132,6 +132,34 @@ describe('API table rules', () => {
     expect(api.properties[0]!.description).toContain('`defaultItems`');
   });
 
+  it('lists one Properties row per property, attribute-backed first, with its control', () => {
+    expect(
+      api.members.map((row) => [row.name, row.attribute ?? null, row.type, row.control]),
+    ).toEqual([
+      ['value', 'value', 'string', 'text'],
+      ['mode', 'mode', 'Mode', 'select'],
+      ['size', 'size', 'Size', null],
+      ['items', null, 'readonly Item[]', null],
+    ]);
+  });
+
+  it('shows a lone callback without the parentheses that grouped it with undefined', () => {
+    const callback = structuredClone(control) as unknown as {
+      modules: { declarations: { members: unknown[] }[] }[];
+    };
+    callback.modules[0]!.declarations[0]!.members.push({
+      kind: 'field',
+      name: 'renderItem',
+      type: { text: '((item: Item, index: number) => unknown) | undefined' },
+      description: 'Renders a row.',
+    });
+    const row = elementApi(callback as unknown as Manifest, 'tp-control')!.members.find(
+      (entry) => entry.name === 'renderItem',
+    )!;
+    expect(row.type).toBe('(item: Item, index: number) => unknown');
+    expect(row.control).toBeNull();
+  });
+
   it('types method signatures; a defaulted parameter is optional', () => {
     expect(api.methods[0]!.signature).toBe('setValue(value: string, reason?: ChangeReason)');
     expect(api.methods[0]!.returns).toBe('boolean');
