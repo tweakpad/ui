@@ -6,9 +6,11 @@ import {
   type Manifest,
 } from '../../../src/docs/api.js';
 import {
+  proseParts,
   reachedSymbols,
   signatureTokens,
   symbolCard,
+  typeRefs,
   type ApiTypes,
 } from '../../../src/docs/api-types.js';
 
@@ -175,6 +177,7 @@ describe('API table rules', () => {
     const types: ApiTypes = {
       elements: { 'tp-control': { Size: 'src/control.ts#Size' } },
       symbols: {},
+      names: {},
     };
     expect(unlistedChoices(api, types)).toEqual([]);
   });
@@ -210,7 +213,15 @@ describe('type cards', () => {
         importFrom: '@tweakpad/ui/list',
         refs: { Context: 'a.ts#Context' },
       },
+      'a.ts#Shared': {
+        name: 'Shared',
+        kind: 'type',
+        declaration: 'type Shared = string;',
+        documentation: 'A type every element may name.',
+        refs: {},
+      },
     },
+    names: { Options: 'a.ts#Options', Shared: 'a.ts#Shared' },
   };
 
   it('makes each type name of a signature its own token, carrying its card', () => {
@@ -229,7 +240,27 @@ describe('type cards', () => {
     expect(card.lines).toHaveLength(3);
     expect(card.lines[1]!.find((token) => token.ref)?.ref).toBe('a.ts#Context');
     expect(card.importLine).toBe("import type { Options } from '@tweakpad/ui/list';");
+    // Its own name, though in the name index, does not link to itself.
+    expect(card.lines[0]!.some((token) => token.ref === 'a.ts#Options')).toBe(false);
     expect(symbolCard(types, 'a.ts#Missing')).toBeUndefined();
+  });
+
+  it('links any library type by name, whichever element shows it', () => {
+    const tokens = signatureTokens(types, 'tp-other', 'Shared | Options');
+    expect(tokens.filter((token) => token.ref).map((token) => token.ref)).toEqual([
+      'a.ts#Shared',
+      'a.ts#Options',
+    ]);
+  });
+
+  it('links the code spans of a description that name a type', () => {
+    expect(proseParts('Set `Shared` or `none`.', typeRefs(types, { tag: 'tp-list' }))).toEqual([
+      { text: 'Set ' },
+      { text: 'Shared', code: true, ref: 'a.ts#Shared' },
+      { text: ' or ' },
+      { text: 'none', code: true },
+      { text: '.' },
+    ]);
   });
 
   it('collects the cards a page reaches, through the cards themselves', () => {

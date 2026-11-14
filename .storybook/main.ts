@@ -1,3 +1,4 @@
+import { unwatchFile, watchFile } from 'node:fs';
 import { resolve } from 'node:path';
 import type { StorybookConfig } from '@storybook/web-components-vite';
 import type { Plugin } from 'vite';
@@ -18,13 +19,19 @@ const manifestReload = (): Plugin => ({
     const files = ['custom-elements.json', 'api-types.json'].map((name) =>
       resolve(import.meta.dirname, '../dist', name),
     );
-    server.watcher.add(files);
-    server.watcher.on('change', (path) => {
-      const file = resolve(path);
-      if (!files.includes(file)) return;
+    // Polled, not Vite's watcher: that one never reports `dist/`, and `npm run build` deletes and
+    // recreates it.
+    const reload = (file: string) => {
       for (const module of server.moduleGraph.getModulesByFile(file) ?? [])
         server.moduleGraph.invalidateModule(module);
       server.ws.send({ type: 'full-reload' });
+    };
+    for (const file of files)
+      watchFile(file, { interval: 500 }, (now, before) => {
+        if (now.mtimeMs !== before.mtimeMs) reload(file);
+      });
+    server.httpServer?.once('close', () => {
+      for (const file of files) unwatchFile(file);
     });
   },
 });

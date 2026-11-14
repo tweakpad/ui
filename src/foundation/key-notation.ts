@@ -4,6 +4,9 @@ export type KbdPlatform = 'auto' | 'mac' | 'windows' | 'linux';
  * What a Kbd group shows between its keys: a plus for a chord, "then" for a sequence, or nothing.
  */
 export type KbdSeparator = 'plus' | 'then' | 'none';
+/**
+ * Replacement texts for key names, each a string or a visible text with its own accessible label.
+ */
 export type KbdLabels = Record<string, string | { text: string; label?: string }>;
 /** The platform key labels follow once `auto` is resolved from the browser. */
 export type ResolvedKbdPlatform = Exclude<KbdPlatform, 'auto'>;

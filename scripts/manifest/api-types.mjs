@@ -19,17 +19,16 @@ import ts from 'typescript';
 
 /** Package entries whose exports a developer imports types from, by preference. */
 const ENTRY_ORDER = (specifier) => (specifier === '.' ? 0 : specifier.split('/').length);
-/** Bases whose public members count as the element's own (as `elementApi` lists them). */
-const OWN_API_BASES = new Set(['TextRevealElement', 'SurfaceBorderElement']);
-const FORM_BASE = 'TpFormElement';
-/** The members `elementApi` documents: own, public, instance. */
-const documented = (member) =>
-  !member.static &&
-  (member.privacy ?? 'public') === 'public' &&
-  !/^[_#]/u.test(member.name) &&
-  (!member.inheritedFrom ||
-    OWN_API_BASES.has(member.inheritedFrom.name) ||
-    (member.inheritedFrom.name === FORM_BASE && member.name === 'value'));
+/**
+ * The members a page can show: every public instance member, inherited ones included, since a
+ * table or a story may print any of them. Which rows a page shows is the renderers' choice; every
+ * type those rows can name has its card.
+ */
+const shown = (member) =>
+  !member.static && (member.privacy ?? 'public') === 'public' && !/^[_#]/u.test(member.name);
+
+/** The type names a text writes as a code span (`DialogInitialFocus`), which the docs link too. */
+const codeSpans = (text) => [...(text ?? '').matchAll(/`([A-Z]\w*)`/gu)].map((match) => match[1]);
 
 /** Entries that only re-export framework bindings, registration or tooling. */
 const SKIPPED_ENTRY =
@@ -45,7 +44,11 @@ const TYPE_DECLARATION = (node) =>
   ts.isClassDeclaration(node) ||
   ts.isEnumDeclaration(node);
 
-/** Builds the type data of a project: `{ elements, symbols }` plus the problems it found. */
+/**
+ * Builds the type data of a project plus the problems it found: `elements` (the type names each
+ * element's rows mention, by card id), `symbols` (the cards) and `names` (every card by its name,
+ * when the name is unique), so a renderer links any code that names a type.
+ */
 export function buildApiTypes({ root, manifest, packageJson }) {
   const configPath = join(root, 'tsconfig.build.json');
   const config = ts.getParsedCommandLineOfConfigFile(
@@ -135,11 +138,19 @@ export function buildApiTypes({ root, manifest, packageJson }) {
     }
     return id;
   };
-  /** Project type names in a type text, resolved in the scope of `node`. */
-  const namesIn = (text, node, via) => {
+  /**
+   * Project type names, resolved in the scope of `node`: every capitalized name of a type text,
+   * or the given names (a description's code spans).
+   */
+  const namesIn = (
+    text,
+    node,
+    via,
+    names = [...text.matchAll(/\b[A-Z]\w*\b/gu)].map(([n]) => n),
+  ) => {
     const refs = {};
     const scope = scopeOf(node);
-    for (const [name] of text.matchAll(/\b[A-Z]\w*\b/gu)) {
+    for (const name of names) {
       if (name in refs) continue;
       // The manifest may name a type the file never imports (an indexed type it resolved).
       const unique = exportedByName.get(name);
@@ -164,21 +175,35 @@ export function buildApiTypes({ root, manifest, packageJson }) {
       const classType = checker.getTypeAtLocation(classNode);
       const refs = {};
       const add = (text, node, label) => Object.assign(refs, namesIn(text ?? '', node, label));
+      const prose = (text, node, label) =>
+        Object.assign(refs, namesIn('', node, label, codeSpans(text)));
       for (const member of declaration.members ?? []) {
-        if (!documented(member)) continue;
+        if (!shown(member)) continue;
         const property = classType.getProperty(member.name);
         const at = property?.valueDeclaration ?? property?.declarations?.[0] ?? classNode;
         const label = `${declaration.tagName}.${member.name}`;
         add(member.type?.text, at, label);
         add(member.return?.type?.text, at, label);
         for (const parameter of member.parameters ?? []) add(parameter.type?.text, at, label);
+        prose(member.description, at, label);
       }
-      for (const attribute of declaration.attributes ?? [])
-        if (!attribute.inheritedFrom && !/^_/u.test(attribute.fieldName ?? attribute.name))
-          add(attribute.type?.text, classNode, `${declaration.tagName}[${attribute.name}]`);
-      for (const event of declaration.events ?? [])
-        if (!event.inheritedFrom)
-          add(event.type?.text, classNode, `${declaration.tagName} ${event.name}`);
+      for (const attribute of declaration.attributes ?? []) {
+        if (/^_/u.test(attribute.fieldName ?? attribute.name)) continue;
+        const label = `${declaration.tagName}[${attribute.name}]`;
+        add(attribute.type?.text, classNode, label);
+        prose(attribute.description, classNode, label);
+      }
+      for (const event of declaration.events ?? []) {
+        const label = `${declaration.tagName} ${event.name}`;
+        add(event.type?.text, classNode, label);
+        prose(event.description, classNode, label);
+      }
+      for (const entry of [
+        ...(declaration.slots ?? []),
+        ...(declaration.cssParts ?? []),
+        ...(declaration.cssProperties ?? []),
+      ])
+        prose(entry.description, classNode, `${declaration.tagName} ${entry.name || 'slot'}`);
       elements[declaration.tagName] = refs;
     }
 
@@ -223,8 +248,14 @@ export function buildApiTypes({ root, manifest, packageJson }) {
         .trim();
       visit(declaration);
     }
-    delete refs[symbol.name];
     const documentation = ts.displayPartsToString(symbol.getDocumentationComment(checker)).trim();
+    // The types its doc comment writes as code spans open their cards too.
+    Object.assign(
+      refs,
+      namesIn('', declaration, `${symbol.name} (from ${via})`, codeSpans(documentation)),
+      refs,
+    );
+    delete refs[symbol.name];
     const exported = importFrom.get(id);
     symbols[id] = {
       name: symbol.name,
@@ -251,7 +282,12 @@ export function buildApiTypes({ root, manifest, packageJson }) {
     if (!documentation)
       problems.add(`${symbol.name} (${id.split('#')[0]}) has no doc comment; reached from ${via}`);
   }
-  return { types: { elements, symbols }, problems: [...problems].sort() };
+  // Every card by its name, when no other card shares it: renderers link any code naming it.
+  const byName = new Map();
+  for (const [id, symbol] of Object.entries(symbols))
+    byName.set(symbol.name, byName.has(symbol.name) ? null : id);
+  const names = Object.fromEntries([...byName].filter(([, id]) => id).sort());
+  return { types: { elements, symbols, names }, problems: [...problems].sort() };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

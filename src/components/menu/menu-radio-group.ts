@@ -5,6 +5,7 @@ import type { TpValueChangeEvent } from '../../foundation/events.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { MenuItemOwner } from './menu-item.js';
 
+/** A radio item a Menu Radio Group keeps in sync with its value. */
 export interface MenuRadioMember extends HTMLElement {
   value: unknown;
   requestUpdate(): void;

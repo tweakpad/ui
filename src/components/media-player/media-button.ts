@@ -18,7 +18,9 @@ import { TpIcon } from '../icon/icon.js';
 import { shortcutAria } from '../kbd/shortcut-hint.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
+/** The look of a media button, the same variants as a Button. */
 export type MediaButtonVariant = TpButton['variant'];
+/** The size of a media button, the same scale as a Button. */
 export type MediaButtonSize = TpButton['size'];
 
 /** Sends a request with a runtime action/value pair through `TpMediaElement.request`. */

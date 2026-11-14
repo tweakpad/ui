@@ -367,7 +367,8 @@ export class TpMediaSeekIndicator extends TpMediaIndicatorElement<MediaSeekIndic
   }
 }
 
-interface MediaVolumeIndicatorPayload extends MediaVolumeIndicatorDetails {
+/** The volume indicator's state, including whether the volume sits at either end of its range. */
+export interface MediaVolumeIndicatorPayload extends MediaVolumeIndicatorDetails {
   readonly min: boolean;
   readonly max: boolean;
 }

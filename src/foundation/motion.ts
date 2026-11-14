@@ -9,6 +9,10 @@ export type MotionPhase = 'enter' | 'exit' | 'change' | 'start' | 'stop';
 
 export type MotionCompletion = 'blocking' | 'non-blocking';
 
+/**
+ * Whether an element animates: as its ancestors decide (`inherit`), always (`normal`) or with
+ * reduced motion (`reduce`).
+ */
 export type MotionPolicy = 'inherit' | 'normal' | 'reduce';
 
 /**

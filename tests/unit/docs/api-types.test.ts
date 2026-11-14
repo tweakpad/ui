@@ -48,7 +48,14 @@ function project(files: Record<string, string>, type: string) {
             kind: 'class',
             name: 'TpList',
             tagName: 'tp-list',
-            members: [{ kind: 'field', name: 'getItemOptions', type: { text: type } }],
+            members: [
+              {
+                kind: 'field',
+                name: 'getItemOptions',
+                type: { text: type },
+                description: 'Per-item settings; the context is a `Position`.',
+              },
+            ],
           },
         ],
       },
@@ -101,7 +108,10 @@ describe('api types from the compiler', () => {
     expect(types.elements['tp-list']).toEqual({
       ItemContext: 'src/options.ts#ItemContext',
       ItemOptions: 'src/options.ts#ItemOptions',
+      // A code span of the description names a type too.
+      Position: 'src/options.ts#Position',
     });
+    expect(types.names['ItemOptions']).toBe('src/options.ts#ItemOptions');
     const card = types.symbols['src/options.ts#ItemOptions']!;
     expect(card.kind).toBe('interface');
     expect(card.declaration).toBe(

@@ -36,7 +36,15 @@ export {
   TpMediaLiveButton,
   TpMediaRemotePlaybackButton,
 } from './buttons.js';
-export type { MediaButtonView, MediaButtonIcon, MediaSeekDirection } from './button-state.js';
+export type {
+  MediaButtonView,
+  MediaButtonIcon,
+  MediaButtonRequest,
+  MediaMarkers,
+  MediaMarkerValue,
+  MediaSeekDirection,
+} from './button-state.js';
+export type { MediaIconName } from '../../icons/media.js';
 export { TpMediaTime } from './time.js';
 export type { MediaTimeType, MediaTimeShown, MediaTimeView } from './time-state.js';
 export { TpMediaBufferingIndicator, TpMediaErrorDialog } from './feedback.js';
@@ -50,7 +58,11 @@ export type {
   MediaIndicatorStatus,
   MediaIndicatorDirection,
   MediaInputAction,
+  MediaSeekIndicatorState,
+  MediaStatusDetails,
+  MediaVolumeIndicatorDetails,
 } from './indicator-state.js';
+export type { MediaVolumeIndicatorPayload } from './indicators.js';
 export type { MediaSliderConfig } from './slider-base.js';
 export { TpMediaTimeSlider } from './time-slider.js';
 export type { MediaTimeBounds, MediaPreviewDetail, MediaPreviewSource } from './time-slider.js';

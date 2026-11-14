@@ -1,5 +1,5 @@
 import type { ApiMember } from '../src/docs/api.js';
-import { signatureTokens, type ApiToken } from '../src/docs/api-types.js';
+import { proseParts, signatureTokens, typeRefs, type ApiToken } from '../src/docs/api-types.js';
 import { types } from './types.js';
 
 const escape = (text: string) =>
@@ -32,6 +32,27 @@ export function tokensHtml(tokens: readonly ApiToken[]): string {
     .join('');
 }
 
+/**
+ * A description (Markdown) whose code spans that name a library type become buttons that open
+ * the type's card, styled as code. `refs` defaults to what `tag` resolves.
+ */
+export function proseHtml(text: string, refs: Readonly<Record<string, string>>): string {
+  return proseParts(text, refs)
+    .map((part) =>
+      part.ref
+        ? `<button type="button" class="tp-docs-type-ref tp-docs-type-code" data-tp-ref="${part.ref}">${escape(part.text)}</button>`
+        : part.code
+          ? `\`${part.text}\``
+          : part.text,
+    )
+    .join('');
+}
+
+/** A description of a row of `tag`, its type-naming code spans linked. */
+export function rowProseHtml(tag: string, text: string): string {
+  return proseHtml(text, typeRefs(types, { tag }));
+}
+
 /** A signature of `tag` as one line of clickable tokens, for an args table description. */
 export function signatureHtml(tag: string, code: string): string {
   return code
@@ -47,7 +68,7 @@ export function signatureHtml(tag: string, code: string): string {
 export function memberDescription(row: ApiMember, tag: string): string {
   return [
     row.attribute ? `Attribute \`${row.attribute}\`` : '',
-    row.description,
+    rowProseHtml(tag, row.description),
     row.readonly ? 'Read-only.' : '',
     signatureHtml(tag, row.type),
   ]

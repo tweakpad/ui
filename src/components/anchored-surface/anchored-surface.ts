@@ -61,6 +61,10 @@ import type { ChangeReason, PresenceState } from '../../foundation/types.js';
 import { HoverSurfaceController } from '../../foundation/hover-surface.js';
 import { DelayGroup } from '../../foundation/delay-group.js';
 
+/**
+ * How a registered trigger opens its surface: on hover, with which delays, and whether a click
+ * closes it.
+ */
 export interface AnchoredTriggerOptions extends SurfaceTriggerOptions {
   openOnHover?: boolean;
   openDelay?: number;
@@ -68,6 +72,10 @@ export interface AnchoredTriggerOptions extends SurfaceTriggerOptions {
   closeOnClick?: boolean;
   disabled?: boolean;
 }
+/**
+ * An owner that decides open and close requests for a surface, such as a menu bar keeping one menu
+ * open at a time.
+ */
 export interface SurfaceOpenCoordinator {
   readonly open: boolean;
   request(

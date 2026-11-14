@@ -90,10 +90,13 @@ as its source.
       that gives it (`import type { X } from '@tweakpad/ui/drag-drop'`). Type names in the card
       open their own cards, and the card keeps a back step. Platform and third-party types end the
       chain as plain names.
-    - **Generated, never authored.** Signatures and cards are read from the TypeScript compiler
-      when `npm run cem` runs (`dist/api-types.json`). It fails when a public signature names a
-      project type that does not resolve, is not exported from a package entry, or has no doc
-      comment: fix the source (export it, or add one JSDoc line), never the docs.
+    - **Generated, never authored; linking is automatic.** Signatures and cards are read from the
+      TypeScript compiler when `npm run cem` runs (`dist/api-types.json`), for every row a page can
+      show, inherited ones included. Any code the docs render links a library type it names: a
+      signature, a declaration in a card, and a code span (`` `DialogInitialFocus` ``) in a
+      description or a doc comment. Nothing is written a special way for it. The build fails when
+      a reached type is not exported from a package entry, has no doc comment, or cites the
+      specification: fix the source (export it, or add one JSDoc line), never the docs.
     - Storybook draws the card with its own components (no `tp-*` in the docs chrome); the website
       with the library Popover and Code block styling. Methods' and events' signatures in the API
       Reference use the same tokens and cards.

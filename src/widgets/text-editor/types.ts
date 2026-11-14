@@ -10,7 +10,7 @@ export type TextEditorImageUpload = (
   options: { readonly signal: AbortSignal; onProgress(loaded: number, total?: number): void },
 ) => Promise<string>;
 
-/** Options of `focus()` (`uwg-te-req-prop-2`): `position` `restore` (default), `start` or `end`. */
+/** Options of `focus()`: `position` `restore` (default), `start` or `end`. */
 export interface TextEditorFocusOptions extends FocusOptions {
   readonly position?: TextEditorFocusPosition | undefined;
 }

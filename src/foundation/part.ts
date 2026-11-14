@@ -38,6 +38,10 @@ export interface ComponentPartContract<S extends PartState = PartState> {
   elementReference?: ElementReference;
   content?: unknown | ((state: S) => unknown);
 }
+/**
+ * How `renderPart` renders a named part: its tag, properties, content and the state the component
+ * protects.
+ */
 export interface PartRenderOptions {
   tag?: string;
   enabled?: boolean;

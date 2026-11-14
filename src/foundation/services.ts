@@ -164,7 +164,12 @@ export function deferRelease(
   return () => scheduler.dispose();
 }
 
+/** How serious a reported diagnostic is. */
 export type DiagnosticSeverity = 'info' | 'warning' | 'error';
+/**
+ * A problem an element reports through `tp-diagnostic`: a stable code, a message, its severity and
+ * optional context.
+ */
 export interface Diagnostic {
   code: string;
   message: string;

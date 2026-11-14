@@ -82,6 +82,10 @@ export type ChangeReason =
    */
   | 'layout';
 
+/**
+ * Where a surface is in its mount cycle: absent, entering, open, leaving, or kept mounted while
+ * closed.
+ */
 export type PresenceState = 'absent' | 'starting' | 'open' | 'ending' | 'retained';
 
 export interface ValueChangeDetail<T> {

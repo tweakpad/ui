@@ -11,6 +11,7 @@ export type Side = 'top' | 'right' | 'bottom' | 'left';
 export type LogicalSide = Side | 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
 /** Where a positioned surface lines up along its anchor's side. */
 export type Alignment = 'start' | 'center' | 'end';
+/** A side of the anchor, optionally with an alignment along it (`bottom-start`). */
 export type Placement = Side | `${Side}-${Alignment}`;
 /**
  * CSS positioning a surface uses: `absolute` within its containing block or `fixed` to the
@@ -30,6 +31,10 @@ export interface Rect {
   left: number;
 }
 
+/**
+ * How far a popup overflows its boundary on each side, in pixels; negative values mean room is
+ * left.
+ */
 export interface SideOverflow {
   top: number;
   right: number;
@@ -37,6 +42,7 @@ export interface SideOverflow {
   left: number;
 }
 
+/** What each positioning step did: the offset, the shift and the placements tried when flipping. */
 export interface PositioningStageData {
   offset: { x: number; y: number; placement: Placement };
   shift: { x: number; y: number; mainAxis: boolean; crossAxis: boolean };
@@ -54,6 +60,10 @@ export interface PositioningStageData {
   };
 }
 
+/**
+ * Where a positioned popup ended up: its coordinates, final placement, available space and
+ * transform origin.
+ */
 export interface PositioningResult {
   x: number;
   y: number;

@@ -179,6 +179,16 @@ body:has(.sbdocs-wrapper) {
   text-decoration-style: solid;
 }
 
+/* A code span of a description that names a type: inline code that opens the type's card. */
+.sbdocs .tp-docs-type-ref.tp-docs-type-code {
+  padding: 0.0625rem 0.3125rem;
+  border: 1px solid var(--tp-border);
+  border-radius: 3px;
+  background: var(--tp-muted);
+  color: var(--tp-syntax-type);
+  font: 0.8125rem / 1.4 var(--tp-font-mono);
+}
+
 .sbdocs .tp-docs-type-ref:focus-visible {
   border-radius: 2px;
   outline: 2px solid var(--tp-ring);

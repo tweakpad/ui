@@ -149,4 +149,5 @@ export const mediaIcons = {
   check: checkIcon,
 } as const satisfies Record<string, IconDefinition>;
 
+/** The name of a built-in media icon (play, pause, volume levels, captions, fullscreen…). */
 export type MediaIconName = keyof typeof mediaIcons;

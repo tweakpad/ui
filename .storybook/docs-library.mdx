@@ -12,8 +12,8 @@ import { MDXProvider } from '@storybook/addon-docs/mdx-react-shim';
 import { DocsTable } from './docs-table.js';
 import { manifest } from './manifest.js';
 import { elementApi } from '../src/docs/api.js';
-import { symbolCard } from '../src/docs/api-types.js';
-import { memberDescription, signatureHtml } from './api-rows.js';
+import { symbolCard, typeRefs } from '../src/docs/api-types.js';
+import { memberDescription, proseHtml, rowProseHtml, signatureHtml } from './api-rows.js';
 import { types } from './types.js';
 import { mountPreview, previewSource } from '../src/docs/preview-runtime.js';
 
@@ -207,7 +207,10 @@ export function ApiRows({ label, id, level, rows, tag }) {
       row.name,
       {
         name: row.name,
-        description: [row.description, row.signature ? signatureHtml(tag, row.signature) : '']
+        description: [
+          rowProseHtml(tag, row.description),
+          row.signature ? signatureHtml(tag, row.signature) : '',
+        ]
           .filter(Boolean)
           .join('\n\n'),
         table: {
@@ -285,8 +288,9 @@ export function ElementApi({ tag, level, properties = false }) {
   );
 }
 
-export function CardTokens({ lines, onOpen }) {
-  // Highlighted lines of a declaration; a project type name is a button that opens its card.
+export function CardTokens({ lines }) {
+  // Highlighted lines of a declaration; a library type name is a button that opens its card (the
+  // page's TypeCard handles the click).
   return lines.map((line, index) => (
     <Fragment key={index}>
       {index ? '\n' : null}
@@ -298,7 +302,7 @@ export function CardTokens({ lines, onOpen }) {
             type="button"
             className="tp-docs-type-ref"
             style={style}
-            onClick={() => onOpen(token.ref)}
+            data-tp-ref={token.ref}
           >
             {token.text}
           </button>
@@ -322,9 +326,13 @@ export function TypeCard() {
   React.useEffect(() => {
     const open = (event) => {
       const button = event.target instanceof Element ? event.target.closest('[data-tp-ref]') : null;
-      if (!button || popover.current?.contains(button)) return;
-      const id = button.getAttribute('data-tp-ref');
-      if (!symbolCard(types, id)) return;
+      const id = button?.getAttribute('data-tp-ref');
+      if (!id || !symbolCard(types, id)) return;
+      // A name inside the card (its declaration or doc comment) opens the next card in place.
+      if (popover.current?.contains(button)) {
+        setStack((entries) => [...entries, { id, anchor: entries[0].anchor }]);
+        return;
+      }
       const rect = button.getBoundingClientRect();
       setStack([{ id, anchor: { left: rect.left, top: rect.bottom, above: rect.top } }]);
     };
@@ -349,7 +357,6 @@ export function TypeCard() {
         : above - gap - height
     }px`;
   }, [card, stack]);
-  const push = (id) => setStack((entries) => [...entries, { id, anchor: entries[0].anchor }]);
   return (
     <div
       ref={popover}
@@ -376,11 +383,13 @@ export function TypeCard() {
             <span className="tp-docs-type-kind">{card.kind}</span>
           </header>
           <pre>
-            <CardTokens lines={card.lines} onOpen={push} />
+            <CardTokens lines={card.lines} />
           </pre>
           {card.documentation ? (
             <div className="tp-docs-type-doc">
-              <Markdown>{card.documentation}</Markdown>
+              <Markdown>
+                {proseHtml(card.documentation, typeRefs(types, { symbol: card.id }))}
+              </Markdown>
             </div>
           ) : null}
           {card.importLine ? (

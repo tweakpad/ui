@@ -19,6 +19,7 @@ import type { MediaState, MediaVolumeLevel } from '../../foundation/media/state.
 
 /** Host marker values: `true` → empty attribute, a string → that value, `false`/`null` → absent. */
 export type MediaMarkerValue = string | boolean | null;
+/** State markers a media button sets on itself, for styling by state. */
 export type MediaMarkers = Readonly<Record<string, MediaMarkerValue>>;
 
 /** The per-state icon: a named slot (with nested fallback slots) over library artwork. */
@@ -31,11 +32,16 @@ export interface MediaButtonIcon {
   readonly name: MediaIconName;
 }
 
+/** The request a media button sends when pressed: an action and, for some actions, its value. */
 export interface MediaButtonRequest {
   readonly action: MediaRequestAction;
   readonly value?: unknown;
 }
 
+/**
+ * What a media button shows for the current media state: its label, icon, state markers and the
+ * request a press sends.
+ */
 export interface MediaButtonView {
   /** State-dependent accessible name (`aria-label`; never `aria-pressed`). */
   readonly label: string;

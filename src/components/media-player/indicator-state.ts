@@ -107,6 +107,7 @@ export function predictVolume(
   }
 }
 
+/** What a volume indicator shows for the current volume. */
 export interface MediaVolumeIndicatorDetails {
   /** The four-level volume vocabulary shared with the mute button. */
   readonly level: MediaVolumeLevel;
@@ -140,6 +141,7 @@ export function volumeIndicatorDetails(
 // ---------------------------------------------------------------------------------------------
 // Status
 
+/** The state change a status indicator announces, such as play, pause or a volume level. */
 export type MediaIndicatorStatus =
   | 'play'
   | 'pause'
@@ -153,6 +155,7 @@ export type MediaIndicatorStatus =
   | 'pip'
   | 'exit-pip';
 
+/** What a status indicator shows: the status, its label and an optional value. */
 export interface MediaStatusDetails {
   readonly status: MediaIndicatorStatus;
   /** Spoken-style label (`statusPaused`, `statusMuted`, …). */
@@ -255,6 +258,7 @@ export function statusIndicatorDetails(
 // ---------------------------------------------------------------------------------------------
 // Seek
 
+/** Which way a seek indicator points. */
 export type MediaIndicatorDirection = 'forward' | 'backward';
 
 export function isSeekIndicatorAction(action: MediaRequestAction): boolean {

@@ -25,6 +25,8 @@ export type { ChoiceModelRecord } from './choice-model.js';
 export type { ChoiceOption } from './choice-types.js';
 export type { OwnedPortalContainer } from './owned-portal.js';
 export type { PointerPoint } from './pointer-position.js';
+export type { Appearance } from './appearance.js';
+export type { Density } from './density.js';
 export * from './motion.js';
 export * from './meter.js';
 export * from './number-field/index.js';

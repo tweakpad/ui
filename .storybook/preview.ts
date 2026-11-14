@@ -8,7 +8,7 @@ import { ThemedDocsContainer } from './docs-container.mdx';
 import { applyAppearance, applyDensity, applyTheme, themePreference } from './docs-theme.js';
 import { manifest } from './manifest.js';
 import { elementApi, elementDeclaration } from '../src/docs/api.js';
-import { memberDescription } from './api-rows.js';
+import { memberDescription, rowProseHtml, signatureHtml } from './api-rows.js';
 
 /** An object without some keys: one table has no categories, and a row without a default shows none. */
 const withoutKeys = <T extends object>(value: T | undefined, keys: readonly string[]): Partial<T> =>
@@ -207,9 +207,10 @@ const preview = definePreview({
           },
         ]);
       }
-      // A story knob for a property every element inherits (`disabled`, `readOnly`) reads its
-      // description and type from the base; other knobs keep the story's own entry. The
-      // manifest's event handlers arrive as hidden entries.
+      // A story knob for a property the element inherits (`disabled`, `initialFocus`) reads its
+      // description and type from the base, rendered like every other row (linked types, no
+      // type chip); other knobs keep the story's own entry. The manifest's event handlers arrive
+      // as hidden entries.
       const declaration = elementDeclaration(manifest, component as string);
       for (const [name, argType] of Object.entries(argTypes)) {
         if (covered.has(name)) continue;
@@ -220,12 +221,19 @@ const preview = definePreview({
           rows.push([
             name,
             {
-              ...argType,
+              ...withoutKeys(argType, ['type']),
               name,
-              description: base.description ?? '',
+              description: [
+                rowProseHtml(component as string, base.description ?? ''),
+                signatureHtml(
+                  component as string,
+                  base.type?.text?.replace(/\s*\|\s*undefined$/u, '') ?? '',
+                ),
+              ]
+                .filter(Boolean)
+                .join('\n\n'),
               table: {
-                ...withoutKeys(argType.table, ['category', 'subcategory', 'defaultValue']),
-                type: { summary: base.type?.text?.replace(/\s*\|\s*undefined$/u, '') ?? 'unknown' },
+                ...withoutKeys(argType.table, ['category', 'subcategory', 'defaultValue', 'type']),
                 ...(base.default ? { defaultValue: { summary: base.default } } : {}),
               },
             },
