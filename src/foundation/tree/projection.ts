@@ -118,6 +118,52 @@ export function resolveMove(
   };
 }
 
+/** Where a dragged row lands relative to the row under the pointer. */
+export type TreeDropZone = 'before' | 'into' | 'after';
+
+/**
+ * The zone of a row under a block coordinate: a row that can take the dragged row as a child
+ * splits into before, into and after over its top quarter, middle half and bottom quarter; any
+ * other row into before and after over its halves.
+ */
+export function dropZone(top: number, height: number, y: number, holds: boolean): TreeDropZone {
+  const at = height > 0 ? (y - top) / height : 0.5;
+  if (!holds) return at < 0.5 ? 'before' : 'after';
+  return at < 0.25 ? 'before' : at >= 0.75 ? 'after' : 'into';
+}
+
+/** The order with `sourceId` moved directly before or after `targetId`. */
+export function placeRow(
+  rows: readonly string[],
+  sourceId: string,
+  targetId: string,
+  side: 'before' | 'after',
+): string[] {
+  const order = rows.filter((id) => id !== sourceId);
+  const index = order.indexOf(targetId);
+  if (index < 0 || sourceId === targetId) return [...rows];
+  order.splice(side === 'before' ? index : index + 1, 0, sourceId);
+  return order;
+}
+
+/** The move that puts an item after the last child of a parent, expanded or not. */
+export function intoMove(
+  model: TreeModel<unknown>,
+  itemId: string,
+  parentId: string,
+): TreeMove | null {
+  const node = model.get(itemId);
+  const parent = model.get(parentId);
+  if (!node || !parent) return null;
+  return {
+    itemId,
+    fromParentId: node.parentId,
+    fromIndex: node.index,
+    toParentId: parentId,
+    toIndex: parent.children.filter((id) => id !== itemId).length,
+  };
+}
+
 /** Whether a move changes the tree and lands somewhere structurally valid. */
 export function validMove(model: TreeModel<unknown>, move: TreeMove): boolean {
   if (move.toParentId === move.itemId) return false;

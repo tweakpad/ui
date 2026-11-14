@@ -18,7 +18,12 @@ import { setPartComposition } from '../../presentation/controller.js';
 import { layersPresentation } from '../../presentation/families/layers.js';
 import { TpTreeView } from '../../components/tree-view/tree-view.js';
 import { TpTreeItem } from '../../components/tree-view/tree-item.js';
-import type { TreeViewRenderContext, TreeViewSize } from '../../components/tree-view/types.js';
+import type {
+  TreeViewDragActivation,
+  TreeViewDropIndicator,
+  TreeViewRenderContext,
+  TreeViewSize,
+} from '../../components/tree-view/types.js';
 import { TpButton } from '../../components/button/button.js';
 import { TpInput } from '../../components/input/input.js';
 import { TpIcon } from '../../components/icon/icon.js';
@@ -95,8 +100,11 @@ export type LayersChangeDetail<D = unknown> = TpValueChangeEvent<readonly Layer<
  * proposal, so the app decides what the order, the states and the selection mean.
  *
  * @slot - `tp-layer` children declaring the layers.
- * @slot header - Controls above the list, such as a filter or an opacity field for the active layer.
- * @slot footer - Controls below the list, such as add, duplicate and remove actions.
+ * @slot header - Controls at the start of the bar above the list, such as an opacity field for the
+ * active layer.
+ * @slot header-end - Controls at the end of the bar above the list, such as a lock toggle.
+ * @slot footer - Controls at the start of the bar below the list, such as an add menu.
+ * @slot footer-end - Controls at the end of the bar below the list, such as a remove button.
  * @slot empty - Shown in the list's place while the stack has no layers.
  * @fires tp-layers-change - Cancelable proposal of the new records; `detail.metadata.change` says
  * what changed (`move`, `rename`, `state`, `add`, `duplicate`, `remove`, `group` or `ungroup`).
@@ -135,6 +143,8 @@ export class TpLayers extends TpElement {
     canRename: { type: Boolean, attribute: 'can-rename', reflect: true },
     canRemove: { type: Boolean, attribute: 'can-remove', reflect: true },
     canDrop: { attribute: false },
+    dragActivation: { type: String, attribute: 'drag-activation', reflect: true },
+    dropIndicator: { type: String, attribute: 'drop-indicator', reflect: true },
     size: { type: String, reflect: true },
     label: { type: String },
     messages: { attribute: false },
@@ -163,6 +173,17 @@ export class TpLayers extends TpElement {
   canRemove = false;
   /** Vetoes a move before the tree offers it; layers can only go into groups either way. */
   canDrop: ((move: LayersMove) => boolean) | null = null;
+  /**
+   * Where a drag starts: anywhere on the row, or only on its handle. Presses on a row's state
+   * controls, its rename field and a group's chevron never start one.
+   */
+  dragActivation: TreeViewDragActivation = 'item';
+  /**
+   * How a drag shows where the layers land: a line between rows marks the place while the rows
+   * stay still, or the rows make space. Holding the pointer over the middle of a group drops into
+   * it, as its last layer.
+   */
+  dropIndicator: TreeViewDropIndicator = 'line';
   /** The row height: `sm` for dense panels. */
   size: TreeViewSize = 'default';
   /** The accessible name of the list. */
@@ -1030,16 +1051,26 @@ export class TpLayers extends TpElement {
       readOnly: this.readOnly,
     };
     const active = this.active;
-    const bar = (name: 'header' | 'footer') =>
-      this.renderPart(`layers-${name}`, state, {
+    // A bar holds a start and an end region; it shows while either has content.
+    const bar = (name: 'header' | 'footer') => {
+      const end = `${name}-end`;
+      const start = this.#filledSlots.has(name);
+      const after = this.#filledSlots.has(end);
+      return this.renderPart(`layers-${name}`, state, {
         tag: 'div',
         properties: {
           part: `layers-${name}`,
           class: `bar ${name}`,
-          'data-empty': !this.#filledSlots.has(name),
+          'data-empty': !start && !after,
         },
-        content: html`<slot name=${name} @slotchange=${this.#onSlotChange}></slot>`,
+        content: html`<div class="region" data-region="start" ?data-empty=${!start}>
+            <slot name=${name} @slotchange=${this.#onSlotChange}></slot>
+          </div>
+          <div class="region" data-region="end" ?data-empty=${!after}>
+            <slot name=${end} @slotchange=${this.#onSlotChange}></slot>
+          </div>`,
       });
+    };
     return this.renderPart('layers', state, {
       tag: 'div',
       properties: {
@@ -1067,6 +1098,9 @@ export class TpLayers extends TpElement {
           .renderItem=${this.#renderRow}
           .reorderable=${this.canReorder && this.#editable}
           .canDrop=${this.#treeCanDrop}
+          .dragActivation=${this.dragActivation === 'handle' ? 'handle' : 'item'}
+          .dropIndicator=${this.dropIndicator === 'displace' ? 'displace' : 'line'}
+          handle-placement="start"
           .messages=${this.messages?.tree ?? {}}
           .disabled=${this.disabled}
           @tp-value-change=${this.#onTreeValue}

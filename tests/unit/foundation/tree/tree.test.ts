@@ -24,6 +24,9 @@ import { TreeLoader } from '../../../../src/foundation/tree/lazy.js';
 import {
   applyMove,
   dragDepth,
+  dropZone,
+  intoMove,
+  placeRow,
   projectDepth,
   resolveMove,
   validMove,
@@ -416,5 +419,37 @@ describe('projection', () => {
     expect(validMove(model, { ...move, toParentId: 'lib', toIndex: 0 })).toBe(false);
     expect(validMove(model, { ...move, itemId: 'src', toParentId: 'app' })).toBe(false);
     expect(validMove(model, { ...move, toParentId: null, toIndex: 2 })).toBe(false);
+  });
+
+  it('splits a row into drop zones: quarters around an into half, or halves', () => {
+    expect(dropZone(100, 40, 105, true)).toBe('before');
+    expect(dropZone(100, 40, 110, true)).toBe('into');
+    expect(dropZone(100, 40, 129, true)).toBe('into');
+    expect(dropZone(100, 40, 130, true)).toBe('after');
+    expect(dropZone(100, 40, 119, false)).toBe('before');
+    expect(dropZone(100, 40, 120, false)).toBe('after');
+  });
+
+  it('places a row before or after another', () => {
+    expect(placeRow(['a', 'b', 'c', 'd'], 'a', 'c', 'after')).toEqual(['b', 'c', 'a', 'd']);
+    expect(placeRow(['a', 'b', 'c', 'd'], 'd', 'b', 'before')).toEqual(['a', 'd', 'b', 'c']);
+    expect(placeRow(['a', 'b'], 'a', 'a', 'after')).toEqual(['a', 'b']);
+    expect(placeRow(['a', 'b'], 'a', 'x', 'after')).toEqual(['a', 'b']);
+  });
+
+  it('moves into a parent as its last child, expanded or collapsed', () => {
+    expect(intoMove(model, 'package.json', 'app')).toEqual({
+      itemId: 'package.json',
+      fromParentId: null,
+      fromIndex: 2,
+      toParentId: 'app',
+      toIndex: 2,
+    });
+    const own = intoMove(model, 'main.ts', 'app')!;
+    expect(own.toIndex).toBe(1);
+    expect(validMove(model, own)).toBe(true);
+    expect(validMove(model, intoMove(model, 'routes.ts', 'app')!)).toBe(false);
+    expect(validMove(model, intoMove(model, 'src', 'app')!)).toBe(false);
+    expect(intoMove(model, 'src', 'missing')).toBeNull();
   });
 });

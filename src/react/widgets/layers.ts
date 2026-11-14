@@ -114,6 +114,8 @@ export type LayersProps = ElementProps<
   | 'defaultValue'
   | 'density'
   | 'disabled'
+  | 'dragActivation'
+  | 'dropIndicator'
   | 'expanded'
   | 'invalid'
   | 'label'

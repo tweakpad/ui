@@ -36,6 +36,10 @@ const definition: ComponentDefinition = {
         'The region holding the children of an item, which animates as it opens and closes.',
     },
     { name: 'tree-view-empty', description: 'The region shown when there are no items.' },
+    {
+      name: 'tree-view-drop-indicator',
+      description: 'The line between rows that marks where a dragged item lands.',
+    },
   ],
 };
 
@@ -47,6 +51,7 @@ export const treeViewPresentation = definePresentation({
       "[part~='viewport']": 'tree-view-viewport',
       "[part~='segment']": 'tree-view-group',
       "[part~='empty']": 'tree-view-empty',
+      "[part~='drop-indicator']": 'tree-view-drop-indicator',
     },
     'tp-tree-item': {
       ':host': 'tree-view-item',

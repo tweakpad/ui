@@ -629,6 +629,8 @@ type Tags = {
     | 'defaultValue'
     | 'density'
     | 'disabled'
+    | 'dragActivation'
+    | 'dropIndicator'
     | 'expanded'
     | 'invalid'
     | 'label'

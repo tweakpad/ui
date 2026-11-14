@@ -6,6 +6,7 @@ export const dragDropListStyles = css`
   }
 
   .list {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-inline-size: 0;
@@ -26,6 +27,28 @@ export const dragDropListStyles = css`
 
   :host([orientation='horizontal']) .item {
     flex: 1 0 auto;
+  }
+
+  /* The stand-in keeps the dragged item's measured size: it never grows or shrinks with the row. */
+  [part~='placeholder'] {
+    flex: none;
+    min-inline-size: 0;
+    list-style: none;
+  }
+
+  /* The landing line is out of the flow, above the items and the lifted one. */
+  [part~='drop-indicator'] {
+    position: absolute;
+    z-index: 2;
+    list-style: none;
+    pointer-events: none;
+    block-size: var(--_tp-drop-line, 2px);
+    translate: 0 -50%;
+  }
+
+  :host([orientation='horizontal']) [part~='drop-indicator'] {
+    inline-size: var(--_tp-drop-line, 2px);
+    translate: -50% 0;
   }
 
   .handle {

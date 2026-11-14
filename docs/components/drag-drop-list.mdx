@@ -8,13 +8,19 @@ tag: tp-drag-drop-list
   width="4"
   title="Drag drop list"
   align="stretch"
-  code={`<tp-drag-drop-list id="drag-drop-list-hero" label="Launch checklist" variant="outline"></tp-drag-drop-list>`}
-  script={`document.querySelector('#drag-drop-list-hero').defaultValue = [
-  { id: 'brief', label: 'Write the launch brief' },
-  { id: 'pricing', label: 'Finalize pricing page' },
-  { id: 'email', label: 'Schedule announcement email' },
-  { id: 'changelog', label: 'Publish changelog' },
-];`}
+  code={`<div id="drag-drop-list-hero"></div>`}
+  script={`const list = document.createElement('tp-drag-drop-list');
+Object.assign(list, {
+  label: 'Launch checklist',
+  variant: 'outline',
+  defaultValue: [
+    { id: 'brief', label: 'Write the launch brief' },
+    { id: 'pricing', label: 'Finalize pricing page' },
+    { id: 'email', label: 'Schedule announcement email' },
+    { id: 'changelog', label: 'Publish changelog' },
+  ],
+});
+document.querySelector('#drag-drop-list-hero').replaceChildren(list);`}
 />
 
 ## Usage
@@ -33,23 +39,24 @@ Every row has a named handle Button. Focus it, press Space or Enter to pick the 
   width="4"
   title="Commit events"
   align="stretch"
-  code={`<tp-stack  gap="3">
-  <tp-drag-drop-list
-    id="drag-drop-list-commit"
-    label="Sprint priorities"
-    variant="outline"
-    size="sm"></tp-drag-drop-list>
+  code={`<tp-stack id="drag-drop-list-commit" gap="3">
   <output
     id="drag-drop-list-commit-output"
     style="color: var(--tp-muted-foreground); font-size: var(--tp-text-sm)">Drag a row to reprioritize.</output
   >
 </tp-stack>`}
-  script={`const list = document.querySelector('#drag-drop-list-commit');
-list.defaultValue = [
-  { id: 'sso', label: 'SAML single sign-on' },
-  { id: 'export', label: 'CSV export for reports' },
-  { id: 'mobile', label: 'Mobile push notifications' },
-];
+  script={`const list = document.createElement('tp-drag-drop-list');
+Object.assign(list, {
+  label: 'Sprint priorities',
+  variant: 'outline',
+  size: 'sm',
+  defaultValue: [
+    { id: 'sso', label: 'SAML single sign-on' },
+    { id: 'export', label: 'CSV export for reports' },
+    { id: 'mobile', label: 'Mobile push notifications' },
+  ],
+});
+document.querySelector('#drag-drop-list-commit').prepend(list);
 list.addEventListener('tp-value-commit', (event) => {
   if (event.target !== list) return;
   document.querySelector('#drag-drop-list-commit-output').textContent =
@@ -65,40 +72,54 @@ list.addEventListener('tp-value-commit', (event) => {
   width="7"
   title="Variants and sizes"
   align="stretch"
-  code={`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--tp-space-6)">
-  <tp-drag-drop-list id="drag-drop-list-ghost" label="Table columns"></tp-drag-drop-list>
-  <tp-drag-drop-list id="drag-drop-list-xs" label="Layer order" variant="subdued" size="xs"></tp-drag-drop-list>
-</div>`}
-  script={`document.querySelector('#drag-drop-list-ghost').defaultValue = [
-  { id: 'customer', label: 'Customer' },
-  { id: 'status', label: 'Status' },
-  { id: 'amount', label: 'Amount' },
-];
-document.querySelector('#drag-drop-list-xs').defaultValue = [
-  { id: 'logo', label: 'Logo' },
-  { id: 'headline', label: 'Headline' },
-  { id: 'photo', label: 'Hero photo' },
-  { id: 'background', label: 'Background' },
-];`}
+  code={`<div id="drag-drop-list-variants" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr));gap:var(--tp-space-6)"></div>`}
+  script={`const make = (options) => Object.assign(document.createElement('tp-drag-drop-list'), options);
+document.querySelector('#drag-drop-list-variants').append(
+  make({
+    label: 'Table columns',
+    defaultValue: [
+      { id: 'customer', label: 'Customer' },
+      { id: 'status', label: 'Status' },
+      { id: 'amount', label: 'Amount' },
+    ],
+  }),
+  make({
+    label: 'Layer order',
+    variant: 'subdued',
+    size: 'xs',
+    defaultValue: [
+      { id: 'logo', label: 'Logo' },
+      { id: 'headline', label: 'Headline' },
+      { id: 'photo', label: 'Hero photo' },
+      { id: 'background', label: 'Background' },
+    ],
+  }),
+);`}
 />
 
-### Activation and swapping
+### Activation and feedback
 
-By default only the handle starts a pointer drag, which keeps text in the row selectable. `activation="item"` lets the whole row start one, after a short delay or movement so clicks still work. `reorder-mode="swap"` exchanges two items instead of shifting the ones between them. The `feedback` property picks the drag feedback; `'clone'`, used here, leaves a copy in the row's layout position while the item moves. Mouse handles activate immediately; touch waits 250 ms with 5 px tolerance. Ordinary item activation uses a 200 ms/10 px delay or distance strictly greater than 5 px. Nested controls retain their own interaction.
+By default only the handle starts a pointer drag, which keeps text in the row selectable. `activation="item"` lets the whole row start one, after a short delay or movement so clicks still work. The `feedback` property picks the drag feedback; `'clone'`, used here, leaves a translucent copy in the row's layout position while the item moves. Mouse handles activate immediately; touch waits 250 ms with 5 px tolerance. Ordinary item activation uses a 200 ms/10 px delay or distance strictly greater than 5 px. Nested controls retain their own interaction.
 
 <Preview
   width="4"
-  title="Whole-row drag with swap"
+  title="Whole-row drag with a copy"
   align="stretch"
-  code={`<tp-drag-drop-list id="drag-drop-list-swap" label="Dashboard widgets" variant="subdued" activation="item" reorder-mode="swap"></tp-drag-drop-list>`}
-  script={`const list = document.querySelector('#drag-drop-list-swap');
-list.feedback = 'clone';
-list.defaultValue = [
-  { id: 'revenue', label: 'Monthly revenue' },
-  { id: 'signups', label: 'New signups' },
-  { id: 'churn', label: 'Churn rate' },
-  { id: 'tickets', label: 'Open support tickets' },
-];`}
+  code={`<div id="drag-drop-list-swap"></div>`}
+  script={`const list = document.createElement('tp-drag-drop-list');
+Object.assign(list, {
+  label: 'Dashboard widgets',
+  variant: 'subdued',
+  activation: 'item',
+  feedback: 'clone',
+  defaultValue: [
+    { id: 'revenue', label: 'Monthly revenue' },
+    { id: 'signups', label: 'New signups' },
+    { id: 'churn', label: 'Churn rate' },
+    { id: 'tickets', label: 'Open support tickets' },
+  ],
+});
+document.querySelector('#drag-drop-list-swap').append(list);`}
 />
 
 ### Rich rows
@@ -138,35 +159,6 @@ list.defaultValue = [
 document.querySelector('#drag-drop-list-rich').prepend(list);`}
 />
 
-### Selection
-
-The list keeps no selection of its own. `isItemSelected` tells it which rows show as selected, from the item and its index, and the context's `selected` flag carries the answer to `renderItem`. Call `requestUpdate()` on the list when your selection changes. A selected row keeps its place in drags and keyboard moves like any other.
-
-<Preview
-  width="5"
-  title="Selected row"
-  align="stretch"
-  code={`<div id="drag-drop-list-selection"></div>`}
-  script={`import { html } from 'lit';
-
-const list = document.createElement('tp-drag-drop-list');
-list.label = 'Layer order';
-list.activation = 'item';
-list.size = 'sm';
-let selected = 'sun';
-list.isItemSelected = (item) => item.id === selected;
-list.renderItem = (item) => html\`<span @click=\${() => {
-  selected = item.id;
-  list.requestUpdate();
-}}>\${item.label}</span>\`;
-list.defaultValue = [
-  { id: 'moon', label: 'Moon' },
-  { id: 'sun', label: 'Sun' },
-  { id: 'clouds', label: 'Clouds' },
-];
-document.querySelector('#drag-drop-list-selection').append(list);`}
-/>
-
 ### Horizontal
 
 `orientation="horizontal"` lays the items out in a row and moves them with the left and right arrow keys, mirrored for right-to-left text.
@@ -175,13 +167,21 @@ document.querySelector('#drag-drop-list-selection').append(list);`}
   width="4"
   title="Horizontal"
   align="stretch"
-  code={`<tp-drag-drop-list id="drag-drop-list-row" label="Board columns" variant="outline" size="sm" orientation="horizontal"></tp-drag-drop-list>`}
-  script={`document.querySelector('#drag-drop-list-row').defaultValue = [
-  { id: 'todo', label: 'To do' },
-  { id: 'doing', label: 'In progress' },
-  { id: 'review', label: 'In review' },
-  { id: 'done', label: 'Done' },
-];`}
+  code={`<div id="drag-drop-list-row"></div>`}
+  script={`const list = document.createElement('tp-drag-drop-list');
+Object.assign(list, {
+  label: 'Board columns',
+  variant: 'outline',
+  size: 'sm',
+  orientation: 'horizontal',
+  defaultValue: [
+    { id: 'todo', label: 'To do' },
+    { id: 'doing', label: 'In progress' },
+    { id: 'review', label: 'In review' },
+    { id: 'done', label: 'Done' },
+  ],
+});
+document.querySelector('#drag-drop-list-row').append(list);`}
 />
 
 ### Disabled and read-only
@@ -192,12 +192,19 @@ document.querySelector('#drag-drop-list-selection').append(list);`}
   width="4"
   title="Read-only"
   align="stretch"
-  code={`<tp-drag-drop-list id="drag-drop-list-locked" label="Approval chain" variant="outline" readonly></tp-drag-drop-list>`}
-  script={`document.querySelector('#drag-drop-list-locked').defaultValue = [
-  { id: 'lead', label: 'Team lead' },
-  { id: 'finance', label: 'Finance' },
-  { id: 'legal', label: 'Legal' },
-];`}
+  code={`<div id="drag-drop-list-locked"></div>`}
+  script={`const list = document.createElement('tp-drag-drop-list');
+Object.assign(list, {
+  label: 'Approval chain',
+  variant: 'outline',
+  readOnly: true,
+  defaultValue: [
+    { id: 'lead', label: 'Team lead' },
+    { id: 'finance', label: 'Finance' },
+    { id: 'legal', label: 'Legal' },
+  ],
+});
+document.querySelector('#drag-drop-list-locked').append(list);`}
 />
 
 ### Connected lists
@@ -407,4 +414,58 @@ Object.assign(list, {
   ],
 });
 document.querySelector('#drag-drop-list-axis').append(list);`}
+/>
+
+### Selection
+
+The list keeps no selection of its own. `isItemSelected` tells it which rows show as selected, from the item and its index, and the context's `selected` flag carries the answer to `renderItem`. Call `requestUpdate()` on the list when your selection changes. A selected row keeps its place in drags and keyboard moves like any other.
+
+<Preview
+  width="5"
+  title="Selected row"
+  align="stretch"
+  code={`<div id="drag-drop-list-selection"></div>`}
+  script={`import { html } from 'lit';
+
+const list = document.createElement('tp-drag-drop-list');
+list.label = 'Layer order';
+list.activation = 'item';
+list.size = 'sm';
+let selected = 'sun';
+list.isItemSelected = (item) => item.id === selected;
+list.renderItem = (item) => html\`<span @click=\${() => {
+  selected = item.id;
+  list.requestUpdate();
+}}>\${item.label}</span>\`;
+list.defaultValue = [
+  { id: 'moon', label: 'Moon' },
+  { id: 'sun', label: 'Sun' },
+  { id: 'clouds', label: 'Clouds' },
+];
+document.querySelector('#drag-drop-list-selection').append(list);`}
+/>
+
+### Landing line
+
+`drop-indicator="line"` keeps the items still while a row is dragged: a line between two items marks where it lands, and the items make room only on the drop. Keyboard moves still show the new order at each step. `--tp-drag-drop-list-drop-indicator-color` and `--tp-drag-drop-list-drop-indicator-size` restyle the line.
+
+<Preview
+  width="4"
+  title="A line marks the place"
+  align="stretch"
+  code={`<div id="drag-drop-list-line"></div>`}
+  script={`const list = document.createElement('tp-drag-drop-list');
+Object.assign(list, {
+  label: 'Recipe steps',
+  variant: 'outline',
+  activation: 'item',
+  dropIndicator: 'line',
+  defaultValue: [
+    { id: 'soak', label: 'Soak the beans overnight' },
+    { id: 'saute', label: 'Sauté the onions' },
+    { id: 'simmer', label: 'Simmer for forty minutes' },
+    { id: 'season', label: 'Season and serve' },
+  ],
+});
+document.querySelector('#drag-drop-list-line').append(list);`}
 />

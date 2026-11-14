@@ -100,6 +100,21 @@
         <tp-tree-view id="big" label="Big" virtualized style="block-size: 20rem"></tp-tree-view>
       </section>
       <section>
+        <h2>Reorder: handle, rows make space</h2>
+        <tp-tree-view id="reorder" label="Reorder" reorderable></tp-tree-view>
+      </section>
+      <section>
+        <h2>Reorder: whole row, line, handle at the start</h2>
+        <tp-tree-view
+          id="reorder-line"
+          label="Reorder line"
+          reorderable
+          drag-activation="item"
+          drop-indicator="line"
+          handle-placement="start"
+        ></tp-tree-view>
+      </section>
+      <section>
         <h2>Disabled / read-only</h2>
         <tp-tree-view id="disabled" label="Disabled" disabled default-expanded='["d"]'
           ><tp-tree-item value="d"
@@ -139,6 +154,19 @@
       big.defaultItems = items;
       big.defaultExpanded = items.map((item) => item.id);
       big.defaultValue = ['50.500'];
+      // Reorder trees: folders take children (`canDrop` below lets the empty one take them too).
+      const files = () => [
+        { id: 'src', label: 'src', children: [{ id: 'main', label: 'main.ts' }, { id: 'util', label: 'util.ts' }] },
+        { id: 'assets', label: 'assets', children: [] },
+        { id: 'readme', label: 'README.md' },
+        { id: 'license', label: 'LICENSE' },
+      ];
+      for (const id of ['reorder', 'reorder-line']) {
+        const tree = document.getElementById(id);
+        tree.defaultItems = files();
+        tree.defaultExpanded = ['src'];
+        tree.canDrop = (move) => move.toParentId === null || ['src', 'assets'].includes(move.toParentId);
+      }
       await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
       const events = [];
       const log = document.querySelector('#log');

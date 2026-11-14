@@ -440,7 +440,13 @@ export const propRows: PropRow[] = [
   {
     entry: 'tp-tree-view',
     binding: 'TreeView',
-    props: { label: 'Regions', selectionMode: 'single' },
+    props: {
+      label: 'Regions',
+      selectionMode: 'single',
+      dragActivation: 'item',
+      dropIndicator: 'line',
+      handlePlacement: 'start',
+    },
     children: [
       child('TreeItem', { value: 'north', label: 'North' }, undefined, [
         child('TreeItem', { value: 'lakes', label: 'Lakes' }),
@@ -506,6 +512,7 @@ export const propRows: PropRow[] = [
       ],
       getItemId: (item: { id: string }) => item.id,
       getItemLabel: (item: { label: string }) => item.label,
+      dropIndicator: 'line',
     },
   },
   {

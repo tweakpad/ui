@@ -33,3 +33,12 @@
 | preview | Horizontal | User-authorized width cleanup: remove incidental framing and use preview stretch; retain capability dimensions. |
 | preview | Read-only | User-authorized width cleanup: remove incidental framing and use preview stretch; retain capability dimensions. |
 | preview | Vertical axis only | User-authorized width cleanup: remove incidental framing and use preview stretch; retain capability dimensions. |
+| preview | Drag drop list | Late-default repair: preview scripts run after the first render, so each list is created and configured in the script before it connects (an assignment to an already rendered list's `defaultValue` is ignored). |
+| preview | Commit events | Late-default repair: preview scripts run after the first render, so each list is created and configured in the script before it connects (an assignment to an already rendered list's `defaultValue` is ignored). |
+| preview | Variants and sizes | Late-default repair: preview scripts run after the first render, so each list is created and configured in the script before it connects (an assignment to an already rendered list's `defaultValue` is ignored). |
+| preview | Whole-row drag with swap | Late-default repair: preview scripts run after the first render, so each list is created and configured in the script before it connects (an assignment to an already rendered list's `defaultValue` is ignored). |
+| preview | Horizontal | Late-default repair: preview scripts run after the first render, so each list is created and configured in the script before it connects (an assignment to an already rendered list's `defaultValue` is ignored). |
+| preview | Read-only | Late-default repair: preview scripts run after the first render, so each list is created and configured in the script before it connects (an assignment to an already rendered list's `defaultValue` is ignored). |
+| heading | Activation and swapping | Swap mode removed: its outline on the target read as dropping inside the item; the section keeps activation and feedback. |
+| prose | By default only the handle starts a pointer drag, which keeps text in the row selectable. | Swap mode removed: its outline on the target read as dropping inside the item; the section keeps activation and feedback. |
+| preview | Whole-row drag with swap → Whole-row drag with a copy | Swap mode removed: its outline on the target read as dropping inside the item; the section keeps activation and feedback. |

@@ -7,7 +7,6 @@ import { LitDragDropRenderer } from '../../foundation/drag-drop/renderer.js';
 import { isSortable } from '../../foundation/drag-drop/sortable.js';
 import {
   arrayMove,
-  arraySwap,
   reportDragDropDiagnostic,
   type UniqueIdentifier,
 } from '../../foundation/drag-drop/sorting.js';
@@ -68,6 +67,15 @@ interface Session {
   initial: Map<AnyList, readonly unknown[]>;
   versions: Map<AnyList, number>;
   preview: Map<AnyList, readonly unknown[]>;
+  /**
+   * Line mode: where a drop would put the item, while `preview` keeps the order on screen; null
+   * while the drop would change nothing.
+   */
+  pending: Map<AnyList, readonly unknown[]> | null;
+  /** Line mode: the list and the boundary (an index into its shown items) the line marks. */
+  anchor: { list: AnyList; slot: number } | null;
+  /** Line mode, released: the landing order is rendering, so the items glide before it commits. */
+  landing?: boolean;
   revision: number;
 }
 
@@ -87,6 +95,11 @@ export class ListController<T> {
   }
   get committed(): readonly T[] {
     return this.state.value;
+  }
+  /** Line mode: the boundary among this list's shown items that a drop would land at. */
+  get anchor(): number | null {
+    const anchor = this.network?.session?.anchor;
+    return anchor?.list === this ? anchor.slot : null;
   }
   get preview(): readonly T[] {
     return (this.network?.session?.preview.get(this) ?? this.committed) as readonly T[];
@@ -248,6 +261,8 @@ export class ListNetwork {
     this.invalidate(list);
     this.session?.initial.delete(list);
     this.session?.preview.delete(list);
+    this.session?.pending?.delete(list);
+    if (this.session?.anchor?.list === list) this.session.anchor = null;
     this.session?.versions.delete(list);
     for (const [group, member] of this.lists) if (member === list) this.lists.delete(group);
     this.#hosts.get(list)?.();
@@ -294,6 +309,8 @@ export class ListNetwork {
         initial: new Map(),
         versions: new Map(),
         preview: new Map(),
+        pending: null,
+        anchor: null,
         revision: 0,
       };
       for (const list of this.lists.values()) {
@@ -304,7 +321,13 @@ export class ListNetwork {
     }
     // Bridge before the default response; the final monitor cancellation is checked in its microtask.
     for (const list of this.lists.values()) list.host.observeDragEvent(name, event);
-    if (name === 'dragover') {
+    // Line mode keeps the items still, so the target only changes between items: each pointer
+    // move re-decides the side of the target the line marks.
+    const lining =
+      name === 'dragmove' &&
+      this.session?.source.host.dropIndicator === 'line' &&
+      event.operation.input === 'pointer';
+    if (name === 'dragover' || lining) {
       const revision = ++this.#previewRevision;
       queueMicrotask(() => {
         try {
@@ -318,6 +341,17 @@ export class ListNetwork {
           this.manager.fail(error);
         }
       });
+    }
+    // Line mode, released: the shown order becomes the landing order now, so the items make room
+    // and the dropped item settles into its new place as in a displacing drag.
+    if (name === 'dragend' && this.session?.anchor) {
+      const session = this.session;
+      if (session.pending && !(event.canceled || event.operation.canceled)) {
+        for (const [list, value] of session.pending) session.preview.set(list, value);
+        session.landing = true;
+      }
+      session.anchor = null;
+      session.revision++;
     }
     if (name === 'settled') {
       this.session = undefined;
@@ -335,8 +369,11 @@ export class ListNetwork {
       !session.source.host.readOnly
     );
   }
-  #location(session: Session): { list: AnyList; index: number } | undefined {
-    for (const [list, items] of session.preview) {
+  #location(
+    session: Session,
+    values: Map<AnyList, readonly unknown[]> = session.preview,
+  ): { list: AnyList; index: number } | undefined {
+    for (const [list, items] of values) {
       const index = list
         .resolve(items)
         .findIndex((record) => record.id === session.itemId && !record.duplicate);
@@ -359,7 +396,14 @@ export class ListNetwork {
       destination.host.readOnly
     )
       return;
-    if (target.id === session.itemId && isSortable(target)) return;
+    // A pointer drag of a line-marked list keeps the items still; keyboard moves show the order.
+    const line =
+      session.source.host.dropIndicator === 'line' &&
+      this.manager.dragOperation.input === 'pointer';
+    if (target.id === session.itemId && isSortable(target)) {
+      if (line) this.#mark(session, null, null);
+      return;
+    }
     const records = destination.resolve(session.preview.get(destination)!);
     let index = target.data.container
       ? records.length
@@ -379,6 +423,18 @@ export class ListNetwork {
         ? position.x >= shape.center.x !== rtl
         : position.y >= shape.center.y
       : false;
+    if (line) {
+      this.#projectLine(
+        session,
+        source,
+        destination,
+        records,
+        index,
+        after,
+        !!target.data.container,
+      );
+      return;
+    }
     if (target.data.container) index = after ? records.length : 0;
     else if (source.list !== destination && after) index++;
     const from = session.preview.get(source.list)!,
@@ -386,10 +442,7 @@ export class ListNetwork {
     let next: readonly unknown[];
     if (source.list === destination) {
       index = Math.min(index, from.length - 1);
-      next =
-        session.source.host.reorderMode === 'swap'
-          ? arraySwap(from, source.index, index)
-          : arrayMove(from, source.index, index);
+      next = arrayMove(from, source.index, index);
       if (next === from) return;
       session.preview.set(source.list, next);
     } else {
@@ -408,15 +461,69 @@ export class ListNetwork {
     session.revision++;
     this.#changed();
   }
-  #complete(snapshot: OperationSnapshot): boolean {
+  /**
+   * Line mode: the shown order stays; the drop target and the pointer's side of it pick the
+   * boundary the item lands at, which the destination list marks with a line.
+   */
+  #projectLine(
+    session: Session,
+    source: { list: AnyList; index: number },
+    destination: AnyList,
+    records: readonly { id: UniqueIdentifier; duplicate: boolean }[],
+    index: number,
+    after: boolean,
+    container: boolean,
+  ): void {
+    const slot = container ? (after ? records.length : 0) : index + (after ? 1 : 0);
+    const from = session.preview.get(source.list)!;
+    if (source.list === destination) {
+      // The boundaries on either side of the item itself change nothing.
+      if (slot === source.index || slot === source.index + 1) {
+        this.#mark(session, null, null);
+        return;
+      }
+      const next = arrayMove(from, source.index, slot > source.index ? slot - 1 : slot);
+      const pending = new Map(session.preview);
+      pending.set(source.list, next);
+      this.#mark(session, pending, { list: destination, slot });
+      return;
+    }
+    if (records.some((record) => record.id === session.itemId)) return;
+    const to = session.preview.get(destination)!;
+    const sourceArray = [...from],
+      destinationArray = [...to];
+    const [item] = sourceArray.splice(source.index, 1);
+    destinationArray.splice(slot, 0, item);
+    if (destination.resolve(destinationArray)[slot]?.id !== session.itemId)
+      throw new Error('Destination identity resolver changed the transferred item ID.');
+    const pending = new Map(session.preview);
+    pending.set(source.list, sourceArray);
+    pending.set(destination, destinationArray);
+    this.#mark(session, pending, { list: destination, slot });
+  }
+  #mark(session: Session, pending: Session['pending'], anchor: Session['anchor']): void {
+    const same = session.anchor?.list === anchor?.list && session.anchor?.slot === anchor?.slot;
+    session.pending = pending;
+    session.anchor = anchor;
+    if (same) return;
+    session.revision++;
+    this.#changed();
+  }
+  #complete(snapshot: OperationSnapshot): boolean | Promise<boolean> {
     const session = this.session;
+    if (session?.landing && session.id === snapshot.id) {
+      session.landing = false;
+      return this.renderer.rendering.then(() => this.#complete(snapshot));
+    }
     if (!session || session.id !== snapshot.id) return true;
     if (!this.#valid(session)) return false;
-    const location = this.#location(session),
+    // Line mode drops where the line marks; the shown order never moved.
+    const values = session.pending ?? session.preview;
+    const location = this.#location(session, values),
       targetList = snapshot.target?.data.list;
     if (!location || targetList !== location.list) return false;
     const result = this.#transaction(
-      session.preview,
+      values,
       session.itemId,
       session.source,
       location.list,
@@ -541,13 +648,7 @@ export class ListNetwork {
         [source, source.committed],
         [target, target.committed],
       ]);
-      if (source === target)
-        values.set(
-          source,
-          source.host.reorderMode === 'swap'
-            ? arraySwap(source.committed, index, insertion)
-            : arrayMove(source.committed, index, insertion),
-        );
+      if (source === target) values.set(source, arrayMove(source.committed, index, insertion));
       else {
         if (to.some((record) => record.id === id)) return 'rejected';
         const nextSource = [...source.committed],

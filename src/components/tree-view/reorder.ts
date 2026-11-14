@@ -1,11 +1,17 @@
 import { DragDropManager } from '../../foundation/drag-drop/manager.js';
 import { Sortable } from '../../foundation/drag-drop/sortable.js';
 import { PointerSensor } from '../../foundation/drag-drop/sensors/index.js';
-import type { DragEvent } from '../../foundation/drag-drop/types.js';
+import type { Draggable } from '../../foundation/drag-drop/entities.js';
+import type { DragEvent, SensorConfiguration } from '../../foundation/drag-drop/types.js';
+import { composedContains } from '../../foundation/focus.js';
+import { interactiveTargetInPath, targetInPath } from '../../foundation/interactive-target.js';
 import { dragMotion, dragMotionContext } from '../../foundation/drag-drop/motion.js';
 import { resolveMotionTiming, type MotionHandle } from '../../foundation/motion.js';
 import {
   dragDepth,
+  dropZone,
+  intoMove,
+  placeRow,
   projectDepth,
   resolveMove,
   type ProjectedRow,
@@ -13,7 +19,7 @@ import {
   type TreeMove,
 } from '../../foundation/tree/index.js';
 import type { ChangeReason, Direction } from '../../foundation/types.js';
-import type { TreeViewMessages } from './types.js';
+import type { TreeViewDragActivation, TreeViewDropIndicator, TreeViewMessages } from './types.js';
 
 /** What the reorder binding needs from its tree. */
 export interface ReorderContext {
@@ -27,10 +33,20 @@ export interface ReorderContext {
   rows(): readonly string[];
   /** Mounted row element of an item. */
   element(id: string): HTMLElement | null;
+  /** The element the rows are laid out in. */
+  list(): HTMLElement | null;
+  activation(): TreeViewDragActivation;
+  indicator(): TreeViewDropIndicator;
+  /** A drop predicate is set: rows without children may take children it accepts. */
+  nestable(): boolean;
+  /** Whether the drop predicate lets an item be a child of a parent at all. */
+  nests(parentId: string, itemId: string): boolean;
   messages(): Required<TreeViewMessages>;
   direction(): Direction;
   /** One indentation step in CSS pixels. */
   indentation(): number;
+  /** The inline space before depth zero's content that rows keep at every depth (a start handle). */
+  lead(): number;
   announce(message: string): void;
   accepts(move: TreeMove): boolean;
   commit(move: TreeMove, reason: ChangeReason, sourceEvent?: Event): boolean;
@@ -40,9 +56,24 @@ export interface ReorderContext {
 interface Session {
   sourceId: string;
   input: 'pointer' | 'keyboard';
-  /** Visible rows with the source's descendants removed, in preview order. */
+  /** Visible rows with the source's descendants removed, in projected order. */
   rows: string[];
+  /** The rows rendered while a line marks the landing place: the order before the drag. */
+  still: readonly string[] | null;
+  /** The source's descendants, hidden while rows make space and dragged with it otherwise. */
+  descendants: ReadonlySet<string>;
+  /** The parent the source lands in as its last child, instead of the projected place. */
+  into: string | null;
+  /** Rows that take the source as a child, decided once per row. */
+  holds: Map<string, boolean>;
+  point: { x: number; y: number } | null;
+  /** Where the pointer took hold of the source row, from the row's top. */
+  grab: number;
+  /** The block offset the source row is drawn at to stay under the pointer. */
+  follow: number;
   initialDepth: number;
+  /** The level a pointer drag projects from: the row it was last beside. */
+  baseDepth: number;
   depth: number;
   parentId: string | null;
   /** The last projection the consumer accepted. */
@@ -51,6 +82,12 @@ interface Session {
 }
 
 const GROUP = 'tp-tree-view';
+
+/** The insertion line of a drag, in the list's coordinates. */
+export interface DropLine {
+  top: number;
+  inset: number;
+}
 
 /**
  * Records-mode reordering (Foundation §19.19 tree reorder profile). Pointer drags run through a
@@ -67,6 +104,23 @@ export class TreeReorder {
   #type = Symbol('tree-view-item');
   #rects = new Map<string, { top: number; left: number; index: number }>();
   #motions = new Map<string, MotionHandle>();
+  /** Row boxes at rest after the last render, in the list's coordinates (no glide offsets). */
+  #rowSensors = new WeakMap<HTMLElement, SensorConfiguration>();
+  /** The row drawn under the pointer, lifted above its neighbours until it settles. */
+  #lifted: HTMLElement | null = null;
+  #layout = new Map<string, { top: number; height: number }>();
+  /**
+   * A released drag settling: renders within one frame of the release glide rows from where they
+   * were drawn to their committed place, and the source stays translucent until it arrives.
+   */
+  #settle: {
+    sourceId: string;
+    dragged: ReadonlySet<string>;
+    rows: readonly string[];
+    open: boolean;
+  } | null = null;
+  #settleMotion: MotionHandle | null = null;
+  #line: DropLine | null = null;
 
   constructor(context: ReorderContext) {
     this.#context = context;
@@ -82,18 +136,33 @@ export class TreeReorder {
     return this.#session !== null;
   }
 
-  /** Preview order while reordering, else null. */
+  /** Rendered order while reordering, else null. */
   get rows(): readonly string[] | null {
-    return this.#session?.rows ?? null;
+    const session = this.#session;
+    return session ? (session.still ?? session.rows) : null;
   }
 
+  /** The insertion line while a line marks the landing place, else null. */
+  get line(): DropLine | null {
+    return this.#session?.still ? this.#line : null;
+  }
+
+  /** The item is dragged, or settling after the drop; a line drag carries its descendants. */
   isSource(id: string): boolean {
-    return this.#session?.sourceId === id;
+    const session = this.#session;
+    if (session) return session.sourceId === id || (!!session.still && session.descendants.has(id));
+    return !!this.#settle?.dragged.has(id);
   }
 
-  /** Projected level of the source row while reordering. */
+  /** The parent a drag would land in as its last child. */
+  isDropInto(id: string): boolean {
+    return this.#session?.into === id;
+  }
+
+  /** Projected level of the source row while its row moves with the projection. */
   levelOf(id: string): number | null {
-    return this.#session?.sourceId === id ? this.#session.depth + 1 : null;
+    const session = this.#session;
+    return session?.sourceId === id && !session.still ? session.depth + 1 : null;
   }
 
   pinnedIds(): readonly string[] {
@@ -158,6 +227,7 @@ export class TreeReorder {
     if (handled) {
       event.preventDefault();
       event.stopPropagation();
+      this.#context.host.requestUpdate();
     }
   };
 
@@ -176,14 +246,13 @@ export class TreeReorder {
     this.#releases.push(manager.sorting.own((source) => source.data.tree === this.#context.host));
     this.#releases.push(
       manager.monitor.addEventListener('dragstart', (event) => this.#pointer('dragstart', event)),
-      manager.monitor.addEventListener('dragover', (event) => this.#pointer('dragover', event)),
       manager.monitor.addEventListener('dragmove', (event) => this.#pointer('dragmove', event)),
       manager.monitor.addEventListener('dragend', (event) => this.#pointer('dragend', event)),
     );
     return manager;
   }
 
-  #pointer(name: 'dragstart' | 'dragover' | 'dragmove' | 'dragend', event: DragEvent): void {
+  #pointer(name: 'dragstart' | 'dragmove' | 'dragend', event: DragEvent): void {
     const source = event.operation.source;
     if (!source || source.data.tree !== this.#context.host) return;
     const id = String(source.id);
@@ -193,34 +262,250 @@ export class TreeReorder {
         return;
       }
       this.#begin(id, 'pointer');
+      const session = this.#session!;
+      const start = event.operation.position.initial;
+      const rect = this.#context.element(id)?.getBoundingClientRect();
+      session.point = { x: start.x, y: start.y };
+      session.grab = rect ? Math.min(Math.max(start.y - rect.top, 0), rect.height) : 0;
+      this.#context.host.ownerDocument.addEventListener('scroll', this.#scrolled, true);
       return;
     }
     const session = this.#session;
     if (!session || session.input !== 'pointer') return;
-    if (name === 'dragover') {
-      const target = event.operation.target;
-      if (!target || String(target.id) === id) return;
-      const from = session.rows.indexOf(id);
-      const to = session.rows.indexOf(String(target.id));
-      if (from < 0 || to < 0) return;
-      session.rows.splice(from, 1);
-      session.rows.splice(to, 0, id);
-      this.#project(session.initialDepth + session.offset, true);
-      return;
-    }
     if (name === 'dragmove') {
-      const offset = dragDepth(
-        event.operation.transform.x,
+      // The event precedes the operation's own move: `to` is where the pointer is now.
+      const { current, initial } = event.operation.position;
+      const point = event.to ?? current;
+      session.offset = dragDepth(
+        point.x - initial.x,
         this.#indentation(),
         this.#context.direction() === 'rtl',
       );
-      if (offset === session.offset) return;
-      session.offset = offset;
-      this.#project(session.initialDepth + offset, false);
+      session.point = { x: point.x, y: point.y };
+      this.#track();
       return;
     }
     this.#finish(Boolean(event.canceled || event.operation.canceled), event.nativeEvent);
   }
+
+  /** Auto-scroll moves rows under a still pointer: the landing place follows. */
+  #scrolled = (): void => {
+    if (this.#session?.input === 'pointer') this.#track();
+  };
+
+  /**
+   * Follow the pointer: the row under it and the zone within that row decide where the source
+   * lands. Rows are hit-tested at their resting boxes, so rows still gliding aside do not flip
+   * the decision back.
+   */
+  #track(): void {
+    const session = this.#session!;
+    const point = session.point;
+    const list = this.#context.list();
+    if (!point || !list) return;
+    const listTop = list.getBoundingClientRect().top;
+    const shown = session.still ?? session.rows;
+    let target: string | null = null;
+    let box: { top: number; height: number } | null = null;
+    for (const id of shown) {
+      const rest = this.#box(id, listTop);
+      if (!rest) continue;
+      const top = listTop + rest.top;
+      if (point.y >= top && point.y < top + rest.height) {
+        target = id;
+        box = { top, height: rest.height };
+        break;
+      }
+    }
+    const before = { rows: session.rows.join(), into: session.into, depth: session.depth };
+    if (
+      target !== null &&
+      box &&
+      (target === session.sourceId || session.descendants.has(target))
+    ) {
+      // Over the source itself: a line drag goes back to where it started; rows that make space
+      // have moved the source under the pointer, which keeps its place.
+      session.into = null;
+      if (session.still) {
+        session.baseDepth = session.initialDepth;
+        session.rows = session.still.filter((id) => !session.descendants.has(id));
+      }
+      this.#project(session.baseDepth + session.offset, false);
+    } else if (target !== null && box) {
+      const zone = dropZone(box.top, box.height, point.y, this.#holds(target));
+      if (zone === 'into') {
+        // Rows keep their place; the parent marks the landing.
+        session.into = target;
+        this.#resolveInto(target);
+      } else {
+        session.into = null;
+        // Beside a row is that row's level; moving sideways from there changes it.
+        session.baseDepth = this.#context.model().get(target)?.depth ?? session.initialDepth;
+        session.rows = placeRow(session.rows, session.sourceId, target, zone);
+        this.#project(session.baseDepth + session.offset, false);
+      }
+    } else if (!session.into && session.depth !== session.baseDepth + session.offset)
+      this.#project(session.baseDepth + session.offset, false);
+    this.#placeLine();
+    this.#follow();
+    if (
+      before.rows !== session.rows.join() ||
+      before.into !== session.into ||
+      before.depth !== session.depth
+    ) {
+      this.#announceMove();
+      this.#context.host.requestUpdate();
+    }
+  }
+
+  /** A row's resting box in list coordinates, measured now when no render recorded it. */
+  #box(id: string, listTop: number): { top: number; height: number } | null {
+    const known = this.#layout.get(id);
+    if (known) return known;
+    const element = this.#context.element(id);
+    if (!element) return null;
+    const rect = element.getBoundingClientRect();
+    const drawn = this.#session?.sourceId === id ? this.#session.follow : 0;
+    return { top: rect.top - drawn - listTop, height: rect.height };
+  }
+
+  /**
+   * The dragged row stays under the pointer where it was taken hold of, within the list: its
+   * place in the list shows as the gap the rows made (or the place it left), and the drop glides
+   * it from the pointer to where it lands.
+   */
+  #follow(): void {
+    const session = this.#session;
+    const list = this.#context.list();
+    if (!session || session.input !== 'pointer' || !session.point || !list) return;
+    const element = this.#context.element(session.sourceId);
+    if (!element) return;
+    const bounds = list.getBoundingClientRect();
+    const rest = this.#box(session.sourceId, bounds.top);
+    if (!rest) return;
+    const top = Math.min(
+      Math.max(session.point.y - session.grab, bounds.top),
+      Math.max(bounds.top, bounds.bottom - rest.height),
+    );
+    session.follow = top - (bounds.top + rest.top);
+    this.#lifted = element;
+    element.style.position = 'relative';
+    element.style.zIndex = '1';
+    element.style.translate = `0 ${session.follow}px`;
+  }
+
+  /** Puts the lifted row back in the flow of the list. */
+  #drop(all: boolean): void {
+    const element = this.#lifted;
+    if (!element) return;
+    element.style.translate = '';
+    if (!all) return;
+    element.style.position = '';
+    element.style.zIndex = '';
+    this.#lifted = null;
+  }
+
+  /** Whether a row takes the source as its last child: always rows with children, others under a drop predicate. */
+  #holds(id: string): boolean {
+    const session = this.#session!;
+    let holds = session.holds.get(id);
+    if (holds === undefined) {
+      const model = this.#context.model();
+      const node = model.get(id);
+      const move =
+        node && (node.expandable || this.#context.nestable())
+          ? intoMove(model, session.sourceId, id)
+          : null;
+      holds = !!move && this.#context.accepts(move);
+      session.holds.set(id, holds);
+    }
+    return holds;
+  }
+
+  /**
+   * Over a parent's middle: the parent marks the landing, so the dragged row keeps the level it
+   * was drawn at; the move appends it to the parent's children.
+   */
+  #resolveInto(parentId: string): void {
+    const session = this.#session!;
+    session.parentId = parentId;
+    session.valid = {
+      index: session.rows.indexOf(session.sourceId),
+      depth: session.depth,
+      parentId,
+    };
+  }
+
+  /** The line between the rows around the projected place, inset to the projected depth. */
+  #placeLine(): void {
+    const session = this.#session!;
+    const previous = this.#line;
+    this.#line = null;
+    const list = this.#context.list();
+    if (session.still && list && !session.into && session.valid && this.#changes(session)) {
+      const listTop = list.getBoundingClientRect().top;
+      const index = session.rows.indexOf(session.sourceId);
+      const above = session.rows[index - 1];
+      const below = session.rows[index + 1];
+      let top: number | null = null;
+      if (above !== undefined) {
+        // After the row above (and its source subtree, if that is what follows it).
+        const box = this.#box(above, listTop);
+        const after = session.still[session.still.indexOf(above) + 1];
+        const next = after === undefined ? null : this.#box(after, listTop);
+        if (box) top = next ? (box.top + box.height + next.top) / 2 : box.top + box.height;
+      } else if (below !== undefined) top = this.#box(below, listTop)?.top ?? null;
+      if (top !== null)
+        this.#line = { top, inset: this.#context.lead() + session.depth * this.#indentation() };
+    }
+    if (previous?.top !== this.#line?.top || previous?.inset !== this.#line?.inset)
+      this.#context.host.requestUpdate();
+  }
+
+  /** The projected place differs from where the source is. */
+  #changes(session: Session): boolean {
+    const move = this.#move(session);
+    return !!move && !(move.fromParentId === move.toParentId && move.fromIndex === move.toIndex);
+  }
+
+  #move(session: Session): TreeMove | null {
+    const model = this.#context.model();
+    if (session.into !== null) return intoMove(model, session.sourceId, session.into);
+    return resolveMove(
+      model,
+      this.#rowsWithDepths(session),
+      session.rows.indexOf(session.sourceId),
+      session.parentId,
+    );
+  }
+
+  #announceMove(): void {
+    const session = this.#session!;
+    const move = this.#move(session);
+    if (!move) return;
+    const model = this.#context.model();
+    const label = model.get(session.sourceId)?.label ?? '';
+    const level = session.into === null ? session.depth + 1 : model.level(session.into) + 1;
+    this.#context.announce(
+      this.#context
+        .messages()
+        .moved(label, level, this.#parentLabel(session.parentId), move.toIndex + 1),
+    );
+  }
+
+  /**
+   * Whole-row activation: presses on the handle start at once; presses on the row's controls
+   * (state buttons, a rename field) and on a parent's chevron stay theirs.
+   */
+  #preventActivation = (event: PointerEvent, source: Draggable): boolean => {
+    const element = source.element;
+    if (!element) return true;
+    const target = event.composedPath()[0];
+    if (source.handle && target instanceof Node && composedContains(source.handle, target))
+      return false;
+    if (targetInPath(event, element, "[part~='indicator']:not([data-placeholder])")) return true;
+    return interactiveTargetInPath(event, element);
+  };
 
   #indentation(): number {
     return this.#context.indentation();
@@ -232,12 +517,23 @@ export class TreeReorder {
     const model = this.#context.model();
     const node = model.get(id)!;
     const descendants = new Set(model.descendants(id));
-    const rows = this.#context.rows().filter((row) => !descendants.has(row));
+    const visible = this.#context.rows();
+    const rows = visible.filter((row) => !descendants.has(row));
+    this.#cancelSettle();
+    this.#line = null;
     this.#session = {
       sourceId: id,
       input,
       rows,
+      still: input === 'pointer' && this.#context.indicator() === 'line' ? [...visible] : null,
+      descendants,
+      into: null,
+      holds: new Map(),
+      point: null,
+      grab: 0,
+      follow: 0,
       initialDepth: node.depth,
+      baseDepth: node.depth,
       depth: node.depth,
       parentId: node.parentId,
       valid: { index: rows.indexOf(id), depth: node.depth, parentId: node.parentId },
@@ -264,7 +560,14 @@ export class TreeReorder {
     const session = this.#session!;
     const rows = this.#rowsWithDepths(session);
     const index = session.rows.indexOf(session.sourceId);
-    const projection = projectDepth(rows, index, requestedDepth);
+    // Under a drop predicate, a row only nests under rows that take it as a child.
+    const source = session.sourceId;
+    const projection = projectDepth(
+      rows,
+      index,
+      requestedDepth,
+      this.#context.nestable() ? (parent) => this.#context.nests(parent.id, source) : undefined,
+    );
     session.depth = projection.depth;
     session.parentId = projection.parentId;
     const move = resolveMove(
@@ -291,22 +594,31 @@ export class TreeReorder {
           ),
       );
     }
-    this.#context.host.requestUpdate();
   }
 
   #finish(canceled: boolean, event?: Event): void {
     const session = this.#session;
     if (!session) return;
-    this.#context.host.ownerDocument.removeEventListener('keydown', this.#keyboard, true);
+    const document = this.#context.host.ownerDocument;
+    document.removeEventListener('keydown', this.#keyboard, true);
+    document.removeEventListener('scroll', this.#scrolled, true);
+    // Rows glide from where they are drawn now to their committed place (or back).
+    const dragged = new Set([session.sourceId, ...session.descendants]);
+    this.#settle = {
+      sourceId: session.sourceId,
+      dragged,
+      rows: [...(session.still ?? session.rows), ...session.descendants],
+      open: true,
+    };
     this.#session = null;
+    this.#line = null;
     const model = this.#context.model();
     const node = model.get(session.sourceId);
     const messages = this.#context.messages();
     const label = node?.label ?? '';
     let committed = false;
     if (!canceled && session.valid) {
-      const index = session.rows.indexOf(session.sourceId);
-      const move = resolveMove(model, this.#rowsWithDepths(session), index, session.parentId);
+      const move = this.#move(session);
       if (move && !(move.fromParentId === move.toParentId && move.fromIndex === move.toIndex)) {
         committed = this.#context.commit(
           move,
@@ -330,6 +642,30 @@ export class TreeReorder {
       );
     this.#context.host.requestUpdate();
     if (session.input === 'keyboard') void this.#context.focus(session.sourceId);
+    // An owner that writes the move back later than the next frame renders it without a glide.
+    const settle = this.#settle;
+    const view = document.defaultView;
+    const close = () => {
+      if (this.#settle !== settle) return;
+      settle.open = false;
+      if (!this.#settleMotion) this.#endSettle();
+    };
+    if (view) view.requestAnimationFrame(close);
+    else close();
+  }
+
+  #endSettle(): void {
+    this.#drop(true);
+    if (!this.#settle) return;
+    this.#settle = null;
+    this.#settleMotion = null;
+    this.#context.host.requestUpdate();
+  }
+
+  #cancelSettle(): void {
+    this.#drop(true);
+    this.#settle = null;
+    this.#settleMotion = null;
   }
 
   #parentLabel(parentId: string | null): string | null {
@@ -338,43 +674,88 @@ export class TreeReorder {
 
   // ── Displacement ───────────────────────────────────────────────────────────
 
-  /** Before a render that may move rows: remember where the mounted rows are. */
+  /** Before a render that may move rows: remember where the mounted rows are drawn. */
   capture(): void {
     const session = this.#session;
-    if (!session) return;
+    const settle = this.#settle;
+    const ids = session
+      ? (session.still ?? session.rows)
+      : settle?.open
+        ? [...new Set([...settle.rows, ...this.#context.rows()])]
+        : null;
+    if (!ids) return;
     this.#rects.clear();
-    session.rows.forEach((id, index) => {
+    ids.forEach((id, index) => {
       const element = this.#context.element(id);
       if (!element) return;
-      this.#motions.get(id)?.cancel();
+      // Where the row is drawn, mid-glide included, so a re-targeted glide starts from there.
       const rect = element.getBoundingClientRect();
+      const motion = this.#motions.get(id);
+      motion?.cancel();
+      // A re-targeted settle starts over from here; the cancelled glide no longer ends it.
+      if (motion && motion === this.#settleMotion) this.#settleMotion = null;
       this.#rects.set(id, { top: rect.top, left: rect.left, index });
     });
+    // The released row leaves the pointer: it glides from where it was drawn to its place.
+    if (!session && settle) this.#drop(false);
   }
 
-  /** After the render: rows that moved glide from their old place (`sort-displacement`). */
+  /**
+   * After the render: rows that moved glide from where they were drawn. While dragging they make
+   * space (`sort-displacement`); after the release the source travels to its place
+   * (`drop-settlement`) as the rows around it make room.
+   */
   animate(): void {
-    const rows = this.#session?.rows ?? this.#context.rows();
+    const session = this.#session;
+    const rows = session ? (session.still ?? session.rows) : this.#context.rows();
+    this.#layout.clear();
+    const list = this.#context.list();
+    const listTop = session && list ? list.getBoundingClientRect().top : 0;
+    const settle = session ? null : this.#settle;
+    const boxes = new Map<string, DOMRect>();
+    for (const id of session ? rows : this.#rects.keys()) {
+      const rect = this.#context.element(id)?.getBoundingClientRect();
+      if (!rect) continue;
+      boxes.set(id, rect);
+      // The row under the pointer is drawn away from its place in the list.
+      const drawn = session?.sourceId === id ? session.follow : 0;
+      if (session) this.#layout.set(id, { top: rect.top - drawn - listTop, height: rect.height });
+    }
     for (const [id, previous] of this.#rects) {
       const element = this.#context.element(id);
-      if (!element) continue;
-      const rect = element.getBoundingClientRect();
+      const rect = boxes.get(id);
+      if (!element || !rect) continue;
+      // While dragging, the source stays under the pointer instead of gliding to its slot.
+      if (session?.input === 'pointer' && id === session.sourceId) continue;
       const x = previous.left - rect.left;
       const y = previous.top - rect.top;
       if (!x && !y) continue;
-      this.#motions.set(
-        id,
-        dragMotion(
-          element,
-          element,
-          'sort-displacement',
-          [{ translate: `${x}px ${y}px` }, { translate: '0 0' }],
-          resolveMotionTiming(element, 'fast', 'enter'),
-          dragMotionContext(id, { fromIndex: previous.index, toIndex: rows.indexOf(id) }, { x, y }),
-        ),
+      const role = settle?.sourceId === id ? 'drop-settlement' : 'sort-displacement';
+      const motion = dragMotion(
+        element,
+        element,
+        role,
+        [{ translate: `${x}px ${y}px` }, { translate: '0 0' }],
+        resolveMotionTiming(element, 'fast', 'enter'),
+        dragMotionContext(id, { fromIndex: previous.index, toIndex: rows.indexOf(id) }, { x, y }),
       );
+      this.#motions.set(id, motion);
+      if (role === 'drop-settlement') {
+        this.#settleMotion = motion;
+        void motion.finished
+          .catch(() => undefined)
+          .then(() => {
+            if (this.#settleMotion !== motion) return;
+            this.#settleMotion = null;
+            if (!this.#settle?.open) this.#endSettle();
+          });
+      }
     }
     this.#rects.clear();
+    // The source's place in the list may have moved: keep it under the pointer.
+    this.#follow();
+    // A settle with nothing left to glide ends once its window has closed.
+    if (settle && !settle.open && !this.#settleMotion) this.#endSettle();
   }
 
   // ── Entities ───────────────────────────────────────────────────────────────
@@ -397,6 +778,7 @@ export class TreeReorder {
         const index = rows.indexOf(id);
         const node = this.#context.model().get(id);
         const disabled = Boolean(node?.disabled) || this.#context.blocked();
+        const sensors = this.#sensorsFor(element);
         let sortable = this.#sortables.get(id);
         if (!sortable) {
           sortable = new Sortable(
@@ -411,6 +793,7 @@ export class TreeReorder {
               data: { tree: this.#context.host },
               transition: null,
               disabled: { draggable: disabled, droppable: false },
+              ...(sensors ? { sensors } : {}),
             },
             manager,
           );
@@ -418,6 +801,7 @@ export class TreeReorder {
         } else {
           sortable.element = element;
           sortable.handle = handle;
+          if (sortable.sensors !== sensors) sortable.sensors = sensors;
           sortable.setMembership(index, GROUP);
           sortable.disabled = { draggable: disabled, droppable: false };
         }
@@ -430,6 +814,22 @@ export class TreeReorder {
     });
   }
 
+  /** Whole-row activation binds the row as the activator, keeping one binding per element. */
+  #sensorsFor(element: HTMLElement): SensorConfiguration | undefined {
+    if (this.#context.activation() !== 'item') return undefined;
+    let sensors = this.#rowSensors.get(element);
+    if (!sensors) {
+      sensors = [
+        PointerSensor.configure({
+          activatorElements: [element],
+          preventActivation: this.#preventActivation,
+        }),
+      ];
+      this.#rowSensors.set(element, sensors);
+    }
+    return sensors;
+  }
+
   #releaseEntities(): void {
     for (const sortable of this.#sortables.values()) sortable.destroy();
     this.#sortables.clear();
@@ -437,6 +837,8 @@ export class TreeReorder {
 
   disconnect(): void {
     if (this.#session) this.#finish(true);
+    this.#cancelSettle();
+    this.#drop(true);
     this.#releaseEntities();
     for (const release of this.#releases) release();
     this.#releases = [];

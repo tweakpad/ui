@@ -24,7 +24,7 @@ const definition: ComponentDefinition = {
     },
     {
       name: 'drag-drop-list-item',
-      description: 'The list element around each row; marked while dragging, dropping or targeted.',
+      description: 'The list element around each row; marked while dragging or dropping.',
       slot: 'item',
     },
     {
@@ -34,8 +34,14 @@ const definition: ComponentDefinition = {
     },
     {
       name: 'drag-drop-list-placeholder',
-      description: 'The stand-in that keeps the dragged row in place.',
+      description:
+        "The stand-in that keeps the dragged row's place; translucent while shown, so it never reads as a second dragged row.",
       slot: 'placeholder',
+    },
+    {
+      name: 'drag-drop-list-drop-indicator',
+      description: 'The line between items that marks where a dragged item lands.',
+      slot: 'drop-indicator',
     },
     {
       name: 'drag-drop-list-overlay',
@@ -69,6 +75,8 @@ export const dragDropListPresentation = definePresentation({
       '.item': 'drag-drop-list-item',
       '.handle': 'drag-drop-list-handle',
       '.empty': 'drag-drop-list-empty',
+      "[part~='placeholder']": 'drag-drop-list-placeholder',
+      "[part~='drop-indicator']": 'drag-drop-list-drop-indicator',
     },
   },
   sources: [dragDropListAppearance],

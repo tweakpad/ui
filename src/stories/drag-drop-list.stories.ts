@@ -1,10 +1,12 @@
 import { html } from 'lit';
 import { libraryDocs } from './library-docs.js';
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
+// The page's main use case.
 const items = Object.freeze([
-  { id: 'research', label: 'Research' },
-  { id: 'design', label: 'Design' },
-  { id: 'review', label: 'Review' },
+  { id: 'brief', label: 'Write the launch brief' },
+  { id: 'pricing', label: 'Finalize pricing page' },
+  { id: 'email', label: 'Schedule announcement email' },
+  { id: 'changelog', label: 'Publish changelog' },
 ]);
 const meta = {
   title: 'Components/Drag Drop List',
@@ -18,7 +20,7 @@ const meta = {
     variant: 'outline',
     size: 'default',
     activation: 'handle',
-    reorderMode: 'move',
+    dropIndicator: 'displace',
     disabled: false,
     readOnly: false,
     feedback: 'default',
@@ -28,18 +30,18 @@ const meta = {
     variant: { control: 'select', options: ['ghost', 'outline', 'subdued'] },
     size: { control: 'select', options: ['xs', 'sm', 'default'] },
     activation: { control: 'select', options: ['handle', 'item'] },
-    reorderMode: { control: 'select', options: ['move', 'swap'] },
+    dropIndicator: { control: 'select', options: ['displace', 'line'] },
     feedback: { control: 'select', options: ['default', 'clone', 'move', 'none'] },
   },
   render: (args) =>
     html`<tp-drag-drop-list
-      label="Project stages"
+      label="Launch checklist"
       .defaultValue=${items}
       .orientation=${args.orientation}
       .variant=${args.variant}
       .size=${args.size}
       .activation=${args.activation}
-      .reorderMode=${args.reorderMode}
+      .dropIndicator=${args.dropIndicator}
       .disabled=${args.disabled}
       .readOnly=${args.readOnly}
       .feedback=${args.feedback}

@@ -9,34 +9,106 @@ parts: [tp-layer, tp-layer-state, tp-layer-state-value]
   title="Layers"
   code={`<tp-card style="inline-size: 18rem">
   <tp-layers id="layers-hero" label="Poster" can-rename can-remove default-expanded='["hero-night"]' default-value='["hero-moon"]'>
+    <tp-input slot="header" variant="inline" size="sm" label="Opacity" type="number" min="0" max="100" value="100"></tp-input>
+    <tp-button slot="header-end" variant="ghost" size="icon-sm" data-action="lock" aria-label="Lock"></tp-button>
     <tp-layer id="hero-headline" label="Headline">
       <tp-icon data-icon="text"></tp-icon>
+      <tp-layer-state name="locked" label="Lock" value="locked">
+        <tp-layer-state-value value="locked"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
+        <tp-layer-state-value value="unlocked"></tp-layer-state-value>
+      </tp-layer-state>
       <tp-layer-state name="visibility" label="Visibility" value="visible">
         <tp-layer-state-value value="visible"><tp-icon data-icon="eye"></tp-icon></tp-layer-state-value>
         <tp-layer-state-value value="hidden" dims><tp-icon data-icon="eye-off"></tp-icon></tp-layer-state-value>
       </tp-layer-state>
-      <tp-layer-state name="locked" label="Lock" value="locked">
-        <tp-layer-state-value value="locked"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
-        <tp-layer-state-value value="unlocked" display="hover"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
-      </tp-layer-state>
     </tp-layer>
     <tp-layer id="hero-night" label="Night sky">
       <tp-icon data-icon="folder"></tp-icon>
-      <tp-layer id="hero-moon" label="Moon"><tp-icon data-icon="image"></tp-icon></tp-layer>
-      <tp-layer id="hero-stars" label="Stars"><tp-icon data-icon="image"></tp-icon></tp-layer>
+      <tp-layer-state name="locked" label="Lock" value="unlocked">
+        <tp-layer-state-value value="locked"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
+        <tp-layer-state-value value="unlocked"></tp-layer-state-value>
+      </tp-layer-state>
+      <tp-layer-state name="visibility" label="Visibility" value="visible">
+        <tp-layer-state-value value="visible"><tp-icon data-icon="eye"></tp-icon></tp-layer-state-value>
+        <tp-layer-state-value value="hidden" dims><tp-icon data-icon="eye-off"></tp-icon></tp-layer-state-value>
+      </tp-layer-state>
+      <tp-layer id="hero-moon" label="Moon">
+        <tp-icon data-icon="image"></tp-icon>
+        <tp-layer-state name="locked" label="Lock" value="unlocked">
+          <tp-layer-state-value value="locked"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
+          <tp-layer-state-value value="unlocked"></tp-layer-state-value>
+        </tp-layer-state>
+        <tp-layer-state name="visibility" label="Visibility" value="visible">
+          <tp-layer-state-value value="visible"><tp-icon data-icon="eye"></tp-icon></tp-layer-state-value>
+          <tp-layer-state-value value="hidden" dims><tp-icon data-icon="eye-off"></tp-icon></tp-layer-state-value>
+        </tp-layer-state>
+      </tp-layer>
     </tp-layer>
-    <tp-layer id="hero-paper" label="Paper texture"><tp-icon data-icon="image"></tp-icon></tp-layer>
+    <tp-layer id="hero-paper" label="Paper texture">
+      <tp-icon data-icon="image"></tp-icon>
+      <tp-layer-state name="locked" label="Lock" value="unlocked">
+        <tp-layer-state-value value="locked"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
+        <tp-layer-state-value value="unlocked"></tp-layer-state-value>
+      </tp-layer-state>
+      <tp-layer-state name="visibility" label="Visibility" value="hidden">
+        <tp-layer-state-value value="visible"><tp-icon data-icon="eye"></tp-icon></tp-layer-state-value>
+        <tp-layer-state-value value="hidden" dims><tp-icon data-icon="eye-off"></tp-icon></tp-layer-state-value>
+      </tp-layer-state>
+    </tp-layer>
+    <tp-menu slot="footer">
+      <tp-button slot="trigger" variant="ghost" size="icon-sm" data-icon="plus" aria-label="Add"></tp-button>
+      <tp-menu-item data-add="layer">Layer</tp-menu-item>
+      <tp-menu-item data-add="group">Group</tp-menu-item>
+    </tp-menu>
+    <tp-button slot="footer-end" variant="ghost" size="icon-sm" data-icon="trash" data-action="remove" aria-label="Remove"></tp-button>
   </tp-layers>
 </tp-card>`}
   script={`import { eyeIcon } from '@tweakpad/ui/icons/eye';
 import { eyeOffIcon } from '@tweakpad/ui/icons/eye-off';
 import { lockIcon } from '@tweakpad/ui/icons/lock';
+import { unlockIcon } from '@tweakpad/ui/icons/unlock';
 import { fileTextIcon } from '@tweakpad/ui/icons/file-text';
 import { folderIcon } from '@tweakpad/ui/icons/folder';
 import { imageIcon } from '@tweakpad/ui/icons/image';
+import { plusIcon } from '@tweakpad/ui/icons/plus';
+import { trashIcon } from '@tweakpad/ui/icons/trash';
 
-const icons = { eye: eyeIcon, 'eye-off': eyeOffIcon, lock: lockIcon, text: fileTextIcon, folder: folderIcon, image: imageIcon };
-for (const icon of document.querySelectorAll('#layers-hero tp-icon')) icon.icon = icons[icon.dataset.icon];`}
+const layers = document.querySelector('#layers-hero');
+const icons = { eye: eyeIcon, 'eye-off': eyeOffIcon, lock: lockIcon, text: fileTextIcon, folder: folderIcon, image: imageIcon, plus: plusIcon, trash: trashIcon };
+for (const element of layers.querySelectorAll('[data-icon]')) element.icon = icons[element.dataset.icon];
+
+// The opacity field follows the active layer.
+const opacity = layers.querySelector('tp-input');
+const opacities = new Map();
+opacity.addEventListener('tp-value-change', (event) => {
+  opacity.value = event.detail.value;
+  if (layers.active) opacities.set(layers.active, event.detail.value);
+});
+layers.addEventListener('tp-active-change', (event) => {
+  opacity.value = opacities.get(event.detail.value) ?? '100';
+});
+
+// The header button locks the selected layers, or unlocks them when all are locked; a locked
+// layer shows its lock, and a press on it unlocks the layer.
+const lock = layers.querySelector('[data-action="lock"]');
+const locked = () => layers.value.length > 0 && layers.value.every((id) => layers.getLayerState(id, 'locked') === 'locked');
+const showLock = () => {
+  lock.icon = locked() ? lockIcon : unlockIcon;
+  lock.ariaLabel = locked() ? 'Unlock' : 'Lock';
+  lock.disabled = layers.value.length === 0;
+};
+lock.addEventListener('click', () => layers.setLayerState(layers.value, 'locked', locked() ? 'unlocked' : 'locked'));
+for (const type of ['tp-value-commit', 'tp-layers-change']) layers.addEventListener(type, () => queueMicrotask(showLock));
+showLock();
+
+let count = 0;
+for (const item of layers.querySelectorAll('[data-add]'))
+  item.addEventListener('click', () => {
+    count += 1;
+    const group = item.dataset.add === 'group';
+    layers.addLayer({ id: \`hero-added-\${count}\`, label: group ? \`Group \${count}\` : \`Layer \${count}\`, ...(group ? { children: [] } : {}) });
+  });
+layers.querySelector('[data-action="remove"]').addEventListener('click', () => layers.removeLayers());`}
 />
 
 ## Usage
@@ -49,7 +121,7 @@ Several layers can be selected at once, and one of them is the active layer: the
 
 A layer's states are its `tp-layer-state` children, and only that layer has them: one layer can have a visibility and a lock, another a visibility alone, another none. A state has a `name`, the `label` of its control, its current `value` and, as `tp-layer-state-value` children, every value it can take, in the order a press on its control steps through them. The control shows the current value's `tp-icon`; a value without one shows nothing, `display="hover"` shows it only while the row is hovered or has focus, and `dims` dims the layer's label, and a group's contents, while the layer has that value.
 
-Here visibility has three values and swaps its icon, and the lock shows while locked and, unlocked, only on the row's hover.
+Here visibility has three values and swaps its icon, and the lock shows only while locked: its unlocked value has no icon, so a press on the lock unlocks the layer and the lock goes away. Locking is left to a control of the app's, such as the header button of the stack above, which calls `setLayerState`.
 
 <Preview
   title="Visibility and lock"
@@ -61,9 +133,9 @@ Here visibility has three values and swaps its icon, and the lock shows while lo
         <tp-layer-state-value value="hidden" dims><tp-icon data-icon="eye-off"></tp-icon></tp-layer-state-value>
         <tp-layer-state-value value="solo" label="Solo"><tp-icon data-icon="pin"></tp-icon></tp-layer-state-value>
       </tp-layer-state>
-      <tp-layer-state name="locked" label="Lock" value="unlocked">
+      <tp-layer-state name="locked" label="Lock" value="locked">
         <tp-layer-state-value value="locked"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
-        <tp-layer-state-value value="unlocked" display="hover"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
+        <tp-layer-state-value value="unlocked"></tp-layer-state-value>
       </tp-layer-state>
     </tp-layer>
     <tp-layer id="states-grid" label="Grid">
@@ -142,6 +214,26 @@ layers.addEventListener('tp-active-change', (event) => {
 
 A `tp-layer` with `tp-layer` children is a group, and `group` makes an empty one: its chevron expands it, and layers are dragged into it, out of it or between groups. `default-expanded` or a controlled `expanded` lists the open groups. `groupLayers()` wraps the selection in a new group where its first layer was, and `ungroupLayers()` puts a group's layers back in its place.
 
+### Dragging
+
+A layer drags from anywhere on its row, and its handle stays at the row's starting edge; presses on the row's state controls, its rename field or a group's chevron never start a drag. `drag-activation="handle"` drags only from the handle. The dragged layer follows the pointer, and a line between the rows marks where it lands, inset to the level it lands at; holding the pointer over the middle of a group marks the group, and the layer drops in as its last layer, without expanding it. `drop-indicator="displace"` makes the rows open a gap for the layer instead of the line.
+
+<Preview
+  title="Rows make space"
+  code={`<tp-card style="inline-size: 18rem">
+  <tp-layers label="Storyboard" drop-indicator="displace" default-expanded='["drag-act-1"]'>
+    <tp-layer id="drag-act-1" label="Act one">
+      <tp-layer id="drag-arrival" label="Arrival"></tp-layer>
+      <tp-layer id="drag-storm" label="Storm"></tp-layer>
+    </tp-layer>
+    <tp-layer id="drag-act-2" label="Act two">
+      <tp-layer id="drag-lighthouse" label="Lighthouse"></tp-layer>
+    </tp-layer>
+    <tp-layer id="drag-credits" label="Credits"></tp-layer>
+  </tp-layers>
+</tp-card>`}
+/>
+
 ### Renaming, removing and duplicating
 
 `can-rename` lets people rename a layer with a double-click or F2: Enter or leaving the field proposes the label, and Escape keeps the old one. `can-remove` lets them remove the selected layers with Delete or Backspace; the layer that takes the active layer's place becomes active. A `tp-layer`'s own `can-rename` and `can-remove` override the stack's for that layer, so `can-remove="false"` keeps a background in place while the other layers can go.
@@ -150,7 +242,7 @@ A `tp-layer` with `tp-layer` children is a group, and `group` makes an empty one
 
 ### Header, footer and the empty stack
 
-The `header`, `footer` and `empty` slots hold the stack's own controls; the widget leaves what they do to the app. Here the header shows or hides a panel of controls that follows the active layer and clears the stack, the footer adds lights from a Menu and duplicates or removes the selected ones, and the `empty` slot shows while no light is left. Switching the panel is the app's: it listens to `tp-active-change` and shows the active layer's controls.
+The `header`, `footer` and `empty` slots hold the stack's own controls; the widget leaves what they do to the app. `header` and `footer` place controls at the start of their bar, and `header-end` and `footer-end` at its end. Here the header shows or hides a panel of controls that follows the active layer and clears the stack, the footer adds lights from a Menu and duplicates or removes the selected ones, and the `empty` slot shows while no light is left. Switching the panel is the app's: it listens to `tp-active-change` and shows the active layer's controls.
 
 <Preview
   title="Panel controls"
@@ -162,7 +254,7 @@ The `header`, `footer` and `empty` slots hold the stack's own controls; the widg
       <tp-toggle slot="header" variant="ghost" size="icon-sm" default-pressed aria-label="Properties"
         ><tp-icon data-icon="settings"></tp-icon
       ></tp-toggle>
-      <tp-button slot="header" variant="ghost" size="sm" data-action="clear">Clear</tp-button>
+      <tp-button slot="header-end" variant="ghost" size="sm" data-action="clear">Clear</tp-button>
       <tp-empty-state slot="empty" title="No lights" description="Add a light to light the scene.">
         <tp-button slot="actions" variant="outline" size="sm" data-kind="point">Add a light</tp-button>
       </tp-empty-state>
@@ -172,7 +264,7 @@ The `header`, `footer` and `empty` slots hold the stack's own controls; the widg
         <tp-menu-item data-kind="spot">Spot light</tp-menu-item>
       </tp-menu>
       <tp-button slot="footer" variant="ghost" size="icon-sm" data-icon="copy" data-action="duplicate" aria-label="Duplicate"></tp-button>
-      <tp-button slot="footer" variant="ghost" size="icon-sm" data-icon="trash" data-action="remove" aria-label="Remove"></tp-button>
+      <tp-button slot="footer-end" variant="ghost" size="icon-sm" data-icon="trash" data-action="remove" aria-label="Remove"></tp-button>
     </tp-layers>
     <div id="layers-bars-panel"></div>
   </tp-stack>

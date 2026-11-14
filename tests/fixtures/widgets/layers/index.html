@@ -39,7 +39,7 @@
             </tp-layer-state>
             <tp-layer-state name="locked" label="Lock" value="unlocked">
               <tp-layer-state-value value="locked"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
-              <tp-layer-state-value value="unlocked" display="hover"><tp-icon data-icon="lock"></tp-icon></tp-layer-state-value>
+              <tp-layer-state-value value="unlocked"></tp-layer-state-value>
             </tp-layer-state>
           </tp-layer>
           <tp-layer id="scene" label="Scene with a long label that has to ellipsize">
@@ -64,6 +64,14 @@
           </tp-layer>
           <tp-layer id="ground" label="Ground" can-remove="false"></tp-layer>
           <tp-layer id="folder" label="Empty group" group></tp-layer>
+          <tp-input slot="header" id="opacity" variant="inline" size="sm" label="Opacity" type="number" min="0" max="100" default-value="100"></tp-input>
+          <tp-button slot="header-end" id="lock-toggle" variant="ghost" size="icon-sm" aria-label="Lock" data-icon="lock-open"></tp-button>
+          <tp-menu slot="footer">
+            <tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Add layer" data-icon="plus"></tp-button>
+            <tp-menu-item data-add="layer">Layer</tp-menu-item>
+            <tp-menu-item data-add="group">Group</tp-menu-item>
+          </tp-menu>
+          <tp-button slot="footer-end" id="trash" variant="ghost" size="icon-sm" aria-label="Remove" data-icon="trash"></tp-button>
         </tp-layers>
       </tp-card>
       <tp-card id="controlled-card"></tp-card>
@@ -78,6 +86,9 @@
           <tp-layer id="sm-a" label="Small one"></tp-layer>
           <tp-layer id="sm-b" label="Small two"></tp-layer>
         </tp-layers>
+      </tp-card>
+      <tp-card>
+        <tp-scroll-area id="scroll-area" style="block-size: 12rem"></tp-scroll-area>
       </tp-card>
       <tp-card>
         <tp-layers id="empty" label="empty"><span slot="empty">No layers yet</span></tp-layers>

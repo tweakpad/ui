@@ -1,0 +1,7 @@
+---
+'@tweakpad/ui': minor
+---
+
+Tree view: `drag-activation="item"` starts a reorder drag anywhere on a row (presses on the row's controls and on a parent's chevron never drag), `drop-indicator="line"` keeps the rows still and marks the landing place with a line between them (the new `drop-indicator` part), and `handle-placement="start"` keeps the handle at the row's starting edge at every level, with the nesting guides centered under each parent's chevron. In both indicator modes, holding the pointer over the middle of a parent marks it and drops the item in as its last child, expanded or not, without expanding it; before and after a row land at that row's level. While dragging, the item follows the pointer where it was taken hold of; after the drop, it glides from the pointer to its place as the rows around it make room (`drop-settlement`), and it stays translucent (now 0.65) until it arrives; with reduced motion the change applies at once. With `canDrop` set, moving sideways only nests an item under items the predicate accepts as its parent. `dropZone`, `placeRow` and `intoMove` join the tree helpers.
+
+Layers: the header and footer each gain an end region (`header-end`, `footer-end` slots), so controls sit at the start and at the end of a bar. Layers drag from the whole row by default (`drag-activation`), mark the landing place with a line by default (`drop-indicator="displace"` makes the rows open a gap instead), and keep the handle at the start; dropping on the middle of a group puts the layers last in it.

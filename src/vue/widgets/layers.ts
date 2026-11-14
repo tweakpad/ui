@@ -107,6 +107,8 @@ export const Layers = /*#__PURE__*/ createBinding(TpLayers, 'Layers', {
   | 'defaultValue'
   | 'density'
   | 'disabled'
+  | 'dragActivation'
+  | 'dropIndicator'
   | 'expanded'
   | 'invalid'
   | 'label'

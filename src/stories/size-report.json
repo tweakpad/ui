@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-11-14T14:43:17.017Z",
+  "generatedAt": "2026-11-14T17:49:51.433Z",
   "version": "0.4.0",
   "method": "Each row imports and registers one component or widget from its public package entry. Rolldown tree-shakes and minifies an independent production JavaScript bundle, then measures its output before and after gzip. Required dependencies and embedded styles are included; Lit, optional engines, source maps and the separate global stylesheet are excluded. Each row's React and Vue sizes import its binding from @tweakpad/ui/react and @tweakpad/ui/vue the same way (the framework excluded); each adapter is measured alone. Sizes use kB of 1000 bytes.",
   "lit": { "bytes": 15977, "gzip": 6060 },
   "reactAdapter": { "bytes": 1100, "gzip": 603 },
   "vueAdapter": { "bytes": 1440, "gzip": 779 },
-  "full": { "bytes": 2080051, "gzip": 587593 },
-  "fullWidgets": { "bytes": 2025518, "gzip": 587815 },
+  "full": { "bytes": 2091730, "gzip": 591602 },
+  "fullWidgets": { "bytes": 2034651, "gzip": 590751 },
   "components": [
     {
       "name": "Flow",
@@ -15,7 +15,7 @@
       "react": { "bytes": 1422652, "gzip": 401660 },
       "vue": { "bytes": 1422458, "gzip": 401664 },
       "bytes": 1421281,
-      "gzip": 400697,
+      "gzip": 400709,
       "modules": 489,
       "includes": [
         "tp-accordion",
@@ -93,9 +93,9 @@
       "name": "Text editor (all features)",
       "tagName": "tp-text-editor",
       "section": "widgets",
-      "bytes": 1055155,
-      "gzip": 310828,
-      "modules": 399,
+      "bytes": 1055173,
+      "gzip": 310852,
+      "modules": 400,
       "includes": [
         "tp-aspect-ratio",
         "tp-attachment",
@@ -179,11 +179,11 @@
       "name": "Text editor",
       "tagName": "tp-text-editor",
       "section": "widgets",
-      "react": { "bytes": 528010, "gzip": 158565 },
-      "vue": { "bytes": 528034, "gzip": 158643 },
-      "bytes": 526870,
-      "gzip": 158218,
-      "modules": 218,
+      "react": { "bytes": 528028, "gzip": 158590 },
+      "vue": { "bytes": 528052, "gzip": 158666 },
+      "bytes": 526886,
+      "gzip": 158234,
+      "modules": 219,
       "includes": [
         "tp-badge",
         "tp-button",
@@ -294,11 +294,11 @@
       "name": "Layers",
       "tagName": "tp-layers",
       "section": "widgets",
-      "react": { "bytes": 328454, "gzip": 96816 },
-      "vue": { "bytes": 328715, "gzip": 96960 },
-      "bytes": 327338,
-      "gzip": 96432,
-      "modules": 150,
+      "react": { "bytes": 337655, "gzip": 99702 },
+      "vue": { "bytes": 337916, "gzip": 99850 },
+      "bytes": 336543,
+      "gzip": 99369,
+      "modules": 152,
       "includes": [
         "tp-button",
         "tp-copy-button",
@@ -359,6 +359,17 @@
       ]
     },
     {
+      "name": "Tree view",
+      "tagName": "tp-tree-view",
+      "section": "components",
+      "react": { "bytes": 256145, "gzip": 76560 },
+      "vue": { "bytes": 256283, "gzip": 76641 },
+      "bytes": 255086,
+      "gzip": 75992,
+      "modules": 112,
+      "includes": ["tp-button", "tp-icon", "tp-spinner", "tp-tree-item"]
+    },
+    {
       "name": "Autocomplete",
       "tagName": "tp-autocomplete",
       "section": "components",
@@ -376,17 +387,6 @@
         "tp-select",
         "tp-spinner"
       ]
-    },
-    {
-      "name": "Tree view",
-      "tagName": "tp-tree-view",
-      "section": "components",
-      "react": { "bytes": 247946, "gzip": 73717 },
-      "vue": { "bytes": 248084, "gzip": 73794 },
-      "bytes": 246887,
-      "gzip": 73344,
-      "modules": 110,
-      "includes": ["tp-button", "tp-icon", "tp-spinner", "tp-tree-item"]
     },
     {
       "name": "Select",
@@ -516,6 +516,17 @@
       ]
     },
     {
+      "name": "Drag Drop List",
+      "tagName": "tp-drag-drop-list",
+      "section": "components",
+      "react": { "bytes": 191981, "gzip": 55980 },
+      "vue": { "bytes": 192067, "gzip": 56119 },
+      "bytes": 190798,
+      "gzip": 55719,
+      "modules": 88,
+      "includes": ["tp-button", "tp-empty-state", "tp-icon", "tp-list-item", "tp-spinner"]
+    },
+    {
       "name": "File upload",
       "tagName": "tp-file-upload",
       "section": "components",
@@ -535,17 +546,6 @@
         "tp-skeleton",
         "tp-spinner"
       ]
-    },
-    {
-      "name": "Drag Drop List",
-      "tagName": "tp-drag-drop-list",
-      "section": "components",
-      "react": { "bytes": 188222, "gzip": 54680 },
-      "vue": { "bytes": 188307, "gzip": 54822 },
-      "bytes": 187038,
-      "gzip": 54434,
-      "modules": 86,
-      "includes": ["tp-button", "tp-empty-state", "tp-icon", "tp-list-item", "tp-spinner"]
     },
     {
       "name": "Table of contents",

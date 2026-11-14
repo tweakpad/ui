@@ -7,8 +7,11 @@ import {
   subLevelGuideOffset,
   subLevelGuideWidth,
 } from './shared/navigation-row.js';
+import { dropInto, listDropLine } from './shared/drop-line.js';
+import { floatEdge } from './shared/edges.js';
 import { checkboxRules } from './shared/selection-control.js';
 import { packedExtent } from './shared/target.js';
+import { controlStepDeclarations, controlStepOf } from './shared/variant.js';
 
 /**
  * Rows are navigation rows; nested levels are marked by an inline-start guide line, drawn once
@@ -27,6 +30,15 @@ const indented = (padding: string) => `calc(${padding} + ${indentation})`;
  * measured extent (virtual windows) and equal between rows of any depth in both content modes.
  */
 const halfGap = `calc(${subLevelGap} / 2)`;
+/**
+ * A handle at the start stays at the row's edge at every depth: the row spans the full width,
+ * the indentation follows the handle, and the guides move over by the handle and its gap.
+ */
+const handleExtent = controlStepDeclarations(controlStepOf('icon-xs'), { square: true })[
+  'inline-size'
+] as string;
+const handleLead = `calc(${handleExtent} + var(--tp-space-2))`;
+const handleStart = "[part~='row'][data-handle-start]";
 
 export const treeViewAppearance: PresentationDictionary = {
   'tree-view': [{ declarations: { 'font-size': 'var(--tp-text-sm)' } }],
@@ -47,8 +59,21 @@ export const treeViewAppearance: PresentationDictionary = {
       },
     },
     { selector: '&[data-disabled]', declarations: { opacity: '0.5', cursor: 'not-allowed' } },
-    { selector: '&[data-dragging]', declarations: { opacity: '0.4' } },
+    // The dragged item is lifted from pick-up until it settles in its new place: a floating
+    // surface over the rows it passes, with its content translucent, so the rows beneath never
+    // show through it.
+    {
+      selector: '&[data-dragging]',
+      declarations: {
+        background: 'var(--tp-popover)',
+        'box-shadow': `var(--tp-shadow-md), ${floatEdge.ring}`,
+      },
+    },
+    { selector: '&[data-dragging] > *', declarations: { opacity: '0.65' } },
+    { selector: '&[data-drop-into]', declarations: dropInto },
+    { selector: '&[data-handle-start]', declarations: { 'margin-inline-start': '0' } },
   ],
+  'tree-view-drop-indicator': [{ declarations: listDropLine('tree-view') }],
   'tree-view-row-size-sm': [
     {
       declarations: {
@@ -70,13 +95,17 @@ export const treeViewAppearance: PresentationDictionary = {
     },
     { selector: ':host(:dir(rtl)) &', declarations: { 'background-image': guides('left') } },
     { selector: ':host([data-guides="none"]) &', declarations: { 'background-image': 'none' } },
+    { selector: `${handleStart} &`, declarations: { 'inset-inline-start': handleLead } },
   ],
   'tree-view-checkbox': [...checkboxRules],
   'tree-view-leading': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'tree-view-trailing': [
     { declarations: { gap: 'var(--tp-space-2)', color: 'var(--tp-muted-foreground)' } },
   ],
-  'tree-view-handle': [{ declarations: { cursor: 'grab' } }],
+  'tree-view-handle': [
+    { declarations: { cursor: 'grab' } },
+    { selector: `${handleStart} &`, declarations: { 'margin-inline-end': indentation } },
+  ],
   'tree-view-status': [
     {
       declarations: {

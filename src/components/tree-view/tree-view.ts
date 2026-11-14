@@ -35,6 +35,7 @@ import {
   toggleId,
   treeKeyAction,
   unionIds,
+  intoMove,
   validMove,
   withExpanded,
   withoutExpanded,
@@ -60,7 +61,10 @@ import type {
   TreeSelectionBehavior,
   TreeViewDropTarget,
   TreeViewExpansionTrigger,
+  TreeViewDragActivation,
+  TreeViewDropIndicator,
   TreeViewGuides,
+  TreeViewHandlePlacement,
   TreeViewItem,
   TreeViewLoadChildren,
   TreeViewMessages,
@@ -111,6 +115,9 @@ const markupAccessors = (loaded: ReadonlySet<string>): TreeAccessors<TpTreeItem>
  * @csspart item - Records mode: each rendered item; its parts are exported.
  * @csspart segment - Records mode: the transient region of rows entering or leaving.
  * @csspart empty - The empty region.
+ * @csspart drop-indicator - Records mode: the line between rows that marks where a dragged item lands.
+ * @cssprop --tp-tree-view-drop-indicator-color - The color of the line that marks where a dragged item lands.
+ * @cssprop --tp-tree-view-drop-indicator-size - The thickness of that line.
  * @fires tp-value-change - Selection proposal (cancelable).
  * @fires tp-expanded-change - Expansion proposal (cancelable).
  * @fires tp-items-change - Records-mode reorder proposal (cancelable); `detail.metadata.move`.
@@ -144,6 +151,9 @@ export class TpTreeView<T = TreeViewItem>
     itemSize: { type: Number, attribute: 'item-size' },
     overscan: { type: Number },
     reorderable: { type: Boolean, reflect: true },
+    dragActivation: { type: String, attribute: 'drag-activation', reflect: true },
+    dropIndicator: { type: String, attribute: 'drop-indicator', reflect: true },
+    handlePlacement: { type: String, attribute: 'handle-placement', reflect: true },
     canDrop: { attribute: false },
     size: { type: String, reflect: true },
     guides: { type: String, reflect: true },
@@ -186,7 +196,18 @@ export class TpTreeView<T = TreeViewItem>
       }
 
       .list {
+        position: relative;
         overflow-anchor: none;
+      }
+
+      /* Above the dragged row, which is lifted over the rest. */
+      [part~='drop-indicator'] {
+        position: absolute;
+        z-index: 2;
+        inset-inline-end: 0;
+        block-size: var(--_tp-drop-line, 2px);
+        translate: 0 -50%;
+        pointer-events: none;
       }
 
       .space {
@@ -246,7 +267,23 @@ export class TpTreeView<T = TreeViewItem>
   overscan = 4;
   /** Lets people drag items, or move them with the keyboard, to a new place; the tree proposes each move through `tp-items-change`. */
   reorderable = false;
-  /** Vetoes a move before it is proposed, for example into a read-only folder. */
+  /**
+   * Where a pointer drag starts: on the handle, or anywhere on the row; presses on the row's
+   * controls and on a parent's chevron stay theirs, and the handle stays shown.
+   */
+  dragActivation: TreeViewDragActivation = 'handle';
+  /**
+   * How a drag shows where the item lands: the rows make space for it, or a line between rows
+   * marks the place while the rows stay still. Either way, holding the pointer over the middle of
+   * a parent marks the parent, and the item lands as its last child.
+   */
+  dropIndicator: TreeViewDropIndicator = 'displace';
+  /** The edge of the row the reorder handle sits at. */
+  handlePlacement: TreeViewHandlePlacement = 'end';
+  /**
+   * Vetoes a move before it is proposed, for example into a read-only folder. When set, an item
+   * without children also takes a dragged item as a child where the predicate accepts it.
+   */
   canDrop: ((move: TreeMove) => boolean) | null = null;
   /** The row density. */
   size: TreeViewSize = 'default';
@@ -366,9 +403,20 @@ export class TpTreeView<T = TreeViewItem>
     model: () => this.#model,
     rows: () => this.#rows.ids,
     element: (id) => this.#element(id),
+    list: () => this.renderRoot?.querySelector<HTMLElement>('.list') ?? null,
+    activation: () => (this.dragActivation === 'item' ? 'item' : 'handle'),
+    indicator: () => (this.dropIndicator === 'line' ? 'line' : 'displace'),
+    nestable: () => this.canDrop !== null,
+    nests: (parentId, itemId) => {
+      const move = intoMove(this.#model, itemId, parentId);
+      return (
+        !!move && !this.#model.isDescendant(parentId, itemId) && (this.canDrop?.(move) ?? true)
+      );
+    },
     messages: () => this.resolvedMessages,
     direction: () => this.direction,
     indentation: () => this.#indentation(),
+    lead: () => this.#lead(),
     announce: (message) => this.#announce(message),
     accepts: (move) => this.#acceptsMove(move),
     commit: (move, reason, event) => this.#commitMove(move, reason, event),
@@ -779,7 +827,9 @@ export class TpTreeView<T = TreeViewItem>
       <div part="viewport">
         ${
           this.#records
-            ? html`<div class="list" role="none">${this.#renderRecords()}</div>`
+            ? html`<div class="list" role="none">
+                ${this.#renderRecords()}${this.#renderLine()}
+              </div>`
             : html`<slot @slotchange=${this.#scheduleRebuild}></slot>`
         }
       </div>
@@ -793,6 +843,30 @@ export class TpTreeView<T = TreeViewItem>
           : nothing
       }
     </div>`;
+  }
+
+  /** The insertion line of a line-marked drag. */
+  #renderLine(): unknown {
+    const line = this.#reorder.line;
+    return line
+      ? html`<div
+          part="drop-indicator"
+          aria-hidden="true"
+          style=${`inset-block-start:${line.top}px;inset-inline-start:${line.inset}px`}
+        ></div>`
+      : nothing;
+  }
+
+  /** A start handle's extent from the row's edge, which every depth keeps before its indentation. */
+  #lead(): number {
+    if (this.handlePlacement !== 'start') return 0;
+    const item = this.renderRoot?.querySelector<TpTreeItem>('tp-tree-item');
+    const row = item?.rowElement;
+    const handle = item?.renderRoot.querySelector<HTMLElement>("[part~='handle']");
+    if (!row || !handle) return 0;
+    const a = handle.getBoundingClientRect();
+    const b = row.getBoundingClientRect();
+    return Math.max(0, this.#direction === 'rtl' ? b.right - a.left : a.right - b.left);
   }
 
   #renderRecords(): unknown {
@@ -938,6 +1012,8 @@ export class TpTreeView<T = TreeViewItem>
       expansionTrigger: this.expansionTrigger,
       transition: id === this.#transitionId,
       dragging: this.#reorder.isSource(id),
+      dropInto: this.#reorder.isDropInto(id),
+      handlePlacement: this.handlePlacement === 'start' ? 'start' : 'end',
       direction: this.#direction,
     };
   }

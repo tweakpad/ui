@@ -1,4 +1,4 @@
-import { html, render, type PropertyValues } from 'lit';
+import { html, nothing, render, type PropertyValues } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import { TpElement } from '../../foundation/element.js';
 import { ControllableState, orderedValuesEqual } from '../../foundation/controllable-state.js';
@@ -110,6 +110,9 @@ type AccessibilityRegion = 'instructions' | 'announcements';
  * @csspart row-actions - Each row's actions, at its inline end.
  * @csspart empty - The row shown while the list has no items.
  * @csspart placeholder - The stand-in that keeps the dragged row's place.
+ * @csspart drop-indicator - The line between items that marks where a dragged item lands.
+ * @cssprop --tp-drag-drop-list-drop-indicator-color - The color of the line that marks where a dragged item lands.
+ * @cssprop --tp-drag-drop-list-drop-indicator-size - The thickness of that line.
  * @csspart overlay - The custom drag overlay drawn by `renderOverlay`.
  * @fires tp-value-change - Cancelable proposal of the new array before it commits, with the moved item, both lists and both indexes in `metadata`; a controlled list must publish the accepted `value`.
  * @fires tp-value-commit - After a drop commits, once per changed list.
@@ -134,7 +137,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
     value: { attribute: false, noAccessor: true },
     defaultValue: { attribute: false },
     activation: { type: String, reflect: true },
-    reorderMode: { type: String, attribute: 'reorder-mode', reflect: true },
+    dropIndicator: { type: String, attribute: 'drop-indicator', reflect: true },
     variant: { type: String, reflect: true },
     size: { type: String, reflect: true },
     label: { type: String },
@@ -165,8 +168,12 @@ export class TpDragDropList<T = unknown> extends TpElement {
   override orientation: 'vertical' | 'horizontal' = 'vertical';
   /** Where a pointer picks a row up: its handle, or anywhere on the row; the handle stays the keyboard target. */
   activation: 'handle' | 'item' = 'handle';
-  /** How a drop rearranges the list: by inserting the item, or by exchanging it with the item it lands on. */
-  reorderMode: 'move' | 'swap' = 'move';
+  /**
+   * How a pointer drag shows where the item lands: the items make room as it moves, or they stay
+   * still and a line between two of them marks the place until the drop. Keyboard moves always
+   * show the new order.
+   */
+  dropIndicator: 'displace' | 'line' = 'displace';
   /** The row treatment, shared with List item. */
   variant: 'ghost' | 'outline' | 'subdued' = 'ghost';
   /** The row density. */
@@ -263,6 +270,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
   #itemData = new Map<UniqueIdentifier, Record<string, unknown>>();
   #content = new Map<UniqueIdentifier, unknown>();
   #overlaySource: Draggable | undefined;
+  #translucent: HTMLElement | undefined;
   #boundRecords = new Map<UniqueIdentifier, ItemRecord<T>>();
   /** The items in their committed order; set it before the list connects to control it, then publish each accepted proposal back. The list never mutates the array. */
   get value(): readonly T[] {
@@ -396,6 +404,64 @@ export class TpDragDropList<T = unknown> extends TpElement {
     this.toggleAttribute('data-pending', this.#connectedManager?.pending ?? false);
     if (this.disabled || this.readOnly) this.cancelDrag();
     this.#animateSort();
+    this.#placeLine();
+  }
+  /**
+   * Places the line at the boundary the drop would land at: halfway across the gap between the
+   * two items around it, along the items' cross extent. The dragged item, lifted out of the
+   * flow, is stood in for by its placeholder.
+   */
+  #placeLine(): void {
+    const slot = this.controller.anchor,
+      list = this.#list,
+      line = this.renderRoot.querySelector<HTMLElement>("[part~='drop-indicator']");
+    if (slot === null || !list || !line) return;
+    const placeholder = list.querySelector<HTMLElement>(":scope > [part~='placeholder']");
+    const box = (index: number): DOMRect | null => {
+      const record = this.controller.records[index];
+      let element = record && this.#items.get(record.id);
+      if (element?.matches(':popover-open') || this.#sortables.get(record?.id ?? '')?.isDragSource)
+        element = placeholder ?? undefined;
+      return element?.isConnected ? element.getBoundingClientRect() : null;
+    };
+    let previous: DOMRect | null = null,
+      next: DOMRect | null = null;
+    for (let index = slot - 1; index >= 0 && !previous; index--) previous = box(index);
+    for (let index = slot; index < this.controller.records.length && !next; index++)
+      next = box(index);
+    const near = previous ?? next;
+    if (!near) return;
+    const style = getComputedStyle(list),
+      frame = list.getBoundingClientRect();
+    if (this.orientation === 'horizontal') {
+      const rtl = style.direction === 'rtl',
+        gap = parseFloat(style.columnGap) || 0;
+      const end = (rect: DOMRect) => (rtl ? rect.left : rect.right),
+        start = (rect: DOMRect) => (rtl ? rect.right : rect.left),
+        half = (rtl ? -gap : gap) / 2;
+      const x =
+        previous && next
+          ? (end(previous) + start(next)) / 2
+          : previous
+            ? end(previous) + half
+            : start(next!) - half;
+      line.style.left = `${x - frame.left}px`;
+      line.style.top = `${near.top - frame.top}px`;
+      line.style.height = `${near.height}px`;
+      line.style.width = '';
+    } else {
+      const gap = parseFloat(style.rowGap) || 0;
+      const y =
+        previous && next
+          ? (previous.bottom + next.top) / 2
+          : previous
+            ? previous.bottom + gap / 2
+            : next!.top - gap / 2;
+      line.style.top = `${y - frame.top}px`;
+      line.style.left = `${near.left - frame.left}px`;
+      line.style.width = `${near.width}px`;
+      line.style.height = '';
+    }
   }
   #participation(record: ItemRecord<T>, options?: Partial<SortableInput>) {
     return itemParticipation((options ?? this.#itemOptions.get(record.id))?.disabled, {
@@ -778,7 +844,11 @@ export class TpDragDropList<T = unknown> extends TpElement {
         'data-drop-target': this.containerTarget?.isDropTarget ?? false,
         'data-drop-disabled': this.disabled || this.readOnly,
       },
-      content,
+      content: html`${content}${
+        this.controller.anchor === null
+          ? nothing
+          : html`<li part="drop-indicator" aria-hidden="true"></li>`
+      }`,
     });
   }
   /** @internal The manager reports a drag event to each connected list. */
@@ -815,7 +885,22 @@ export class TpDragDropList<T = unknown> extends TpElement {
     }
     if (!this.emit(eventNames[name], event, { cancelable: event.cancelable }))
       event.preventDefault();
+    // A line marks the landing place and no stand-in shows, so the dragged item itself is the
+    // translucent one and the line shows through it. It is drawn outside this list's styles while
+    // it follows the pointer, so its own style carries the translucency.
+    if (
+      name === 'dragstart' &&
+      event.operation.source?.data.list === this.controller &&
+      this.dropIndicator === 'line' &&
+      event.operation.input === 'pointer'
+    ) {
+      const element = this.#items.get(event.operation.source.id);
+      element?.style.setProperty('opacity', '0.65');
+      this.#translucent = element;
+    }
     if (name === 'settled') {
+      this.#translucent?.style.removeProperty('opacity');
+      this.#translucent = undefined;
       this.#clearOverlay();
       const id = event.operation.source?.id;
       if (

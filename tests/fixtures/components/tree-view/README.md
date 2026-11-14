@@ -3,8 +3,13 @@
 Served by the Vite dev server (`npm run dev`), driven only through Chrome DevTools MCP. Append
 `?package` to load the built package (`npm run build` first).
 
-- `index.html`: markup, RTL, form, virtualized, disabled/read-only and empty trees; events in
-  `window.treeFixture.events`.
+- `index.html`: markup, RTL, form, virtualized, reorder, disabled/read-only and empty trees;
+  events in `window.treeFixture.events`. `#reorder` keeps the defaults (handle at the end, rows
+  make space); `#reorder-line` drags from the whole row, marks the place with a line and keeps the
+  handle at the start. In both, the middle half of `src` or `assets` drops into it as its last
+  child without expanding it, and the dragged row stays at 0.65 opacity until it settles.
+  Pointer gestures are dispatched on the deep `elementFromPoint` target with `pointerId: 1`
+  (Chrome's mouse; another id fails pointer capture and cancels the drag), one move per frame.
 - `markup-motion.html` + `markup-motion.ts`: expand/collapse motion of markup items.
   `assertMarkupMotion()` checks the first render, a collapse and an expand on a fresh load;
   `assertMove()` moves an expanded tree in a scrolled column (`moveBefore`, then `append`) and

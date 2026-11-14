@@ -40,6 +40,7 @@ import {
 } from './shared/document-content.js';
 import { documentCellPadding, documentTableRules } from './shared/document-table.js';
 import { nativeChoiceAppearance } from './shared/selection-control.js';
+import { dropLine } from './shared/drop-line.js';
 import { selectionFill, selectionLine } from './shared/selection.js';
 import { resizeSeparatorRules } from './shared/separator.js';
 import { statusAppearance } from './shared/status.js';
@@ -358,14 +359,7 @@ export const textEditorAppearance: PresentationDictionary = {
       },
     },
   ],
-  'text-editor-drop-indicator': [
-    {
-      declarations: {
-        'border-block-start': `calc(2 * var(--tp-border-width)) var(--tp-border-style) ${selectionLine}`,
-        translate: '0 -50%',
-      },
-    },
-  ],
+  'text-editor-drop-indicator': [{ declarations: dropLine }],
   // Tables (M9): the cell-range outline (R15), the resize separator line and ring (R14), the
   // resize guide, the quick-add Buttons filling their reserved space, the size picker and the
   // sticky header copy under the content binding (R25).

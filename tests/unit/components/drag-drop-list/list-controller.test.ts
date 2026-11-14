@@ -21,7 +21,7 @@ function list(
     group,
     disabled: false,
     readOnly: false,
-    reorderMode: 'move',
+    dropIndicator: 'displace',
     getItemId: undefined,
     getItemLabel: undefined,
     updateComplete: Promise.resolve(true),
@@ -166,16 +166,15 @@ describe('connected canonical list transactions', () => {
     expect(a.controller.moveItem('a', { list: b.host, index: 0 })).toBe('rejected');
     m.destroy();
   });
-  it('keeps no-op references and same-list swap semantics', () => {
+  it('keeps no-op references and moves within a list', () => {
     const m = manager(),
       original = Object.freeze([{ id: 'a' }, { id: 'b' }, { id: 'c' }]),
       a = list(m, 'a', original);
     expect(a.controller.moveItem('a', { index: 0 })).toBe('no-op');
     expect(a.host.value).toBe(original);
     expect(a.commits).toEqual([]);
-    a.host.reorderMode = 'swap';
     expect(a.controller.moveItem('a', { index: 2 })).toBe('accepted');
-    expect(a.host.value.map((x) => x.id)).toEqual(['c', 'b', 'a']);
+    expect(a.host.value.map((x) => x.id)).toEqual(['b', 'c', 'a']);
     m.destroy();
   });
 });

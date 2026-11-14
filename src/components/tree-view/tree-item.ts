@@ -448,6 +448,8 @@ export class TpTreeItem extends TpElement {
     const messages = this.owner?.resolvedMessages;
     const status = state?.status ?? 'idle';
     const checked = state?.checked;
+    const handleStart = state?.handlePlacement === 'start';
+    const handle = html`<span part="handle"><slot name="handle"></slot></span>`;
     const row = html`<div
       part="row"
       class="row"
@@ -457,8 +459,11 @@ export class TpTreeItem extends TpElement {
       ?data-expanded=${expanded}
       ?data-disabled=${Boolean(state?.disabled)}
       ?data-dragging=${Boolean(state?.dragging)}
+      ?data-drop-into=${Boolean(state?.dropInto)}
+      ?data-handle-start=${handleStart && Boolean(state?.reorderable)}
     >
       <span part="indent" aria-hidden="true" data-depth=${depth}></span>
+      ${handleStart ? handle : nothing}
       <span
         part="indicator"
         aria-hidden="true"
@@ -488,7 +493,7 @@ export class TpTreeItem extends TpElement {
       <span part="leading"><slot name="leading"></slot></span>
       <span part="label"><slot></slot></span>
       <span part="trailing"><slot name="trailing"></slot></span>
-      <span part="handle"><slot name="handle"></slot></span>
+      ${handleStart ? nothing : handle}
     </div>`;
     const statusLine =
       expanded && (status === 'loading' || status === 'error')

@@ -20,6 +20,23 @@ export const layersStyles = css`
     min-inline-size: 0;
   }
 
+  .region {
+    display: flex;
+    align-items: center;
+    gap: inherit;
+    min-inline-size: 0;
+  }
+
+  /* The start region takes the free space, so the end region sits at the bar's end. */
+  .region[data-region='start'] {
+    flex: 1 1 auto;
+  }
+
+  .region[data-region='end'] {
+    flex: 0 0 auto;
+  }
+
+  .region[data-region='end'][data-empty],
   .bar[data-empty],
   .tree[hidden],
   .empty[hidden] {

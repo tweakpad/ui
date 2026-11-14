@@ -417,6 +417,42 @@ document.querySelector('#tree-view-methods-reveal').addEventListener('click', ()
 </tp-tree-view>`}
 />
 
+### Dragging
+
+`drag-activation="item"` starts a drag anywhere on a row, not only on its handle; a press without a move still selects, and presses on the row's own controls or on a parent's chevron never drag. `drop-indicator="line"` keeps the rows still and marks the landing place with a line between them, inset to the level the item lands at. `handle-placement="start"` puts the handle at the row's starting edge, where it stays at every level.
+
+Holding the pointer over the middle of a parent marks the parent, and the item lands as its last child, whether the parent is expanded or not; the parent does not expand. A parent is any item with children, and any item `canDrop` accepts as one; with `canDrop` set, moving sideways nests an item only under items it accepts. The dragged item follows the pointer, translucent, and glides from it to its new place on release as the rows around it make room; with reduced motion, it moves at once.
+
+<Preview
+  title="Whole rows and a line"
+  code={`<div id="tree-view-drag-mount"></div>`}
+  script={`await customElements.whenDefined('tp-tree-view');
+const tree = document.createElement('tp-tree-view');
+tree.label = 'Trip plan';
+tree.size = 'sm';
+tree.reorderable = true;
+tree.dragActivation = 'item';
+tree.dropIndicator = 'line';
+tree.handlePlacement = 'start';
+tree.style.inlineSize = '18rem';
+tree.defaultExpanded = ['day-1'];
+tree.defaultItems = [
+  { id: 'day-1', label: 'Day 1', children: [
+    { id: 'gallery', label: 'Harbor gallery' },
+    { id: 'market', label: 'Lunch at the market' },
+  ] },
+  { id: 'day-2', label: 'Day 2', children: [
+    { id: 'ridge', label: 'Ridge trail' },
+    { id: 'springs', label: 'Hot springs' },
+  ] },
+  { id: 'day-3', label: 'Day 3', children: [] },
+  { id: 'ferry', label: 'Night ferry' },
+];
+// Only days hold stops, the empty one included.
+tree.canDrop = (move) => move.toParentId === null || move.toParentId.startsWith('day-');
+document.querySelector('#tree-view-drag-mount').append(tree);`}
+/>
+
 ### Keyboard
 
 | Key        | Action                                             |

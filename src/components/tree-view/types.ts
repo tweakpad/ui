@@ -28,6 +28,12 @@ export type TreeViewExpansionTrigger = 'item' | 'indicator';
  */
 export type TreeSelectionBehavior = 'toggle' | 'replace';
 export type TreeViewGuides = 'line' | 'none';
+/** Where a pointer drag can start: on the handle only, or anywhere on the row but its controls. */
+export type TreeViewDragActivation = 'handle' | 'item';
+/** How a drag shows its landing place: rows make space for it, or a line marks it. */
+export type TreeViewDropIndicator = 'displace' | 'line';
+/** The edge of the row the reorder handle sits at. */
+export type TreeViewHandlePlacement = 'start' | 'end';
 export type TreeViewSize = 'sm' | 'default';
 
 /** Row state handed to `renderItem` and pushed to each mounted Item. */
@@ -60,8 +66,11 @@ export interface TreeItemState {
   readonly expansionTrigger: TreeViewExpansionTrigger;
   /** True only for the one render in which this item's expansion animates. */
   readonly transition: boolean;
-  /** The item is the source of a reorder in progress. */
+  /** The item is the source of a reorder in progress, until it settles in its new place. */
   readonly dragging: boolean;
+  /** A dragged item would land as the last child of this item. */
+  readonly dropInto: boolean;
+  readonly handlePlacement: TreeViewHandlePlacement;
   /** Text direction resolved once by the tree, so rows do not each read computed style. */
   readonly direction: Direction;
 }
