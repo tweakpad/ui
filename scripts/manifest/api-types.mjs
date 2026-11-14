@@ -38,6 +38,9 @@ const SKIPPED_ENTRY =
 const CITATION =
   /§|\b[a-z]{2,4}-[a-z]{2,6}-(?:req|par|tab)-|\b(?:Widgets|Foundation)(?: Specification)? §?\d|\bSpecification \d/u;
 
+/** A built-in type with more members than this shows only its header, as an editor's hover does. */
+const PLATFORM_MEMBERS = 12;
+
 const TYPE_DECLARATION = (node) =>
   ts.isInterfaceDeclaration(node) ||
   ts.isTypeAliasDeclaration(node) ||
@@ -66,6 +69,8 @@ export function buildApiTypes({ root, manifest, packageJson }) {
   const source = resolve(root, 'src');
   const projectFile = (file) =>
     !!file && resolve(file.fileName).startsWith(source) && !file.isDeclarationFile;
+  /** The platform's own types (the DOM, the language), which need no import. */
+  const platformFile = (file) => !!file && program.isSourceFileDefaultLibrary(file);
   const printer = ts.createPrinter({ removeComments: true, newLine: ts.NewLineKind.LineFeed });
 
   /** A symbol through its import aliases. */
@@ -73,7 +78,9 @@ export function buildApiTypes({ root, manifest, packageJson }) {
     symbol && symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol;
   const declarationOf = (symbol) => symbol?.declarations?.find(TYPE_DECLARATION);
   const idOf = (symbol, declaration) =>
-    `${relative(root, declaration.getSourceFile().fileName).split('\\').join('/')}#${symbol.name}`;
+    platformFile(declaration.getSourceFile())
+      ? `lib#${symbol.name}`
+      : `${relative(root, declaration.getSourceFile().fileName).split('\\').join('/')}#${symbol.name}`;
 
   // Which package entry exports each project type: the shortest specifier wins.
   const importFrom = new Map();
@@ -126,11 +133,15 @@ export function buildApiTypes({ root, manifest, packageJson }) {
   const symbols = {};
   const pending = [];
   const problems = new Set();
-  /** The card id of a project type symbol, queuing its card; undefined for any other symbol. */
+  /**
+   * The card id of a library or platform type symbol, queuing its card; undefined for any other
+   * symbol (a value, a type parameter, a third-party type).
+   */
   const reach = (symbol, via) => {
     const resolved = target(symbol);
     const declaration = declarationOf(resolved);
-    if (!declaration || !projectFile(declaration.getSourceFile())) return undefined;
+    const file = declaration?.getSourceFile();
+    if (!declaration || !(projectFile(file) || platformFile(file))) return undefined;
     const id = idOf(resolved, declaration);
     if (!(id in symbols)) {
       symbols[id] = null;
@@ -222,8 +233,21 @@ export function buildApiTypes({ root, manifest, packageJson }) {
       }
       ts.forEachChild(node, visit);
     };
+    const platform = platformFile(declaration.getSourceFile());
+    const members = declaration.members?.length ?? 0;
     let text;
-    if (ts.isClassDeclaration(declaration)) {
+    if (platform && (ts.isClassDeclaration(declaration) || members > PLATFORM_MEMBERS)) {
+      // A large built-in type (`HTMLElement`): its header, its doc comment says the rest.
+      const keyword = ts.isClassDeclaration(declaration) ? 'class' : 'interface';
+      const heritage = (declaration.heritageClauses ?? [])
+        .map((clause) => clause.getText())
+        .join(' ');
+      const parameters = declaration.typeParameters
+        ? `<${declaration.typeParameters.map((parameter) => parameter.getText()).join(', ')}>`
+        : '';
+      text = `${keyword} ${symbol.name}${parameters}${heritage ? ` ${heritage}` : ''} { … }`;
+      for (const clause of declaration.heritageClauses ?? []) visit(clause);
+    } else if (ts.isClassDeclaration(declaration)) {
       // A class used as a type: its header, not its body.
       const heritage = (declaration.heritageClauses ?? [])
         .map((clause) => clause.getText())
@@ -269,8 +293,11 @@ export function buildApiTypes({ root, manifest, packageJson }) {
       declaration: text,
       documentation,
       ...(exported ? { importFrom: exported.from } : {}),
+      ...(platform ? { platform: true } : {}),
       refs,
     };
+    // The platform's types are documented by the platform; only the library's are checked.
+    if (platform) continue;
     if (!exported)
       problems.add(
         `${symbol.name} (${id.split('#')[0]}) is not exported from a package entry; reached from ${via}`,

@@ -21,9 +21,13 @@ const manifestReload = (): Plugin => ({
     );
     // Polled, not Vite's watcher: that one never reports `dist/`, and `npm run build` deletes and
     // recreates it.
+    // The loaders glob the files: while a build has deleted them, the glob resolves to nothing, so
+    // they are invalidated too, not only the data modules.
+    const loaders = ['manifest.ts', 'types.ts'].map((name) => resolve(import.meta.dirname, name));
     const reload = (file: string) => {
-      for (const module of server.moduleGraph.getModulesByFile(file) ?? [])
-        server.moduleGraph.invalidateModule(module);
+      for (const path of [file, ...loaders])
+        for (const module of server.moduleGraph.getModulesByFile(path) ?? [])
+          server.moduleGraph.invalidateModule(module);
       server.ws.send({ type: 'full-reload' });
     };
     for (const file of files)

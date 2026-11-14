@@ -88,8 +88,9 @@ as its source.
     - **A click opens the type's card**, as an editor's hover does: a popover anchored to the token
       with the type's declaration (pretty-printed, highlighted), its doc comment, and the import
       that gives it (`import type { X } from '@tweakpad/ui/drag-drop'`). Type names in the card
-      open their own cards, and the card keeps a back step. Platform and third-party types end the
-      chain as plain names.
+      open their own cards, and the card keeps a back step. Platform types (`FocusOptions`,
+      `HTMLElement`) open cards too, from TypeScript's own declarations and docs, marked as needing
+      no import; a large one shows its header only. Third-party types stay plain names.
     - **Generated, never authored; linking is automatic.** Signatures and cards are read from the
       TypeScript compiler when `npm run cem` runs (`dist/api-types.json`), for every row a page can
       show, inherited ones included. Any code the docs render links a library type it names: a

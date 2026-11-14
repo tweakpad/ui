@@ -195,8 +195,18 @@ body:has(.sbdocs-wrapper) {
   outline-offset: 1px;
 }
 
+/* An API group without defaults: no Default column of dashes. */
+.sbdocs .tp-docs-api-no-default .docblock-argstable :is(th, td):nth-child(3) {
+  display: none;
+}
+
 /* A row whose description ends in its signature shows no separate type placeholder. */
 .sbdocs .docblock-argstable td > div:has(.tp-docs-signature) + div {
+  display: none;
+}
+
+/* A group without types (slots, parts) shows no type placeholder under its descriptions. */
+.sbdocs .tp-docs-api-no-type .docblock-argstable td:nth-child(2) > div + div {
   display: none;
 }
 

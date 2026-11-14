@@ -31,6 +31,8 @@ export interface ApiSymbol {
   documentation: string;
   /** The package entry that exports it (`@tweakpad/ui/drag-drop`). */
   importFrom?: string;
+  /** A type of the platform (the DOM, the language): global, no import needed. */
+  platform?: true;
   /** The project type names the declaration and its doc comment mention, by card id. */
   refs: Record<string, string>;
 }

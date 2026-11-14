@@ -223,7 +223,18 @@ export function ApiRows({ label, id, level, rows, tag }) {
   return (
     <>
       <Heading id={id}>{label}</Heading>
-      <PureArgsTable rows={argTypes} sort="none" />
+      {/* A group without defaults (events, methods, slots, parts) drops the Default column, and one
+      without types (slots, parts) the type placeholder under each description. */}
+      <div
+        className={[
+          rows.some((row) => row.default) ? '' : 'tp-docs-api-no-default',
+          rows.some((row) => row.type || row.signature) ? '' : 'tp-docs-api-no-type',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <PureArgsTable rows={argTypes} sort="none" />
+      </div>
     </>
   );
 }
@@ -395,6 +406,10 @@ export function TypeCard() {
           {card.importLine ? (
             <footer>
               <code>{card.importLine}</code>
+            </footer>
+          ) : card.platform ? (
+            <footer>
+              <span className="tp-docs-type-kind">Built into the platform: no import needed.</span>
             </footer>
           ) : null}
         </>

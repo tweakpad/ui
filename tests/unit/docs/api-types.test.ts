@@ -121,9 +121,13 @@ describe('api types from the compiler', () => {
     expect(card.importFrom).toBe('@scope/ui');
     expect(card.refs).toEqual({ Base: 'src/options.ts#Base' });
     expect(types.symbols['src/options.ts#ItemContext']!.refs).toEqual({
+      // A platform type opens its card too, read from the language's own declarations.
+      Omit: 'lib#Omit',
       Position: 'src/options.ts#Position',
     });
     expect(types.symbols['src/options.ts#Position']).toBeDefined();
+    expect(types.symbols['lib#Omit']).toMatchObject({ kind: 'type', platform: true });
+    expect(types.symbols['lib#Omit']!.importFrom).toBeUndefined();
   });
 
   it('fails a reached type that no package entry exports', () => {
