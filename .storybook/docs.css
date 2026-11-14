@@ -195,6 +195,94 @@ body:has(.sbdocs-wrapper) {
   outline-offset: 1px;
 }
 
+/* A Properties row's badges: `attr` (filled) when an attribute also sets the property, its tooltip
+   (hover or focus) naming the attribute, and `read-only` (outline). They belong after the name,
+   but Storybook's name column takes text only: they are written with the description and placed
+   after the row's name with anchor positioning, `read-only` after `attr` when both show. */
+.sbdocs .docblock-argstable tbody tr {
+  position: relative;
+  anchor-scope: --tp-docs-name, --tp-docs-attr;
+}
+
+.sbdocs .docblock-argstable tbody tr > td:first-child > span:first-child {
+  anchor-name: --tp-docs-name;
+}
+
+.sbdocs :is(.tp-docs-attr, .tp-docs-flag) {
+  position: absolute;
+  inset-block-start: anchor(center);
+  inset-inline-start: calc(anchor(end) + 0.375rem);
+  box-sizing: border-box;
+  display: inline-block;
+  padding: 0 0.375rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font: 500 0.6875rem / 1.4 var(--tp-font-mono);
+  position-anchor: --tp-docs-name;
+  translate: 0 -50%;
+  white-space: nowrap;
+}
+
+.sbdocs .tp-docs-attr {
+  anchor-name: --tp-docs-attr;
+  background: var(--tp-primary);
+  color: var(--tp-primary-foreground);
+  cursor: help;
+}
+
+.sbdocs .tp-docs-flag {
+  border-color: var(--tp-border);
+  color: var(--tp-muted-foreground);
+}
+
+.sbdocs .docblock-argstable tr:has(.tp-docs-attr) .tp-docs-flag {
+  position-anchor: --tp-docs-attr;
+}
+
+.sbdocs .tp-docs-attr:focus-visible {
+  outline: 2px solid var(--tp-ring);
+  outline-offset: 2px;
+}
+
+.sbdocs .tp-docs-attr::after {
+  position: absolute;
+  inset-block-end: calc(100% + 6px);
+  inset-inline-start: 0;
+  z-index: 1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  background: var(--tp-foreground);
+  color: var(--tp-background);
+  font: 0.75rem / 1.4 var(--tp-font-mono);
+  white-space: nowrap;
+
+  /* Shown only: the badge's hidden text already names the attribute for assistive technology. */
+  content: 'attribute ' attr(data-attribute) / '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+
+/* Like the library's Tooltip: hover shows it after 200 ms, focus at once. */
+.sbdocs .tp-docs-attr:hover::after {
+  opacity: 1;
+  transition-delay: 0.2s;
+}
+
+.sbdocs .tp-docs-attr:focus::after {
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.sbdocs .tp-docs-visually-hidden {
+  position: absolute;
+  overflow: hidden;
+  inline-size: 1px;
+  block-size: 1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* An API group without defaults: no Default column of dashes. */
 .sbdocs .tp-docs-api-no-default .docblock-argstable :is(th, td):nth-child(3) {
   display: none;

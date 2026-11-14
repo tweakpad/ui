@@ -8,7 +8,7 @@ import { ThemedDocsContainer } from './docs-container.mdx';
 import { applyAppearance, applyDensity, applyTheme, themePreference } from './docs-theme.js';
 import { manifest } from './manifest.js';
 import { elementApi, elementDeclaration } from '../src/docs/api.js';
-import { memberDescription, rowProseHtml, signatureHtml } from './api-rows.js';
+import { attributeBadge, memberDescription, rowProseHtml, signatureHtml } from './api-rows.js';
 
 /** An object without some keys: one table has no categories, and a row without a default shows none. */
 const withoutKeys = <T extends object>(value: T | undefined, keys: readonly string[]): Partial<T> =>
@@ -217,6 +217,7 @@ const preview = definePreview({
         const base = declaration?.members?.find(
           (member) => member.name === name && member.kind === 'field',
         );
+        const attribute = declaration?.attributes?.find((entry) => entry.fieldName === name)?.name;
         if (base && driven.has(name))
           rows.push([
             name,
@@ -224,7 +225,12 @@ const preview = definePreview({
               ...withoutKeys(argType, ['type']),
               name,
               description: [
-                rowProseHtml(component as string, base.description ?? ''),
+                [
+                  attribute ? attributeBadge(attribute) : '',
+                  rowProseHtml(component as string, base.description ?? ''),
+                ]
+                  .filter(Boolean)
+                  .join(' '),
                 signatureHtml(
                   component as string,
                   base.type?.text?.replace(/\s*\|\s*undefined$/u, '') ?? '',

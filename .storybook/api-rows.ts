@@ -61,15 +61,33 @@ export function signatureHtml(tag: string, code: string): string {
 }
 
 /**
- * A Properties row's description: the attribute that sets it, what it does, read-only state and
- * its type as the compiler declares it, one line whose type names open their cards. Storybook's
- * own type chip stays empty, so the type shows once and never widens the table.
+ * The `attr` badge of a property an attribute also sets: hover or focus shows the attribute's
+ * name, and assistive technology reads it. Native (no library elements in the docs chrome), its
+ * tooltip drawn by `docs.css`.
+ */
+export function attributeBadge(attribute: string): string {
+  const name = escape(attribute);
+  return `<span class="tp-docs-attr" tabindex="0" data-attribute="${name}"><span aria-hidden="true">attr</span><span class="tp-docs-visually-hidden">Attribute ${name}</span></span>`;
+}
+
+/** The outline `read-only` badge of a property that cannot be set; drawn after the name. */
+const readOnlyBadge = '<span class="tp-docs-flag">read-only</span>';
+
+/**
+ * A Properties row's description: its badges (`attr` when an attribute sets it, `read-only`),
+ * which `docs.css` places after the row's name, what it does, and its type as the compiler
+ * declares it, one line whose type names open their cards. Storybook's own type chip stays
+ * empty, so the type shows once and never widens the table.
  */
 export function memberDescription(row: ApiMember, tag: string): string {
   return [
-    row.attribute ? `Attribute \`${row.attribute}\`` : '',
-    rowProseHtml(tag, row.description),
-    row.readonly ? 'Read-only.' : '',
+    [
+      row.attribute ? attributeBadge(row.attribute) : '',
+      row.readonly ? readOnlyBadge : '',
+      rowProseHtml(tag, row.description),
+    ]
+      .filter(Boolean)
+      .join(' '),
     signatureHtml(tag, row.type),
   ]
     .filter(Boolean)

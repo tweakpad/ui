@@ -75,7 +75,7 @@ export class TpTooltip extends TpHoverSurface {
     return this.describes === 'none' ? { ...properties, 'aria-hidden': 'true' } : properties;
   }
   protected override get defaultHoverDelay(): number {
-    return 600;
+    return 200;
   }
   #hints = new Set<TpElement>();
   protected override updated(changed: PropertyValues<this>): void {
