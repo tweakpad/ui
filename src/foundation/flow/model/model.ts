@@ -215,6 +215,10 @@ function definedOnly<T extends object>(value: T): Partial<T> {
   return result;
 }
 
+/**
+ * The flow document's state holder: applies and validates changes, keeps history and indices, and
+ * notifies subscribers.
+ */
 export class FlowModel<
   N extends FlowNode = FlowNode,
   E extends FlowEdge = FlowEdge,

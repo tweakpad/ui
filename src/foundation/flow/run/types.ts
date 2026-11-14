@@ -1,14 +1,19 @@
 /**
- * Run visualization types (Widgets §6.3 Run state): node and edge statuses, the event union a
- * host pushes (live) or replays (trace) and the derived run record.
+ * Run visualization types: node and edge statuses, the event union a host pushes (live) or
+ * replays (trace) and the derived run record.
  */
+
+/** The run state of one node, which the node's status marker shows. */
 export type FlowNodeRunStatus =
   'idle' | 'pending' | 'running' | 'waiting' | 'success' | 'failed' | 'skipped' | 'cancelled';
 
+/** How an edge shows during a run: inactive, active, taken, not taken or disabled. */
 export type FlowEdgeRunStatus = 'inactive' | 'active' | 'taken' | 'not-taken' | 'disabled';
 
+/** The overall state of a run, from idle through running or paused to how it ended. */
 export type FlowRunStatus = 'idle' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled';
 
+/** Fields every run event carries: its timestamp and optional sequence number and run id. */
 export interface FlowRunEventBase {
   /** Sequence number; gaps are buffered and duplicates ignored. */
   seq?: number | undefined;
@@ -17,6 +22,7 @@ export interface FlowRunEventBase {
   runId?: string | undefined;
 }
 
+/** The kind-specific part of a run event, one variant per run, node or edge transition. */
 export type FlowRunEventBody =
   /** `scope` limits the run to those nodes; nodes outside it keep their earlier results. */
   | { type: 'run_started'; scope?: readonly string[] | undefined }
@@ -41,9 +47,14 @@ export type FlowRunEventBody =
   | { type: 'run_failed'; error: string }
   | { type: 'run_cancelled' };
 
+/**
+ * One step of a run that a host pushes live or replays from a trace, such as a node starting or
+ * failing.
+ */
 export type FlowRunEvent = FlowRunEventBase & FlowRunEventBody;
 export type FlowRunEventType = FlowRunEventBody['type'];
 
+/** What a run knows about one node: its status, attempts, timing, progress, output and problems. */
 export interface FlowNodeRunState {
   status: FlowNodeRunStatus;
   attempts: number;
@@ -60,6 +71,7 @@ export interface FlowNodeRunState {
   waiting?: { reason?: string | undefined; options?: readonly string[] | undefined } | undefined;
 }
 
+/** What a run knows about one edge: its status and when it changed. */
 export interface FlowEdgeRunState {
   status: FlowEdgeRunStatus;
   /** Set by an `edge_taken` event. */
@@ -67,6 +79,7 @@ export interface FlowEdgeRunState {
   at?: number | undefined;
 }
 
+/** The run record derived from the events applied so far, with the state of every node and edge. */
 export interface FlowRun {
   id: string;
   status: FlowRunStatus;
@@ -99,6 +112,7 @@ export interface FlowRunGraph {
   incoming: Map<string, string[]>;
 }
 
+/** A recorded list of run events, replayed to show a past run. */
 export type FlowTrace = readonly FlowRunEvent[];
 
 /** What a run request covers: every node, one node, a node and its downstream, or its upstream and it. */

@@ -38,6 +38,7 @@ export class TpTimeline extends TpElement {
   };
   static override styles = [TpElement.styles, ...timelineListStyles];
 
+  /** The direction the items run along the timeline. */
   override orientation: Orientation = 'vertical';
   /** Side of the axis holding item content. */
   align: TimelineAlign = 'end';

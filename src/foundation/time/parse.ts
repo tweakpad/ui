@@ -10,6 +10,7 @@ export type TimeKind =
   | 'time'
   | 'duration';
 
+/** A duration split into calendar and clock units. */
 export interface TimeDuration {
   years: number;
   months: number;
@@ -20,6 +21,9 @@ export interface TimeDuration {
   seconds: number;
 }
 
+/**
+ * A parsed time value with its kind, its instant or wall-clock time, and its machine-readable form.
+ */
 export interface ResolvedTime {
   readonly kind: TimeKind;
   /** Epoch milliseconds; present for `instant`. */

@@ -33,9 +33,15 @@ import {
 } from './export.js';
 import { DEFAULT_QR_CODE_MESSAGES, type QrCodeMessages } from './messages.js';
 
+/** The side of a QR code's tile. */
 export type QrCodeSize = 'sm' | 'default' | 'lg';
+/**
+ * The outcome of encoding a QR code's current value: nothing to encode, encoded, or an error when
+ * the value does not fit.
+ */
 export type QrCodeStatus = 'empty' | 'encoded' | 'error';
 
+/** Options for exporting a QR code as an image: the side in pixels and the JPEG quality. */
 export interface QrExportOptions {
   /** Side in pixels; `exportSize` by default. */
   readonly size?: number;
@@ -43,11 +49,16 @@ export interface QrExportOptions {
   readonly quality?: number;
 }
 
+/** Options for a QR code's `download()`: the export size, quality and file name. */
 export interface QrDownloadOptions extends QrExportOptions {
   /** File name, with or without the format's extension; `filename` by default. */
   readonly filename?: string;
 }
 
+/**
+ * Detail of the cancelable `tp-download` event: the format, size and file name of the download and
+ * the event that started it.
+ */
 export interface QrDownloadDetail {
   readonly format: QrExportFormat;
   readonly size: number;
@@ -55,6 +66,7 @@ export interface QrDownloadDetail {
   readonly sourceEvent?: Event;
 }
 
+/** Detail of `tp-download-error`: the failed download and the error the export raised. */
 export interface QrDownloadErrorDetail extends QrDownloadDetail {
   readonly error: unknown;
 }

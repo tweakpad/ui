@@ -3,6 +3,7 @@ import type { ChangeReason } from './types.js';
 
 /** A color scheme preference; `system` follows the device. */
 export type ColorSchemePreference = 'light' | 'dark' | 'system';
+/** The color scheme in effect once a `system` preference is resolved against the device. */
 export type ResolvedColorScheme = 'light' | 'dark';
 
 export interface ColorSchemeState {

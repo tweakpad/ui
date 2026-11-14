@@ -13,6 +13,7 @@ export interface MediaTextTrackState {
   readonly mode: string;
 }
 
+/** A timed text cue, such as a caption or a thumbnail entry, with its start and end in seconds. */
 export interface MediaCue {
   readonly id?: string;
   readonly startTime: number;
@@ -20,6 +21,7 @@ export interface MediaCue {
   readonly text: string;
 }
 
+/** The text track that supplies preview thumbnails for the time slider. */
 export interface MediaThumbnailsTrack {
   readonly cues: readonly MediaCue[];
   /** Source of the `<track>` element, which cue URLs resolve against; `null` when unknown. */
@@ -28,6 +30,7 @@ export interface MediaThumbnailsTrack {
   readonly crossOrigin: 'anonymous' | 'use-credentials' | null;
 }
 
+/** An audio track of the current media as the player state reports it. */
 export interface MediaAudioTrackState {
   readonly id: string;
   readonly kind?: string;
@@ -36,6 +39,7 @@ export interface MediaAudioTrackState {
   readonly enabled: boolean;
 }
 
+/** One quality rendition of the current video as the player state reports it. */
 export interface MediaVideoRenditionState {
   readonly id: string;
   readonly width?: number;
@@ -46,15 +50,21 @@ export interface MediaVideoRenditionState {
   readonly selected: boolean;
 }
 
+/** The media error the player currently shows, or reports through its state. */
 export interface MediaErrorState {
   readonly code: number;
   readonly message: string;
   readonly fatal: boolean;
 }
 
+/** Coarse volume bucket that picks the volume icon. */
 export type MediaVolumeLevel = 'off' | 'low' | 'medium' | 'high';
+/** Connection state of remote playback, such as casting to another device. */
 export type MediaRemotePlaybackState = 'disconnected' | 'connecting' | 'connected';
 
+/**
+ * Snapshot of everything the media player knows about its media, read by its controls to render.
+ */
 export interface MediaState {
   // playback
   readonly paused: boolean;
@@ -126,7 +136,9 @@ export const LIVE_EDGE_START_TOLERANCE = 5;
 /** Live-edge tolerance measured from the seekable end, in seconds. */
 export const LIVE_EDGE_SEEKABLE_TOLERANCE = 10;
 
+/** Screen orientation the player locks to in fullscreen, or `none` to leave it free. */
 export type MediaOrientationLock = 'none' | OrientationLockType;
+/** Authored stream type: `auto` detects it from the media, `on-demand` and `live` force it. */
 export type MediaStreamTypeConfig = 'auto' | 'on-demand' | 'live';
 
 /**

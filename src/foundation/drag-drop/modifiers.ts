@@ -9,19 +9,33 @@ import {
 } from './geometry.js';
 import { measureElement, viewportRectangle } from './dom-geometry.js';
 
+/**
+ * The drag state a modifier receives: the proposed transform, the dragged shape and the source
+ * element.
+ */
 export interface ModifierOperation {
   transform: Coordinates;
   shape: { initial: Rectangle; current: Rectangle } | null;
   source: { element?: Element | null } | null;
 }
+/**
+ * Adjusts the transform of a dragged item on every move, for example to lock it to an axis or keep
+ * it inside a container.
+ */
 export interface Modifier {
   disabled?: boolean;
   apply(operation: ModifierOperation): Coordinates;
   end?(): void;
   destroy?(): void;
 }
+/** Creates a fresh modifier for each manager or draggable that uses it. */
 export type ModifierFactory = () => Modifier;
+/** A modifier given directly or as a factory that creates one. */
 export type ModifierInput = Modifier | ModifierFactory;
+/**
+ * The modifiers a manager or draggable applies, as a list or as a function that receives the
+ * defaults and returns the list.
+ */
 export type ModifierConfiguration =
   readonly ModifierInput[] | ((defaults: readonly ModifierInput[]) => readonly ModifierInput[]);
 

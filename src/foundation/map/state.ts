@@ -10,8 +10,13 @@ import type { ChangeReason } from '../types.js';
 import type { MapScheme } from './engine.js';
 import { DEFAULT_CAMERA, type MapBounds, type MapCamera } from './geo.js';
 
+/** Where a map is in loading its engine: idle, loading, ready or failed. */
 export type MapStatus = 'idle' | 'loading' | 'ready' | 'error';
 
+/**
+ * The map's current published state, such as its camera, selection and status, read from `state`
+ * or through `subscribe`.
+ */
 export interface MapState {
   readonly status: MapStatus;
   readonly camera: MapCamera;
@@ -38,6 +43,7 @@ export const DEFAULT_MAP_STATE: MapState = Object.freeze({
   pinCount: 0,
 });
 
+/** How a map subscription compares selected values and when it ends. */
 export interface MapSubscribeOptions<S> {
   readonly equality?: StoreEquality<S>;
   readonly signal?: AbortSignal;

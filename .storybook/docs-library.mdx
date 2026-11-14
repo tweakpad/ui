@@ -2,6 +2,7 @@ import React, { Fragment } from 'react';
 import {
   Canvas,
   Description,
+  Markdown,
   PureArgsTable,
   Source,
   Title,
@@ -11,6 +12,9 @@ import { MDXProvider } from '@storybook/addon-docs/mdx-react-shim';
 import { DocsTable } from './docs-table.js';
 import { manifest } from './manifest.js';
 import { elementApi } from '../src/docs/api.js';
+import { symbolCard } from '../src/docs/api-types.js';
+import { memberDescription, signatureHtml } from './api-rows.js';
+import { types } from './types.js';
 import { mountPreview, previewSource } from '../src/docs/preview-runtime.js';
 
 export const LibraryDocContext = React.createContext(null);
@@ -191,9 +195,11 @@ export function LibraryDoc() {
   return <DocContent Content={Content} hero={page.hero} previews={page.previews} />;
 }
 
-export function ApiRows({ label, id, level, rows }) {
+export function ApiRows({ label, id, level, rows, tag }) {
   // One group of API rows in Storybook's own args table (the look of the Controls table above),
-  // read-only: no args, so no Control column. Descriptions are Markdown, so code spans render.
+  // read-only: no args, so no Control column. Descriptions are Markdown, so code spans render. A
+  // row's `signature` closes its description as clickable type tokens, so the type chip is left
+  // empty and the type shows once.
   if (!rows.length) return null;
   const Heading = level;
   const argTypes = Object.fromEntries(
@@ -201,9 +207,11 @@ export function ApiRows({ label, id, level, rows }) {
       row.name,
       {
         name: row.name,
-        description: row.description,
+        description: [row.description, row.signature ? signatureHtml(tag, row.signature) : '']
+          .filter(Boolean)
+          .join('\n\n'),
         table: {
-          ...(row.type ? { type: { summary: row.type } } : {}),
+          ...(row.type && !row.signature ? { type: { summary: row.type } } : {}),
           ...(row.default ? { defaultValue: { summary: row.default } } : {}),
         },
       },
@@ -217,9 +225,10 @@ export function ApiRows({ label, id, level, rows }) {
   );
 }
 
-export function ElementApi({ tag, level }) {
-  // Attributes, Properties and Events, then Methods, Slots, CSS parts and CSS custom properties,
-  // each only when the element has rows for it.
+export function ElementApi({ tag, level, properties = false }) {
+  // What the page's Properties table does not cover: Events, Methods, Slots, CSS parts and CSS
+  // custom properties, each only when the element has rows for it. A part tag has no table of its
+  // own above, so it also gets its Properties table here (`properties`).
   const api = elementApi(manifest, tag);
   if (!api)
     return (
@@ -231,24 +240,21 @@ export function ElementApi({ tag, level }) {
     label: name,
     id: `api-${tag}-${name.toLowerCase().replace(/\s+/g, '-')}`,
     level,
+    tag,
   });
-  const described = (...parts) => parts.filter(Boolean).join('\n\n');
-  // The named types a row's type mentions, each with its definition: `PanelExtent = number | string`.
-  const definitionsOf = (row) =>
-    (row.definitions ?? []).map((entry) => `\`${entry.name} = ${entry.text}\``).join('\n\n');
   return (
     <>
-      <ApiRows
-        {...group('Attributes')}
-        rows={api.attributes.map((row) => ({
-          ...row,
-          description: described(
-            row.description,
-            row.property && row.property !== row.name && `Property: \`${row.property}\``,
-            definitionsOf(row),
-          ),
-        }))}
-      />
+      {properties ? (
+        <ApiRows
+          {...group('Properties')}
+          rows={api.members.map((row) => ({
+            name: row.name,
+            type: row.type,
+            default: row.default,
+            description: memberDescription(row, tag),
+          }))}
+        />
+      ) : null}
       {api.formControl ? (
         <p>
           As a form control it also accepts <code>name</code>, <code>disabled</code>,{' '}
@@ -256,16 +262,15 @@ export function ElementApi({ tag, level }) {
         </p>
       ) : null}
       <ApiRows
-        {...group('Properties')}
-        rows={api.properties.map((row) => ({
-          ...row,
-          description: described(row.description, row.readonly && 'Read-only.', definitionsOf(row)),
-        }))}
+        {...group('Events')}
+        rows={api.events.map((row) => ({ ...row, signature: row.type }))}
       />
-      <ApiRows {...group('Events')} rows={api.events} />
       <ApiRows
         {...group('Methods')}
-        rows={api.methods.map((row) => ({ ...row, name: row.signature, type: row.returns }))}
+        rows={api.methods.map((row) => ({
+          ...row,
+          signature: `${row.signature}: ${row.returns || 'void'}`,
+        }))}
       />
       <ApiRows
         {...group('Slots')}
@@ -277,6 +282,115 @@ export function ElementApi({ tag, level }) {
       />
       <ApiRows {...group('CSS custom properties')} rows={api.cssProperties} />
     </>
+  );
+}
+
+export function CardTokens({ lines, onOpen }) {
+  // Highlighted lines of a declaration; a project type name is a button that opens its card.
+  return lines.map((line, index) => (
+    <Fragment key={index}>
+      {index ? '\n' : null}
+      {line.map((token, at) => {
+        const style = token.scope ? { color: `var(--tp-syntax-${token.scope})` } : undefined;
+        return token.ref ? (
+          <button
+            key={at}
+            type="button"
+            className="tp-docs-type-ref"
+            style={style}
+            onClick={() => onOpen(token.ref)}
+          >
+            {token.text}
+          </button>
+        ) : (
+          <span key={at} style={style}>
+            {token.text}
+          </span>
+        );
+      })}
+    </Fragment>
+  ));
+}
+
+export function TypeCard() {
+  // The page's one type card, an editor hover on click: a type name in a signature opens the
+  // card of its type at the name (declaration, doc comment, import line), and the names inside
+  // the card open theirs, with a back step. A native popover: light dismiss (Escape, outside
+  // press) and no library elements in the docs chrome.
+  const popover = React.useRef(null);
+  const [stack, setStack] = React.useState([]);
+  React.useEffect(() => {
+    const open = (event) => {
+      const button = event.target instanceof Element ? event.target.closest('[data-tp-ref]') : null;
+      if (!button || popover.current?.contains(button)) return;
+      const id = button.getAttribute('data-tp-ref');
+      if (!symbolCard(types, id)) return;
+      const rect = button.getBoundingClientRect();
+      setStack([{ id, anchor: { left: rect.left, top: rect.bottom, above: rect.top } }]);
+    };
+    document.addEventListener('click', open);
+    return () => document.removeEventListener('click', open);
+  }, []);
+  const shown = stack.at(-1);
+  const card = shown ? symbolCard(types, shown.id) : undefined;
+  React.useLayoutEffect(() => {
+    const element = popover.current;
+    if (!element || !card) return;
+    if (!element.matches(':popover-open')) element.showPopover();
+    // At the name that opened it, inside the viewport: below it, or above when there is no room.
+    const { left, top, above } = stack[0].anchor;
+    const gap = 6;
+    const margin = 16;
+    const { width, height } = element.getBoundingClientRect();
+    element.style.left = `${Math.max(margin, Math.min(left, innerWidth - width - margin))}px`;
+    element.style.top = `${
+      top + gap + height <= innerHeight - margin || above - gap - height < margin
+        ? Math.max(margin, Math.min(top + gap, innerHeight - height - margin))
+        : above - gap - height
+    }px`;
+  }, [card, stack]);
+  const push = (id) => setStack((entries) => [...entries, { id, anchor: entries[0].anchor }]);
+  return (
+    <div
+      ref={popover}
+      popover="auto"
+      className="tp-docs-type-card"
+      onToggle={(event) => {
+        if (event.newState === 'closed') setStack([]);
+      }}
+    >
+      {card ? (
+        <>
+          <header>
+            {stack.length > 1 ? (
+              <button
+                type="button"
+                className="tp-docs-type-back"
+                onClick={() => setStack((entries) => entries.slice(0, -1))}
+                aria-label={`Back to ${symbolCard(types, stack.at(-2).id)?.name ?? 'previous type'}`}
+              >
+                ←
+              </button>
+            ) : null}
+            <code>{card.name}</code>
+            <span className="tp-docs-type-kind">{card.kind}</span>
+          </header>
+          <pre>
+            <CardTokens lines={card.lines} onOpen={push} />
+          </pre>
+          {card.documentation ? (
+            <div className="tp-docs-type-doc">
+              <Markdown>{card.documentation}</Markdown>
+            </div>
+          ) : null}
+          {card.importLine ? (
+            <footer>
+              <code>{card.importLine}</code>
+            </footer>
+          ) : null}
+        </>
+      ) : null}
+    </div>
   );
 }
 
@@ -296,7 +410,7 @@ export function Api() {
           <h3 id={`api-${part}`}>
             <code>&lt;{part}&gt;</code>
           </h3>
-          <ElementApi tag={part} level="h4" />
+          <ElementApi tag={part} level="h4" properties />
         </Fragment>
       ))}
     </>

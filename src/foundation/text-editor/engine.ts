@@ -46,6 +46,7 @@ export type TextEditorUrlPolicy = Required<MarkdownUrlPolicy>;
 /** How content set after ready treats the history: `push` adds one undo step, `reset` clears it. */
 export type TextEditorHistoryMode = 'reset' | 'push';
 
+/** Options of reading the editor's content, such as limiting it to some blocks. */
 export interface TextEditorContentOptions {
   /** Limits the content to these blocks, each with its nested items. */
   readonly blocks?: readonly string[] | undefined;
@@ -135,7 +136,7 @@ export interface TextEditorEngineLabels {
 }
 
 /**
- * Views that the widget renders into hosts the engine owns (`uwg-te-req-surfaces-4`): the engine
+ * Views that the widget renders into hosts the engine owns: the engine
  * creates the host and calls the hook; the returned function cleans the view up when the host
  * leaves the pending state, the node leaves the document or the editor is destroyed.
  */
@@ -144,6 +145,10 @@ export interface TextEditorEngineViews {
   pendingImage?(host: HTMLElement, id: string): (() => void) | void;
 }
 
+/**
+ * What the editor gives an engine adapter when it mounts: the initial content, editability, the
+ * supported nodes and the notifications to call.
+ */
 export interface TextEditorEngineContext extends TextEditorEngineNotifications {
   /** Rendered as the editing root mounts, without history and without a content notification. */
   readonly initialContent: TextEditorContentInput | null;
@@ -170,6 +175,10 @@ export interface TextEditorEngineContext extends TextEditorEngineNotifications {
 
 // Instance (uwg-te-tab-engine r1–r14)
 
+/**
+ * Options of running an editor action: the reason of the change, its source event and whether focus
+ * moves into the editor.
+ */
 export interface TextEditorExecuteOptions {
   readonly reason: ChangeReason;
   readonly sourceEvent?: Event | undefined;
@@ -177,6 +186,7 @@ export interface TextEditorExecuteOptions {
   readonly focus?: boolean | undefined;
 }
 
+/** Options of replacing the editor's content: how the history treats the change and its reason. */
 export interface TextEditorSetContentOptions {
   /** Default `reset`. */
   readonly history?: TextEditorHistoryMode | undefined;

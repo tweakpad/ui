@@ -12,6 +12,7 @@ import {
   type ScrollAxis,
 } from './scroll-progress.js';
 
+/** Direction parallax media moves as the page scrolls. */
 export type ParallaxDirection = 'up' | 'down' | 'left' | 'right';
 
 /**

@@ -114,8 +114,11 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
   override modal = false;
   override showViewport = true;
   override openOnHover = true;
+  /** The direction the top-level items run and the arrow keys move between them. */
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
+  /** How an open panel aligns along its trigger's side. */
   override align: Alignment = 'center';
+  /** The positioning an open panel uses; `fixed` escapes a clipping ancestor. */
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   #provided: string | undefined;

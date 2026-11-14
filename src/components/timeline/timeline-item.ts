@@ -61,6 +61,7 @@ export class TpTimelineItem extends TpElement {
   status: '' | Exclude<TimelineStatus, 'none'> = '';
   /** Keeps this item on one side of the axis, as for one author in a conversation; empty follows the Timeline `align`. */
   align: '' | TimelineSide = '';
+  /** The direction the item lays out along its timeline. */
   override orientation: Orientation = 'vertical';
   _record: TimelineItemRecord | null = null;
   _customMarker = false;

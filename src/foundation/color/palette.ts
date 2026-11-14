@@ -50,6 +50,7 @@ export function hueFamily(value: ColorValue): HueFamily {
 
 /** The perceptual feature a palette sorts by. */
 export type ColorSortKey = 'lightness' | 'hue' | 'chroma';
+/** Whether a palette sort runs from low to high values of its key or from high to low. */
 export type SortDirection = 'ascending' | 'descending';
 
 /**

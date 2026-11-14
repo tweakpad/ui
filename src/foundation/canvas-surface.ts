@@ -29,6 +29,10 @@ export interface CanvasSurfaceOptions {
 
 const THEME_ATTRIBUTES = ['class', 'style', 'data-theme', 'data-color-scheme'];
 
+/**
+ * Keeps a 2D canvas sized to its CSS box at the device pixel ratio and repaints it on resize, theme
+ * change and context loss; widgets that draw on a canvas create one and call `connect()`.
+ */
 export class CanvasSurface {
   readonly #options: CanvasSurfaceOptions;
   #scope: CleanupScope | undefined;

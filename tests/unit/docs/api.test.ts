@@ -5,6 +5,12 @@ import {
   unlistedChoices,
   type Manifest,
 } from '../../../src/docs/api.js';
+import {
+  reachedSymbols,
+  signatureTokens,
+  symbolCard,
+  type ApiTypes,
+} from '../../../src/docs/api-types.js';
 
 const manifest = (inheritedFrom: string) =>
   ({
@@ -165,17 +171,12 @@ describe('API table rules', () => {
     expect(api.methods[0]!.returns).toBe('boolean');
   });
 
-  it('accepts a named type the docs define', () => {
-    const defined = structuredClone(control) as unknown as Manifest;
-    const size = (
-      defined.modules[0]!.declarations![0]!.attributes as { name: string; type: object }[]
-    ).find((attribute) => attribute.name === 'size')!;
-    size.type = { text: 'Size', definitions: [{ name: 'Size', text: 'number | string' }] };
-    const rows = elementApi(defined, 'tp-control')!;
-    expect(rows.attributes.find((row) => row.name === 'size')!.definitions).toEqual([
-      { name: 'Size', text: 'number | string' },
-    ]);
-    expect(unlistedChoices(rows)).toEqual([]);
+  it('accepts a named type that opens a card', () => {
+    const types: ApiTypes = {
+      elements: { 'tp-control': { Size: 'src/control.ts#Size' } },
+      symbols: {},
+    };
+    expect(unlistedChoices(api, types)).toEqual([]);
   });
 
   it('reports a description that repeats the values the type lists', () => {
@@ -194,5 +195,44 @@ describe('API table rules', () => {
     expect(unlistedChoices(api)).toEqual([
       'attribute size: Size is not defined in the docs; list its values or use a primitive type',
     ]);
+  });
+});
+
+describe('type cards', () => {
+  const types: ApiTypes = {
+    elements: { 'tp-list': { Context: 'a.ts#Context', Options: 'a.ts#Options' } },
+    symbols: {
+      'a.ts#Options': {
+        name: 'Options',
+        kind: 'interface',
+        declaration: 'interface Options {\n  context: Context;\n}',
+        documentation: 'How one item behaves.',
+        importFrom: '@tweakpad/ui/list',
+        refs: { Context: 'a.ts#Context' },
+      },
+    },
+  };
+
+  it('makes each type name of a signature its own token, carrying its card', () => {
+    const tokens = signatureTokens(types, 'tp-list', '(context: Context) => Options | Other');
+    expect(tokens.filter((token) => token.ref).map((token) => [token.text, token.ref])).toEqual([
+      ['Context', 'a.ts#Context'],
+      ['Options', 'a.ts#Options'],
+    ]);
+    expect(tokens.map((token) => token.text).join('')).toBe(
+      '(context: Context) => Options | Other',
+    );
+  });
+
+  it('gives a card its declaration lines, nested refs and import line', () => {
+    const card = symbolCard(types, 'a.ts#Options')!;
+    expect(card.lines).toHaveLength(3);
+    expect(card.lines[1]!.find((token) => token.ref)?.ref).toBe('a.ts#Context');
+    expect(card.importLine).toBe("import type { Options } from '@tweakpad/ui/list';");
+    expect(symbolCard(types, 'a.ts#Missing')).toBeUndefined();
+  });
+
+  it('collects the cards a page reaches, through the cards themselves', () => {
+    expect(reachedSymbols(types, ['tp-list'])).toEqual(['a.ts#Options']);
   });
 });

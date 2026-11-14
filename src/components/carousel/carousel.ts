@@ -147,6 +147,7 @@ export class TpCarousel<T = unknown> extends Scrollable(TpElement) {
   itemsPerMovement = 1;
   /** The interval between automatic advances, in milliseconds; zero turns autoplay off. Autoplay adds a pause control and pauses on hover, focus, reduced motion and hidden tabs. */
   autoplay = 0;
+  /** The direction the slides move. */
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   /** Builds the slides from data instead of children; any array, even an empty one, switches to data. */
   items: readonly T[] | undefined;

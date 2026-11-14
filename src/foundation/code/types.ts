@@ -23,8 +23,13 @@ export const CODE_SCOPES = [
   'deleted',
   'plain',
 ] as const;
+/**
+ * Semantic role of a code token, such as `keyword` or `string`, which picks its `--tp-syntax-*`
+ * color.
+ */
 export type CodeScope = (typeof CODE_SCOPES)[number];
 
+/** One run of highlighted source text with its scope and optional explicit colors. */
 export interface CodeToken {
   /** Exact source text; concatenating every token of every line reproduces the input. */
   readonly text: string;
@@ -42,11 +47,16 @@ export interface CodeTokens {
   readonly language: string;
 }
 
+/** Context passed to `CodeHighlighter.highlight()` for one highlighting request. */
 export interface CodeHighlightContext {
   /** Aborted when a newer request supersedes this one or the element disconnects. */
   readonly signal: AbortSignal;
 }
 
+/**
+ * A tokenizer that turns source text into scoped tokens for a code block; supply one to replace or
+ * extend the built-in highlighting.
+ */
 export interface CodeHighlighter {
   readonly name?: string;
   /** Languages (and aliases) this highlighter can tokenize; absent means "try any". */

@@ -9,6 +9,7 @@ import { interactiveTargetInPath } from '../../foundation/interactive-target.js'
 import { radioGroupPresentation } from '../../presentation/families/radio-group.js';
 import { selectionBoxStyles } from '../shared/control-styles.js';
 
+/** The group that owns a Radio group item's selection, read from `radioGroup`. */
 export interface RadioSelectionOwner {
   isChecked(member: HTMLElement): boolean;
   isDisabled(member: HTMLElement): boolean;

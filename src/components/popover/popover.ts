@@ -42,8 +42,11 @@ export class TpPopover extends TpHoverSurface {
   override portal = true;
   override modal = false;
   override openOnHover = false;
+  /** The side of the trigger the popup opens on. */
   override side: LogicalSide = 'block-end';
+  /** How the popup aligns along that side. */
   override align: Alignment = 'center';
+  /** The positioning the popup uses; `fixed` escapes a clipping ancestor. */
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   /** Keeps a hover-opened popup open while the pointer moves back to the trigger, as long as focus is inside the popup. */

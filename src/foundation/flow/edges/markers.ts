@@ -6,6 +6,10 @@ import type { FlowMarker, FlowMarkerDefinition, FlowMarkerType, FlowPoint } from
  */
 export const DEFAULT_MARKER_SIZE = 12.5;
 
+/**
+ * A normalized edge marker with its per-flow id, ready for a renderer to define once and reference
+ * from every edge that uses it.
+ */
 export interface FlowMarkerSpec extends Required<Omit<FlowMarkerDefinition, 'color'>> {
   id: string;
   color: string | undefined;

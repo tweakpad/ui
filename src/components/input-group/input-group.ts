@@ -5,7 +5,8 @@ import { componentHandlingPrevented } from '../../foundation/part.js';
 import { assignedElements } from '../shared/events.js';
 import { inputGroupPresentation } from '../../presentation/families/input-group.js';
 
-type Edge = 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
+/** The edge of an Input group where the `prefix` addon sits, in writing direction. */
+export type InputGroupEdge = 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
 
 /**
  * The trees of an editor that can hold its native control: the editor itself (a text control
@@ -118,7 +119,7 @@ export class TpInputGroup extends TpElement {
     `,
   ];
   /** The edge the `prefix` slot sits at; move it to another edge without changing the markup. */
-  addonPosition: Edge = 'inline-start';
+  addonPosition: InputGroupEdge = 'inline-start';
   /**
    * The size the Buttons in the `action` slot take unless they set their own; the `icon-*` sizes
    * suit Icon-only actions.
@@ -145,7 +146,7 @@ export class TpInputGroup extends TpElement {
       );
     }
   };
-  #addon(position: Edge) {
+  #addon(position: InputGroupEdge) {
     return this.renderPart(
       'input-group-addon',
       { position },

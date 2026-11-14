@@ -85,6 +85,7 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
   get interactionElement(): HTMLElement {
     return this;
   }
+  /** The direction the menus run and the arrow keys move between them. */
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   #provided: string | undefined;
   #members: Member[] = [];

@@ -15,7 +15,7 @@ import type { ObstacleIndex } from './obstacles.js';
 import type { SegmentIndex } from './segments.js';
 
 /**
- * Router contract (Widgets §6.3 Routing). A route request carries resolved endpoints and the
+ * Router contract. A route request carries resolved endpoints and the
  * routing context: the obstacle index, the segment index of already routed edges, spacing and
  * the two injected path builders. The builders keep the router free of the edge-path module so
  * routers and their tests run with any polyline renderer.
@@ -37,6 +37,10 @@ export interface FlowRouteContext {
   render(points: FlowPoint[], borderRadius: number): FlowEdgePath;
 }
 
+/**
+ * What a router needs to route one edge: its kind and options, both endpoints, waypoints and the
+ * obstacle context.
+ */
 export interface FlowRouteRequest {
   edgeId: string;
   kind: FlowEdgeKind;
@@ -48,6 +52,10 @@ export interface FlowRouteRequest {
   context: FlowRouteContext;
 }
 
+/**
+ * A routed edge path, with whether the router fell back to smoothstep and a hash for change
+ * detection.
+ */
 export interface FlowRoute extends FlowEdgePath {
   edgeId: string;
   /** The orthogonal search failed and the smoothstep fallback was used. */
@@ -61,6 +69,10 @@ export interface FlowRoute extends FlowEdgePath {
   hash: number;
 }
 
+/**
+ * Computes obstacle-aware edge paths; pass one to the flow to replace the built-in orthogonal
+ * router.
+ */
 export interface FlowRouter {
   route(request: FlowRouteRequest): FlowRoute;
   /** Spreads colinear overlapping segments; routes that did not move keep their identity. */

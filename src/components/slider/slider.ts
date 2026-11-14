@@ -169,6 +169,7 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
    * range.
    */
   defaultValue: SliderValue | undefined;
+  /** The axis the track runs along. */
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   /** The lowest value. */
   minimum = 0;

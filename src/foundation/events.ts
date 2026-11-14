@@ -53,6 +53,10 @@ function changeDetail<T>(
   };
 }
 
+/**
+ * The `tp-value-change` event a component fires as its value changes, with the new and previous
+ * value and the reason of the change.
+ */
 export class TpValueChangeEvent<T> extends CustomEvent<ValueChangeDetail<T>> {
   static readonly eventName = 'tp-value-change';
 
@@ -78,6 +82,10 @@ export class TpValueChangeEvent<T> extends CustomEvent<ValueChangeDetail<T>> {
   }
 }
 
+/**
+ * The `tp-value-commit` event a component fires when a value change is complete, such as at the end
+ * of a drag or when a field loses focus.
+ */
 export class TpValueCommitEvent<T> extends CustomEvent<ValueChangeDetail<T>> {
   static readonly eventName = 'tp-value-commit';
 
@@ -96,6 +104,10 @@ export class TpValueCommitEvent<T> extends CustomEvent<ValueChangeDetail<T>> {
   }
 }
 
+/**
+ * The cancelable `tp-open-change` event a component fires when it is about to open or close; cancel
+ * it to keep the current state.
+ */
 export class TpOpenChangeEvent extends CustomEvent<ValueChangeDetail<boolean>> {
   static readonly eventName = 'tp-open-change';
 

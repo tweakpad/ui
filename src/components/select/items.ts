@@ -1,4 +1,6 @@
+/** A value type a collection from `createSelectItems` can key its items by. */
 export type SelectPrimitive = string | number | bigint | boolean;
+/** A labeled group of items in the data given to `createSelectItems`. */
 export interface SelectItemGroup<T> {
   items: readonly (T | null | undefined)[];
   label?: unknown;
@@ -25,6 +27,10 @@ type RejectGroupLeaf<T> =
   true extends HasGroupLeaf<T>
     ? 'Select leaf items cannot declare an items array; it marks a group.'
     : unknown;
+/**
+ * The data `createSelectItems` accepts: a flat list of items or a list of groups; empty entries are
+ * skipped.
+ */
 export type SelectItemsData<T> =
   | (Extract<T, { items: readonly unknown[] }> extends never
       ? readonly (T | null | undefined)[]
@@ -32,6 +38,10 @@ export type SelectItemsData<T> =
   | readonly SelectItemGroup<T>[];
 const itemCollection = Symbol('Select item collection');
 const negativeZeroIdentity = Symbol('Select negative zero identifier');
+/**
+ * Items of your own wrapped by `createSelectItems`, which reads the value and label of each, to
+ * pass as a Select's `items`.
+ */
 export interface SelectItemCollection<T, V extends SelectPrimitive = SelectPrimitive> {
   readonly [itemCollection]: true;
   readonly data: SelectItemsData<T> | undefined;

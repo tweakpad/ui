@@ -49,15 +49,17 @@ export interface FlowEdgeReconnectDetail {
   sourceEvent: Event | null;
 }
 
-type Axis = 'x' | 'y';
-interface Segment {
+/** The axis an edge segment runs along. */
+export type FlowSegmentAxis = 'x' | 'y';
+/** A segment handle of a routed edge path: an interior axis-aligned run the editor can drag. */
+export interface FlowEdgeSegment {
   index: number;
-  axis: Axis;
+  axis: FlowSegmentAxis;
   midpoint: FlowPoint;
 }
 type Target =
   | { kind: 'waypoint'; index: number }
-  | { kind: 'segment'; index: number; axis: Axis }
+  | { kind: 'segment'; index: number; axis: FlowSegmentAxis }
   | { kind: 'reconnect'; end: 'source' | 'target' };
 
 /** Outward unit vector of each socket side: a reconnect anchor sits on the edge beyond it. */
@@ -240,9 +242,9 @@ export class TpFlowEdgeEditor extends TpElement {
    * grab. The first and last segments end at a socket, so they cannot move along their normal
    * (and their handles would sit under the reconnect anchors).
    */
-  get segments(): readonly Segment[] {
+  get segments(): readonly FlowEdgeSegment[] {
     if (!this.routed) return [];
-    const segments: Segment[] = [];
+    const segments: FlowEdgeSegment[] = [];
     for (let index = 1; index + 2 < this.points.length; index++) {
       const a = this.points[index]!;
       const b = this.points[index + 1]!;
@@ -343,7 +345,11 @@ export class TpFlowEdgeEditor extends TpElement {
     const kind = handle.dataset['handle'];
     if (kind === 'waypoint') return { kind, index: Number(handle.dataset['index']) };
     if (kind === 'segment')
-      return { kind, index: Number(handle.dataset['index']), axis: handle.dataset['axis'] as Axis };
+      return {
+        kind,
+        index: Number(handle.dataset['index']),
+        axis: handle.dataset['axis'] as FlowSegmentAxis,
+      };
     if (kind === 'reconnect') return { kind, end: handle.dataset['end'] as 'source' | 'target' };
     return null;
   }
@@ -504,7 +510,12 @@ export class TpFlowEdgeEditor extends TpElement {
 
   // ---- render --------------------------------------------------------------------------------
 
-  #dimensionInput(index: number, axis: Axis, value: number, name: string): TemplateResult {
+  #dimensionInput(
+    index: number,
+    axis: FlowSegmentAxis,
+    value: number,
+    name: string,
+  ): TemplateResult {
     const rounded = Math.round(value * 100) / 100;
     return html`<input
       type="range"
@@ -556,7 +567,7 @@ export class TpFlowEdgeEditor extends TpElement {
     return this.#anchor(point, handle);
   }
 
-  #renderSegment(segment: Segment): TemplateResult {
+  #renderSegment(segment: FlowEdgeSegment): TemplateResult {
     const strings = this.#strings;
     const name = `${this.label ? `${this.label}: ` : ''}${strings.segment} ${segment.index + 1}`;
     const handle = this.renderPart(

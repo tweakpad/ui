@@ -1,3 +1,4 @@
+/** Replaceable status texts a Timeline announces for its items; each defaults to English. */
 export interface TimelineMessages {
   complete?: string;
   current?: string;

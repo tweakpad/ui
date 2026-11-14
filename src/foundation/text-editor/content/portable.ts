@@ -68,6 +68,7 @@ export interface TextEditorPortableText {
   readonly marks?: TextEditorPortableMarks | undefined;
 }
 
+/** A line break inside a textblock. */
 export interface TextEditorPortableHardBreak {
   readonly type: 'hard-break';
 }
@@ -85,6 +86,7 @@ export type TextEditorPortableInline =
 
 // Blocks
 
+/** A paragraph: a textblock of inline content. */
 export interface TextEditorPortableParagraph {
   readonly type: 'paragraph';
   readonly id?: string | undefined;
@@ -92,6 +94,7 @@ export interface TextEditorPortableParagraph {
   readonly content: readonly TextEditorPortableInline[];
 }
 
+/** A heading: a textblock with a level from 1 to 6. */
 export interface TextEditorPortableHeading {
   readonly type: 'heading';
   readonly id?: string | undefined;
@@ -116,7 +119,8 @@ export interface TextEditorPortableCodeBlock {
   readonly text: string;
 }
 
-interface ListItemFields<K extends TextEditorListKind> {
+/** Fields every portable list item shares, whatever its list kind. */
+export interface TextEditorPortableListItemFields<K extends TextEditorListKind> {
   readonly type: K;
   readonly id?: string | undefined;
   readonly align?: TextEditorAlign | undefined;
@@ -126,14 +130,17 @@ interface ListItemFields<K extends TextEditorListKind> {
   readonly children: readonly TextEditorPortableListItem[];
 }
 
-export type TextEditorPortableBulletItem = ListItemFields<'list-bullet'>;
+/** A bullet list item. */
+export type TextEditorPortableBulletItem = TextEditorPortableListItemFields<'list-bullet'>;
 
-export interface TextEditorPortableOrderedItem extends ListItemFields<'list-ordered'> {
+/** A numbered list item. */
+export interface TextEditorPortableOrderedItem extends TextEditorPortableListItemFields<'list-ordered'> {
   /** The number of the list's first item, held by that item; 1 when absent. */
   readonly start?: number | undefined;
 }
 
-export interface TextEditorPortableTaskItem extends ListItemFields<'list-task'> {
+/** A task list item with a checkbox, checked or not. */
+export interface TextEditorPortableTaskItem extends TextEditorPortableListItemFields<'list-task'> {
   readonly checked: boolean;
 }
 
@@ -144,11 +151,16 @@ export interface TextEditorPortableTaskItem extends ListItemFields<'list-task'> 
 export type TextEditorPortableListItem =
   TextEditorPortableBulletItem | TextEditorPortableOrderedItem | TextEditorPortableTaskItem;
 
+/** A divider: a horizontal rule between blocks. */
 export interface TextEditorPortableDivider {
   readonly type: 'divider';
   readonly id?: string | undefined;
 }
 
+/**
+ * An image block with its source, alternative text and optional width; an empty source is an image
+ * still uploading.
+ */
 export interface TextEditorPortableImage {
   readonly type: 'image';
   readonly id?: string | undefined;
@@ -199,6 +211,7 @@ export interface TextEditorPortableCustomBlock {
   readonly content?: readonly TextEditorPortableInline[] | undefined;
 }
 
+/** One block of portable content, built-in or custom. */
 export type TextEditorPortableBlock =
   | TextEditorPortableParagraph
   | TextEditorPortableHeading

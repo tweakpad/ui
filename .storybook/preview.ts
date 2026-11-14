@@ -7,7 +7,14 @@ import DocumentationPage from './docs-page.mdx';
 import { ThemedDocsContainer } from './docs-container.mdx';
 import { applyAppearance, applyDensity, applyTheme, themePreference } from './docs-theme.js';
 import { manifest } from './manifest.js';
-import { elementApi } from '../src/docs/api.js';
+import { elementApi, elementDeclaration } from '../src/docs/api.js';
+import { memberDescription } from './api-rows.js';
+
+/** An object without some keys: one table has no categories, and a row without a default shows none. */
+const withoutKeys = <T extends object>(value: T | undefined, keys: readonly string[]): Partial<T> =>
+  Object.fromEntries(
+    Object.entries(value ?? {}).filter(([key]) => !keys.includes(key)),
+  ) as Partial<T>;
 import {
   installPreviewModules,
   mountPreview,
@@ -155,43 +162,78 @@ const preview = definePreview({
     },
   },
   initialGlobals: { theme: 'system', density: 'default', appearance: 'default' },
-  // The manifest lists every member of the element, base plumbing included. Controls keep the
-  // element's own public attributes and properties (the rows of its API reference) plus whatever
-  // the story declares itself; events, slots and parts are the Docs page's API section.
+  // The Properties table under the main use case: one row per property of the element
+  // (`elementApi().members`, attribute-backed first), each with what it does, its type as the
+  // compiler declares it (type names open their cards), its default, and a control only when the
+  // value is a choice, a toggle or a plain field. No categories: one table. Base plumbing, events,
+  // slots and parts are left out; the API Reference prints the last three.
   argTypesEnhancers: [
-    ({ argTypes, component }) => {
+    ({ argTypes, component, initialArgs }) => {
       const api = typeof component === 'string' ? elementApi(manifest, component) : undefined;
       if (!api) return argTypes;
-      const own = new Set([
-        ...api.attributes.flatMap((attribute) => [attribute.name, attribute.property]),
-        ...api.properties.map((property) => property.name),
-      ]);
-      // A choice list's values (the docs data's `values`) fill its select, unless the story sets
-      // its own options.
-      const values = new Map<string, readonly string[]>();
-      for (const row of [...api.attributes, ...api.properties])
-        if (row.values?.length && !('readonly' in row && row.readonly)) {
-          values.set(row.name, row.values);
-          if ('property' in row && row.property) values.set(row.property, row.values);
-        }
-      return Object.fromEntries(
-        Object.entries(argTypes)
-          .filter(
-            ([name, argType]) =>
-              own.has(name) ||
-              // A story's own fixture knob; the manifest's event handlers arrive as empty entries.
-              (argType.table?.category === undefined && Object.keys(argType).length > 0),
-          )
-          .map(([name, argType]) => {
-            const options = values.get(name);
-            return [
+      // Only a value the Default story drives gets a control: the table never offers an empty
+      // "Set" button for a value the main use case does not use.
+      const driven = new Set(Object.keys(initialArgs ?? {}));
+      const off = { disable: true } as const;
+      const rows: [string, (typeof argTypes)[string]][] = [];
+      const covered = new Set<string>();
+      for (const row of api.members) {
+        const existing =
+          argTypes[row.name] ?? (row.attribute ? argTypes[row.attribute] : undefined);
+        covered.add(row.name);
+        if (row.attribute) covered.add(row.attribute);
+        // A story may offer its own choices for a value the type cannot list (a mode or a callback).
+        const storyChoice = existing?.options?.length ? existing.control : undefined;
+        const control = !driven.has(row.name)
+          ? off
+          : row.control === 'select'
+            ? (storyChoice ?? { type: 'select' })
+            : row.control
+              ? { type: row.control }
+              : (storyChoice ?? off);
+        rows.push([
+          row.name,
+          {
+            // The description carries the type, with clickable names: no type chip.
+            ...withoutKeys(existing, ['type']),
+            name: row.name,
+            description: memberDescription(row, component as string),
+            ...(row.control === 'select' && !storyChoice ? { options: [...row.values!] } : {}),
+            control,
+            table: {
+              ...withoutKeys(existing?.table, ['category', 'subcategory', 'defaultValue', 'type']),
+              ...(row.default ? { defaultValue: { summary: row.default } } : {}),
+            },
+          },
+        ]);
+      }
+      // A story knob for a property every element inherits (`disabled`, `readOnly`) reads its
+      // description and type from the base; other knobs keep the story's own entry. The
+      // manifest's event handlers arrive as hidden entries.
+      const declaration = elementDeclaration(manifest, component as string);
+      for (const [name, argType] of Object.entries(argTypes)) {
+        if (covered.has(name)) continue;
+        const base = declaration?.members?.find(
+          (member) => member.name === name && member.kind === 'field',
+        );
+        if (base && driven.has(name))
+          rows.push([
+            name,
+            {
+              ...argType,
               name,
-              options && !argType.options
-                ? { ...argType, options: [...options], control: { type: 'select' } }
-                : argType,
-            ];
-          }),
-      );
+              description: base.description ?? '',
+              table: {
+                ...withoutKeys(argType.table, ['category', 'subcategory', 'defaultValue']),
+                type: { summary: base.type?.text?.replace(/\s*\|\s*undefined$/u, '') ?? 'unknown' },
+                ...(base.default ? { defaultValue: { summary: base.default } } : {}),
+              },
+            },
+          ]);
+        else if (argType.table?.category === undefined && Object.keys(argType).length > 0)
+          rows.push([name, argType]);
+      }
+      return Object.fromEntries(rows);
     },
   ],
   decorators: [

@@ -13,10 +13,15 @@ import { oneTimeCodeFieldPresentation } from '../../presentation/families/one-ti
 import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
+/** Detail of `tp-complete`, dispatched when the last slot of a One-time code field is filled. */
 export interface CodeCompleteDetail {
   value: string;
   sourceEvent: Event;
 }
+/**
+ * Detail of `tp-invalid-input`, dispatched when typed or pasted text contained characters the code
+ * does not accept.
+ */
 export interface CodeInvalidDetail {
   attemptedValue: string;
   reason: 'input' | 'paste';

@@ -5,7 +5,9 @@
  */
 import { graphemes, segmenter } from '../text-split/segment.js';
 
+/** Where text is cut when it is too long: not at all, at the start, in the middle or at the end. */
 export type TruncatePosition = 'none' | 'start' | 'middle' | 'end';
+/** Whether truncation counts and cuts characters or whole words. */
 export type TruncateUnit = 'chars' | 'words';
 
 /** The mark that replaces removed text. */

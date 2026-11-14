@@ -15,3 +15,4 @@ export type {
   SliderValueCommitCallback,
   SliderVariant,
 } from './types.js';
+export type { SliderThumbOwner } from './types.js';

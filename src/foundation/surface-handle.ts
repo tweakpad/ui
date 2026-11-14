@@ -1,3 +1,7 @@
+/**
+ * The options of a trigger registered with a surface handle: its identifier, the payload it opens
+ * the surface with, and whether it keeps its native action.
+ */
 export interface SurfaceTriggerOptions {
   identifier?: string;
   payload?: unknown;

@@ -6,6 +6,7 @@ export interface MediaThumbnailCoords {
   readonly y: number;
 }
 
+/** A preview image for a span of media time, optionally a region of a larger sprite image. */
 export interface MediaThumbnail {
   /** Absolute image URL (resolved against the track source when known). */
   readonly url: string;
@@ -112,6 +113,7 @@ export class ThumbnailSourceMemory {
   }
 }
 
+/** The CORS mode thumbnail images load with; the empty string is the same as `anonymous`. */
 export type ThumbnailCrossOrigin = '' | 'anonymous' | 'use-credentials';
 
 /**

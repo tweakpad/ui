@@ -3,7 +3,15 @@ import { numberFormatter } from '../intl.js';
 import { fillTemplate } from '../template.js';
 import { civilEpoch, type ResolvedTime, type TimeDuration } from './parse.js';
 
+/**
+ * How a time is shown: chosen automatically, relative to now, as a calendar phrase, as a date and
+ * time, or as a duration.
+ */
 export type TimeMode = 'auto' | 'relative' | 'calendar' | 'absolute' | 'duration';
+/**
+ * A named date and time format for absolute times, from a short time to a full date and time or ISO
+ * text.
+ */
 export type TimePreset =
   | 'time'
   | 'time-seconds'
@@ -14,13 +22,19 @@ export type TimePreset =
   | 'datetime-long'
   | 'full'
   | 'iso';
+/** A calendar unit that relative and duration text counts in. */
 export type TimeUnit = 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year';
+/** How long unit names are in relative and duration text, such as "minutes", "min." or "m". */
 export type TimeStyle = 'long' | 'short' | 'narrow';
+/** Whether relative text follows the value's side of now or always reads as past or future. */
 export type TimeTense = 'auto' | 'past' | 'future';
+/** Whether relative counts round down or to the nearest unit. */
 export type TimeRounding = 'floor' | 'round';
+/** The hour cycle of displayed times: 0 to 11, 1 to 12, 0 to 23 or 1 to 24. */
 export type TimeHourCycle = 'h11' | 'h12' | 'h23' | 'h24';
 export type TimePresentationKind = 'relative' | 'calendar' | 'absolute' | 'duration';
 
+/** The resolved value, reference time, locale and time zone that time formatting works from. */
 export interface TimeFormatContext {
   readonly value: ResolvedTime;
   /** The instant, or the wall-clock fields in host local time for zone-less values. */
@@ -29,7 +43,15 @@ export interface TimeFormatContext {
   readonly locale: string | undefined;
   readonly timeZone: string | undefined;
 }
+/**
+ * A calendar phrase such as "Today at {time}": a template with placeholders, or a function that
+ * builds the text.
+ */
 export type TimeMessage = string | ((context: TimeMessageContext) => string);
+/**
+ * What a calendar message receives: the format context with the time, weekday, date, week and year
+ * as text or numbers.
+ */
 export interface TimeMessageContext extends TimeFormatContext {
   readonly time: string;
   readonly weekday: string;
@@ -37,6 +59,10 @@ export interface TimeMessageContext extends TimeFormatContext {
   readonly week: number;
   readonly year: number;
 }
+/**
+ * The calendar phrases for today, yesterday, tomorrow, nearby weekdays and the current week, which
+ * you override to reword or translate them.
+ */
 export interface TimeMessages {
   today: TimeMessage;
   yesterday: TimeMessage;

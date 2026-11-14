@@ -50,6 +50,10 @@ export function isBuiltInTextPreset(name: string): name is TextPreset {
 /** Options of a preset: number format options, or `{ style, guide }` for durations. */
 export type TextFormatOptions = Intl.NumberFormatOptions | TextDurationOptions;
 
+/**
+ * What a custom formatter receives: the input, the locale, the preset name and its options, and a
+ * way to apply other presets.
+ */
 export interface TextFormatContext {
   /** The input, as supplied. */
   readonly value: unknown;
@@ -64,8 +68,12 @@ export interface TextFormatContext {
   apply(preset: string, value?: unknown, format?: TextFormatOptions): string;
 }
 
+/**
+ * What a formatter returns: the text, or the text with a different text for assistive technology.
+ */
 export type TextFormatterResult =
   string | { readonly text: string; readonly accessibleText?: string | undefined };
+/** A custom preset that formats text from its context. */
 export type TextFormatter = (context: TextFormatContext) => TextFormatterResult;
 /** A Consumer preset: a formatter, or a preset with options. */
 export type TextPresetDefinition =

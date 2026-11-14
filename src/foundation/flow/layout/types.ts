@@ -13,7 +13,7 @@ import type {
 } from '../types.js';
 
 /**
- * Layout engine contract (Widgets §6.3 Layout). A request is plain data: measured sizes,
+ * Layout engine contract. A request is plain data: measured sizes,
  * parents, pins and the port order each edge attaches to; the result maps ids to absolute
  * positions and carries the parent-relative `node-position` / `node-size` changes.
  */
@@ -25,6 +25,7 @@ export interface FlowLayoutPort {
   side?: FlowSide | undefined;
 }
 
+/** A node as the layout engine sees it: its size, parent, pin and ports, without its data. */
 export interface FlowLayoutNode {
   id: string;
   size: FlowSize;
@@ -40,6 +41,7 @@ export interface FlowLayoutNode {
   ports: FlowLayoutPort[];
 }
 
+/** A connection the layout engine ranks and orders nodes by. */
 export interface FlowLayoutEdge {
   id: string;
   source: string;
@@ -48,8 +50,12 @@ export interface FlowLayoutEdge {
   targetPort?: string | undefined;
 }
 
+/**
+ * The direction a layout request runs in; `smart` picks horizontal or vertical to fit the viewport.
+ */
 export type FlowLayoutRequestDirection = FlowLayoutDirection | 'smart';
 
+/** Space kept between a group node's edges and its children, per side. */
 export interface FlowLayoutGroupPadding {
   top: number;
   right: number;
@@ -57,6 +63,7 @@ export interface FlowLayoutGroupPadding {
   left: number;
 }
 
+/** Spacing, packing and tuning options for an automatic layout run; every option has a default. */
 export interface FlowLayoutOptions {
   /** Cross-axis gap between nodes of a rank (default 40). */
   nodeSpacing?: number | undefined;
@@ -83,6 +90,7 @@ export interface FlowLayoutOptions {
   bendPoints?: boolean | undefined;
 }
 
+/** The input to a layout engine: the nodes and edges to arrange, the direction and the options. */
 export interface FlowLayoutRequest {
   nodes: FlowLayoutNode[];
   edges: FlowLayoutEdge[];
@@ -90,6 +98,7 @@ export interface FlowLayoutRequest {
   options?: FlowLayoutOptions | undefined;
 }
 
+/** Measurements of a finished layout run (layers, crossings, components, time), for diagnostics. */
 export interface FlowLayoutStats {
   layers: number;
   dummies: number;
@@ -98,6 +107,10 @@ export interface FlowLayoutStats {
   elapsed: number;
 }
 
+/**
+ * What a layout engine returns: new node positions and group sizes, the changes that apply them,
+ * and the bounds.
+ */
 export interface FlowLayoutResult {
   direction: FlowLayoutDirection;
   /** Absolute top-left positions of every laid-out node. */
@@ -111,6 +124,10 @@ export interface FlowLayoutResult {
   stats: FlowLayoutStats;
 }
 
+/**
+ * A pluggable automatic layout algorithm; pass one to the flow to replace the built-in layered
+ * layout.
+ */
 export interface FlowLayoutEngine {
   layout(request: FlowLayoutRequest): FlowLayoutResult;
 }

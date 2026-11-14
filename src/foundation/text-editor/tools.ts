@@ -137,6 +137,7 @@ export interface TextEditorToolTableTarget {
   readonly index?: number | undefined;
 }
 
+/** What a tool acts on: the selection, a set of blocks, or rows, columns or cells of a table. */
 export type TextEditorToolTarget =
   TextEditorToolSelectionTarget | TextEditorToolBlocksTarget | TextEditorToolTableTarget;
 
@@ -251,6 +252,10 @@ export function defineTextEditorTool<const T extends TextEditorTool>(tool: T): T
 
 // Registry (uwg-te-req-tools-1, uwg-te-req-tools-2)
 
+/**
+ * The registered tools of an editor, in order, with the capabilities that decide which are
+ * available and the diagnostics of registration.
+ */
 export interface TextEditorToolRegistry {
   /** The tools by identifier, in registration order. */
   readonly tools: ReadonlyMap<string, TextEditorTool>;

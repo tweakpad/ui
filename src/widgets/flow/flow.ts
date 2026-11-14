@@ -1299,7 +1299,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#size;
   }
 
-  /** The layer that renders the node hosts in view; used by the widget's own parts. */
+  /**
+   * The layer that renders the node hosts in view; used by the widget's own parts.
+   * @internal
+   */
   get nodeLayer(): NodeLayer {
     return this.#nodeLayer;
   }
@@ -1307,6 +1310,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   /**
    * The layer that resolves the edges in view and hands them to the renderer; used by the widget's
    * own parts.
+   * @internal
    */
   get edgeLayer(): EdgeLayer {
     return this.#edgeLayer;
@@ -1315,6 +1319,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   /**
    * The live region that announces moves, connections and run changes; used by the widget's own
    * parts.
+   * @internal
    */
   get announcer(): LiveAnnouncer {
     return this.#announcer;
@@ -1325,7 +1330,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     return this.#resolvedStrings;
   }
 
-  /** The controller that pans, zooms and animates the canvas; used by the widget's own parts. */
+  /**
+   * The controller that pans, zooms and animates the canvas; used by the widget's own parts.
+   * @internal
+   */
   get viewportOwner(): ViewportOwner {
     return this.#viewportOwner;
   }
@@ -1333,6 +1341,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   /**
    * The controller of the document's proposals, commits and rollbacks; used by the widget's own
    * parts.
+   * @internal
    */
   get lane(): DocumentLane {
     return this.#lane;

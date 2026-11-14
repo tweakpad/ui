@@ -4,6 +4,7 @@ export interface IconDefinition {
   readonly paths: readonly IconPath[];
 }
 
+/** One path of an icon definition: its outline data and how it is filled or stroked. */
 export interface IconPath {
   readonly d: string;
   readonly fill?: string;

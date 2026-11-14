@@ -43,10 +43,22 @@ import {
   type Bounds,
 } from './zone-resolution.js';
 
+/**
+ * Where the Cursor follows the pointer: anywhere in the document, or only inside its region
+ * element.
+ */
 export type CursorScope = 'document' | 'region';
+/** Why the Cursor's state changed: the pointer entered or left a zone, or a script set it. */
 export type CursorStateReason = 'hover' | 'programmatic';
+/**
+ * Why the Cursor started or stopped following the pointer, reported in `tp-cursor-follow-change`.
+ */
 export type CursorFollowReason = 'pointer' | 'disabled' | 'programmatic';
 
+/**
+ * Detail of the cancelable `tp-cursor-state-change`, dispatched when the Cursor's state or zone is
+ * about to change.
+ */
 export interface CursorStateChangeDetail {
   readonly value: string | null;
   readonly previousValue: string | null;
@@ -55,6 +67,10 @@ export interface CursorStateChangeDetail {
   readonly sourceEvent: Event | null;
 }
 
+/**
+ * Detail of `tp-cursor-follow-change`, dispatched when the Cursor starts or stops following the
+ * pointer.
+ */
 export interface CursorFollowChangeDetail {
   readonly value: boolean;
   readonly previousValue: boolean;

@@ -4,6 +4,10 @@ import { hideVisually } from './visually-hidden.js';
 /** Foundation live announcer (`sec-1923-live-announcer`). */
 export type AnnouncementPoliteness = 'polite' | 'assertive';
 
+/**
+ * Options for one live-region announcement: which region speaks it and how repeated messages are
+ * debounced or replaced.
+ */
 export interface AnnounceOptions {
   /** Region that speaks the message. Defaults to `polite`. */
   readonly politeness?: AnnouncementPoliteness;

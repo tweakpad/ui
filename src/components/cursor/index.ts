@@ -8,5 +8,5 @@ export {
   type CursorStateReason,
 } from './cursor.js';
 export { TpCursorZone, type CursorStick } from './cursor-zone.js';
-export type { CursorPoint } from './cursor-document.js';
+export type { CursorParticipant, CursorPoint, CursorZoneLike } from './cursor-document.js';
 export { ADOPTED_PROPERTIES, type AdoptedProperty } from './zone-resolution.js';

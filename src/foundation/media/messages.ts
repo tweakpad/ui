@@ -7,28 +7,30 @@ import { fillTemplate } from '../template.js';
  * a string (with optional `{name}` placeholders) or a function of its parameters. Locale formats
  * numbers and times only; it never selects translations. Diagnostics are not localized.
  */
-type Text = string | number;
+/** A number or preformatted text a media message interpolates. */
+export type MediaMessageValue = string | number;
 
 /** Parameters of the parameterized entries. Values arrive already formatted for the locale. */
 export interface MediaMessageParams {
-  seekForward: { seconds: Text };
-  seekBackward: { seconds: Text };
-  volumeValue: { percent: Text };
-  mutedValue: { percent: Text };
-  playbackRate: { rate: Text };
-  timePosition: { current: Text; duration: Text };
-  showRemaining: { duration: Text };
-  showElapsed: { duration: Text };
-  showDuration: { duration: Text };
-  remainingSuffix: { duration: Text };
-  elapsedSuffix: { duration: Text };
-  durationSuffix: { duration: Text };
-  autoWithLabel: { label: Text };
-  statusPlaybackRate: { rate: Text };
-  statusVolume: { percent: Text };
-  statusSeekedTo: { time: Text };
+  seekForward: { seconds: MediaMessageValue };
+  seekBackward: { seconds: MediaMessageValue };
+  volumeValue: { percent: MediaMessageValue };
+  mutedValue: { percent: MediaMessageValue };
+  playbackRate: { rate: MediaMessageValue };
+  timePosition: { current: MediaMessageValue; duration: MediaMessageValue };
+  showRemaining: { duration: MediaMessageValue };
+  showElapsed: { duration: MediaMessageValue };
+  showDuration: { duration: MediaMessageValue };
+  remainingSuffix: { duration: MediaMessageValue };
+  elapsedSuffix: { duration: MediaMessageValue };
+  durationSuffix: { duration: MediaMessageValue };
+  autoWithLabel: { label: MediaMessageValue };
+  statusPlaybackRate: { rate: MediaMessageValue };
+  statusVolume: { percent: MediaMessageValue };
+  statusSeekedTo: { time: MediaMessageValue };
 }
 
+/** Name of a media player label or announcement that can be overridden through `messages`. */
 export type MediaMessageKey =
   | 'player'
   | 'play'
@@ -102,10 +104,18 @@ export type MediaMessageKey =
   | 'retry'
   | 'dismiss';
 
+/**
+ * The parameters a message function receives for a given message key; keys without parameters get
+ * an empty object.
+ */
 export type MediaMessageParamsOf<K extends MediaMessageKey> = K extends keyof MediaMessageParams
   ? MediaMessageParams[K]
   : Record<string, never>;
 
+/**
+ * A media player message: a fixed string, or a function that builds the string from the message's
+ * parameters.
+ */
 export type MediaMessageEntry<K extends MediaMessageKey> =
   string | ((params: MediaMessageParamsOf<K>) => string);
 
@@ -197,7 +207,7 @@ export const DEFAULT_MEDIA_MESSAGES: Readonly<MediaPlayerMessageDictionary> = Ob
 /** Replaces `{name}` placeholders; unknown placeholders are left intact. */
 export function interpolateMediaMessage(
   template: string,
-  params: Readonly<Record<string, Text>> = {},
+  params: Readonly<Record<string, MediaMessageValue>> = {},
 ): string {
   return fillTemplate(template, params);
 }
@@ -234,7 +244,7 @@ export function createMediaMessages(
   const resolver: MediaMessagesResolver = {
     messages,
     get(key, ...rest) {
-      const params = (rest[0] ?? {}) as Record<string, Text>;
+      const params = (rest[0] ?? {}) as Record<string, MediaMessageValue>;
       const entry = messages[key] as string | ((params: unknown) => string);
       return typeof entry === 'function' ? entry(params) : interpolateMediaMessage(entry, params);
     },

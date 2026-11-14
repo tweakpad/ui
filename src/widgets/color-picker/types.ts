@@ -2,6 +2,7 @@ import type { ChannelKey } from '../../foundation/color/channels.js';
 import type { HarmonyRule } from './color/harmony.js';
 import type { ColorFormat, ColorValue } from '../../foundation/color/types.js';
 
+/** A surface the picker can show for choosing a color, listed in `views`. */
 export type ColorPickerView = 'area' | 'sliders' | 'wheel' | 'triangle';
 export const COLOR_PICKER_VIEWS: readonly ColorPickerView[] = [
   'area',
@@ -9,8 +10,11 @@ export const COLOR_PICKER_VIEWS: readonly ColorPickerView[] = [
   'wheel',
   'triangle',
 ];
+/** Whether the picker shows in place or opens from a trigger in a popup. */
 export type ColorPickerPicker = 'inline' | 'popup';
+/** Scale of the surfaces, tracks, thumbs and swatches together. */
 export type ColorPickerSize = 'sm' | 'default' | 'lg';
+/** Whether the preview and the swatches are squares or circles. */
 export type ColorPickerShape = 'square' | 'round';
 export type ColorPickerSurface =
   'area' | 'wheel' | 'triangle' | 'slider' | 'field' | 'swatch' | 'eyedropper' | 'compare';
@@ -20,6 +24,7 @@ export interface ColorSwatchGroup {
   readonly label: string;
   readonly colors: readonly string[];
 }
+/** One entry of `swatches`: a CSS color text, or a labeled group of them. */
 export type ColorSwatchInput = string | ColorSwatchGroup;
 
 /** Metadata of a `tp-value-change` / `tp-value-commit` detail. */

@@ -1,5 +1,9 @@
 import { normalizeHue } from '../../../foundation/color/convert.js';
 
+/**
+ * How the wheel derives related colors from the current one; `none` shows no harmony handles and
+ * `custom` lets each handle move freely.
+ */
 export type HarmonyRule = 'none' | 'complementary' | 'analogous' | 'triad' | 'compound' | 'custom';
 
 export const HARMONY_RULES: readonly HarmonyRule[] = [

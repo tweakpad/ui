@@ -71,6 +71,7 @@ export abstract class TpJoinedGroup extends TpElement {
   ];
   /** The family parts this group registers; set by each public group. */
   protected abstract readonly groupParts: JoinedGroupParts;
+  /** The direction the members join along. */
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   /**
    * Joins the members' borders into one shape with shared seams; turn it off to keep each

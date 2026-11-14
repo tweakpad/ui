@@ -10,11 +10,19 @@ export enum CollisionPriority {
   High = 3,
   Highest = 4,
 }
+/**
+ * How a collision was measured: a generic overlap, a shape intersection or the pointer inside the
+ * drop target.
+ */
 export enum CollisionType {
   Collision = 0,
   ShapeIntersection = 1,
   PointerIntersection = 2,
 }
+/**
+ * A drop target that a dragged item currently touches, with the priority and score that rank it
+ * against other candidates.
+ */
 export interface Collision {
   id: UniqueIdentifier;
   priority: number;
@@ -22,6 +30,7 @@ export interface Collision {
   value: number;
   data?: Record<string, unknown>;
 }
+/** The current drag position and shape and one drop target, passed to a collision detector. */
 export interface CollisionInput {
   dragOperation: {
     shape: { current: Rectangle } | null;
@@ -29,6 +38,10 @@ export interface CollisionInput {
   };
   droppable: { id: UniqueIdentifier; shape: Rectangle | undefined };
 }
+/**
+ * A function that decides whether a dragged item touches a drop target and returns the collision,
+ * or null when it does not.
+ */
 export type CollisionDetector = (input: CollisionInput) => Collision | null;
 
 /**

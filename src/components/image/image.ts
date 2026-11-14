@@ -41,9 +41,13 @@ import {
   type ImageSourceRecord,
 } from './sources.js';
 
+/** The loading status of an Image's current source, read from `imageLoadingStatus`. */
 export type ImageLoadingStatus = ImageLoadStatus;
+/** How an Image fills its frame: cropped, letterboxed, stretched or at its own size. */
 export type ImageFit = 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+/** The surface an Image shows while it loads. */
 export type ImagePlaceholder = 'skeleton' | 'spinner' | 'none';
+/** Whether an Image scales in or out inside its frame on hover. */
 export type ImageZoom = 'none' | 'in' | 'out';
 /** Scroll-linked effects: one direction (displacement) and/or one scroll zoom. */
 export type ImageParallaxEffect = ParallaxDirection | 'zoom-in' | 'zoom-out';

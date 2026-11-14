@@ -80,7 +80,9 @@ import {
   type EasingPreviewMode,
 } from './types.js';
 
+/** Called with each `tp-value-change` proposal of a new easing string while it is being edited. */
 export type EasingEditorValueChangeCallback = (event: TpValueChangeEvent<string>) => void;
+/** Called with each `tp-value-commit` when an edit settles, such as on release or Enter. */
 export type EasingEditorValueCommitCallback = (event: TpValueCommitEvent<string>) => void;
 
 interface DragSnapshot {

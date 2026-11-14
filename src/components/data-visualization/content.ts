@@ -10,6 +10,10 @@ import type {
   VisualizationTooltipOptions,
 } from './types.js';
 
+/**
+ * The series and resolved colors a Data visualization hands to tooltip or legend content you build
+ * yourself, read from its `metadataProvider`.
+ */
 export interface VisualizationMetadataProvider {
   owner: TpElement;
   legendPart?: string;

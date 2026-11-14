@@ -11,6 +11,10 @@ export type FieldAssociationAttributes = Readonly<
   Record<'aria-label' | 'aria-describedby' | 'aria-errormessage' | 'aria-invalid', string | null>
 >;
 
+/**
+ * The base class of components that take part in forms, with a name, a value, form association and
+ * validity.
+ */
 export abstract class TpFormElement<TValue = string> extends TpElement {
   static formAssociated = true;
 

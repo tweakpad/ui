@@ -5,6 +5,10 @@ import { reportDragDropDiagnostic, type UniqueIdentifier } from './sorting.js';
 import type { DraggableInput, DroppableInput, SortTransition } from './types.js';
 import { validIdentifier } from './registry.js';
 
+/**
+ * The options of a sortable item: its position in its group, the elements it drags and accepts
+ * drops on, and how it animates when its index changes.
+ */
 export interface SortableInput
   extends Omit<DraggableInput, 'disabled'>, Omit<DroppableInput, 'disabled'> {
   index: number;

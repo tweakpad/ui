@@ -207,3 +207,35 @@ export type {
 
 // Strings (uwg-te-tab-props r12)
 export type { TextEditorStrings } from './strings.js';
+export type {
+  TextEditorAccess,
+  TextEditorRequestProposal,
+  TextEditorValueChange,
+} from './controller.js';
+export type { TextEditorEngineViews } from './engine.js';
+export type {
+  TextEditorPortableBlock,
+  TextEditorPortableBulletItem,
+  TextEditorPortableCellParagraph,
+  TextEditorPortableCodeBlock,
+  TextEditorPortableCustomBlock,
+  TextEditorPortableDivider,
+  TextEditorPortableFragment,
+  TextEditorPortableHardBreak,
+  TextEditorPortableHeading,
+  TextEditorPortableImage,
+  TextEditorPortableInline,
+  TextEditorPortableInlineNode,
+  TextEditorPortableListItem,
+  TextEditorPortableListItemFields,
+  TextEditorPortableMarks,
+  TextEditorPortableOrderedItem,
+  TextEditorPortableParagraph,
+  TextEditorPortableQuote,
+  TextEditorPortableTable,
+  TextEditorPortableTableCell,
+  TextEditorPortableTableRow,
+  TextEditorPortableTaskItem,
+  TextEditorPortableText,
+} from './content/portable.js';
+export type { TextEditorToolRegistry } from './tools.js';

@@ -66,6 +66,7 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
   onValueChange: ((event: TpValueChangeEvent<unknown>) => void) | undefined;
   /** The accessible name of the group when no Field or visible heading names it. */
   label = '';
+  /** The direction the options run. */
   override orientation: 'horizontal' | 'vertical' = 'vertical';
   #members: Member[] = [];
   #excluded = new Set<Member>();

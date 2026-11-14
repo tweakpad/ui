@@ -37,7 +37,10 @@ export class TpColorPickerTriangle extends ColorSurfaceElement {
   #pressed: Pressed | undefined;
   #paintedHue = NaN;
 
-  /** The canvas raster owner; exposed for repaint-count evidence. */
+  /**
+   * The canvas raster owner; exposed for repaint-count evidence.
+   * @internal
+   */
   get rasterSurface(): CanvasSurface | undefined {
     return this.#raster;
   }

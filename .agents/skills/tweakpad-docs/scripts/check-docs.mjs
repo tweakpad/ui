@@ -27,6 +27,9 @@ const { parseDoc, slugify } = await import(pathToFileURL(join(root, 'src/docs/pa
 const { elementApi, repeatedValues, unlistedChoices } = await import(
   pathToFileURL(join(root, 'src/docs/api.ts')).href
 );
+/** The type cards `npm run cem` reads from the compiler: a named type with a card is defined. */
+const typesFile = join(root, 'dist/api-types.json');
+const apiTypes = existsSync(typesFile) ? JSON.parse(readFileSync(typesFile, 'utf8')) : undefined;
 
 export const DISPOSITIONS = new Set([
   'in-A',
@@ -323,7 +326,7 @@ export function checkPage(id, options = {}) {
     for (const tag of [page.tag, ...(page.parts ?? [])]) {
       const api = tag && elementApi(manifest, tag);
       if (api)
-        for (const problem of [...unlistedChoices(api), ...repeatedValues(api)])
+        for (const problem of [...unlistedChoices(api, apiTypes), ...repeatedValues(api)])
           problems.push(`${id}: ${tag} ${problem}`);
     }
   }

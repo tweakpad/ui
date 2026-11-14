@@ -5,12 +5,14 @@ export interface Coordinates {
   x: number;
   y: number;
 }
+/** A rectangle in CSS pixels given by its left and top edges and its size. */
 export interface BoundingRectangle {
   left: number;
   top: number;
   width: number;
   height: number;
 }
+/** Which point of a dragged item follows the pointer on each axis. */
 export interface Alignment {
   x: 'start' | 'center' | 'end';
   y: 'start' | 'center' | 'end';
@@ -48,6 +50,10 @@ export class Point implements Coordinates {
   }
 }
 
+/**
+ * A box in client coordinates that drag and drop measures items and targets with, for collision
+ * detection and placement.
+ */
 export class Rectangle implements BoundingRectangle {
   scale = { x: 1, y: 1 };
   constructor(
@@ -150,6 +156,10 @@ export class Rectangle implements BoundingRectangle {
   }
 }
 
+/**
+ * A tracked pointer position during a drag, keeping its start, previous and current points with
+ * the velocity and direction between them.
+ */
 export class Position {
   initial: Point;
   previous: Point | undefined;

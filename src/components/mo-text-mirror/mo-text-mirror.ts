@@ -26,9 +26,8 @@ export class TpMoTextMirror extends TextRevealElement {
   static override presentation = moTextMirrorPresentation;
 
   /**
-   * The direction the halves slide in: `horizontal` cuts each line down the middle of its text
-   * and slides the halves sideways; `vertical` cuts it across the middle and slides them up and
-   * down.
+   * The direction the halves slide in: sideways from a cut down the middle of each line, or up and
+   * down from a cut across it.
    */
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
 

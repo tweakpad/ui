@@ -1,11 +1,16 @@
 /**
- * Easing curve records (UI Widgets Specification 6.2 Definition): the progression of an
- * animated value over normalized time. Four kinds share one canonical string notation each;
- * parameters are kept unrounded until serialization.
+ * Easing curve records: the progression of an animated value over normalized time. Four kinds
+ * share one canonical string notation each; parameters are kept unrounded until serialization.
  */
+
+/** The four kinds of easing curve, each with its own record and string notation. */
 export type EasingKind = 'bezier' | 'spring' | 'parametric' | 'custom';
 export const EASING_KINDS: readonly EasingKind[] = ['bezier', 'spring', 'parametric', 'custom'];
 
+/**
+ * Which end of a parametric curve its formula shapes: the start (`in`), the end (`out`), or both in
+ * either order.
+ */
 export type EasingDirection = 'in' | 'out' | 'in-out' | 'out-in';
 export const EASING_DIRECTIONS: readonly EasingDirection[] = ['in', 'out', 'in-out', 'out-in'];
 
@@ -37,6 +42,7 @@ export interface EasingPoint {
   readonly output: number;
 }
 
+/** A cubic Bézier easing curve given by its two control points. */
 export interface BezierCurve {
   readonly kind: 'bezier';
   readonly x1: number;
@@ -44,6 +50,10 @@ export interface BezierCurve {
   readonly x2: number;
   readonly y2: number;
 }
+/**
+ * A spring easing curve given by the physical mass, stiffness, damping and initial velocity of the
+ * spring.
+ */
 export interface SpringCurve {
   readonly kind: 'spring';
   readonly mass: number;
@@ -51,6 +61,7 @@ export interface SpringCurve {
   readonly damping: number;
   readonly velocity: number;
 }
+/** An easing curve built from a named formula family, a direction and the family's parameters. */
 export interface ParametricCurve {
   readonly kind: 'parametric';
   readonly family: ParametricFamily;
@@ -58,10 +69,12 @@ export interface ParametricCurve {
   /** Family parameters by key (`exponent`, `overshoot`, `amplitude`, `period`, `count`). */
   readonly parameters: Readonly<Record<string, number>>;
 }
+/** A free-form easing curve drawn through a list of points. */
 export interface CustomCurve {
   readonly kind: 'custom';
   readonly points: readonly EasingPoint[];
 }
+/** Any easing curve the easing editor can edit, told apart by its `kind`. */
 export type EasingCurve = BezierCurve | SpringCurve | ParametricCurve | CustomCurve;
 
 export type EasingFunction = (progress: number) => number;

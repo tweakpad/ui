@@ -326,6 +326,7 @@ export class TpFlowControls extends TpElement {
   zoom = 1;
   /** Zoom levels the zoom field's menu offers, where 1 is 100%. */
   zoomPresets: readonly number[] = DEFAULT_ZOOM_PRESETS;
+  /** The direction the controls stack in. */
   override orientation: Orientation = 'vertical';
 
   #toolbar: ToolbarController | undefined;

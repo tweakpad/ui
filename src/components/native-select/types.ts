@@ -1,3 +1,4 @@
+/** A Native select's value: one option value, or a list of them when `multiple` is set. */
 export type NativeSelectValue = string | readonly string[];
 export interface NativeSelectState extends Readonly<Record<string, unknown>> {
   readonly value: NativeSelectValue;

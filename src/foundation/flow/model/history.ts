@@ -30,6 +30,7 @@ export interface FlowHistoryEntry {
   at: number;
 }
 
+/** What undo and redo can do now: availability, the labels of the next steps and the stack depth. */
 export interface FlowHistoryState {
   canUndo: boolean;
   canRedo: boolean;

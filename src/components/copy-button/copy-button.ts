@@ -14,9 +14,15 @@ import { copyButtonPresentation } from '../../presentation/families/copy-button.
 import { TpButton } from '../button/button.js';
 import { TpIcon } from '../icon/icon.js';
 
+/** The treatment of the Button a Copy button composes, from the Button variants. */
 export type CopyButtonVariant =
   'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link';
+/**
+ * The size of the Button a Copy button composes; icon-only buttons take the square size of the same
+ * height.
+ */
 export type CopyButtonSize = 'xs' | 'sm' | 'default' | 'lg';
+/** Detail of the cancelable `tp-copy` event: the value about to be written to the clipboard. */
 export interface CopyDetail {
   readonly value: string;
 }

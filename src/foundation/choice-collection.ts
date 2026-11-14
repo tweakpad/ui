@@ -1,6 +1,9 @@
 import { CollectionRegistry, stepIndex } from './collection.js';
 import { TypeaheadController } from './typeahead.js';
 
+/**
+ * One registered option of a choice collection: its value, label and the element that renders it.
+ */
 export interface ChoiceRecord<T = unknown> {
   value: T;
   label: unknown;

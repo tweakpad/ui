@@ -136,6 +136,10 @@ export interface OverlayPassRecord {
   readonly time: number;
 }
 
+/**
+ * Positions the overlay marks of one text editor, running at most one batched layout pass per
+ * frame when its content, size or state changes.
+ */
 export class OverlayGeometry {
   readonly #host: OverlayGeometryHost;
   readonly #layers = new Set<OverlayLayer<unknown>>();

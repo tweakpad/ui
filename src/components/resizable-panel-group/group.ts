@@ -131,6 +131,7 @@ export class TpResizablePanelGroup extends Scrollable(TpElement) {
       }
     `,
   ];
+  /** The direction the panels are laid out and resized along. */
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   #inputSizes: readonly PanelExtent[] | undefined;
   /** The panel sizes in panel order; set it to control the layout, then publish each accepted proposal back. Numbers are pixels, unitless strings percentages. */

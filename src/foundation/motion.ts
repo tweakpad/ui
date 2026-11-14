@@ -11,6 +11,9 @@ export type MotionCompletion = 'blocking' | 'non-blocking';
 
 export type MotionPolicy = 'inherit' | 'normal' | 'reduce';
 
+/**
+ * A state value a motion role transitions between, such as a component's previous and next state.
+ */
 export type MotionValue = string | number | boolean | null;
 
 export interface MotionRoleDefinition {
@@ -87,6 +90,10 @@ export function cancelMotions(owner: HTMLElement): void {
   ACTIVE_MOTION.delete(owner);
 }
 
+/**
+ * Fired when an element asks to animate; a motion driver above it may claim the request with
+ * `respondWith()`.
+ */
 export class TpMotionRequestEvent extends Event {
   readonly request: MotionRequest;
   #driver: MotionDriver | null = null;

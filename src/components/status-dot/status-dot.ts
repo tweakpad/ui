@@ -14,7 +14,9 @@ import { ambientCss } from '../../presentation/motion.js';
 import { DescriptionTooltipController } from '../shared/description-tooltip.js';
 import { TpTooltip } from '../tooltip/tooltip.js';
 
+/** The status color of a Status dot, from the theme's status roles. */
 export type StatusDotVariant = 'default' | 'secondary' | 'success' | 'warning' | 'destructive';
+/** The looping motion of a Status dot, as its `motion` takes it. */
 export type StatusDotMotion = 'none' | 'pulse' | 'ping';
 
 export const statusDotMotionRoles = {

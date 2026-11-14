@@ -16,8 +16,16 @@ import type { CarouselId, CarouselNavigationRequest, CarouselOptions } from './t
  * the viewport origin and present the logical position themselves.
  */
 export type CarouselEffectLayout = 'track' | 'stack';
+/**
+ * What is moving the carousel when an effect receives a frame: a drag, a navigation animation or
+ * the final settle.
+ */
 export type CarouselEffectPhase = 'drag' | 'animate' | 'settle';
 
+/**
+ * One slide as an effect sees it in a frame, with its elements and its distance from the alignment
+ * position.
+ */
 export interface CarouselEffectItem {
   readonly id: CarouselId;
   readonly index: number;
@@ -32,6 +40,10 @@ export interface CarouselEffectItem {
   readonly progress: number;
 }
 
+/**
+ * The carousel position an effect presents, delivered for every drag move, animation frame and
+ * settle.
+ */
 export interface CarouselEffectFrame {
   readonly phase: CarouselEffectPhase;
   /** Logical position in layout pixels. */
@@ -50,6 +62,7 @@ export interface CarouselEffectFrame {
   readonly amount: number;
 }
 
+/** The carousel elements and services an effect receives when it attaches. */
 export interface CarouselEffectContext {
   readonly owner: HTMLElement;
   readonly viewport: HTMLElement;
@@ -63,6 +76,10 @@ export interface CarouselEffectContext {
   diagnose(message: string, error?: unknown): void;
 }
 
+/**
+ * An effect attached to one carousel, returned by `attach` and driven with frames until the
+ * carousel detaches it.
+ */
 export interface CarouselEffectInstance {
   /** Called for every presented position: drag, each animation frame and settle. */
   frame(frame: CarouselEffectFrame): void;

@@ -24,7 +24,9 @@ export class TpMapOverlay extends TpPopover {
   static override tagName = 'tp-map-overlay';
   static override presentationFamilies = [mapPresentation];
 
+  /** The side of its anchor the overlay sits on. */
   override side: LogicalSide = 'block-start';
+  /** How the overlay aligns along that side. */
   override align: Alignment = 'center';
 
   #pin: OverlayPin | null = null;

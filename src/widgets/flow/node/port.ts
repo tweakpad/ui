@@ -16,7 +16,7 @@ export interface FlowPortActivateDetail {
 }
 
 /**
- * A connection endpoint (Widgets 6.3 Anatomy port row): a native button named with the node and
+ * A connection endpoint: a native button named with the node and
  * port labels and its direction, carrying the candidate, validity and connection markers the
  * recipe paints. Pointer presses are classified by the node layer's delegated drag; the button's
  * keyboard activation starts a keyboard connection through `flow-port-activate`.

@@ -5,10 +5,20 @@ import { directive, PartType } from 'lit/directive.js';
 import type { ElementPart, PartInfo } from 'lit/directive.js';
 import { attachPartReference, detachPartReference } from './part-reference.js';
 
+/**
+ * A callback or `{ current }` object that receives a part's rendered element, and `null` when it is
+ * removed.
+ */
 export type ElementReference =
   ((element: HTMLElement | null) => void) | { current: HTMLElement | null };
+/** Read-only state of a component part, passed to its contract's hooks and render delegate. */
 export type PartState = Readonly<Record<string, unknown>>;
+/** Properties and attributes a part contract sets on the part's element. */
 export type HostProperties = Record<string, unknown>;
+/**
+ * What a part's `renderDelegate` receives: the part's state, its properties, its default content
+ * and the directive that keeps its behavior.
+ */
 export interface PartRenderContext<S extends PartState = PartState> {
   state: S;
   properties: HostProperties;
@@ -16,6 +26,10 @@ export interface PartRenderContext<S extends PartState = PartState> {
   /** Place this directive on the delegate's semantic host to retain the behavior bundle. */
   bind: ReturnType<typeof bindPart>;
 }
+/**
+ * Customization for one part of a component: replace its rendering, or add properties, classes,
+ * styles, a reference or content to it.
+ */
 export interface ComponentPartContract<S extends PartState = PartState> {
   renderDelegate?: (context: PartRenderContext<S>) => unknown;
   hostProperties?: HostProperties;

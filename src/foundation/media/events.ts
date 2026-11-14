@@ -64,6 +64,7 @@ export class TpMediaRequestEvent extends CustomEvent<MediaRequestDetail> {
   }
 }
 
+/** Fired when a media request could not be carried out; the detail says which and why. */
 export class TpMediaRequestFailedEvent extends CustomEvent<MediaRequestFailedDetail> {
   static readonly eventName = MEDIA_REQUEST_FAILED_EVENT;
   constructor(detail: MediaRequestFailedDetail) {
@@ -71,6 +72,7 @@ export class TpMediaRequestFailedEvent extends CustomEvent<MediaRequestFailedDet
   }
 }
 
+/** Fired when the media state changes; the detail carries the changed state. */
 export class TpMediaStateChangeEvent extends CustomEvent<MediaStateChangeDetail> {
   static readonly eventName = MEDIA_STATE_CHANGE_EVENT;
   constructor(detail: MediaStateChangeDetail) {
@@ -78,6 +80,7 @@ export class TpMediaStateChangeEvent extends CustomEvent<MediaStateChangeDetail>
   }
 }
 
+/** Fired when the media fails to load or play; the detail carries the error. */
 export class TpMediaErrorEvent extends CustomEvent<MediaErrorDetail> {
   static readonly eventName = MEDIA_ERROR_EVENT;
   constructor(detail: MediaErrorDetail) {
@@ -85,6 +88,7 @@ export class TpMediaErrorEvent extends CustomEvent<MediaErrorDetail> {
   }
 }
 
+/** Fired when a media element attaches to the player. */
 export class TpMediaAttachEvent extends CustomEvent<MediaAttachDetail> {
   static readonly eventName = MEDIA_ATTACH_EVENT;
   constructor(detail: MediaAttachDetail) {
@@ -92,6 +96,7 @@ export class TpMediaAttachEvent extends CustomEvent<MediaAttachDetail> {
   }
 }
 
+/** Fired when a media element detaches from the player. */
 export class TpMediaDetachEvent extends CustomEvent<MediaAttachDetail> {
   static readonly eventName = MEDIA_DETACH_EVENT;
   constructor(detail: MediaAttachDetail) {

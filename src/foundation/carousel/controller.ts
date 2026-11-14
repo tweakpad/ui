@@ -32,6 +32,10 @@ import type {
   CarouselEventName,
 } from './types.js';
 
+/**
+ * Everything a carousel controller reads from its owner on each update: the root options, the
+ * selection, the state flags and the item records.
+ */
 export interface CarouselInput extends Partial<CarouselRootOptions> {
   readonly options?: CarouselOptions;
   readonly value?: number;

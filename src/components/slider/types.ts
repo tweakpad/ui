@@ -7,8 +7,11 @@ import type {
 } from '../../foundation/slider.js';
 import type { TpValueChangeEvent, TpValueCommitEvent } from '../../foundation/events.js';
 
+/** A Slider's value: one number, or one per thumb for a range. */
 export type SliderValue = number | number[];
+/** How a Slider's thumbs sit on the track at its ends, as `thumbAlignment` takes it. */
 export type SliderThumbAlignment = 'center' | 'edge' | 'delayed-edge';
+/** What a Slider thumb dragged into its neighbor does, as `thumbCollisionBehavior` takes it. */
 export type SliderThumbCollisionBehavior = SliderCollisionBehavior;
 export type { SliderBufferedRange, SliderSegment, SliderSegmentState };
 /** Detail of the non-cancelable `tp-slider-pointer-change` event. */
@@ -18,6 +21,7 @@ export interface SliderPointerChangeDetail {
   /** Hovered position as a 0–1 ratio of the domain, or `null` when not pointing. */
   ratio: number | null;
 }
+/** A summary of one Slider thumb, listed in the Slider's `thumbMetadata`. */
 export interface SliderThumbMetadata {
   index: number;
   inputId: string;
@@ -25,6 +29,10 @@ export interface SliderThumbMetadata {
   percentage: number;
   disabled: boolean;
 }
+/**
+ * The full state of one Slider thumb, which its Slider resolves and the Thumb renders its input and
+ * state markers from.
+ */
 export interface SliderThumbState extends Record<string, unknown> {
   index: number;
   value: number;
@@ -50,6 +58,10 @@ export interface SliderThumbState extends Record<string, unknown> {
  */
 export type SliderVariant = 'default' | 'bar' | 'inline';
 
+/**
+ * The Slider a Slider thumb belongs to, as the thumb's `slider` returns it; the thumb reads its
+ * state from it and reports input back to it.
+ */
 export interface SliderThumbOwner {
   readonly orientation: 'horizontal' | 'vertical';
   readonly variant: SliderVariant;
@@ -67,9 +79,11 @@ export interface SliderThumbOwner {
   thumbKey(thumb: HTMLElement, event: KeyboardEvent): void;
   thumbFocus(thumb: HTMLElement, focused: boolean): void;
 }
+/** A Slider's `onValueChange`, called with each proposed value before `tp-value-change`. */
 export type SliderValueChangeCallback = (
   event: TpValueChangeEvent<SliderValue | undefined>,
 ) => void;
+/** A Slider's `onValueCommitted`, called with each committed value before `tp-value-commit`. */
 export type SliderValueCommitCallback = (
   event: TpValueCommitEvent<SliderValue | undefined>,
 ) => void;

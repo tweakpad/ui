@@ -1,8 +1,5 @@
 /**
- * Strings of the text editor (Widgets `uwg-te-tab-props` r12, `uwg-te-req-a11y-1` to
- * `uwg-te-req-a11y-5`, `uwg-te-par-tools-1`, `uwg-te-par-tools-2`, `uwg-te-req-tables-8`).
- *
- * Labels, names, hints and announcement texts in English. Keys are camelCase; a `{name}`
+ * Strings of the text editor. Labels, names, hints and announcement texts in English. Keys are camelCase; a `{name}`
  * placeholder is filled where the text is used. Texts that only the live announcer speaks start
  * with `announce`. The built-in tools take their labels from here, through the tool context, so
  * that replacing a string relabels every surface. The accessible name of the task checkbox,

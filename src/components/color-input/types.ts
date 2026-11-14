@@ -4,6 +4,7 @@ import type { ColorFormat } from '../../foundation/color/types.js';
 export type ColorInputVariant = 'default' | 'inline';
 /** `none`: the swatch is a button that never opens the browser's picker, for another picker. */
 export type ColorInputPicker = 'native' | 'none';
+/** The height of a Color input's swatch and row, matching Input's sizes. */
 export type ColorInputSize = 'sm' | 'default';
 
 export interface ColorInputState extends Readonly<Record<string, unknown>> {

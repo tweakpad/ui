@@ -127,6 +127,7 @@ export class TpElementBase extends LitElement {
 
   /** Takes the element out of interaction: its actions do nothing and it shows the disabled appearance. */
   disabled = false;
+  /** Keeps the element readable and focusable but refuses changes to its value. */
   readOnly = false;
   invalid = false;
   required = false;

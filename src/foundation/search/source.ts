@@ -1,6 +1,9 @@
 import { TextIndex, type TextIndexOptions, type TextSearchOptions } from './text-index.js';
 import type { SearchHit } from './types.js';
 
+/**
+ * What a search source receives with each query: an abort signal, the result limit and the locale.
+ */
 export interface SearchSourceContext {
   /** Aborted when a newer query starts or the owner goes away. */
   readonly signal: AbortSignal;

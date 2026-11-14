@@ -81,18 +81,22 @@ as its source.
   setting folded into its property. A member the element redeclares (`override orientation`) is
   its own.
 - **Columns:** name (+ attribute), description, type, default, and in Storybook a control.
-  - **Type** shows the main type: a choice list as its values (`'line' | 'displace'`), a callback
-    as its signature, otherwise the named type. What a named type means is shown by size:
-    - **Small** (its declaration is one line of at most 60 characters, such as
-      `UniqueIdentifier = string | number`): printed directly in the cell, under the main type.
-      No disclosure, no modal.
-    - **Structured** (an object, an interface, or any longer declaration): a "Type details"
-      button in the cell opens a modal with every declaration the row needs, pretty-printed and
-      highlighted, including the types a wrapper (`Omit<…>`, an alias, an interface's bases) is
-      built from. Code never renders inside the table, so the table keeps its width.
-    - A declaration is never flattened into one line, truncated, or pasted into the description.
-    - Storybook draws the button and modal with its own components (no `tp-*` in the docs
-      chrome); the website with the library Button, Dialog and Code block.
+  - **Type** shows the signature exactly as TypeScript declares it, on one line: a choice list
+    as its values (`'line' | 'displace'`), a callback as its signature, otherwise the named type.
+    Each project type name in it is a token a click opens; no code block or declaration ever
+    renders inside the table, so the table keeps its width.
+    - **A click opens the type's card**, as an editor's hover does: a popover anchored to the token
+      with the type's declaration (pretty-printed, highlighted), its doc comment, and the import
+      that gives it (`import type { X } from '@tweakpad/ui/drag-drop'`). Type names in the card
+      open their own cards, and the card keeps a back step. Platform and third-party types end the
+      chain as plain names.
+    - **Generated, never authored.** Signatures and cards are read from the TypeScript compiler
+      when `npm run cem` runs (`dist/api-types.json`). It fails when a public signature names a
+      project type that does not resolve, is not exported from a package entry, or has no doc
+      comment: fix the source (export it, or add one JSDoc line), never the docs.
+    - Storybook draws the card with its own components (no `tp-*` in the docs chrome); the website
+      with the library Popover and Code block styling. Methods' and events' signatures in the API
+      Reference use the same tokens and cards.
   - **Control** exists only for a choice, boolean, string or number value that is not read-only.
     Callbacks, objects and read-only state have no control (never "Set object").
 - **API Reference** prints `events`, `methods`, `slots`, `cssParts`, `cssProperties`, in that

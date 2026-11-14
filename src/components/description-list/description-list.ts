@@ -29,8 +29,13 @@ export interface DescriptionListCounts {
   total: number;
 }
 
+/** A Description list trigger text: a string, or a function of the hidden and total Item counts. */
 export type DescriptionListMessage = string | ((counts: DescriptionListCounts) => string);
 
+/**
+ * Replacements for the Show more and Show less trigger text of a Description list; missing entries
+ * keep the defaults.
+ */
 export interface DescriptionListMessages {
   /** Trigger text while the Items beyond the limit are hidden, `Show more` by default. */
   showMore?: DescriptionListMessage;
@@ -46,6 +51,7 @@ const VIEWPORT_EXTENT = {
 } as const;
 const COLLAPSED_EXTENT = '--description-list-collapsed-height';
 
+/** How a Description list places each label: beside its value or above it. */
 export type DescriptionListLayout = 'inline' | 'stacked';
 
 const isLayout = (value: unknown): value is DescriptionListLayout =>

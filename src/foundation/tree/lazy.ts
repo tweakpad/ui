@@ -1,5 +1,6 @@
 import type { TreeLoadStatus } from './model.js';
 
+/** The loading status of an item's children, with the error when loading failed. */
 export interface TreeLoadState {
   status: TreeLoadStatus;
   error?: unknown;

@@ -22,6 +22,7 @@ import {
   type TpMediaTimeSlider,
 } from './time-slider.js';
 
+/** Whether a media time preview stays inside the track or may overflow it. */
 export type MediaPreviewOverflow = 'clamp' | 'visible';
 
 /** Far enough above and below the track that only the viewport limits the block axis. */

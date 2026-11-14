@@ -5,6 +5,7 @@ export interface AlignItem {
   rect: FlowRect;
 }
 
+/** The edge or center line that aligning selected nodes lines them up on. */
 export type AlignMode = 'left' | 'center-x' | 'right' | 'top' | 'center-y' | 'bottom';
 
 export interface MovedItem {

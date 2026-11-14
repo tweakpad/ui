@@ -23,6 +23,7 @@ import {
   stateRole,
 } from '../../foundation/motion.js';
 
+/** Which way the last selection of a Tabs moved, read from its `activationDirection`. */
 export type TabsActivationDirection = 'left' | 'right' | 'up' | 'down' | 'none';
 export type TabsMember = HTMLElement & {
   value?: unknown;

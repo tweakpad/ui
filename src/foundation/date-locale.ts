@@ -14,6 +14,10 @@ export const listFormatter = cachedIntl(
   (locale, options?: Intl.ListFormatOptions) => new Intl.ListFormat(locale, options),
 );
 
+/**
+ * Width of a formatted duration's unit labels, from full words (`long`) to the shortest form
+ * (`narrow`).
+ */
 export type DurationStyle = 'long' | 'short' | 'narrow';
 export interface DurationRecord {
   years?: number;

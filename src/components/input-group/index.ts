@@ -1,1 +1,1 @@
-export { TpInputGroup } from './input-group.js';
+export { TpInputGroup, type InputGroupEdge } from './input-group.js';

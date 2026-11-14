@@ -43,8 +43,10 @@ export interface FlowRenderHost {
   requestRender(): void;
 }
 
+/** The run status an edge is drawn with while a run is bound. */
 export type FlowEdgeRunStatusMarker = 'inactive' | 'active' | 'taken' | 'not-taken' | 'disabled';
 
+/** One label of a visible edge, with its text and the point along the edge where it is drawn. */
 export interface RenderedEdgeLabel extends FlowLabelAnchor {
   text: string;
 }
@@ -94,10 +96,15 @@ export interface ConnectionLineState {
   candidate?: { nodeId: string; portId: string | undefined };
 }
 
+/** An edge a renderer's own hit test found under a point. */
 export interface FlowRendererHit extends FlowPathHit {
   edgeId: string;
 }
 
+/**
+ * Draws the flow's edges, connection line and selection box; the default draws SVG and a custom one
+ * can replace it.
+ */
 export interface FlowRenderer {
   readonly capabilities: FlowRendererCapabilities;
   attach(host: FlowRenderHost): void;

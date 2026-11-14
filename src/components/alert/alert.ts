@@ -4,7 +4,9 @@ import { TpElement } from '../../foundation/element.js';
 import { alertPresentation } from '../../presentation/families/alert.js';
 import { calloutRegion, calloutTints } from '../../presentation/recipes/shared/callout-surface.js';
 
+/** The outcome an Alert reports, which sets its color. */
 export type AlertSeverity = 'informational' | 'success' | 'warning' | 'danger';
+/** How urgently assistive technology announces an Alert, or `off` to leave it unannounced. */
 export type AlertAnnouncement = 'off' | 'polite' | 'assertive';
 
 /**

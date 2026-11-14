@@ -43,6 +43,10 @@ export function scrollbarProgress(
   const progress = Math.max(0, Math.min(1, ((point - start) / scale - grab) / travel));
   return rtl ? 1 - progress : progress;
 }
+/**
+ * When a scrollbar shows: whenever the content overflows, always, only while scrolling, or on
+ * hover.
+ */
 export type ScrollbarVisibility = 'automatic' | 'always' | 'while-scrolling' | 'on-hover';
 export interface ScrollbarConfiguration {
   track: HTMLElement | null;

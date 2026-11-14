@@ -66,9 +66,22 @@ import {
 import { mediaContainerStyles, mediaSurfaceVariables } from './styles.js';
 import { mediaPlayerPresentation } from '../../presentation/families/media-player.js';
 
+/**
+ * Whether a media player registers its default key map or keeps only its `tp-media-hotkey`
+ * bindings.
+ */
 export type MediaHotkeysMode = 'default' | 'none';
+/**
+ * Where a media player listens for keys: on its own container, or on the document, routed to the
+ * most recently active player.
+ */
 export type MediaHotkeyScope = 'player' | 'document';
+/**
+ * Whether a media player registers the default video tap gestures or only its `tp-media-gesture`
+ * bindings.
+ */
 export type MediaGesturesMode = 'default' | 'none';
+/** Whether a media player announces its status changes politely or not at all. */
 export type MediaAnnouncementsMode = 'polite' | 'off';
 
 export const DEFAULT_SEEK_STEP = 10;
@@ -92,6 +105,7 @@ export const playbackRatesConverter = {
 
 /** Registered declarative bindings (`tp-media-hotkey`, `tp-media-gesture`). */
 export type MediaHotkeySource = MediaHotkeyInput & object;
+/** A declarative gesture binding (`tp-media-gesture`) registered with a media player. */
 export type MediaGestureSource = MediaGestureInput & object;
 
 interface Relay<S> {
@@ -499,7 +513,10 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     };
   }
 
-  /** Registers a declarative key binding (`tp-media-hotkey`); read again whenever bindings sync. */
+  /**
+   * Registers a declarative key binding (`tp-media-hotkey`); read again whenever bindings sync.
+   * @internal
+   */
   registerHotkey(source: MediaHotkeySource): () => void {
     this.#hotkeySources.add(source);
     this.#scheduleBindings();
@@ -508,7 +525,10 @@ export class TpMediaPlayer extends TpElement implements MediaPlayerApi {
     };
   }
 
-  /** Registers a declarative gesture binding (`tp-media-gesture`). */
+  /**
+   * Registers a declarative gesture binding (`tp-media-gesture`).
+   * @internal
+   */
   registerGesture(source: MediaGestureSource): () => void {
     this.#gestureSources.add(source);
     this.#scheduleBindings();

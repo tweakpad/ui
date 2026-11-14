@@ -1,14 +1,25 @@
 import { dateTimeFormatter } from './date-locale.js';
 
+/** How a calendar selects dates: one date, several dates, or a start-to-end range. */
 export type CalendarSelectionMode = 'single' | 'multiple' | 'range';
 
+/**
+ * A selected date range as ISO date strings; `to` is absent while only the start has been picked.
+ */
 export interface CalendarRange {
   from: string;
   to?: string;
 }
 
+/**
+ * A calendar's selection: an ISO date string in single mode, a list in multiple mode, a range in
+ * range mode, or `undefined` when nothing is selected.
+ */
 export type CalendarValue = string | string[] | CalendarRange | undefined;
 
+/**
+ * A date split into its fields in the adapter's calendar, as returned by `CalendarAdapter.parts()`.
+ */
 export interface CalendarDateParts {
   calendar: string;
   era?: string;
@@ -17,6 +28,10 @@ export interface CalendarDateParts {
   day: number;
 }
 
+/**
+ * Date arithmetic and field access for one calendar system, working on ISO date strings; calendar
+ * components use it for every navigation and comparison.
+ */
 export interface CalendarAdapter {
   readonly calendar: string;
   normalize(date: string): string | null;

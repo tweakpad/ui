@@ -7,7 +7,6 @@ const entry: string = '../../../scripts/manifest/member-types.mjs';
 const { scanChoices } = (await import(entry)) as {
   scanChoices(root: string): {
     values(text: string, module: string): string[] | undefined;
-    definitions(text: string, module: string): { name: string; text: string }[];
     indexed(text: string, module: string): { text: string; module: string } | undefined;
   };
 };
@@ -43,18 +42,5 @@ describe('manifest member types', () => {
     );
     expect(types.indexed("ManagerOptions['missing']", module)).toBeUndefined();
     expect(types.values('Mode', module)).toEqual(['default', 'clone']);
-  });
-
-  it('keeps a definition as its whole declaration, pretty-printed without comments', () => {
-    const [definition] = types.definitions('ManagerOptions', module);
-    expect(definition).toEqual({
-      name: 'ManagerOptions',
-      text: [
-        'interface ManagerOptions extends FeedbackOptions {',
-        '  autoScroll?: boolean;',
-        '  sensors?: readonly string[];',
-        '}',
-      ].join('\n'),
-    });
   });
 });

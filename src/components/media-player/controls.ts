@@ -4,6 +4,10 @@ import { OwnedAttributes } from '../../foundation/owned-attributes.js';
 import { TpMediaElement, closeMediaPopups, type MediaPlayerApi } from './context.js';
 import { mediaScrimPreferenceStyles, mediaSurfacePreferenceStyles } from './styles.js';
 
+/**
+ * Whether media controls follow the player's controls visibility or always stay visible, as in the
+ * audio layout.
+ */
 export type MediaControlsVisibility = 'auto' | 'always';
 
 /**

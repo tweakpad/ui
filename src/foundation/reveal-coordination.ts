@@ -15,6 +15,9 @@ import {
 import { ViewTransitionHold } from './view-transition.js';
 import { ViewportTrigger } from './viewport-trigger.js';
 
+/**
+ * Where a staggered reveal starts: the first member, the last one, or the center, moving outward.
+ */
 export type StaggerFrom = 'first' | 'last' | 'center';
 
 /** What a revealing component (or a nested coordinator) offers its coordinator. */

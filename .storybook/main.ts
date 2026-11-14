@@ -1,9 +1,33 @@
+import { resolve } from 'node:path';
 import type { StorybookConfig } from '@storybook/web-components-vite';
+import type { Plugin } from 'vite';
 import remarkGfm from 'remark-gfm';
 import { literalCode } from '../src/docs/vite.js';
 import viteConfig from '../vite.config.js';
 
 const cssTarget = viteConfig.build?.cssTarget;
+
+/**
+ * The Docs pages read their Properties tables and API sections from `dist/custom-elements.json`,
+ * and their type cards from `dist/api-types.json`, which `npm run cem` rewrites while Storybook
+ * runs: reload the pages with the new data.
+ */
+const manifestReload = (): Plugin => ({
+  name: 'tweakpad-manifest-reload',
+  configureServer(server) {
+    const files = ['custom-elements.json', 'api-types.json'].map((name) =>
+      resolve(import.meta.dirname, '../dist', name),
+    );
+    server.watcher.add(files);
+    server.watcher.on('change', (path) => {
+      const file = resolve(path);
+      if (!files.includes(file)) return;
+      for (const module of server.moduleGraph.getModulesByFile(file) ?? [])
+        server.moduleGraph.invalidateModule(module);
+      server.ws.send({ type: 'full-reload' });
+    });
+  },
+});
 
 const config: StorybookConfig = {
   // Stories anywhere under src; the Widgets section also has an MDX overview page.
@@ -76,7 +100,7 @@ const config: StorybookConfig = {
   // plugin runs before Storybook's MDX plugin; both run early, so it goes first in the list.
   viteFinal: (config) => ({
     ...config,
-    plugins: [literalCode({ frontmatter: 'strip' }), ...(config.plugins ?? [])],
+    plugins: [literalCode({ frontmatter: 'strip' }), manifestReload(), ...(config.plugins ?? [])],
     build: { ...config.build, ...(cssTarget === undefined ? {} : { cssTarget }) },
   }),
 };

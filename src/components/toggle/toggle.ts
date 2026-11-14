@@ -19,6 +19,10 @@ import type { TpButton } from '../button/button.js';
  */
 export type ToggleSize = TpButton['size'];
 
+/**
+ * The Toggle group that owns a Toggle's pressed state, size and paint, as the Toggle's
+ * `selectionOwner` returns it.
+ */
 export interface ToggleSelectionOwner {
   readonly variant: 'ghost' | 'outline';
   readonly size: ToggleSize;

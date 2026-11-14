@@ -17,16 +17,19 @@ import type { TextEditorAttributeValue } from './model.js';
 
 // Attributes
 
+/** A string attribute of a custom node; `default` is `null` for none. */
 export interface TextEditorStringAttribute {
   readonly type: 'string';
   readonly default: string | null;
 }
 
+/** A number attribute of a custom node; `default` is `null` for none. */
 export interface TextEditorNumberAttribute {
   readonly type: 'number';
   readonly default: number | null;
 }
 
+/** A true or false attribute of a custom node, with its default. */
 export interface TextEditorBooleanAttribute {
   readonly type: 'boolean';
   readonly default: boolean;
@@ -89,6 +92,7 @@ export interface TextEditorBlockMarkdownMatch<
   readonly content?: readonly MarkdownInline[] | undefined;
 }
 
+/** How a custom block converts to and from Markdown. */
 export interface TextEditorBlockMarkdown<
   S extends TextEditorAttributeSpecs = TextEditorAttributeSpecs,
 > {
@@ -191,6 +195,7 @@ export interface TextEditorSuggestion<
   attrs(item: I): Partial<TextEditorAttributeValues<S>>;
 }
 
+/** How a custom inline node writes itself as Markdown. */
 export interface TextEditorInlineMarkdown<
   S extends TextEditorAttributeSpecs = TextEditorAttributeSpecs,
 > {

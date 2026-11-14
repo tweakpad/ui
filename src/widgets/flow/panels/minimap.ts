@@ -15,6 +15,7 @@ import type { FlowGesturePhase, FlowStrings } from '../types.js';
 export const MINIMAP_STEP = 'flow-minimap-step';
 export const MINIMAP_PAN = 'flow-minimap-pan';
 
+/** A node as the minimap paints it: its rect, tone and selection. */
 export interface FlowMinimapNode {
   rect: FlowRect;
   /** Tone key (`chart-1`, `success`, …) painted through `--tp-<tone>`. */

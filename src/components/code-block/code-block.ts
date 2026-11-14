@@ -28,6 +28,10 @@ import { TpButton } from '../button/button.js';
 import { TpCopyButton, type CopyDetail } from '../copy-button/copy-button.js';
 import { TpTooltip } from '../tooltip/tooltip.js';
 
+/**
+ * Replacements for a Code block's built-in text, such as the copy action and the diff line names;
+ * missing entries keep the defaults.
+ */
 export interface CodeBlockMessages {
   readonly code?: string;
   readonly copy?: string;
@@ -49,6 +53,7 @@ export const DEFAULT_CODE_BLOCK_MESSAGES: Required<CodeBlockMessages> = {
   removed: 'removed',
 };
 
+/** Detail of the cancelable `tp-code-copy` event: the text about to be copied. */
 export interface CodeCopyDetail {
   readonly text: string;
 }

@@ -80,6 +80,10 @@ export interface FlowNodePropertyDetail {
   phase: 'propose' | 'commit';
 }
 
+/**
+ * The transient state a node shows on one port, such as being a connection candidate, connected or
+ * reporting an issue.
+ */
 export interface FlowPortState {
   candidate?: boolean;
   candidateFocused?: boolean;

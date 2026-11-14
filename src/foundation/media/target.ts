@@ -17,15 +17,18 @@ export const MediaReadyState = Object.freeze({
 } as const);
 export type MediaReadyStateValue = 0 | 1 | 2 | 3 | 4;
 
+/** Whether the media is a fixed-length recording, a live stream, or not yet known. */
 export type MediaStreamType = 'on-demand' | 'live' | 'unknown';
 export type MediaCrossOrigin = 'anonymous' | 'use-credentials';
 
+/** The time ranges the media has buffered or can seek to, in seconds, as start and end pairs. */
 export interface TimeRangesLike {
   readonly length: number;
   start(index: number): number;
   end(index: number): number;
 }
 
+/** The members of a media error the player reads from its target. */
 export interface MediaErrorLike {
   readonly code: number;
   readonly message?: string | undefined;
@@ -33,6 +36,7 @@ export interface MediaErrorLike {
   readonly fatal?: boolean | undefined;
 }
 
+/** The members of a text track cue the player reads: its time span and its text. */
 export interface TextCueLike {
   readonly id?: string | undefined;
   readonly startTime: number;
@@ -40,11 +44,15 @@ export interface TextCueLike {
   readonly text?: string | undefined;
 }
 
+/** An array-like list of the cues of a text track. */
 export interface TextCueListLike {
   readonly length: number;
   readonly [index: number]: TextCueLike | undefined;
 }
 
+/**
+ * The members of a text track the player reads and sets, such as captions, subtitles or chapters.
+ */
 export interface TextTrackLike {
   readonly id: string;
   readonly kind: string;
@@ -60,6 +68,7 @@ export interface TextTrackListLike extends EventTarget {
   readonly [index: number]: TextTrackLike | undefined;
 }
 
+/** The members of an audio track the player reads, so any media target can expose its tracks. */
 export interface AudioTrackLike {
   readonly id: string;
   readonly kind?: string | undefined;
@@ -74,6 +83,7 @@ export interface AudioTrackListLike extends EventTarget {
   readonly [index: number]: AudioTrackLike | undefined;
 }
 
+/** One quality level of an adaptive video stream, which the player lists in its quality menu. */
 export interface VideoRenditionLike {
   readonly id?: string | undefined;
   readonly width?: number | undefined;
@@ -104,6 +114,9 @@ export interface RemotePlaybackLike extends EventTarget {
   cancelWatchAvailability?(id?: number): Promise<void>;
 }
 
+/**
+ * Title and poster a media target reports for its content, used when the player has none authored.
+ */
 export interface MediaContentData {
   readonly title?: string | null | undefined;
   readonly poster?: string | null | undefined;

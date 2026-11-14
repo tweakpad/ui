@@ -53,15 +53,13 @@ export interface EdgeLayerOptions {
 
 const DEFAULT_LABEL_OFFSET = 12;
 
-/**
- * The edge layer (Widgets 6.3 Anatomy edge rows): resolves the visible edges into renderer
- * records (paths, markers, labels, state markers), hands them to the renderer, places the label
- * pills in the label layer and keeps a hidden focus proxy per visible edge in the overlay so
- * edge focus works for every renderer.
- */
 /** Path fractions tried, nearest the middle first, when a default anchor lands on a node. */
 const ANCHOR_FALLBACKS = [0.4, 0.6, 0.3, 0.7, 0.2, 0.8] as const;
 
+/**
+ * The flow's edge layer: resolves the visible edges into records the renderer draws, places
+ * their label pills and keeps a hidden focus proxy per edge so edge focus works with any renderer.
+ */
 export class EdgeLayer {
   readonly #options: EdgeLayerOptions;
   readonly #labels = new Map<string, TpFlowEdgeLabel>();

@@ -13,6 +13,7 @@ import { flowPresentation } from '../../../presentation/families/flow.js';
 import { resolveStrings } from '../strings.js';
 import type { FlowStrings } from '../types.js';
 
+/** Which side of the selected node its toolbar appears on. */
 export type FlowNodeToolbarPlacement = 'top' | 'bottom';
 
 const toolbarStyles = css`

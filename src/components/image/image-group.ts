@@ -9,6 +9,7 @@ import {
 } from '../../foundation/reveal-coordination.js';
 import { imagePresentation } from '../../presentation/families/image.js';
 
+/** The aggregate loading status of the Images in an Image group, read from `loadingStatus`. */
 export type ImageGroupLoadingStatus = 'idle' | 'loading' | 'loaded';
 
 /**

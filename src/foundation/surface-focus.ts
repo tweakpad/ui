@@ -3,6 +3,10 @@ import { deepActiveElement, focusManaged, focusableElements } from './focus.js';
 /** How a surface was opened; empty when no initiating event is known. */
 export type SurfaceInteraction = 'mouse' | 'touch' | 'pen' | 'keyboard' | '';
 
+/**
+ * Where focus moves when a surface opens or closes: an element, a named target, an item index, a
+ * function that chooses, or `false` to leave focus alone.
+ */
 export type SurfaceFocusTarget =
   | HTMLElement
   | { current: HTMLElement | null }

@@ -6,6 +6,7 @@ import { citationPresentation } from '../../presentation/families/citation.js';
 import { TpCitation } from './citation.js';
 import { setListPosition } from './source.js';
 
+/** Replacements for the built-in text of a Citation list; missing entries keep the defaults. */
 export interface CitationListMessages {
   /** Default list name, `Sources` by default. */
   sources?: string;
@@ -50,6 +51,7 @@ export class TpCitationList extends TpElement {
       }
     `,
   ];
+  /** The direction the citations run. */
   override orientation: 'horizontal' | 'vertical' = 'vertical';
   /** The list's accessible name, "Sources" by default. */
   label = '';

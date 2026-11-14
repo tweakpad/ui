@@ -13,6 +13,9 @@ export interface FlowSegmentHit {
   t: number;
 }
 
+/**
+ * The nearest point of an edge path to a pointer, with whether it falls within the hit tolerance.
+ */
 export interface FlowPathHit extends FlowSegmentHit {
   hit: boolean;
 }

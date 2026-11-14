@@ -21,6 +21,7 @@ export interface FileUploadMessageParams {
   error?: string;
 }
 
+/** One File upload text: a string with `{param}` placeholders, or a function of the parameters. */
 export type FileUploadMessage = string | ((params: FileUploadMessageParams) => string);
 
 /** Every visible and announced File upload text. Text entries use `{param}` placeholders. */

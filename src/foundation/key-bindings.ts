@@ -130,6 +130,10 @@ export interface KeyBindingOwnerOptions {
   scope?: CleanupScope;
 }
 
+/**
+ * A key binding described three ways at once: for `aria-keyshortcuts`, for tooltip text and as Kbd
+ * keys.
+ */
 export interface KeyShortcut {
   /** `aria-keyshortcuts` value, e.g. `Control+Shift+f` or `k Space`. */
   readonly aria: string;
@@ -146,6 +150,7 @@ export interface KeyBindingSummary {
   readonly chords: readonly KeyChord[];
 }
 
+/** Fired when an element's key bindings change, so hints that show its shortcuts update. */
 export class TpShortcutChangeEvent extends CustomEvent<{ owner: KeyBindingOwner }> {
   static readonly eventName = 'tp-shortcut-change';
   constructor(owner: KeyBindingOwner) {

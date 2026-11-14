@@ -37,6 +37,7 @@ unfinished task.
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | The page (authored)                    | `docs/components/<slug>.mdx`, `docs/motion/<group>/<slug>.mdx`, `docs/widgets/<slug>.mdx`               |
 | Properties and API data (generated)    | JSDoc → Custom Elements Manifest → `elementApi` (`src/docs/api.ts`)                                     |
+| Type signatures and cards (generated)  | TypeScript compiler → `scripts/manifest/api-types.mjs` → `dist/api-types.json`                          |
 | Related data (generated, website only) | manifest `renders` → `dist/docs.json`, plus pattern frontmatter `components`                            |
 | Storybook rendering                    | `.storybook/docs-page.mdx`, `.storybook/docs-library.mdx`, `src/stories/<slug>.stories.ts`              |
 | Website rendering                      | site repo `src/pages/docs/[...slug].astro`, `src/components/{Preview,Code,Keys,ApiTable}.astro`         |
@@ -102,8 +103,8 @@ row belongs in JSDoc.
 5. **Read it rendered** in Chrome through the `chrome-devtools` MCP server (never headless):
    Storybook, and the website through `npm link` and the site's dev server. Read it as a developer
    would: sections in order, previews run, the Properties table has a description, type and
-   default on every row, one-line types sit in the cell and structured ones open in a modal
-   without widening the table, the API Reference repeats nothing. Use one tab
+   default on every row, type names open their cards (and the names inside them) without widening
+   the table, the API Reference repeats nothing. Use one tab
    and close the tabs you opened.
 
 **Done** means the checks pass in the library, `npm run build` passes in the site, both renderings
@@ -115,9 +116,8 @@ were read, and every forced edit is a ledger row.
 - Reword, reorder or trim existing text outside the forced-edit list.
 - Restate a Properties or API row in prose, or repeat attributes and properties in the API
   Reference.
-- Print a flattened, truncated or multi-line type definition inside the table (structured types
-  open in a modal; only one-line ones sit in the cell), or give a callback or object a
-  "Set object" control.
+- Print a type declaration inside the table, or rewrite one by hand: types are the compiler's
+  signatures with clickable cards. Never give a callback or object a "Set object" control.
 - Author a page, a Properties table or an API section in the website repo, or put Related in
   Storybook.
 - Use library elements in Storybook's docs chrome, or share a rendering between the two systems.

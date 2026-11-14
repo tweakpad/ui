@@ -1,4 +1,8 @@
 import type { ComponentPartContract } from './part.js';
+/**
+ * One option passed as data to a choice component such as Select, Combobox or a menu, with its
+ * value, label and optional part contracts.
+ */
 export interface ChoiceOption {
   value: unknown;
   label?: unknown;

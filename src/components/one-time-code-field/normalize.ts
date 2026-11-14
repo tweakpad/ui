@@ -1,3 +1,7 @@
+/**
+ * Which characters a One-time code field accepts: digits, letters, both, or those a predicate
+ * allows.
+ */
 export type CodeValidation = 'numeric' | 'alphabetic' | 'alphanumeric' | 'predicate';
 export interface CodePolicy {
   length: number;

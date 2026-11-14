@@ -5,19 +5,14 @@
  * inherits (except `disabled`) and the diagnostics event are left out.
  */
 
+import type { ApiTypes } from './api-types.js';
+
 export interface ManifestType {
   text?: string;
   /** A choice list's values, written out or read through its alias (tweakpad-member-types). */
   values?: string[];
-  /** The source definitions of the other named types it mentions (tweakpad-member-types). */
-  definitions?: ApiDefinition[];
 }
 
-/** A named type and its source definition, one level deep: `PanelExtent` = `number | string`. */
-export interface ApiDefinition {
-  name: string;
-  text: string;
-}
 export interface ManifestAttribute {
   name: string;
   fieldName?: string;
@@ -84,8 +79,6 @@ export interface ApiAttribute {
   type: string;
   /** The valid values of a choice list; Controls lists them in a select. */
   values?: string[];
-  /** The definitions of the named types `type` mentions. */
-  definitions?: ApiDefinition[];
   default: string;
   description: string;
 }
@@ -94,11 +87,29 @@ export interface ApiProperty {
   type: string;
   /** The valid values of a choice list; Controls lists them in a select. */
   values?: string[];
-  /** The definitions of the named types `type` mentions. */
-  definitions?: ApiDefinition[];
   default: string;
   readonly: boolean;
   description: string;
+}
+/** How a Properties row's value can be edited live: a choice, a toggle or a field; null for none. */
+export type ApiControl = 'select' | 'boolean' | 'text' | 'number' | null;
+
+/**
+ * One row of the Properties table: a property (and the attribute that sets it, when one does),
+ * what it does, its type, its default and how its value can be controlled live.
+ */
+export interface ApiMember {
+  /** The property name, or the attribute name when no property backs it. */
+  name: string;
+  /** The HTML attribute that sets it, when one does. */
+  attribute?: string;
+  type: string;
+  /** The valid values of a choice list. */
+  values?: string[];
+  default: string;
+  readonly: boolean;
+  description: string;
+  control: ApiControl;
 }
 export interface ApiMethod {
   name: string;
@@ -127,6 +138,11 @@ export interface ElementApi {
   attributes: ApiAttribute[];
   /** The element's public properties that no attribute reflects, such as object-valued ones. */
   properties: ApiProperty[];
+  /**
+   * The Properties table: every attribute-backed property, then every JavaScript-only one, each
+   * once. The API Reference prints the other groups and never these.
+   */
+  members: ApiMember[];
   /** Public methods, one row per name with its overloads merged. */
   methods: ApiMethod[];
   events: ApiEvent[];
@@ -162,10 +178,28 @@ const inherited = (entry: { name?: string; inheritedFrom?: { name?: string } }) 
 const FORM_BASE = 'TpFormElement';
 
 /** The cell of a type: `undefined` is absence, which the Default cell shows, so it is dropped. */
-const cell = (type: ManifestType | undefined): string =>
-  topLevelUnion(type?.text ?? '')
-    .filter((part) => part !== 'undefined')
-    .join(' | ');
+const cell = (type: ManifestType | undefined): string => {
+  const parts = topLevelUnion(type?.text ?? '').filter((part) => part !== 'undefined');
+  // A lone callback loses the parentheses that only grouped it with `undefined`.
+  const only = parts.length === 1 ? parts[0]! : '';
+  return only.startsWith('(') &&
+    only.endsWith(')') &&
+    topLevelUnion(only.slice(1, -1)).length === 1 &&
+    balanced(only.slice(1, -1))
+    ? only.slice(1, -1)
+    : parts.join(' | ');
+};
+
+/** Whether brackets in a type text pair up, so stripping an outer pair keeps it valid. */
+function balanced(text: string): boolean {
+  let depth = 0;
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index]!;
+    if ('([{'.includes(char)) depth++;
+    else if (')]}'.includes(char) && --depth < 0) return false;
+  }
+  return depth === 0;
+}
 
 /** A type text's top-level union members; `|` inside brackets, parentheses or quotes stays. */
 function topLevelUnion(text: string): string[] {
@@ -188,12 +222,10 @@ function topLevelUnion(text: string): string[] {
   parts.push(text.slice(start).trim());
   return parts.filter(Boolean);
 }
-/** A choice list's values, or the definitions of the named types it mentions. */
+/** A choice list's values, when the type is one. */
 const valuesOf = (...types: (ManifestType | undefined)[]) => {
   const values = types.find((type) => type?.values?.length)?.values;
-  if (values) return { values };
-  const definitions = types.find((type) => type?.definitions?.length)?.definitions;
-  return definitions ? { definitions } : {};
+  return values ? { values } : {};
 };
 
 /** Public API the element declares itself. */
@@ -305,6 +337,7 @@ export function elementApi(manifest: Manifest, tagName: string): ElementApi | un
       description: event.description ?? '',
     });
   }
+  const properties = propertyRows(members);
   const named = (entries: ManifestNamed[] | undefined): ApiNamed[] =>
     (entries ?? []).map((entry) => ({ name: entry.name, description: entry.description ?? '' }));
   return {
@@ -312,7 +345,23 @@ export function elementApi(manifest: Manifest, tagName: string): ElementApi | un
     className: declaration.name ?? '',
     description: declaration.description ?? '',
     attributes,
-    properties: propertyRows(members),
+    properties,
+    members: [
+      ...attributes.map((row): ApiMember => ({
+        name: row.property || row.name,
+        attribute: row.name,
+        type: row.type,
+        ...(row.values ? { values: row.values } : {}),
+        default: row.default,
+        readonly: false,
+        description: row.description,
+        control: controlOf(row.type, row.values, false),
+      })),
+      ...properties.map((row): ApiMember => ({
+        ...row,
+        control: controlOf(row.type, row.values, row.readonly),
+      })),
+    ],
     methods: methodsOf(members),
     events,
     slots: named(declaration.slots),
@@ -326,6 +375,25 @@ export function elementApi(manifest: Manifest, tagName: string): ElementApi | un
       (entry) => entry.inheritedFrom?.name === FORM_BASE,
     ),
   };
+}
+
+/** The live control a value takes: choices, toggles and plain fields only; never an object. */
+function controlOf(
+  type: string,
+  values: readonly string[] | undefined,
+  readonly: boolean,
+): ApiControl {
+  if (readonly) return null;
+  if (values?.length) return 'select';
+  const parts = topLevelUnion(type).filter((part) => part !== 'null');
+  if (parts.length !== 1) return null;
+  return parts[0] === 'boolean'
+    ? 'boolean'
+    : parts[0] === 'number'
+      ? 'number'
+      : parts[0] === 'string'
+        ? 'text'
+        : null;
 }
 
 /** Whether an attribute is the `default-*` starting value of another listed attribute. */
@@ -373,19 +441,19 @@ export function repeatedValues(api: ElementApi): string[] {
 
 /**
  * Attributes a reader cannot fill in from the docs: one typed by a name (`SortDirection`) that the
- * docs neither list the values of (a choice list, Controls' select) nor define (`PanelExtent =
- * number | string`). A name alone tells a reader nothing.
+ * docs neither list the values of (a choice list, Controls' select) nor open a card for (`types`,
+ * from `api-types.json`). A name alone tells a reader nothing.
  */
-export function unlistedChoices(api: ElementApi): string[] {
+export function unlistedChoices(api: ElementApi, types?: ApiTypes): string[] {
+  const carded = types?.elements[api.tagName] ?? {};
   return api.attributes
     .filter((row) => {
       const parts = row.type
         .split('|')
         .map((part) => part.trim())
         .filter((part) => part && part !== 'undefined' && part !== 'null');
-      const defined = new Set(row.definitions?.map((entry) => entry.name));
       return (
-        !row.values?.length && parts.some((part) => /^[A-Z]\w*$/u.test(part) && !defined.has(part))
+        !row.values?.length && parts.some((part) => /^[A-Z]\w*$/u.test(part) && !(part in carded))
       );
     })
     .map(

@@ -20,6 +20,7 @@ export interface TreeViewItem {
   [key: string]: unknown;
 }
 
+/** What expands a Tree view parent, as its `expansionTrigger` takes it. */
 export type TreeViewExpansionTrigger = 'item' | 'indicator';
 /**
  * How presses and arrow keys select in a tree that offers selection: `toggle` presses add or
@@ -27,6 +28,7 @@ export type TreeViewExpansionTrigger = 'item' | 'indicator';
  * while Control or Command toggles and Shift extends.
  */
 export type TreeSelectionBehavior = 'toggle' | 'replace';
+/** How a Tree view draws nesting: a guide line per level, or indentation alone. */
 export type TreeViewGuides = 'line' | 'none';
 /** Where a pointer drag can start: on the handle only, or anywhere on the row but its controls. */
 export type TreeViewDragActivation = 'handle' | 'item';
@@ -34,6 +36,7 @@ export type TreeViewDragActivation = 'handle' | 'item';
 export type TreeViewDropIndicator = 'displace' | 'line';
 /** The edge of the row the reorder handle sits at. */
 export type TreeViewHandlePlacement = 'start' | 'end';
+/** The row density of a Tree view. */
 export type TreeViewSize = 'sm' | 'default';
 
 /** Row state handed to `renderItem` and pushed to each mounted Item. */
@@ -75,26 +78,40 @@ export interface TreeItemState {
   readonly direction: Direction;
 }
 
+/** The row state passed to a Tree view's `renderItem`, with the record it renders. */
 export interface TreeViewRenderContext extends TreeItemState {
   /** Records mode: the consumer record. */
   readonly item: unknown;
 }
 
+/** A Tree view's `renderItem`, which renders the content of a record's row. */
 export type TreeViewRenderItem<T> = (
   item: T,
   context: TreeViewRenderContext,
 ) => TemplateResult | string | Node | readonly unknown[] | null | undefined;
 
+/**
+ * A Tree view's `loadChildren`, which loads an item's children on its first expansion; the signal
+ * aborts when the load is no longer needed.
+ */
 export type TreeViewLoadChildren<T> = (
   item: T,
   options: { signal: AbortSignal },
 ) => Promise<readonly T[] | void> | readonly T[] | void;
 
+/**
+ * Where a moved item lands in a Tree view: under a parent, or the root when `parentId` is `null`,
+ * at an index among its children.
+ */
 export interface TreeViewDropTarget {
   parentId: string | null;
   index: number;
 }
 
+/**
+ * Replaceable texts of a Tree view, such as the loading, retry and reorder announcements; each
+ * defaults to English.
+ */
 export interface TreeViewMessages {
   loading?: string;
   /** Receives the item label. */

@@ -60,7 +60,8 @@ export interface EasingSurfaceChangeDetail {
 }
 export const SURFACE_CHANGE = 'easing-surface-change';
 
-type Axis = 'time' | 'progression';
+/** The dimension a point field edits: time along x, or progression along y. */
+export type EasingGraphAxis = 'time' | 'progression';
 interface Active {
   readonly kind: 'handle' | 'point';
   readonly index: number;
@@ -125,7 +126,7 @@ export class TpEasingEditorGraph extends TpElement {
   #pressed: EasingCurve | undefined;
   #active: Active | undefined;
   #dragging = false;
-  #focused: { kind: 'handle' | 'point'; index: number; axis: Axis } | undefined;
+  #focused: { kind: 'handle' | 'point'; index: number; axis: EasingGraphAxis } | undefined;
   #focusVisible = false;
   #playing = false;
   #motion: MotionHandle | undefined;
@@ -177,7 +178,7 @@ export class TpEasingEditorGraph extends TpElement {
   }
 
   /** Focuses the time input of a handle (1 or 2) or a custom point. */
-  focusInput(kind: 'handle' | 'point', index: number, axis: Axis = 'time'): void {
+  focusInput(kind: 'handle' | 'point', index: number, axis: EasingGraphAxis = 'time'): void {
     this.renderRoot
       .querySelector<HTMLInputElement>(`input[data-${kind}="${index}"][data-axis="${axis}"]`)
       ?.focus({ preventScroll: true });
@@ -469,7 +470,7 @@ export class TpEasingEditorGraph extends TpElement {
     sourceEvent: Event,
     phase: EasingSurfaceChangeDetail['phase'],
     active: Active,
-    axis?: Axis,
+    axis?: EasingGraphAxis,
     conversion?: boolean,
   ): void {
     const detail: EasingSurfaceChangeDetail = {
@@ -492,7 +493,7 @@ export class TpEasingEditorGraph extends TpElement {
     const active: Active = input.dataset.handle
       ? { kind: 'handle', index: Number(input.dataset.handle) }
       : { kind: 'point', index: Number(input.dataset.point) };
-    const focusedAxis = input.dataset.axis as Axis;
+    const focusedAxis = input.dataset.axis as EasingGraphAxis;
     if ((event.key === 'Delete' || event.key === 'Backspace') && active.kind === 'point') {
       const curve = this.curve;
       if (curve.kind !== 'custom') return;
@@ -518,7 +519,7 @@ export class TpEasingEditorGraph extends TpElement {
       direction: 'ltr',
     });
     let next: EasingPoint;
-    let axis: Axis = focusedAxis;
+    let axis: EasingGraphAxis = focusedAxis;
     if (time || progression) {
       next = {
         input: time ? applyKeyboardStep(current.input, time, TIME_DIMENSION) : current.input,
@@ -586,8 +587,16 @@ export class TpEasingEditorGraph extends TpElement {
   #focus = (event: FocusEvent): void => {
     const input = event.currentTarget as HTMLInputElement;
     this.#focused = input.dataset.handle
-      ? { kind: 'handle', index: Number(input.dataset.handle), axis: input.dataset.axis as Axis }
-      : { kind: 'point', index: Number(input.dataset.point), axis: input.dataset.axis as Axis };
+      ? {
+          kind: 'handle',
+          index: Number(input.dataset.handle),
+          axis: input.dataset.axis as EasingGraphAxis,
+        }
+      : {
+          kind: 'point',
+          index: Number(input.dataset.point),
+          axis: input.dataset.axis as EasingGraphAxis,
+        };
     this.#focusVisible = input.matches(':focus-visible');
     this.requestUpdate();
   };
@@ -642,7 +651,7 @@ export class TpEasingEditorGraph extends TpElement {
 
   // ---- render --------------------------------------------------------------------------------
 
-  #dimensionInput(active: Active, axis: Axis, value: number, name: string) {
+  #dimensionInput(active: Active, axis: EasingGraphAxis, value: number, name: string) {
     const definition = axis === 'time' ? TIME_DIMENSION : PROGRESSION_DIMENSION;
     const props: Record<string, unknown> = {
       type: 'range',

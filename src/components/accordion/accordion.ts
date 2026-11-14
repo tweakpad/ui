@@ -8,7 +8,12 @@ import { TpAccordionItem, type AccordionContentAlignment } from './accordion-ite
 import type { TpCollapsible } from '../collapsible/collapsible.js';
 import { accordionPresentation } from '../../presentation/families/accordion.js';
 
+/**
+ * The values of the open Accordion items, in order; the `value` attribute lists them separated by
+ * spaces.
+ */
 export type AccordionValue = string[];
+/** How the items of an Accordion relate visually, from no chrome to separated surfaces. */
 export type AccordionVariant = 'plain' | 'line' | 'outline' | 'separated';
 
 const accordionValueConverter = {

@@ -1,6 +1,11 @@
+/** Platform whose key names and symbols a Kbd uses; `auto` detects it from the browser. */
 export type KbdPlatform = 'auto' | 'mac' | 'windows' | 'linux';
+/**
+ * What a Kbd group shows between its keys: a plus for a chord, "then" for a sequence, or nothing.
+ */
 export type KbdSeparator = 'plus' | 'then' | 'none';
 export type KbdLabels = Record<string, string | { text: string; label?: string }>;
+/** The platform key labels follow once `auto` is resolved from the browser. */
 export type ResolvedKbdPlatform = Exclude<KbdPlatform, 'auto'>;
 
 export function kbdPlatform(

@@ -181,7 +181,7 @@ export class TpProgress extends TpElement {
   get state(): ProgressState {
     return this.#state;
   }
-  /** Whether the task is `indeterminate`, `progressing` or `complete`. */
+  /** Where the task stands: its progress unknown, under way, or done. */
   get status(): ProgressState['status'] {
     return this.#state.status;
   }

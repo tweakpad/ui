@@ -7,6 +7,10 @@ import { ImageLoadController, type ImageLoadStatus } from '../../foundation/imag
 import { avatarPresentation } from '../../presentation/families/avatar.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
+/**
+ * The loading status of an Avatar's current image, read from `imageLoadingStatus` and passed to
+ * `onLoadingStatusChange`.
+ */
 export type AvatarLoadingStatus = ImageLoadStatus;
 
 /**

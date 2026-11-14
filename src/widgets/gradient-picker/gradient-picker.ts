@@ -59,13 +59,19 @@ export type GradientPickerVariant = 'linear' | 'field';
 export type GradientPickerValue = readonly GradientStop[] | readonly FieldGradientAnchor[];
 /** One stop or anchor, for `setStop`: the fields the variant reads. */
 export type GradientPickerStopChanges = Partial<GradientStop> & Partial<FieldGradientAnchor>;
+/**
+ * Called with each `tp-value-change` proposal of new stops or anchors while they are being edited.
+ */
 export type GradientPickerValueChangeCallback = (
   event: TpValueChangeEvent<GradientPickerValue>,
 ) => void;
+/** Called with each `tp-value-commit` when an edit of the stops or anchors settles. */
 export type GradientPickerValueCommitCallback = (
   event: TpValueCommitEvent<GradientPickerValue>,
 ) => void;
+/** Called with each `tp-selection-change` proposal of the selected stop index, `-1` for none. */
 export type GradientPickerSelectionChangeCallback = (event: TpValueChangeEvent<number>) => void;
+/** Scale of the gradient track, handles and fields. */
 export type GradientPickerSize = 'sm' | 'default';
 
 type Kind = 'stop' | 'midpoint' | 'anchor';

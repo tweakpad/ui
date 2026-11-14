@@ -1,6 +1,7 @@
 import type { ComponentDefinition } from './definition.js';
 import { axisSuffix, partAxes } from './family.js';
 
+/** CSS declarations by property name, as a presentation rule or style hook writes them. */
 export type PresentationDeclarations = Readonly<Record<string, string | number>>;
 
 export interface PresentationRule {
@@ -11,11 +12,13 @@ export interface PresentationRule {
 
 export type PresentationDictionary = Readonly<Record<string, readonly PresentationRule[]>>;
 
+/** How a part takes its appearance: a class to set on it, inline declarations, or both. */
 export interface PartPresentationHook {
   classHook?: string;
   styleHook?: PresentationDeclarations;
 }
 
+/** Presentation hooks by part name, applied to the matching parts of a component. */
 export type PartPresentation = Readonly<Record<string, PartPresentationHook>>;
 
 export interface ComponentPresentation {

@@ -24,12 +24,16 @@ import type {
 export type { FlowViewport, FlowSelection };
 
 export const FLOW_TOOLS = ['select', 'pan'] as const;
+/** The pointer tool: select, where a pane drag draws a marquee, or pan. */
 export type FlowTool = (typeof FLOW_TOOLS)[number];
 export const FLOW_MODES = ['design', 'view'] as const;
+/** Design mode for editing, or view mode for reading and monitoring with editing off. */
 export type FlowMode = (typeof FLOW_MODES)[number];
 export const FLOW_AUTO_LAYOUTS = ['none', 'horizontal', 'vertical', 'smart'] as const;
+/** Whether the graph lays itself out after every change, and in which direction. */
 export type FlowAutoLayout = (typeof FLOW_AUTO_LAYOUTS)[number];
 export const FLOW_BACKGROUNDS = ['dots', 'lines', 'cross', 'none'] as const;
+/** The pattern drawn behind the canvas. */
 export type FlowBackground = (typeof FLOW_BACKGROUNDS)[number];
 /**
  * Where a floating panel anchors: the four corners and the middle of the four edges, as
@@ -45,6 +49,7 @@ export const FLOW_PANEL_POSITIONS = [
   'bottom-center',
   'bottom-end',
 ] as const;
+/** Where a floating panel anchors over the canvas. */
 export type FlowPanelPosition = (typeof FLOW_PANEL_POSITIONS)[number];
 /** The opt-in header's slots above the canvas: its start, center and end. */
 export const FLOW_HEADER_SLOTS = ['header-start', 'header-center', 'header-end'] as const;
@@ -56,11 +61,14 @@ export const FLOW_SLOT_REGIONS: readonly FlowSlotRegion[] = [
   ...FLOW_HEADER_SLOTS,
 ];
 export const FLOW_WHEEL_POLICIES = ['pan', 'zoom', 'none'] as const;
+/** What a plain mouse wheel does over the canvas: pan, zoom, or nothing so the page scrolls. */
 export type FlowWheelPolicy = (typeof FLOW_WHEEL_POLICIES)[number];
 export const FLOW_INSPECTOR_POLICIES = ['none', 'auto', 'manual'] as const;
+/** When the inspector panel shows: opened from a node, only through the open state, or never. */
 export type FlowInspectorPolicy = (typeof FLOW_INSPECTOR_POLICIES)[number];
 /** How the node library shows: none, a sidebar at the inline start or a menu over the widget. */
 export const FLOW_PALETTE_LAYOUTS = ['none', 'sidebar', 'menu'] as const;
+/** How the node library shows. */
 export type FlowPaletteLayout = (typeof FLOW_PALETTE_LAYOUTS)[number];
 export const FLOW_CONTROL_ACTIONS = [
   'zoom-in',
@@ -77,11 +85,14 @@ export const FLOW_CONTROL_ACTIONS = [
   'execute',
   'run-summary',
 ] as const;
+/** A built-in control the controls bar can show. */
 export type FlowControlAction = (typeof FLOW_CONTROL_ACTIONS)[number];
+/** Whether the marquee selects the nodes it touches or only those it encloses. */
 export type FlowSelectionMode = 'partial' | 'full';
+/** The level of detail nodes render at; low below the detail zoom. */
 export type FlowLod = 'high' | 'low';
 
-/** Metadata carried by every value-lane proposal (Widgets §6.3 Events). */
+/** Metadata carried by every value-lane proposal. */
 export interface FlowChangeMetadata extends Record<string, unknown> {
   changes: readonly FlowChange[];
   transaction?: string;
@@ -96,6 +107,10 @@ export interface FlowChangeMetadata extends Record<string, unknown> {
   animated?: boolean;
 }
 
+/**
+ * What a node template receives: the node, its definition and state, and helpers that render its
+ * ports and controls.
+ */
 export interface FlowNodeRenderContext {
   node: FlowNode;
   definition: FlowNodeDefinition | undefined;
@@ -108,16 +123,23 @@ export interface FlowNodeRenderContext {
   /** Renders the library control bound to a property key. */
   control: (key: string) => TemplateResult;
 }
+/** Renders the body of a node type in place of the built-in body. */
 export type FlowNodeTemplate = (context: FlowNodeRenderContext) => TemplateResult;
 
+/** What an edge template receives: the edge, its kind, selection and label text. */
 export interface FlowEdgeRenderContext {
   edge: FlowEdge;
   kind: FlowEdgeKind;
   selected: boolean;
   label: string | undefined;
 }
+/** Renders an edge's label content in place of the plain text. */
 export type FlowEdgeTemplate = (context: FlowEdgeRenderContext) => TemplateResult;
 
+/**
+ * What a property control factory receives: the node, the property, its value and callbacks to
+ * propose and commit edits.
+ */
 export interface FlowPropertyControlContext {
   node: FlowNode;
   definition: FlowPropertyDefinition;
@@ -137,19 +159,30 @@ export interface FlowPropertyControlContext {
    */
   inline: boolean;
 }
+/** Renders the control that edits one node property. */
 export type FlowPropertyControlFactory = (context: FlowPropertyControlContext) => TemplateResult;
+/**
+ * Property control factories keyed by control name, replacing built-in ones or supplying `custom`.
+ */
 export type FlowPropertyControls = Partial<Record<FlowPropertyControl, FlowPropertyControlFactory>>;
 
+/** What a node toolbar template receives: the selected node and its definition. */
 export interface FlowToolbarContext {
   node: FlowNode;
   definition: FlowNodeDefinition | undefined;
 }
+/** Renders the content of the toolbar over a selected node. */
 export type FlowNodeToolbarTemplate = (context: FlowToolbarContext) => TemplateResult;
 
+/**
+ * What a context menu opened on: a node, an edge or a point on the pane, with the current
+ * selection.
+ */
 export type FlowContextSubject =
   | { kind: 'node'; nodeId: string; selection: FlowSelection }
   | { kind: 'edge'; edgeId: string; selection: FlowSelection }
   | { kind: 'pane'; point: FlowPoint; selection: FlowSelection };
+/** Renders the context menu items for a node, an edge or the pane. */
 export type FlowContextMenuTemplate = (subject: FlowContextSubject) => TemplateResult;
 
 export interface FlowStrings {

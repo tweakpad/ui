@@ -113,6 +113,7 @@ export class TpToggleGroup
   spacing = 2;
   /** The accessible name of the group when no Field names it. */
   label = '';
+  /** The direction the toggles run and the arrow keys move between them. */
   override orientation: 'horizontal' | 'vertical' = 'horizontal';
   #members: TpToggle[] = [];
   #excluded = new Set<TpToggle>();

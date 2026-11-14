@@ -4,6 +4,10 @@ import { PresenceController } from './presence.js';
 import type { ChoiceRecord } from './choice-collection.js';
 import type { ChoiceEntry, ChoiceGroup, ChoiceOption, ChoiceSeparator } from './choice-types.js';
 
+/**
+ * An option of a choice model with its generated id, indicator element and presence controller, as
+ * the model tracks it while rendering.
+ */
 export interface ChoiceModelRecord extends ChoiceRecord {
   id: string;
   text: string;

@@ -1,3 +1,7 @@
+/**
+ * A custom element class that may carry its own tag name and the library elements it depends on, as
+ * accepted by `defineElement()`.
+ */
 export type CustomElementConstructorWithTag = CustomElementConstructor & {
   readonly tagName?: string;
   /** Library elements this element renders; defining it defines them too. */

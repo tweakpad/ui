@@ -89,6 +89,7 @@ export const TEXT_EDITOR_CONTEXTUAL_ORDER = Object.freeze({
   gutter: 2,
 });
 
+/** A surface that joins the text editor's Alt+F10 cycle, registered with `registerContextual`. */
 export interface TextEditorContextualSurface {
   /** The cycle position: lower comes first (selection toolbar, table controls, gutter). */
   readonly order: number;

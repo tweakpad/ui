@@ -152,24 +152,145 @@ body:has(.sbdocs-wrapper) {
   overflow-x: auto;
 }
 
-/* Controls only control: the docs page's Controls table (the one args table with a Control column)
-   keeps the name and the control. Each row's description, values and default are in the API
-   Reference below, so a fact appears once on the page. */
-.sbdocs .docblock-argstable:has(thead th:nth-child(4)) {
-  display: table;
-  inline-size: 100%;
+/* A signature in an API row: one line of highlighted tokens that wraps inside its column, each
+   project type name a button that opens its card. */
+.sbdocs .tp-docs-signature {
+  display: block;
+  font: 0.8125rem / 1.6 var(--tp-font-mono);
+  overflow-wrap: anywhere;
 }
 
-.sbdocs
-  .docblock-argstable:has(thead th:nth-child(4))
-  :is(thead th, tbody td):is(:nth-child(2), :nth-child(3)):not(:last-child) {
+.sbdocs .tp-docs-signature span {
+  font: inherit;
+}
+
+.sbdocs .tp-docs-type-ref {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.sbdocs .tp-docs-type-ref:hover {
+  text-decoration-style: solid;
+}
+
+.sbdocs .tp-docs-type-ref:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--tp-ring);
+  outline-offset: 1px;
+}
+
+/* A row whose description ends in its signature shows no separate type placeholder. */
+.sbdocs .docblock-argstable td > div:has(.tp-docs-signature) + div {
   display: none;
+}
+
+/* The page's type card: a popover at the name that opened it, like an editor hover. */
+.sbdocs .tp-docs-type-card {
+  position: fixed;
+  inset: auto;
+  inline-size: max-content;
+  max-inline-size: min(40rem, calc(100vw - 2rem));
+  max-block-size: min(32rem, calc(100vh - 2rem));
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--tp-border);
+  border-radius: 8px;
+  background: var(--tp-popover, var(--tp-background));
+  box-shadow: 0 8px 24px rgb(0 0 0 / 16%);
+  color: var(--tp-foreground);
+  font: 0.875rem / 1.5 var(--tp-font-sans);
+}
+
+.sbdocs .tp-docs-type-card header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-block-end: 1px solid var(--tp-border);
+}
+
+.sbdocs .tp-docs-type-card header code {
+  font: 600 0.8125rem / 1.5 var(--tp-font-mono);
+}
+
+.sbdocs .tp-docs-type-card .tp-docs-type-kind {
+  color: var(--tp-muted-foreground);
+  font-size: 0.75rem;
+}
+
+.sbdocs .tp-docs-type-card .tp-docs-type-back {
+  appearance: none;
+  padding: 0 0.25rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--tp-muted-foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.sbdocs .tp-docs-type-card .tp-docs-type-back:hover {
+  background: var(--tp-muted);
+  color: var(--tp-foreground);
+}
+
+/* Storybook styles every pre and span on the docs page: the card sets its own. */
+.sbdocs .tp-docs-type-card pre {
+  margin: 0;
+  padding: 0.75rem;
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+  background: var(--tp-muted);
+  font: 0.8125rem / 1.6 var(--tp-font-mono);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.sbdocs .tp-docs-type-card pre * {
+  font: inherit;
+}
+
+.sbdocs .tp-docs-type-card .tp-docs-type-doc {
+  padding: 0.5rem 0.75rem;
+}
+
+.sbdocs .tp-docs-type-card .tp-docs-type-doc :is(p, li) {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sbdocs .tp-docs-type-card .tp-docs-type-doc p + p {
+  margin-block-start: 0.5rem;
+}
+
+.sbdocs .tp-docs-type-card footer {
+  padding: 0.5rem 0.75rem;
+  border-block-start: 1px solid var(--tp-border);
+}
+
+.sbdocs .tp-docs-type-card footer code {
+  color: var(--tp-muted-foreground);
+  font: 0.75rem / 1.5 var(--tp-font-mono);
 }
 
 /* A long type definition in an API row wraps inside its column instead of widening the table. */
 .sbdocs .docblock-argstable td code {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/* Code in a type card's doc comment, at the card's code size. */
+.sbdocs .tp-docs-type-card .tp-docs-type-doc code {
+  font-size: 0.75rem;
 }
 
 @media (width <= 600px) {

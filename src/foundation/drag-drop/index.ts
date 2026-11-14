@@ -1,5 +1,5 @@
 export { DragDropManager } from './manager.js';
-export { Draggable, Droppable } from './entities.js';
+export { Draggable, Droppable, type Entity } from './entities.js';
 export { Sortable, isSortable, isSortableOperation } from './sortable.js';
 export type { SortableInput } from './sortable.js';
 export * from './geometry.js';

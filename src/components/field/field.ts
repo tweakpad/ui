@@ -246,6 +246,7 @@ export class TpField extends TpElement {
   legend = '';
   /** Sizes the legend as a section heading or as a field label. */
   legendScale: 'section' | 'field' = 'section';
+  /** How the label and the control are laid out together. */
   override orientation: 'horizontal' | 'vertical' | 'responsive' = 'vertical';
   /**
    * Whether a click on the label activates the control; turn it off for a control that opens a

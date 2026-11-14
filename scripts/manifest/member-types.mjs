@@ -16,9 +16,6 @@ const KEYWORD_TYPES = new Set([
   'void',
 ]);
 
-/** An interface with more fields than this shows its first fields and a count. */
-const MAX_FIELDS = 8;
-
 /**
  * Choice lists of the sources, read from the syntax alone: every type alias, `as const` array,
  * class property type and interface under `folder`, plus the DOM library's string unions. A type
@@ -40,7 +37,7 @@ export function scanChoices(root, folder = 'src') {
     list: new Map(),
     class: new Map(),
     interface: new Map(),
-    definition: new Map(),
+    shape: new Map(),
   };
   const declare = (kind, name, module) => {
     const owners = index[kind].get(name) ?? [];
@@ -59,7 +56,20 @@ export function scanChoices(root, folder = 'src') {
       list: new Map(),
       class: new Map(),
       interface: new Map(),
-      definition: new Map(),
+      /** Interfaces and object-type aliases: their property types and the types they extend. */
+      shape: new Map(),
+    };
+    /** The property types and bases of an object type: members of literals, names it extends. */
+    const shapeOf = (node, props, bases) => {
+      if (ts.isParenthesizedTypeNode(node)) return shapeOf(node.type, props, bases);
+      if (ts.isIntersectionTypeNode(node))
+        for (const part of node.types) shapeOf(part, props, bases);
+      else if (ts.isTypeLiteralNode(node))
+        for (const member of node.members)
+          if (ts.isPropertySignature(member) && member.name && member.type)
+            props.set(member.name.text ?? member.name.getText(), line(member.type));
+          else if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName))
+            bases.push(node.typeName.text);
     };
     /** One line of source text, without comments. */
     const line = (node) =>
@@ -72,24 +82,20 @@ export function scanChoices(root, folder = 'src') {
         .replace(/; /gu, ', ')
         .trim();
     for (const statement of source.statements) {
-      // Every named type keeps its definition, one level deep, for the docs.
+      // Every object type keeps its property types, for `Name['property']` member types.
       if (ts.isTypeAliasDeclaration(statement) || ts.isInterfaceDeclaration(statement)) {
-        // A long interface (a texts dictionary) shows its first fields and a count, not a wall.
-        const fields = ts.isInterfaceDeclaration(statement)
-          ? statement.members.map((member) => line(member).replace(/[;,]$/u, ''))
-          : [];
-        const shape = ts.isTypeAliasDeclaration(statement)
-          ? line(statement.type)
-          : fields.length > MAX_FIELDS
-            ? `{ ${fields.slice(0, 3).join(', ')}, … (${fields.length} fields) }`
-            : `{ ${fields.join(', ')} }`;
-        const bases = ts.isInterfaceDeclaration(statement)
-          ? (statement.heritageClauses ?? []).flatMap((clause) =>
-              clause.types.map((type) => type.getText()),
-            )
-          : [];
-        entry.definition.set(statement.name.text, [...bases, shape].join(' & '));
-        declare('definition', statement.name.text, module);
+        const props = new Map();
+        const bases = [];
+        if (ts.isInterfaceDeclaration(statement)) {
+          for (const member of statement.members)
+            if (ts.isPropertySignature(member) && member.name && member.type)
+              props.set(member.name.text ?? member.name.getText(), line(member.type));
+          for (const clause of statement.heritageClauses ?? [])
+            for (const type of clause.types)
+              if (ts.isIdentifier(type.expression)) bases.push(type.expression.text);
+        } else shapeOf(statement.type, props, bases);
+        entry.shape.set(statement.name.text, { props, bases });
+        declare('shape', statement.name.text, module);
       }
       if (ts.isTypeAliasDeclaration(statement) && !statement.typeParameters) {
         entry.alias.set(statement.name.text, statement.type);
@@ -260,20 +266,28 @@ export function scanChoices(root, folder = 'src') {
     return found.length ? [...new Set(found)] : undefined;
   };
   /**
-   * The source definitions of the named types a type text mentions (`PanelExtent` →
-   * `number | string`), one level deep; library and platform types have none.
+   * The type a property of a named object type has (`ManagerOptions['feedback']`), following the
+   * interfaces it extends and the parts of an intersection; undefined when it is not found.
    */
-  const definitions = (text, module) => {
-    const found = [];
-    for (const [name] of text.matchAll(/\b[A-Z]\w*\b/gu)) {
-      if (found.some((entry) => entry.name === name)) continue;
-      const from = owner('definition', name, module);
-      if (!from || from === '#lib.dom') continue;
-      found.push({ name, text: modules.get(from).definition.get(name) });
+  const member = (name, property, module, seen = new Set()) => {
+    const from = owner('shape', name, module);
+    if (!from || seen.has(`${from}#${name}`)) return undefined;
+    seen.add(`${from}#${name}`);
+    const shape = modules.get(from).shape.get(name);
+    const type = shape.props.get(property);
+    if (type) return { text: type, module: from };
+    for (const base of shape.bases) {
+      const found = member(base, property, from, seen);
+      if (found) return found;
     }
-    return found;
+    return undefined;
   };
-  return { values, definitions };
+  /** A member type written as `Name['property']` (optionally `| undefined`), resolved. */
+  const indexed = (text, module) => {
+    const match = /^\(?([A-Z]\w*)\['(\w+)'\]\)?(\s*\|\s*undefined)?$/u.exec(text.trim());
+    return match ? member(match[1], match[2], module) : undefined;
+  };
+  return { values, indexed };
 }
 
 /**
@@ -282,8 +296,8 @@ export function scanChoices(root, folder = 'src') {
  *   base's type parameter (`TValue`) becomes the type argument the element passes up its class
  *   chain (`extends TpFormElement<string>`);
  * - a member typed by a choice list gets its values as `type.values`, which Storybook's Controls
- *   list in a select; one typed by another named type gets that type's source definition as
- *   `type.definitions`. Every docs consumer reads both through `elementApi`.
+ *   list in a select. Every docs consumer reads it through `elementApi`; the types themselves,
+ *   with their declarations, are read from the compiler (`api-types.mjs`).
  * Docs fields only: the framework bindings read neither.
  */
 export function tweakpadMemberTypes(choices) {
@@ -361,12 +375,24 @@ export function tweakpadMemberTypes(choices) {
               const text = substitute(declaration.name, entry.inheritedFrom.name, entry.type.text);
               if (text !== entry.type.text) entry.type = { text };
             }
-            const text = entry.type?.text;
+            // A setting the element redeclares with its own choices (`override orientation:
+            // 'vertical' | 'horizontal'`) is its own API; redeclared plumbing stays inherited.
+            if (own && entry.inheritedFrom && choices.values(own, module.path))
+              delete entry.inheritedFrom;
+            let text = entry.type?.text;
             if (!text) continue;
-            const values = choices.values(text, typeModule(entry, module));
-            const definitions = values ? [] : choices.definitions(text, typeModule(entry, module));
+            let at = typeModule(entry, module);
+            // `Options['feedback']` reads as the type that property has.
+            const resolved = choices.indexed(text, at);
+            if (resolved) {
+              text = /\|\s*undefined\s*$/u.test(text)
+                ? `${resolved.text} | undefined`
+                : resolved.text;
+              entry.type = { text };
+              at = resolved.module;
+            }
+            const values = choices.values(text, at);
             if (values) entry.type = { ...entry.type, values };
-            else if (definitions.length) entry.type = { ...entry.type, definitions };
           }
         }
     },

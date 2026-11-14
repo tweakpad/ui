@@ -8,6 +8,7 @@
 export * from './parse.js';
 export * from './pattern.js';
 export * from './api.js';
+export * from './api-types.js';
 export * from './related.js';
 export * from './preview-runtime.js';
 export * from './token-catalog.js';

@@ -24,9 +24,11 @@ import {
   untrackCitation,
 } from './source.js';
 
+/** The badge treatment of a Citation, from the Badge variants. */
 export type CitationVariant =
   'default' | 'secondary' | 'destructive' | 'success' | 'warning' | 'outline' | 'ghost' | 'link';
 
+/** Replacements for the text of a Citation's accessible name; missing entries keep the defaults. */
 export interface CitationMessages {
   /** Accessible-name text before the number and the source, `Citation` by default. */
   citation?: string;

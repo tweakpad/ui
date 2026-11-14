@@ -3,6 +3,7 @@ import { CleanupScope, Scheduler } from './services.js';
 
 /** Foundation tap gesture regions (`sec-1921-tap-gesture-regions`). */
 export type TapGestureType = 'tap' | 'doubletap';
+/** The kind of pointer a tap gesture accepts. */
 export type TapGesturePointer = 'mouse' | 'touch' | 'pen';
 /** Physical horizontal regions of the surface; they do not mirror in right-to-left text. */
 export type TapGestureRegion = 'left' | 'center' | 'right';

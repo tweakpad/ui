@@ -146,6 +146,10 @@ export const mediaPreviewSourceBrand: unique symbol = Symbol.for('tweakpad.media
 /** Event dispatched (not bubbling) on a preview source whenever its preview state changes. */
 export const MEDIA_PREVIEW_CHANGE_EVENT = 'tp-media-preview-change';
 
+/**
+ * Detail of `tp-media-preview-change`: the time under the pointer or drag and whether a preview is
+ * in progress.
+ */
 export interface MediaPreviewDetail {
   /** Time under the pointer or drag, retained after leaving; `null` before any. */
   readonly time: number | null;

@@ -10,6 +10,7 @@ import { TpButton } from '../button/button.js';
 import { TpIcon } from '../icon/icon.js';
 import { TpMapElement, type MapMessages } from './context.js';
 
+/** The action a Map control performs: zoom in, zoom out, reset the view or fit every pin. */
 export type MapControlAction = 'zoom-in' | 'zoom-out' | 'reset' | 'fit-pins';
 
 const ACTIONS: Record<MapControlAction, { icon: IconDefinition; message: keyof MapMessages }> = {

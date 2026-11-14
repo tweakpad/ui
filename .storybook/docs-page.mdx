@@ -1,13 +1,15 @@
-import { Api, LibraryDoc, PageHeader } from './docs-library.mdx';
+import { Api, LibraryDoc, PageHeader, TypeCard } from './docs-library.mdx';
 import { Controls, Primary } from '@storybook/addon-docs/blocks';
 
 export function MainUseCase() {
   // The page's main use case is the Default story: while its Controls are untouched it renders the
-  // page's hero (see the decorator in preview.ts), and its source is the hero's code. Its Controls
-  // follow it, as Storybook's own playground for the element's public properties.
+  // page's hero (see the decorator in preview.ts), and its source is the hero's code. The Properties
+  // table follows it: every property once, with what it does, its type, its default and, when the
+  // value is controllable, a live control (rows from `elementApi().members`, see preview.ts).
   return (
     <>
       <Primary />
+      <h2 id="properties">Properties</h2>
       <Controls />
     </>
   );
@@ -20,3 +22,5 @@ export function MainUseCase() {
 <LibraryDoc />
 
 <Api />
+
+<TypeCard />

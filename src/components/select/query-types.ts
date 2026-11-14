@@ -1,5 +1,7 @@
 import type { ComponentPartContract } from '../../foundation/part.js';
+/** What the clear button of an editable Select clears, as its `clearBehavior` takes it. */
 export type SelectClearBehavior = 'query' | 'selection' | 'both' | 'contextual';
+/** How the query of an editable Select completes, as its `completionMode` takes it. */
 export type SelectCompletionMode = 'list' | 'both' | 'inline' | 'none';
 export interface SelectOptionConfiguration {
   label?: unknown;

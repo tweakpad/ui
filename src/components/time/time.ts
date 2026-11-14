@@ -36,7 +36,9 @@ import { TpTooltip } from '../tooltip/tooltip.js';
 import { DescriptionTooltipController } from '../shared/description-tooltip.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
+/** When a Time refreshes its text, as its `updateInterval` takes it. */
 export type TimeUpdateInterval = 'auto' | 'none' | number;
+/** Detail of the `tp-time-update` event, sent when a Time's presented text changes. */
 export interface TimeUpdateDetail {
   text: string;
   previousText: string;

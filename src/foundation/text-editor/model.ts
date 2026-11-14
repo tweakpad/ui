@@ -22,6 +22,7 @@ export type TextEditorAttributes = Readonly<Record<string, TextEditorAttributeVa
  */
 export type TextEditorAlign = 'start' | 'center' | 'end' | 'justify';
 
+/** The level of a heading, from 1 for the top level to 6. */
 export type TextEditorHeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 // Block kinds (uwg-te-req-blocks-1)
@@ -96,6 +97,7 @@ export interface TextEditorCellRange {
 
 // Selections (uwg-te-req-engine-4; uwg-te-tab-actions r6)
 
+/** No selection, as the editor reports before it is ready. */
 export interface TextEditorNoSelection {
   readonly kind: 'none';
 }
@@ -260,6 +262,7 @@ export type TextEditorColorMark = 'text-color' | 'highlight';
  */
 export type TextEditorMarkStatus = 'on' | 'off' | 'mixed';
 
+/** Which marks and colors cover the selection, which formatting tools show as pressed or mixed. */
 export interface TextEditorMarkState {
   readonly bold: TextEditorMarkStatus;
   readonly italic: TextEditorMarkStatus;
@@ -330,6 +333,7 @@ export interface TextEditorEmptyBlockState {
   readonly kind: TextEditorBlockKind;
 }
 
+/** Whether there is a change to undo and a change to redo. */
 export interface TextEditorHistoryState {
   readonly undo: boolean;
   readonly redo: boolean;

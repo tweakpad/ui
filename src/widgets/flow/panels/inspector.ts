@@ -56,14 +56,18 @@ export const INSPECTOR_FOCUS_EDGE = 'flow-inspector-focus-edge';
 export const INSPECTOR_CLOSE = 'flow-inspector-close';
 export const INSPECTOR_PRESENCE = 'flow-inspector-presence';
 
+/** The inspector tab showing: the node's settings, its wiring or its run. */
 export type FlowInspectorTab = 'settings' | 'wiring' | 'run';
+/** Whether inspector edits apply as they happen or wait for its Save button. */
 export type FlowInspectorCommit = 'live' | 'explicit';
 
+/** One edge listed in the inspector's wiring tab, with the label of the node at its other end. */
 export interface FlowInspectorConnection {
   edge: FlowEdge;
   /** The other node's label (with the port names appended by the inspector). */
   label: string;
 }
+/** The incoming and outgoing edges the inspector's wiring tab lists for the node. */
 export interface FlowInspectorConnections {
   incoming: readonly FlowInspectorConnection[];
   outgoing: readonly FlowInspectorConnection[];

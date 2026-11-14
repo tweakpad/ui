@@ -1,12 +1,23 @@
 import type { TpValueChangeEvent } from './events.js';
+/** How a questionnaire moves between questions: in order (`linear`) or in any order (`free`). */
 export type QuestionnaireFlow = 'linear' | 'free';
+/** Whether a choice question takes one answer or several. */
 export type QuestionnaireChoiceMode = 'single' | 'multiple';
+/** How a question is answered: by one choice, several choices, or free text. */
 export type QuestionnaireQuestionKind = QuestionnaireChoiceMode | 'text';
+/**
+ * One question's answer: the text or choice value, or the list of choice values for a
+ * multiple-choice question.
+ */
 export type QuestionnaireAnswer = string | string[];
+/** All answers of a questionnaire, keyed by question name. */
 export type QuestionnaireAnswers = Record<string, QuestionnaireAnswer>;
+/** Progress of one question: not answered yet, answered, or skipped. */
 export type QuestionnaireStatus = 'unanswered' | 'answered' | 'skipped';
+/** Keyboard shortcuts shown on choices: none, letters or numbers. */
 export type QuestionnaireShortcutMode = 'none' | 'letters' | 'numbers';
 
+/** One selectable answer of a choice question. */
 export interface QuestionnaireChoice {
   value: string;
   label: string;
@@ -18,6 +29,7 @@ export interface QuestionnaireChoice {
   shortcut?: string;
 }
 
+/** Settings of the text field a text question renders. */
 export interface QuestionnaireInput {
   label?: string;
   value?: string;
@@ -39,6 +51,7 @@ export interface QuestionnaireInput {
   readOnly?: boolean;
   onValueChange?: (event: TpValueChangeEvent<string>) => void;
 }
+/** One question of a questionnaire, supplied as data. */
 export interface QuestionnaireQuestion {
   name: string;
   title: string;

@@ -15,12 +15,12 @@ export interface TextEditorFocusOptions extends FocusOptions {
   readonly position?: TextEditorFocusPosition | undefined;
 }
 
-/** Detail of `tp-text-editor-ready` (`uwg-te-req-evt-5`). */
+/** Detail of `tp-text-editor-ready`. */
 export interface TextEditorReadyDetail {
   readonly native: unknown;
 }
 
-/** Detail of `tp-text-editor-error` (`uwg-te-req-evt-5`). */
+/** Detail of `tp-text-editor-error`. */
 export interface TextEditorErrorDetail {
   readonly error: unknown;
 }

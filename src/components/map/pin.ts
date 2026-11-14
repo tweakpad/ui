@@ -8,6 +8,7 @@ import type { MapState } from '../../foundation/map/state.js';
 import { TpMapElement, type MapApi, type MapPinRecord } from './context.js';
 import { TpMapOverlay } from './overlay.js';
 
+/** Which point of a Map pin's visual sits on its position. */
 export type MapPinAnchor = 'bottom' | 'center';
 
 /**

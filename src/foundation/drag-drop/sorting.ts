@@ -5,6 +5,10 @@
  */
 import { DiagnosticChannel } from '../services.js';
 
+/**
+ * The identifier of a draggable item, drop target or group, unique among its kind within one drag
+ * and drop manager.
+ */
 export type UniqueIdentifier = string | number;
 export const dragDropDiagnostics = new DiagnosticChannel();
 

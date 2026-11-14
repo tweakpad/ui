@@ -65,7 +65,9 @@ import type {
 import { renderCategoryBar } from './views/categories.js';
 import { renderFooter, renderGlyph } from './views/footer.js';
 
+/** Called with each `tp-value-change` proposal of a different emoji when one is picked. */
 export type EmojiPickerValueChangeCallback = (event: TpValueChangeEvent<string>) => void;
+/** Called with each `tp-value-commit` when an emoji is picked. */
 export type EmojiPickerValueCommitCallback = (event: TpValueCommitEvent<string>) => void;
 
 const DEFAULT_COLUMNS = 9;

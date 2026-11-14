@@ -8,6 +8,7 @@ import type {
   PositioningStrategy,
 } from '../../foundation/positioning.js';
 
+/** Why a toast closed, passed to its `onClose` and `onRemove` and kept as its `cause`. */
 export type ToastCause =
   | 'timeout'
   | 'close-action'
@@ -16,8 +17,11 @@ export type ToastCause =
   | 'programmatic'
   | 'anchor-removed'
   | 'provider-destroyed';
+/** How urgently assistive technology announces a toast; `high` interrupts. */
 export type ToastPriority = 'low' | 'high';
+/** A direction a swipe can dismiss a toast in. */
 export type ToastSwipeDirection = 'up' | 'down' | 'left' | 'right';
+/** Where a Toast stack sits, as a block and an inline position in writing direction. */
 export type ToastPosition =
   `${'block-start' | 'block-end'} ${'inline-start' | 'center' | 'inline-end'}`;
 
@@ -36,6 +40,10 @@ export interface ToastActionProperties extends HostProperties {
   /** Optional dismissal is explicit; an ordinary action does not close its toast. */
   closeOnAction?: boolean;
 }
+/**
+ * Placement of a toast anchored to an element instead of shown in the stack, given as its
+ * `positionerProperties`.
+ */
 export interface ToastPositionerProperties {
   anchor: Element | null;
   side?: LogicalSide;
@@ -51,6 +59,7 @@ export interface ToastPositionerProperties {
   sticky?: boolean;
   disableAnchorTracking?: boolean;
 }
+/** The content and behavior of a toast, given when you add one. */
 export interface ToastOptions<Data extends object = Record<string, unknown>> {
   identifier?: string;
   title?: unknown;
@@ -71,6 +80,10 @@ export type ToastUpdateOptions<Data extends object = Record<string, unknown>> = 
   Partial<ToastOptions<Data>>,
   'identifier' | 'data'
 > & { data?: Partial<Data> };
+/**
+ * A toast as the queue holds it, listed in the manager's `toasts` with its identifier and lifecycle
+ * state.
+ */
 export interface ToastObject<Data extends object = Record<string, unknown>> extends Omit<
   ToastOptions<Data>,
   'identifier'

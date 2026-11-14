@@ -65,6 +65,10 @@ export const DEFAULT_MEDIA_STATE: MediaState = freezeMediaValue(
   deriveMediaState(DEFAULT_MEDIA_SOURCE, DEFAULT_MEDIA_CONFIG),
 );
 
+/**
+ * Options for a subscription to a media player's state: how selected values compare and a signal
+ * that ends it.
+ */
 export interface MediaSubscribeOptions<S> {
   /** Selected-value equality. Defaults to `shallowEqual`. */
   readonly equality?: StoreEquality<S>;

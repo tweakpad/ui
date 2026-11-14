@@ -57,6 +57,10 @@ interface Binding {
   scope: CleanupScope;
 }
 
+/**
+ * Coordinates every drag in one scope: it registers draggable items and drop targets, runs the
+ * drag operation and dispatches its events.
+ */
 export class DragDropManager {
   readonly dragOperation = new DragOperation();
   readonly monitor = new DragDropMonitor(this);

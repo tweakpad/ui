@@ -1,5 +1,9 @@
 import type { MarkdownNode, MarkdownNodeType } from '../../foundation/markdown/index.js';
 
+/**
+ * Replacements for the built-in text of a Markdown element, such as the footnote and alert titles;
+ * missing entries keep the defaults.
+ */
 export interface MarkdownMessages {
   /** Accessible name of the footnotes section. */
   readonly footnotes?: string;
@@ -25,6 +29,10 @@ export const DEFAULT_MARKDOWN_MESSAGES: Required<MarkdownMessages> = {
   caution: 'Caution',
 };
 
+/**
+ * What a custom Markdown renderer receives with its node: the rendering element, the rendered
+ * children and the default rendering.
+ */
 export interface MarkdownRenderContext {
   /** The rendering element. */
   readonly markdown: HTMLElement;
@@ -43,11 +51,15 @@ export type MarkdownRenderer<N extends MarkdownNode = MarkdownNode> = (
   context: MarkdownRenderContext,
 ) => unknown;
 
+/**
+ * Functions keyed by node type that replace how a Markdown element renders that node; returning
+ * `undefined` keeps the default.
+ */
 export type MarkdownRenderers = {
   readonly [T in MarkdownNodeType]?: MarkdownRenderer<Extract<MarkdownNode, { type: T }>>;
 };
 
-/** One heading in the collected-target shape of scroll spy (Foundation §18.15). */
+/** One heading in the collected-target shape of scroll spy. */
 export interface MarkdownHeadingTarget {
   readonly element: Element;
   readonly id: string | null;
@@ -56,6 +68,10 @@ export interface MarkdownHeadingTarget {
   readonly depth: number;
 }
 
+/**
+ * Detail of `tp-markdown-render`, dispatched after each committed render with the headings it
+ * produced.
+ */
 export interface MarkdownRenderDetail {
   readonly headings: readonly MarkdownHeadingTarget[];
 }

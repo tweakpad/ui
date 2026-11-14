@@ -52,9 +52,14 @@ import {
   type MapPinRecord,
 } from './context.js';
 
+/**
+ * Whether a Map moves to show a pin selected other than on the pin itself: never, only when it is
+ * out of view, or always.
+ */
 export type MapRevealPolicy = 'none' | 'if-hidden' | 'always';
 /** A viewport corner for floating content; logical, so it mirrors in right-to-left. */
 export type MapCorner = 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end';
+/** How a Map stacks its built-in controls. */
 export type MapControlsOrientation = 'vertical' | 'horizontal';
 
 export const MAP_CORNERS: readonly MapCorner[] = [

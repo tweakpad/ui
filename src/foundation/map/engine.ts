@@ -16,8 +16,10 @@ import type {
 } from './geo.js';
 import type { ResolvedMapTheme } from './theme.js';
 
+/** The color scheme a map resolves and passes to its engine. */
 export type MapScheme = 'light' | 'dark';
 
+/** The duration and abort signal a map passes to an engine's animated camera move. */
 export interface MapAnimationOptions {
   /** Milliseconds. Engines may choose their own duration when omitted. */
   readonly duration?: number;
@@ -25,6 +27,7 @@ export interface MapAnimationOptions {
   readonly signal?: AbortSignal;
 }
 
+/** The padding and zoom limit a map passes to an engine when it frames bounds. */
 export interface MapFitOptions {
   readonly padding?: MapPadding;
   readonly maxZoom?: number;
@@ -55,6 +58,10 @@ export interface MapEngineNotifications {
   error(error: unknown): void;
 }
 
+/**
+ * The initial settings and map services an engine receives when it mounts, along with the
+ * notifications it sends back.
+ */
 export interface MapEngineContext extends MapEngineNotifications {
   /** The initial camera on the 256-pixel zoom scale. */
   readonly initialCamera: MapCamera;
@@ -73,6 +80,7 @@ export interface MapEngineContext extends MapEngineNotifications {
   readonly signal: AbortSignal;
 }
 
+/** A mounted engine that renders the basemap, reports and moves the camera and places overlays. */
 export interface MapEngineInstance {
   // Required capabilities.
   getCamera(): MapCamera;
@@ -95,6 +103,10 @@ export interface MapEngineInstance {
   readonly native?: unknown;
 }
 
+/**
+ * A consumer-supplied adapter that mounts a basemap into a map's viewport, created by an engine
+ * factory and set on the map.
+ */
 export interface MapEngine {
   /** Optional identifier used in diagnostics only; never part of the public contract. */
   readonly name?: string;

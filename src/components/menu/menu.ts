@@ -142,11 +142,14 @@ export class TpMenu extends TpHoverSurface implements MenuItemOwner {
   highlightItemOnHover = true;
   /** Makes Escape in a submenu close the whole menu instead of only the submenu. */
   closeParentOnEscape = false;
+  /** The direction the items run and the arrow keys move between them. */
   override orientation: 'horizontal' | 'vertical' = 'vertical';
   override portal = true;
   override modal = true;
   override openOnHover = false;
+  /** How the menu aligns along its trigger's side. */
   override align: Alignment = 'center';
+  /** The positioning the menu uses; `fixed` escapes a clipping ancestor. */
   override positionMethod: PositioningStrategy = 'absolute';
   override collisionAvoidance: CollisionPolicy = { side: 'flip', align: 'flip' };
   // A submenu continues its parent: it meets the parent's content edge and its first item is

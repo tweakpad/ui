@@ -19,9 +19,17 @@ export type CalendarDayMarkers =
   | ReadonlyMap<string, readonly CalendarDayMarker[]>
   | ((date: string) => readonly CalendarDayMarker[] | undefined)
   | undefined;
+/**
+ * How a Calendar's month caption reads: a plain label, or dropdowns for the month, the year or
+ * both.
+ */
 export type CalendarCaptionLayout = 'label' | 'dropdown' | 'dropdown-months' | 'dropdown-years';
 /** Month grids, or a strip of consecutive days under the month caption. */
 export type CalendarVariant = 'grid' | 'strip';
+/**
+ * The date, label and selection, availability and marker state of one day, passed to `renderDay` to
+ * draw its cell.
+ */
 export interface CalendarDayState {
   date: string;
   month: string;
@@ -41,6 +49,10 @@ export interface CalendarDayState {
   /** The dots under the number, today's dot first under `today-indicator="dot"`. */
   markers: readonly CalendarDayMarker[];
 }
+/**
+ * Display functions for a Calendar's caption, dropdown entries, weekdays, day numbers and week
+ * numbers; a missing one keeps the default text.
+ */
 export interface CalendarFormatters {
   caption?: (date: string) => string;
   monthDropdown?: (date: string) => string;

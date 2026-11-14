@@ -8,11 +8,16 @@
  */
 import { finite } from '../values.js';
 
+/** A geographic position in decimal degrees. */
 export interface MapPosition {
   readonly latitude: number;
   readonly longitude: number;
 }
 
+/**
+ * A geographic rectangle given by its edges in decimal degrees; a west edge greater than the east
+ * edge crosses the antimeridian.
+ */
 export interface MapBounds {
   readonly south: number;
   readonly west: number;
@@ -20,6 +25,7 @@ export interface MapBounds {
   readonly east: number;
 }
 
+/** The full map view: its center, zoom, bearing and pitch. */
 export interface MapCamera {
   readonly center: MapPosition;
   readonly zoom: number;

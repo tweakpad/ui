@@ -18,7 +18,12 @@ import { collapsiblePresentation } from '../../presentation/families/collapsible
 import { TpIcon } from '../icon/icon.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
+/** The side of a Collapsible's trigger that draws the chevron, in writing direction. */
 export type CollapsibleIndicatorPosition = LogicalPosition;
+/**
+ * Where a Collapsible's content starts: at the outer edge, or lined up with the label after leading
+ * content.
+ */
 export type CollapsibleContentAlignment = 'edge' | 'label';
 
 /**

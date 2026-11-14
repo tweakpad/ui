@@ -57,7 +57,11 @@ import type { CustomElementConstructorWithTag } from '../../foundation/define.js
 
 export type { DialogModality } from './modality.js';
 
-type DialogFocusTarget = 'first' | 'cancel' | 'confirm' | 'popup' | string | HTMLElement;
+/**
+ * An element a Dialog can focus when it opens: the first control, its cancel or confirm action, the
+ * popup itself, a selector or an element.
+ */
+export type DialogFocusTarget = 'first' | 'cancel' | 'confirm' | 'popup' | string | HTMLElement;
 
 /**
  * A resolver receives how the Dialog was opened, as the shared surface focus targets do, and
@@ -65,6 +69,10 @@ type DialogFocusTarget = 'first' | 'cancel' | 'confirm' | 'popup' | string | HTM
  */
 export type DialogInitialFocus =
   DialogFocusTarget | ((interaction: SurfaceInteraction) => DialogFocusTarget | null);
+/**
+ * Where focus goes when a Dialog closes: its trigger, the previously focused element, a given
+ * element or resolver, or `false` to leave it.
+ */
 export type DialogFinalFocus =
   HTMLElement | (() => HTMLElement | null) | 'trigger' | 'previous' | false;
 const triggerIdentifiers = new WeakMap<HTMLElement, string>();

@@ -1,7 +1,13 @@
 import { numericRange, formatNumericRange } from '../../foundation/numeric-range.js';
 
+/** Where a Progress task stands: its progress unknown, under way, or done. */
 export type ProgressStatus = 'indeterminate' | 'progressing' | 'complete';
+/** Builds the spoken value of a Progress from its formatted and raw value. */
 export type AccessibleProgressText = (formattedValue: string, rawValue: number | null) => string;
+/**
+ * A read-only snapshot of a Progress's value, range, formatting and status, read from `state` and
+ * passed to every part.
+ */
 export interface ProgressState extends Readonly<Record<string, unknown>> {
   readonly value: number | null;
   readonly rawMinimum: number;

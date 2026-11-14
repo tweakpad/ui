@@ -10,6 +10,7 @@ import type { FlowModel } from '../../../foundation/flow/model/model.js';
 /** Media type of a copied selection (Widgets §6.3 Keyboard and pointer: clipboard). */
 export const FLOW_CLIPBOARD_TYPE = 'application/x-tweakpad-flow+json';
 
+/** The nodes and edges a copy puts on the clipboard and a paste reads back. */
 export interface FlowClipboardPayload {
   version: 1;
   nodes: FlowNode[];

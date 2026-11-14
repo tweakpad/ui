@@ -29,6 +29,10 @@ export interface ValidationSnapshot {
   fieldResults: readonly FieldValidationResult[];
 }
 
+/**
+ * One validation pass over a form, which settles with the field results or is cancelled when a
+ * newer pass starts.
+ */
 export class ValidationRun {
   readonly generation: number;
   readonly #controller = new AbortController();

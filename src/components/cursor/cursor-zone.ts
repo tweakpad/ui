@@ -9,6 +9,10 @@ import { CursorDocument, type CursorParticipant, type CursorZoneLike } from './c
 import { cursorZoneStyles } from './styles.js';
 import { mouseLikePointer } from './zone-resolution.js';
 
+/**
+ * How a Cursor zone holds the cursor: not at all, pulled to the zone's center, or morphed to its
+ * bounds.
+ */
 export type CursorStick = 'none' | 'center' | 'bounds';
 
 const isCursor = (node: Node): node is Element =>

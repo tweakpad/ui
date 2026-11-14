@@ -165,6 +165,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
   manager: DragDropManager | undefined;
   /** The identity of this list among lists sharing a manager; unique and stable. */
   group: UniqueIdentifier = createId('drag-list');
+  /** The direction the items run and the arrow keys move them. */
   override orientation: 'vertical' | 'horizontal' = 'vertical';
   /** Where a pointer picks a row up: its handle, or anywhere on the row; the handle stays the keyboard target. */
   activation: 'handle' | 'item' = 'handle';
@@ -241,7 +242,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
     },
     diagnostic: (message) => reportDragDropDiagnostic('value', message),
   });
-  /** The list's binding to its drag manager, shared with connected lists. */
+  /** @internal The list's binding to its drag manager, shared with connected lists. */
   readonly controller = new ListController(this, this.#state);
   #ownedManager: DragDropManager | undefined;
   #connectedManager: DragDropManager | undefined;

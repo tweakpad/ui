@@ -1,14 +1,23 @@
 import { windowFrames } from '../../foundation/frame-loop.js';
 
+/** A paint a plot registers with a scheduler, with the shortest time allowed between its paints. */
 export interface PlotRenderJob {
   paint(timestamp: number): void;
   minimumInterval: number;
 }
+/**
+ * Returned when a job registers with a scheduler: requests the next paint, retunes or suspends it,
+ * and unregisters it.
+ */
 export interface PlotRenderHandle {
   invalidate(): void;
   configure(options: { minimumInterval: number; suspended: boolean }): void;
   dispose(): void;
 }
+/**
+ * Paints the plots of one window within a shared frame budget; assign one to several plots through
+ * `scheduler`.
+ */
 export interface PlotRenderScheduler {
   readonly owner: Window;
   readonly disposed?: boolean;

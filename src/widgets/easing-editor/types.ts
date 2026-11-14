@@ -1,6 +1,8 @@
 import type { EasingCurve, EasingKind, EasingPoint } from '../../foundation/easing/types.js';
 
+/** Whether the presets sit in a column beside the graph or behind a header Toggle over it. */
 export type EasingEditorLayout = 'extended' | 'compact';
+/** Scale of the graph, fields and controls of the editor. */
 export type EasingEditorSize = 'sm' | 'default' | 'lg';
 /** The two categories of the header Tabs: springs, and every other kind as an ease. */
 export type EasingCategory = 'ease' | 'spring';
@@ -31,6 +33,7 @@ export interface EasingPreset {
   readonly label: string;
   readonly value: string;
 }
+/** A labeled group of presets in the preset picker, as given to `presets`. */
 export interface EasingPresetGroup {
   readonly id: string;
   readonly label: string;

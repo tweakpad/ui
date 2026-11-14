@@ -6,6 +6,8 @@ export type {
   TextEditorFeatureName,
 } from './feature.js';
 export * from './features/index.js';
+export type { OverlayGeometry } from './geometry.js';
+export type { BlockBand } from './views/selection-anchor.js';
 export type {
   TextEditorChangeMetadata,
   TextEditorErrorDetail,
@@ -14,3 +16,5 @@ export type {
   TextEditorReadyDetail,
 } from './types.js';
 export * from '../../foundation/text-editor/index.js';
+export type { TextEditorContextualSurface, TextEditorMenuModality } from './focus.js';
+export type { TextEditorLaneSurface } from './views/lanes.js';

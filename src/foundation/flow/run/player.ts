@@ -14,6 +14,7 @@ export interface FlowRunPlayerOptions extends FlowRunStateOptions {
   follow?: boolean | undefined;
 }
 
+/** How a run plays: `trace` replays recorded events, `live` follows events as the host pushes them. */
 export type FlowRunPlayerMode = 'trace' | 'live';
 
 /** Ticker over the environment's timers; the engine never schedules on its own. */

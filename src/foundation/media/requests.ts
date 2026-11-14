@@ -101,6 +101,7 @@ export interface MediaRequestResults {
   'dismiss-error': void;
 }
 
+/** Name of an action a media control can request from the player, such as `play` or `seek`. */
 export type MediaRequestAction = keyof MediaRequestValues;
 
 export const MEDIA_REQUEST_ACTIONS: readonly MediaRequestAction[] = Object.freeze([
@@ -132,6 +133,7 @@ export const MEDIA_REQUEST_ACTIONS: readonly MediaRequestAction[] = Object.freez
   'dismiss-error',
 ]);
 
+/** Options for a media request: why it was made and which event or control made it. */
 export interface MediaRequestOptions {
   /** Defaults to `programmatic`. */
   readonly reason?: ChangeReason;

@@ -19,8 +19,10 @@ import { Fade } from './fade.js';
 import { cometHeads, cometTail, lightGlow, type GlowSources } from './lights.js';
 import { moGlowBorderStyles, TAIL } from './styles.js';
 
+/** What makes a Glow border light up: never, always, hover, focus, or the pointer's position. */
 export type GlowBorderTrigger = 'none' | 'always' | 'hover' | 'focus' | 'pointer';
 export type GlowBorderMotion = 'comets' | 'sweep' | 'pulse' | 'glint';
+/** Which way a Glow border's lights travel: clockwise or counterclockwise. */
 export type GlowBorderRotation = 'cw' | 'ccw';
 
 export const moGlowBorderMotionRoles = {

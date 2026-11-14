@@ -10,6 +10,10 @@ import {
 import { parseScrollRangeSpan } from '../../foundation/scroll-progress.js';
 import { scrollTriggerPresentation } from '../../presentation/families/scroll-trigger.js';
 
+/**
+ * The aggregate readiness of a Scroll trigger's members, read from its `status` and reported by
+ * `tp-loading-status-change`.
+ */
 export type ScrollTriggerStatus = 'idle' | 'loading' | 'ready';
 
 /**

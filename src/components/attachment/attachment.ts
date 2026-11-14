@@ -13,6 +13,10 @@ import { formatBytes } from '../../foundation/format-bytes.js';
 import { resolveLocale } from '../../foundation/services.js';
 import { fillTemplate } from '../../foundation/template.js';
 
+/**
+ * The application's upload status for an Attachment, which sets its busy, error or finished
+ * presentation.
+ */
 export type AttachmentStatus = 'idle' | 'uploading' | 'processing' | 'error' | 'complete';
 /** Visible and accessible Attachment text. `{name}` is replaced with the filename. */
 export interface AttachmentMessages {

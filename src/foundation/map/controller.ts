@@ -42,6 +42,10 @@ import { resolveMotionTiming } from '../motion.js';
 import { MapStore, type MapState, type MapSubscribeOptions } from './state.js';
 import { mapThemesEqual, type ResolvedMapTheme } from './theme.js';
 
+/**
+ * A camera or pin action requested from a map, by its controls or by calls such as `flyTo` and
+ * `selectPin`.
+ */
 export type MapRequestAction =
   | 'zoom-in'
   | 'zoom-out'
@@ -52,12 +56,14 @@ export type MapRequestAction =
   | 'select-pin'
   | 'reveal-pin';
 
+/** The bounds a `fit-bounds` request frames, with optional padding and a zoom limit. */
 export interface MapFitValue {
   readonly bounds: MapBounds;
   readonly padding?: MapPadding;
   readonly maxZoom?: number;
 }
 
+/** The value each map request action takes. */
 export interface MapRequestValues {
   'zoom-in': number | undefined;
   'zoom-out': number | undefined;
@@ -69,8 +75,16 @@ export interface MapRequestValues {
   'reveal-pin': { readonly value: string; readonly zoom?: number };
 }
 
+/**
+ * How a map request settled: completed, or cancelled by a listener, a newer request or the map's
+ * removal.
+ */
 export type MapRequestOutcome = 'completed' | 'cancelled';
 
+/**
+ * The reason, source event and trigger recorded with a map request, and an optional animation
+ * duration.
+ */
 export interface MapRequestOptions {
   readonly reason?: ChangeReason | undefined;
   readonly sourceEvent?: Event | undefined;
@@ -79,6 +93,10 @@ export interface MapRequestOptions {
   readonly duration?: number | undefined;
 }
 
+/**
+ * The detail of `tp-map-request`, dispatched before a map runs a request so a listener can cancel
+ * it.
+ */
 export interface MapRequestDetail {
   readonly action: MapRequestAction;
   readonly value: unknown;
@@ -87,10 +105,15 @@ export interface MapRequestDetail {
   readonly trigger: Element | null;
 }
 
+/** The detail of `tp-map-request-failed`, dispatched when a map request throws. */
 export interface MapRequestFailedDetail extends Omit<MapRequestDetail, 'sourceEvent' | 'trigger'> {
   readonly error: unknown;
 }
 
+/**
+ * The detail of `tp-map-camera-change` and `tp-map-camera-commit`, with the camera and visible
+ * bounds after the move.
+ */
 export interface MapCameraDetail {
   readonly camera: MapCamera;
   readonly bounds: MapBounds | null;
@@ -98,6 +121,10 @@ export interface MapCameraDetail {
   readonly sourceEvent: Event | undefined;
 }
 
+/**
+ * The detail of `tp-map-press`, with the geographic position and viewport point of a press on the
+ * basemap.
+ */
 export interface MapPressDetail {
   readonly position: MapPosition;
   readonly point: MapPoint;

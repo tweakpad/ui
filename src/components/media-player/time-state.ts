@@ -6,6 +6,10 @@ import { formatDuration, secondsToIsoDuration } from '../../foundation/duration-
 import type { MediaMessagesResolver } from '../../foundation/media/messages.js';
 import { timeRangeEnd, type MediaState } from '../../foundation/media/state.js';
 
+/**
+ * Which time a media time display shows: the current time, the duration, the remaining time or the
+ * time under the pointer.
+ */
 export type MediaTimeType = 'current' | 'duration' | 'remaining' | 'pointer';
 /** The type a toggle currently shows. */
 export type MediaTimeShown = 'current' | 'duration' | 'remaining';
@@ -34,6 +38,10 @@ export interface MediaTimeInput {
   readonly locale?: string | undefined;
 }
 
+/**
+ * One media time ready to display: the signed seconds, the clock text, the spoken phrase and the
+ * machine-readable value.
+ */
 export interface MediaTimeView {
   /** Signed seconds shown (negative for remaining time before the end). */
   readonly seconds: number;

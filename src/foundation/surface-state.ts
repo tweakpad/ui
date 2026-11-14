@@ -6,6 +6,10 @@ export interface SurfaceChangeDetail extends ValueChangeDetail<boolean> {
   preventUnmountOnClose(): void;
 }
 
+/**
+ * The `tp-open-change` event of a surface, which also lets a listener keep the surface's content
+ * mounted after it closes.
+ */
 export class TpSurfaceOpenChangeEvent extends TpOpenChangeEvent {
   declare readonly detail: SurfaceChangeDetail;
   #retain = false;

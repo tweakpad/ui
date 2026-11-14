@@ -5,7 +5,7 @@ export type {
   EasingEditorValueCommitCallback,
 } from './easing-editor.js';
 export { TpEasingEditorGraph } from './surfaces/graph.js';
-export type { EasingSurfaceChangeDetail } from './surfaces/graph.js';
+export type { EasingGraphAxis, EasingSurfaceChangeDetail } from './surfaces/graph.js';
 export { TpEasingEditorFrames } from './surfaces/frames.js';
 export * from './types.js';
 export { DEFAULT_STRINGS as easingEditorStrings } from './strings.js';

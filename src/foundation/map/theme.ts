@@ -21,6 +21,7 @@ export const MAP_THEME_ROLES = [
   'labelHalo',
 ] as const;
 
+/** A basemap feature a map theme can color, such as land, water, roads or labels. */
 export type MapThemeRole = (typeof MAP_THEME_ROLES)[number];
 
 /** Role colors for one scheme. */

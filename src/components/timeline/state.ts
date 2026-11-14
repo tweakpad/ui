@@ -1,5 +1,10 @@
+/**
+ * The progress status of a Timeline item, set on the item or derived from the Timeline's `value`.
+ */
 export type TimelineStatus = 'complete' | 'current' | 'upcoming' | 'none';
+/** Which side of the axis a Timeline puts item content on, or whether it alternates. */
 export type TimelineAlign = 'start' | 'end' | 'alternate' | 'alternate-reverse';
+/** The side of the axis a Timeline item's content sits on. */
 export type TimelineSide = 'start' | 'end';
 
 export interface TimelineItemInput {

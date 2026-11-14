@@ -190,6 +190,7 @@ export interface TextEditorBlocksDuplicateAction {
   readonly ids: readonly string[];
 }
 
+/** Removes blocks, each list item with its nested items. */
 export interface TextEditorBlocksDeleteAction {
   readonly type: 'blocks.delete';
   readonly ids: readonly string[];
@@ -204,6 +205,7 @@ export interface TextEditorTextInsertAction {
   readonly range?: TextEditorTextRange | undefined;
 }
 
+/** Removes the text of a range. */
 export interface TextEditorTextDeleteAction {
   readonly type: 'text.delete';
   readonly range: TextEditorTextRange;
@@ -380,7 +382,7 @@ export interface TextEditorTableClearCellsAction {
   readonly range: TextEditorCellRange;
 }
 
-/** An action of the text editor: the 37 types of `uwg-te-tab-actions`. */
+/** An action of the text editor, which `run()` executes. */
 export type TextEditorAction =
   | TextEditorMarkToggleAction
   | TextEditorMarkColorAction
@@ -420,6 +422,7 @@ export type TextEditorAction =
   | TextEditorTableColumnWidthsAction
   | TextEditorTableClearCellsAction;
 
+/** The `type` of an editor action, such as `text.insert` or `blocks.delete`. */
 export type TextEditorActionType = TextEditorAction['type'];
 
 /** The action of a type. */

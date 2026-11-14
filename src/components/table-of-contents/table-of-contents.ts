@@ -28,6 +28,7 @@ import {
 } from './table-of-contents-compact.js';
 import { TpTableOfContentsItem } from './table-of-contents-item.js';
 
+/** Replaceable texts of a Table of contents; each defaults to English. */
 export interface TableOfContentsMessages {
   readonly title?: string;
 }

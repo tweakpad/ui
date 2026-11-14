@@ -9,7 +9,9 @@ import type {
 import { TpCollapsible } from '../collapsible/collapsible.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
+/** The side of an Accordion item's trigger that draws the chevron, in writing direction. */
 export type AccordionIndicatorPosition = CollapsibleIndicatorPosition;
+/** Where an Accordion item's content starts: at the outer edge, or lined up with the label. */
 export type AccordionContentAlignment = CollapsibleContentAlignment;
 
 const optionalContentAlignmentConverter = {

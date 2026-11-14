@@ -14,6 +14,10 @@ import {
 
 export type ScrollMode =
   'following-bottom' | 'free-scrolling' | 'anchored-to-message' | 'settling-jump';
+/**
+ * Options for a Message scroller's `scrollToStart`, `scrollToEnd` and `scrollToMessage`, such as
+ * where the target aligns and whether the scroll is smooth.
+ */
 export interface ScrollOptions {
   align?: 'start' | 'center' | 'end' | 'nearest';
   behavior?: ScrollBehavior;

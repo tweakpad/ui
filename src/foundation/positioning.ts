@@ -2,12 +2,23 @@ import { composedParent } from './focus.js';
 import { observeResize, observeScroll } from './observation.js';
 import { POSITIONING_PROPERTIES } from './positioning-properties.js';
 import { visualViewportBox } from './scroll.js';
+/** A physical side of an anchor that a positioned surface is placed against. */
 export type Side = 'top' | 'right' | 'bottom' | 'left';
+/**
+ * A side of the anchor, as a physical side or a writing-mode-relative one that follows the text
+ * direction.
+ */
 export type LogicalSide = Side | 'inline-start' | 'inline-end' | 'block-start' | 'block-end';
+/** Where a positioned surface lines up along its anchor's side. */
 export type Alignment = 'start' | 'center' | 'end';
 export type Placement = Side | `${Side}-${Alignment}`;
+/**
+ * CSS positioning a surface uses: `absolute` within its containing block or `fixed` to the
+ * viewport.
+ */
 export type PositioningStrategy = 'absolute' | 'fixed';
 
+/** A box in viewport coordinates with its position, size and edges. */
 export interface Rect {
   x: number;
   y: number;
@@ -56,6 +67,10 @@ export interface PositioningResult {
   stageData: PositioningStageData;
 }
 
+/**
+ * How a positioned surface avoids overflowing its boundary on each axis: flip to the other side,
+ * shift along, or do nothing.
+ */
 export interface CollisionPolicy {
   side?: 'flip' | 'shift' | 'none';
   align?: 'flip' | 'shift' | 'none';
@@ -75,6 +90,10 @@ export interface AutoUpdatePolicy {
   frameSynchronized?: boolean;
 }
 
+/**
+ * An anchor that is not an element, such as a text range or a pointer position, that a surface
+ * positions against by its rectangles.
+ */
 export interface VirtualAnchor {
   getBoundingRectangle(): Rect;
   /**
@@ -93,8 +112,17 @@ export interface InlineFragmentOptions {
   /** Widens the band that decides which line fragment holds the point; default 2. */
   padding?: number | undefined;
 }
+/**
+ * What a surface is positioned against: an element, or a virtual anchor that only supplies a
+ * rectangle.
+ */
 export type AnchorGeometry = Element | VirtualAnchor;
+/**
+ * The area a positioned surface must stay inside: its clipping ancestors, given elements, or a
+ * rectangle.
+ */
 export type CollisionBoundary = 'clipping-ancestors' | Element | Element[] | Rect;
+/** The resolved placement and sizes passed to a function offset. */
 export interface PositioningOffsetContext {
   side: Side;
   align: Alignment;
@@ -155,6 +183,10 @@ function writeData(element: HTMLElement, key: string, value: string): void {
   if (element.dataset[key] !== value) element.dataset[key] = value;
 }
 
+/**
+ * A positioning offset in pixels, or a function that computes it from the resolved placement and
+ * sizes.
+ */
 export type GeometryOffset = number | ((context: PositioningOffsetContext) => number);
 export type PositioningOffset =
   number | { mainAxis?: number; crossAxis?: number; alignmentAxis?: number };

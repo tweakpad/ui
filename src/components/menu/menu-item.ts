@@ -6,6 +6,7 @@ import { componentHandlingPrevented } from '../../foundation/part.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { setPartComposition } from '../../presentation/controller.js';
 
+/** The menu that owns a Menu item, through which the item reports activation and changes. */
 export interface MenuItemOwner extends HTMLElement {
   readonly menuDisabled: boolean;
   readonly typing: boolean;

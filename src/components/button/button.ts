@@ -15,7 +15,8 @@ import { TpIcon } from '../icon/icon.js';
 import { observeSlots, slotOccupied } from '../shared/slots.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
-type ButtonType = 'button' | 'submit' | 'reset';
+/** What pressing a Button does to its owning form: nothing, submit it or reset it. */
+export type ButtonType = 'button' | 'submit' | 'reset';
 
 /**
  * One action or navigation target. It renders a native button, or a native link when `href` is

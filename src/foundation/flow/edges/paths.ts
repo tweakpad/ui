@@ -16,6 +16,7 @@ export interface FlowEdgePath {
   length: number;
 }
 
+/** One end of an edge path: the point it leaves or enters and the node side it faces. */
 export interface FlowPathEndpoint {
   point: FlowPoint;
   side: FlowSide;

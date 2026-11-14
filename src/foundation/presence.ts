@@ -17,6 +17,10 @@ function composedAnimations(element: Element, found = new Set<Animation>()): Set
   return found;
 }
 
+/**
+ * Keeps an opening or closing surface mounted until its enter or exit animations finish, and
+ * reports each presence state; components with animated popups use it.
+ */
 export class PresenceController implements ReactiveController {
   readonly #host: ReactiveControllerHost;
   readonly #options: PresenceControllerOptions;

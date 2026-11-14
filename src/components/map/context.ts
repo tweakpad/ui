@@ -26,6 +26,10 @@ import { mapPresentation } from '../../presentation/families/map.js';
 /** Brand carried by `tp-map`; the owner lookup tests it instead of `instanceof`. */
 export const mapBrand: unique symbol = Symbol.for('tweakpad.map');
 
+/**
+ * Replacements for a Map's built-in text, such as its viewport name, statuses and control names;
+ * missing entries keep the defaults.
+ */
 export interface MapMessages {
   /** Viewport name. */
   map?: string;

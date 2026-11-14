@@ -1,7 +1,12 @@
 import { checkboxParentSelection } from '../checkbox-group.js';
 import type { TreeModel } from './model.js';
 
+/** Whether tree items cannot be selected, one at a time, or several at once. */
 export type TreeSelectionMode = 'none' | 'single' | 'multiple';
+/**
+ * Whether a tree item's checkbox is checked, unchecked or mixed, when only some of its descendants
+ * are checked.
+ */
 export type TreeCheckedState = boolean | 'mixed';
 
 /** Unique string identifiers in their first-seen order. */

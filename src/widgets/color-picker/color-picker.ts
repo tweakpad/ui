@@ -119,7 +119,9 @@ import {
   type ColorSwatchInput,
 } from './types.js';
 
+/** Called with each `tp-value-change` proposal of a new color, on every step of a drag or edit. */
 export type ColorPickerValueChangeCallback = (event: TpValueChangeEvent<string>) => void;
+/** Called with each `tp-value-commit` when a pick settles, such as on release or Enter. */
 export type ColorPickerValueCommitCallback = (event: TpValueCommitEvent<string>) => void;
 
 interface DragSnapshot {

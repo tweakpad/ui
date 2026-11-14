@@ -1,7 +1,10 @@
 import type { EmojiRecord, SkinTone } from '../../foundation/emoji/types.js';
 
+/** Scale of the emoji cells, the search field and the controls together. */
 export type EmojiPickerSize = 'sm' | 'default' | 'lg';
+/** Whether the picker shows in place or opens from a trigger in a popup. */
 export type EmojiPickerPicker = 'inline' | 'popup';
+/** Loading state of the dataset, read from `status`; `error` shows a Retry button. */
 export type EmojiPickerStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
 /** An emoji as the picker offers it: the tone applied, or a custom image. */

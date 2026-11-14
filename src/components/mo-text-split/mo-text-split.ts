@@ -14,6 +14,10 @@ export { parseSplitUnits } from '../shared/text-reveal.js';
 
 export type MoTextSplitEffect =
   'fade' | 'up' | 'down' | 'left' | 'right' | 'zoom-in' | 'zoom-out' | 'blur';
+/**
+ * Which unit of a Text split clips its pieces, so they emerge from behind it, or `none` for no
+ * clipping.
+ */
 export type MoTextSplitMask = 'none' | 'lines' | 'words' | 'chars';
 
 const EFFECTS: readonly MoTextSplitEffect[] = [

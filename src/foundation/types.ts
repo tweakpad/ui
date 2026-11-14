@@ -1,6 +1,19 @@
+/**
+ * Layout axis of a component; `responsive` switches between horizontal and vertical with the
+ * available size.
+ */
 export type Orientation = 'horizontal' | 'vertical' | 'responsive';
+/** Text direction of a component, left-to-right or right-to-left. */
 export type Direction = 'ltr' | 'rtl';
+/**
+ * Placement relative to the content in reading order: before it (`leading`) or after it
+ * (`trailing`).
+ */
 export type LogicalPosition = 'leading' | 'trailing';
+/**
+ * Why a component's value or open state changed, reported on its change events so handlers can tell
+ * user actions from programmatic ones.
+ */
 export type ChangeReason =
   | 'programmatic'
   | 'automatic-advance'

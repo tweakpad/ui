@@ -23,6 +23,10 @@ export interface TreeProjection {
 /** Whether `parent` accepts `source` as a child at a projected position. */
 export type TreeNestPredicate = (parent: ProjectedRow, source: ProjectedRow) => boolean;
 
+/**
+ * A move of a tree item from one parent and index to another, which a drop or a keyboard move
+ * proposes.
+ */
 export interface TreeMove {
   itemId: string;
   fromParentId: string | null;

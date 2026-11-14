@@ -34,7 +34,12 @@ import { TpKbd } from '../kbd/kbd.js';
 import { TpButton } from '../button/button.js';
 import type { CustomElementConstructorWithTag } from '../../foundation/define.js';
 
+/** One of a Questionnaire's navigation actions: go back, skip, go on or submit. */
 export type QuestionnaireAction = 'previous' | 'skip' | 'next' | 'submit';
+/**
+ * Overrides for one Questionnaire action Button: its label, variant and size, or whether it is
+ * disabled or hidden.
+ */
 export interface QuestionnaireActionOptions {
   label?: string;
   variant?: TpButton['variant'];
@@ -42,6 +47,7 @@ export interface QuestionnaireActionOptions {
   disabled?: boolean;
   hidden?: boolean;
 }
+/** Per-action overrides for a Questionnaire's navigation Buttons, keyed by action. */
 export type QuestionnaireActions = Partial<Record<QuestionnaireAction, QuestionnaireActionOptions>>;
 
 export interface QuestionnaireItemChangeDetail {
@@ -51,6 +57,10 @@ export interface QuestionnaireItemChangeDetail {
   sourceEvent: Event;
 }
 
+/**
+ * Detail of the cancelable `tp-submit` event, dispatched after every answer passes validation and
+ * before the form submits.
+ */
 export interface QuestionnaireSubmitDetail {
   form: HTMLFormElement;
   data: FormData;

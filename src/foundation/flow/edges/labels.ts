@@ -15,6 +15,10 @@ export interface FlowPathPosition {
   t: number;
 }
 
+/**
+ * Where an edge label sits on its path: the point, its tangent and normal, and the label's resolved
+ * alignment and placement.
+ */
 export interface FlowLabelAnchor extends FlowPathPosition {
   /** Unit normal pointing visually up (negative y) from the tangent. */
   normal: FlowPoint;

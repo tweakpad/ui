@@ -1,13 +1,23 @@
 /** The fixed minimum Stack inline sizes, in rem. */
 export const stackBreakpoints = { xs: 0, sm: 30, md: 48, lg: 64, xl: 80 } as const;
+/**
+ * A breakpoint name in a Stack's responsive values; each applies from its minimum inline size up.
+ */
 export type StackBreakpoint = keyof typeof stackBreakpoints;
+/** A Stack layout value given once, or as a map from breakpoint name to value. */
 export type ResponsiveValue<T> = T | Readonly<Partial<Record<StackBreakpoint, T>>>;
+/** Whether a Stack lays its children out in a row or a column. */
 export type StackDirection = 'row' | 'column';
+/** How a Stack aligns its children on the cross axis. */
 export type StackAlign = 'start' | 'center' | 'end' | 'stretch' | 'baseline';
+/** How a Stack distributes its children along the main axis. */
 export type StackJustify =
   'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly';
+/** Whether a Stack's children wrap onto new lines, and in which direction. */
 export type StackWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
+/** A spacing token number for the gap between a Stack's children. */
 export type StackGap = 0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 4 | 5 | 6 | 8 | 10 | 12 | 16;
+/** A Stack gap as a number or its string form, as an attribute writes it. */
 export type StackGapValue = StackGap | `${StackGap}`;
 export const stackDefaults = {
   direction: 'column',

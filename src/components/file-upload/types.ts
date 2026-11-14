@@ -24,6 +24,7 @@ export type FileErrorCode =
   | 'file-invalid'
   | 'validation-failed';
 
+/** One reason a file was rejected, with a built-in or application code and a message. */
 export interface FileError {
   /** A built-in code or an application code. */
   readonly code: FileErrorCode | (string & {});
@@ -55,6 +56,10 @@ export interface FileUploadItem {
 export type FileAcceptInput =
   string | readonly string[] | Readonly<Record<string, readonly string[]>> | null | undefined;
 
+/**
+ * What a `FileValidator` receives with each file: the current value, the files accepted so far in
+ * the batch, the file's position and an abort signal.
+ */
 export interface FileValidationContext {
   /** Accepted files before this batch (empty when one file replaces another). */
   readonly value: readonly File[];
@@ -68,6 +73,7 @@ export interface FileValidationContext {
   readonly relativePath: string;
 }
 
+/** One error a `FileValidator` reports: a message, or a message with an application code. */
 export type FileValidationError = string | { readonly code?: string; readonly message: string };
 
 /** A validator result: no errors, errors, or errors with metadata and a description. */
@@ -83,11 +89,19 @@ export type FileValidationResult =
       readonly description?: string;
     };
 
+/**
+ * Application validation for one file, run after the built-in checks; it returns errors, metadata
+ * or nothing, synchronously or as a promise.
+ */
 export type FileValidator = (
   file: File,
   context: FileValidationContext,
 ) => FileValidationResult | Promise<FileValidationResult>;
 
+/**
+ * What a `FileUploader` receives with each file: a signal that aborts the transfer and a progress
+ * callback.
+ */
 export interface FileUploadContext {
   readonly signal: AbortSignal;
   /** Reports transferred and total bytes, or a percentage when `total` is omitted. */
@@ -97,6 +111,9 @@ export interface FileUploadContext {
 /** Transfers one accepted file; fulfils with the server result or rejects with an error. */
 export type FileUploader = (item: FileUploadItem, context: FileUploadContext) => Promise<unknown>;
 
+/**
+ * A file the File upload rejected, with every error it failed and its path inside a dropped folder.
+ */
 export interface FileRejection {
   readonly file: File;
   readonly errors: readonly FileError[];
@@ -131,6 +148,10 @@ export interface FileUploadItemPatch {
 /** An item is addressed by its identifier, its file or the item itself. */
 export type FileUploadTarget = string | File | FileUploadItem;
 
+/**
+ * What `addFiles` resolves with: the accepted files, the rejected ones with their errors, and
+ * whether the change was cancelled.
+ */
 export interface FileAddResult {
   readonly accepted: readonly File[];
   readonly rejected: readonly FileRejection[];
@@ -138,8 +159,19 @@ export interface FileAddResult {
   readonly cancelled: boolean;
 }
 
+/** How a File upload lists its files: as rows, or as image tiles with an Add tile at the end. */
 export type FileUploadLayout = 'stack' | 'grid';
+/** The density of a File upload's drop surface. */
 export type FileUploadSize = 'sm' | 'default';
+/** The density of listed files in the stack layout of a File upload; `xs` wraps them as chips. */
 export type FileUploadItemSize = 'xs' | 'sm' | 'default';
+/**
+ * How a File upload shows its accepted types and size: as a sentence, as a row of Badges, or not at
+ * all.
+ */
 export type FileUploadHintTreatment = 'text' | 'badges' | 'none';
+/**
+ * Which camera the File upload picker prefers on mobile devices: neither, the front one or the back
+ * one.
+ */
 export type FileUploadCapture = '' | 'user' | 'environment';

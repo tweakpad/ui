@@ -1,4 +1,8 @@
 export type SliderCrossing = 'prevent' | 'swap';
+/**
+ * What happens when a slider thumb reaches another: it pushes the other along, swaps places with
+ * it, or stops.
+ */
 export type SliderCollisionBehavior = 'push' | 'swap' | 'none';
 
 export interface SliderMoveRequest {

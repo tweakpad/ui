@@ -4,6 +4,10 @@ import { setLogicalPortalOwner } from './portal-ownership.js';
 import { GeneratedStyleResource, styleText, themeTokens } from './generated-style.js';
 export { logicalPortalOwner } from './portal-ownership.js';
 
+/**
+ * Where a portaled surface mounts: an element or shadow root, a ref or function that returns one,
+ * or `null` for the default container.
+ */
 export type OwnedPortalContainer =
   | HTMLElement
   | ShadowRoot

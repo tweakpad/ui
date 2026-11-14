@@ -1,21 +1,26 @@
 import type { ChangeReason } from '../types.js';
 
 /**
- * Flow engine types (`@tweakpad/ui/flow`, Widgets Specification §6.3 Flow). The engine is
- * framework-free: documents, nodes, edges, ports and schema definitions are plain data; runtime
- * measurements, routes and run state are derived and never serialized.
+ * Flow engine types (`@tweakpad/ui/flow`). The engine is framework-free: documents, nodes, edges,
+ * ports and schema definitions are plain data; runtime measurements, routes and run state are
+ * derived and never serialized.
  */
 
+/** A side of a node box, where a port sits. */
 export type FlowSide = 'top' | 'right' | 'bottom' | 'left';
+/** A position in flow units. */
 export interface FlowPoint {
   x: number;
   y: number;
 }
+/** A width and height in flow units. */
 export interface FlowSize {
   width: number;
   height: number;
 }
+/** A rectangle in flow units, given by its top-left corner and size. */
 export interface FlowRect extends FlowPoint, FlowSize {}
+/** The view's pan offset in screen pixels and its zoom factor. */
 export interface FlowViewport {
   x: number;
   y: number;
@@ -24,9 +29,18 @@ export interface FlowViewport {
 /** `[[x1, y1], [x2, y2]]` in flow units. */
 export type FlowExtent = readonly [readonly [number, number], readonly [number, number]];
 
+/** The axis a layout runs along: ranks left to right or top to bottom. */
 export type FlowLayoutDirection = 'horizontal' | 'vertical';
+/**
+ * A document's layout direction; `smart` picks the direction that fits, `none` leaves nodes where
+ * they are.
+ */
 export type FlowLayoutMode = 'none' | FlowLayoutDirection | 'smart';
 
+/**
+ * Layout settings saved with a document: the direction, which also sets default port sides, and the
+ * spacing.
+ */
 export interface FlowLayoutSettings {
   direction: FlowLayoutMode;
   /** Cross-axis gap between nodes of a rank (default 40). */
@@ -39,6 +53,7 @@ export interface FlowLayoutSettings {
   pack?: 'grid' | 'rows' | 'none';
 }
 
+/** The serializable flow graph: its nodes, edges, viewport and layout settings. */
 export interface FlowDocument<N extends FlowNode = FlowNode, E extends FlowEdge = FlowEdge> {
   version: 1;
   /** Parents precede their children (`normalizeNodeOrder`). */
@@ -49,6 +64,7 @@ export interface FlowDocument<N extends FlowNode = FlowNode, E extends FlowEdge 
   metadata?: Record<string, unknown>;
 }
 
+/** A per-node override or addition to a port of the node's definition, matched by port id. */
 export type FlowPortInstance = Partial<Omit<FlowPortDefinition, 'id'>> & { id: string };
 
 /** Measured port box relative to its node, in flow units (runtime only). */
@@ -61,6 +77,7 @@ export interface FlowPortGeometry {
   side: FlowSide;
 }
 
+/** One node of a flow document: its type, position, data and per-instance flags. */
 export interface FlowNode<Data extends Record<string, unknown> = Record<string, unknown>> {
   id: string;
   /** `FlowNodeDefinition.type`. */
@@ -90,8 +107,10 @@ export interface FlowNode<Data extends Record<string, unknown> = Record<string, 
   pinned?: boolean;
 }
 
+/** The path shape an edge is drawn with. */
 export type FlowEdgeKind = 'bezier' | 'straight' | 'step' | 'smoothstep' | 'orthogonal';
 
+/** Shape parameters of an edge kind, set per schema kind or per edge. */
 export interface FlowEdgeKindOptions {
   /** Bezier control offset factor (default 0.25). */
   curvature?: number;
@@ -105,6 +124,7 @@ export interface FlowEdgeKindOptions {
   stub?: number;
 }
 
+/** A text label placed along an edge. */
 export interface FlowEdgeLabel {
   text: string;
   /** Path parameter in 0–1 (default 0.5). */
@@ -113,7 +133,9 @@ export interface FlowEdgeLabel {
   placement?: 'on' | 'above' | 'below';
 }
 
+/** The built-in symbols an edge end can show. */
 export type FlowMarkerType = 'arrow' | 'arrowclosed' | 'circle' | 'diamond';
+/** An edge end marker with its own size, color and orientation. */
 export interface FlowMarkerDefinition {
   type: FlowMarkerType;
   width?: number;
@@ -123,8 +145,13 @@ export interface FlowMarkerDefinition {
   orient?: 'auto' | 'auto-start-reverse' | number;
   units?: 'strokeWidth' | 'userSpaceOnUse';
 }
+/** An edge end marker, given as a built-in symbol name or a full definition. */
 export type FlowMarker = FlowMarkerType | FlowMarkerDefinition;
 
+/**
+ * One edge of a flow document, connecting a source port to a target port, with its shape, labels
+ * and markers.
+ */
 export interface FlowEdge<Data extends Record<string, unknown> = Record<string, unknown>> {
   id: string;
   source: string;
@@ -152,6 +179,7 @@ export interface FlowEdge<Data extends Record<string, unknown> = Record<string, 
   zIndex?: number;
 }
 
+/** A proposed link between two node ports, checked before it becomes an edge. */
 export interface FlowConnection {
   source: string;
   sourcePort?: string;
@@ -159,6 +187,7 @@ export interface FlowConnection {
   targetPort?: string;
 }
 
+/** A data type ports can carry, with its label, tone and the types its inputs accept. */
 export interface FlowDataTypeDefinition {
   id: string;
   label?: string;
@@ -168,6 +197,10 @@ export interface FlowDataTypeDefinition {
   accepts?: readonly string[];
 }
 
+/**
+ * Graph-wide rules a schema enforces on connections: direction, cycles, self loops, duplicates and
+ * type compatibility.
+ */
 export interface FlowSchemaRules {
   /** `strict` connects outputs to inputs only (default). */
   connectionMode?: 'strict' | 'loose';
@@ -196,6 +229,10 @@ export interface FlowCategoryDefinition {
   open?: boolean;
 }
 
+/**
+ * Declares what a flow can contain: node types, categories, data types, edge kinds and connection
+ * rules.
+ */
 export interface FlowSchema {
   nodes: FlowNodeDefinition[];
   /** Order, labels and tones of the categories; categories not listed follow in first-use order. */
@@ -205,8 +242,10 @@ export interface FlowSchema {
   rules?: FlowSchemaRules;
 }
 
+/** How a node is drawn: a card, a compact chip, a panel or a group that contains other nodes. */
 export type FlowNodeShape = 'card' | 'compact' | 'panel' | 'group';
 
+/** A node type of the schema: its label, look, ports, editable properties and validation. */
 export interface FlowNodeDefinition {
   type: string;
   label: string;
@@ -227,6 +266,7 @@ export interface FlowNodeDefinition {
   validate?: (node: FlowNode, context: FlowValidationContext) => readonly FlowIssue[] | void;
 }
 
+/** A connection point a node type declares, with its direction, data type and connection limits. */
 export interface FlowPortDefinition {
   id: string;
   label?: string;
@@ -242,6 +282,7 @@ export interface FlowPortDefinition {
   hidden?: boolean;
 }
 
+/** The control that edits a node property; `custom` uses a control you supply. */
 export type FlowPropertyControl =
   | 'number'
   | 'slider'
@@ -254,6 +295,7 @@ export type FlowPropertyControl =
   | 'easing'
   | 'custom';
 
+/** A test on one node data key that decides whether a property shows. */
 export interface FlowCondition {
   key: string;
   equals?: unknown;
@@ -261,6 +303,7 @@ export interface FlowCondition {
   truthy?: boolean;
 }
 
+/** An editable node property: the data key, its control and the control's settings. */
 export interface FlowPropertyDefinition {
   key: string;
   label: string;
@@ -290,8 +333,10 @@ export interface FlowPropertyDefinition {
   placement?: FlowPropertyPlacement;
 }
 
+/** Where a property's control renders: in the node body or in the inspector. */
 export type FlowPropertyPlacement = 'node' | 'inspector';
 
+/** A validation problem found in the document, pointing at the node, edge or port it concerns. */
 export interface FlowIssue {
   code: string;
   severity: 'error' | 'warning';
@@ -317,6 +362,7 @@ export type FlowEdgePatch = {
     Omit<FlowEdge, 'id' | 'waypoints'>[K] | undefined;
 };
 
+/** One atomic edit to a flow document; the model applies, records and emits changes in batches. */
 export type FlowChange =
   | { type: 'node-add'; node: FlowNode; index?: number }
   | { type: 'node-remove'; id: string }
@@ -345,6 +391,10 @@ export type FlowChange =
 
 export type FlowChangeType = FlowChange['type'];
 
+/**
+ * What a node definition's `validate` function receives besides the node: the model, the schema and
+ * any edge being reconnected.
+ */
 export interface FlowValidationContext {
   // Declared structurally so `validation.ts` has no import cycle with the model.
   model: FlowModelLike;
@@ -381,11 +431,16 @@ export interface FlowResolvedPort extends FlowPortDefinition {
   measured?: boolean;
 }
 
+/** The ids of the selected nodes and edges. */
 export interface FlowSelection {
   nodes: string[];
   edges: string[];
 }
 
+/**
+ * A resolved edge end in absolute flow units: the point, the side it faces and the node and port it
+ * belongs to.
+ */
 export interface FlowEndpoint {
   point: FlowPoint;
   side: FlowSide;

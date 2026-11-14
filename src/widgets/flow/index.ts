@@ -58,12 +58,15 @@ export {
 export type {
   FlowEdgeWaypointDetail,
   FlowEdgeWaypointRemoveDetail,
+  FlowEdgeSegment,
   FlowEdgeSegmentDetail,
   FlowEdgeReconnectDetail,
+  FlowSegmentAxis,
 } from './edge/edge-editor.js';
 export { SvgFlowRenderer, svgRenderer } from './renderers/svg-renderer.js';
 export { defaultPropertyControls } from './node/property-controls.js';
 export { DEFAULT_STRINGS as flowStrings, resolveStrings as resolveFlowStrings } from './strings.js';
 export * from './types.js';
+export type { FlowClipboardPayload } from './interaction/clipboard.js';
 // Engine re-exports (the same surface as `@tweakpad/ui/flow`).
 export * from '../../foundation/flow/index.js';

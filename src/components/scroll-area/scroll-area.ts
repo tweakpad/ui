@@ -117,6 +117,7 @@ export class TpScrollArea extends Scrollable(TpElement) {
       }
     `,
   ];
+  /** The direction the content scrolls. */
   override orientation: 'horizontal' | 'vertical' = 'vertical';
   /** Restricts scrolling to one axis, or shows both tracks for content that overflows both ways; takes precedence over `orientation`. */
   axis: 'x' | 'y' | 'both' | undefined;

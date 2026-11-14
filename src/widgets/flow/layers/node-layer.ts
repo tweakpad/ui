@@ -21,14 +21,13 @@ export interface NodeLayerOptions {
   onHostRemoved?: (host: TpFlowNode, id: string) => void;
 }
 
-/**
- * The node layer (Widgets 6.3 Anatomy): pooled `tp-flow-node` hosts for the visible model
- * nodes, authored hosts assigned to the manual slot while visible, positions written through
- * the object model, measurement through the shared resize observer, and a roving tab stop.
- */
 /** Released hosts kept connected (hidden) for reuse. */
 const POOL_SIZE = 64;
 
+/**
+ * The flow's node layer: keeps a pooled `tp-flow-node` host per visible node, positions and
+ * measures the hosts, and gives the nodes one roving tab stop.
+ */
 export class NodeLayer {
   readonly #options: NodeLayerOptions;
   readonly #hosts = new Map<string, TpFlowNode>();

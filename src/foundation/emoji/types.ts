@@ -9,6 +9,7 @@ export const SKIN_TONES = [
   'medium-dark',
   'dark',
 ] as const;
+/** A skin tone an emoji can show, from `none` for the default yellow to the five tone modifiers. */
 export type SkinTone = (typeof SKIN_TONES)[number];
 /** The tones that have a modifier. */
 export type ToneModifier = Exclude<SkinTone, 'none'>;
@@ -51,6 +52,7 @@ export interface EmojiData {
   readonly skinTones?: Readonly<Partial<Record<SkinTone, string>>>;
 }
 
+/** The request an emoji data source receives when the picker needs a dataset for a locale. */
 export interface EmojiDataRequest {
   readonly locale: string;
   readonly signal: AbortSignal;

@@ -31,7 +31,8 @@ function validate(input: EntityInput): void {
     throw new TypeError('Entity disabled must be boolean.');
 }
 
-abstract class Entity {
+/** The registration lifecycle and identity shared by draggable items and drop targets. */
+export abstract class Entity {
   #id: UniqueIdentifier;
   #manager: DragDropManager | undefined;
   #scope: CleanupScope | undefined;
@@ -195,6 +196,7 @@ abstract class Entity {
   }
 }
 
+/** An item a person can pick up and move, registered with a drag-and-drop manager. */
 export class Draggable extends Entity {
   declare protected options: DraggableInput;
   constructor(input: DraggableInput, manager?: DragDropManager) {

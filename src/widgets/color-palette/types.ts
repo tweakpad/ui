@@ -26,6 +26,7 @@ export interface ColorPaletteFavoritesMetadata {
 }
 /** How a palette shows its colors: hard stops side by side, or blended as one gradient. */
 export type ColorPalettePaletteStyle = 'stops' | 'gradient';
+/** Scale of the swatches, cells and controls of the palette. */
 export type ColorPaletteSize = 'sm' | 'default' | 'lg';
 /** How the colors mode shows its colors: cells in rows, or one row per color with its name. */
 export type ColorPaletteLayout = 'grid' | 'list';

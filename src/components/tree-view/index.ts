@@ -21,3 +21,4 @@ export type {
   TreeViewRenderItem,
   TreeViewSize,
 } from './types.js';
+export type { TreeItemOwner } from './types.js';

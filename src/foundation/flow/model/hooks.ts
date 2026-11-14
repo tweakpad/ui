@@ -21,6 +21,10 @@ export interface FlowHookContext {
   preview(): FlowDocument;
 }
 
+/**
+ * Emitted after the model applies a change batch, with the changes, their inverse, the documents
+ * before and after and what they touched.
+ */
 export interface FlowChangeEvent {
   changes: readonly FlowChange[];
   inverse: readonly FlowChange[];
@@ -36,6 +40,10 @@ export interface FlowChangeEvent {
   label?: string;
 }
 
+/**
+ * A hook around the model's change pipeline that can veto or rewrite changes before they apply and
+ * observe them after.
+ */
 export interface FlowMiddleware {
   name?: string;
   before?(changes: readonly FlowChange[], context: FlowHookContext): FlowChange[] | false | void;

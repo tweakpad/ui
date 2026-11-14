@@ -14,6 +14,7 @@ import { BorderSegments, spanDash } from './segments.js';
 import { lightSpans } from './spans.js';
 import { moSegmentBorderStyles } from './styles.js';
 
+/** When a Segment border plays its segments, as its `trigger` takes it. */
 export type SegmentBorderTrigger = 'none' | 'always' | 'hover' | 'focus';
 
 export const moSegmentBorderMotionRoles = {
