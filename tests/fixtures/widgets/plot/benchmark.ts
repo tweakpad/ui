@@ -7,6 +7,7 @@ export async function benchmarkPlot(
   windowSize = 120,
   updates = 20,
   interval = 0,
+  gradient = false,
 ) {
   if (
     !Number.isSafeInteger(count) ||
@@ -34,7 +35,12 @@ export async function benchmarkPlot(
     plot.offscreen = 'render';
     plot.renderStrategy = strategy;
     plot.series = [
-      { id: 'load', label: 'Load', fill: { baseline: 0 }, negativeColor: 'var(--tp-destructive)' },
+      {
+        id: 'load',
+        label: 'Load',
+        fill: gradient ? { baseline: 0, gradient: true } : { baseline: 0 },
+        negativeColor: 'var(--tp-destructive)',
+      },
     ];
     plot.stream = stream;
     for (let n = 0; n < capacity; n++) stream.push({ load: Math.sin(n * 0.2) * 80 });
@@ -80,6 +86,7 @@ export async function benchmarkPlot(
     count,
     strategy,
     capacity,
+    gradient,
     cssSize: [rect.width, rect.height],
     devicePixelRatio: devicePixelRatio,
     userAgent: navigator.userAgent,
@@ -171,5 +178,84 @@ export async function benchmarkPlotDashboard() {
     host.remove();
     base.dispose();
     streams.forEach((s) => s.dispose());
+  }
+}
+
+/**
+ * Hover cost on a static plot of `points` samples with `interaction="inspect"`: `moves` pointer
+ * moves across the plot at the live scheduler, counting the full redraws they cause, and the cost
+ * of one explicit full redraw of that plot (what a hover-driven repaint costs).
+ */
+export async function benchmarkPlotHover(points = 2000, moves = 60, gradient = false) {
+  if (points > 20000 || moves > 300) throw new RangeError('Keep within 20000 points, 300 moves.');
+  const host = document.createElement('div');
+  host.style.cssText = 'position:fixed;inset:0 auto auto 0;width:640px;height:200px';
+  document.body.append(host);
+  const plot = document.createElement('tp-plot');
+  plot.style.cssText = 'width:640px;height:200px';
+  Object.assign(plot, {
+    label: '',
+    interaction: 'inspect',
+    maxFrameRate: 60,
+    offscreen: 'render',
+    series: [
+      {
+        id: 'price',
+        label: 'Price',
+        fill: gradient ? { baseline: 0, gradient: true } : { baseline: 0 },
+      },
+    ],
+    data: {
+      price: Array.from({ length: points }, (_, i) => [i, 50 + Math.sin(i * 0.05) * 30] as const),
+    },
+  });
+  host.append(plot);
+  try {
+    await plot.updateComplete;
+    for (let i = 0; i < 6; i++) await new Promise((r) => requestAnimationFrame(r));
+    const viewport = plot.shadowRoot!.querySelector('.viewport') as HTMLElement;
+    const box = viewport.getBoundingClientRect();
+    const before = plot.renderStats.fullRedraws;
+    const frames: number[] = [];
+    for (let i = 0; i < moves; i++) {
+      // A bracket around the frame that handles this move: started before the move, read after.
+      let start = 0;
+      requestAnimationFrame(() => (start = performance.now()));
+      viewport.dispatchEvent(
+        new PointerEvent('pointermove', {
+          bubbles: true,
+          composed: true,
+          clientX: box.left + ((i * 37) % box.width),
+          clientY: box.top + box.height / 2,
+        }),
+      );
+      await new Promise((r) => requestAnimationFrame(r));
+      await new Promise((r) => requestAnimationFrame(r));
+      frames.push(performance.now() - start);
+    }
+    const hoverRedraws = plot.renderStats.fullRedraws - before;
+    const redraws: number[] = [];
+    for (let i = 0; i < 20; i++) {
+      const begin = performance.now();
+      plot.renderNow();
+      redraws.push(performance.now() - begin);
+    }
+    const summary = (a: number[]) => {
+      const sorted = [...a].sort((x, y) => x - y);
+      return {
+        mean: a.reduce((x, y) => x + y, 0) / a.length,
+        p95: sorted[Math.floor(sorted.length * 0.95)],
+      };
+    };
+    return {
+      points,
+      moves,
+      gradient,
+      hoverFullRedraws: hoverRedraws,
+      fullRedrawMs: summary(redraws),
+      moveFrameMs: summary(frames),
+    };
+  } finally {
+    host.remove();
   }
 }

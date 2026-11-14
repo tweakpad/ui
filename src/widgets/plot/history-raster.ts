@@ -6,7 +6,7 @@ import type {
   PlotSamples,
 } from './types.js';
 import { plotPoints } from './decimation.js';
-import { paintPlotSeries } from './renderer.js';
+import { paintPlotSeries, PlotGradientCache } from './renderer.js';
 import { PlotDashPhase } from './dash-phase.js';
 import { lowerBound } from './geometry.js';
 export interface PlotFrame {
@@ -24,6 +24,8 @@ export interface PlotFrame {
 export class PlotHistoryRaster {
   readonly canvas: HTMLCanvasElement;
   readonly #dashes = new Map<string, PlotDashPhase>();
+  /** Area gradients of the series that use them; never created for solid fills. */
+  #gradients: PlotGradientCache | undefined;
   #offset = 0;
   #width = 0;
   #last:
@@ -105,6 +107,14 @@ export class PlotHistoryRaster {
       previous.config.mode === c.mode &&
       previous.config.renderStrategy === c.renderStrategy;
     if (!sameMapping) this.#dashes.clear();
+    // Gradients follow the vertical mapping and the resolved colors; a new paint drops them.
+    if (this.#gradients && (!sameMapping || previous?.paint !== f.paint)) this.#gradients.clear();
+    if (
+      !this.#gradients &&
+      previous?.config !== c &&
+      c.series.some((s) => s.fill && s.fill.gradient)
+    )
+      this.#gradients = new PlotGradientCache();
     const delta = stream?.changesSince(last?.revision ?? -1);
     const scale = w / (f.x[1] - f.x[0]);
     const distance = last ? (f.x[1] - last.end) * scale : 0;
@@ -253,6 +263,7 @@ export class PlotHistoryRaster {
           dashed?.offset,
           !!dashed && c.decimation === 'auto',
           fraction,
+          this.#gradients,
         );
       }
       ctx.restore();

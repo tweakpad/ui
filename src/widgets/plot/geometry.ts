@@ -8,6 +8,43 @@ export const domainConverter = {
   },
   toAttribute: (v: 'auto' | PlotDomain) => (v === 'auto' ? 'auto' : v.join(' ')),
 };
+/**
+ * An object option in its attribute: JSON, or the option's default when the attribute is absent.
+ * Text that is not JSON passes through unchanged, so validation reports it.
+ */
+export function jsonOption<T>(fallback: T) {
+  return {
+    fromAttribute: (text: string | null): T | string => {
+      if (text === null) return fallback;
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        return text;
+      }
+    },
+    toAttribute: (value: T) => JSON.stringify(value),
+  };
+}
+/** An axis or legend in its attribute: absent or `false` hides it, empty shows its defaults. */
+export const jsonAxisOption = {
+  fromAttribute: (text: string | null): unknown => {
+    if (text === null || text.trim() === 'false') return false;
+    if (text.trim() === '' || text.trim() === 'true') return {};
+    return jsonOption(false).fromAttribute(text);
+  },
+  toAttribute: (value: unknown) => (value === false ? null : JSON.stringify(value)),
+};
+/** The crosshair in its attribute: a Boolean attribute, or JSON options. */
+export const crosshairOption = {
+  fromAttribute: (text: string | null): unknown => {
+    if (text === null || text.trim() === 'false') return false;
+    if (text.trim() === '' || text.trim() === 'true') return true;
+    return jsonOption(false).fromAttribute(text);
+  },
+  toAttribute: (value: unknown) =>
+    value === false ? null : value === true ? '' : JSON.stringify(value),
+};
+const isRecord = (v: unknown): boolean => typeof v === 'object' && v !== null && !Array.isArray(v);
 export function validDomain(v: unknown): v is PlotDomain {
   return Array.isArray(v) && v.length === 2 && v.every(Number.isFinite) && v[0] < v[1];
 }
@@ -113,6 +150,27 @@ export function plotDomains(
   return { x, y };
 }
 export function validatePlot(c: PlotConfiguration): void {
+  // Options set through their attributes arrive as text when it is not JSON.
+  if (!isRecord(c.data))
+    throw new TypeError('Plot data must be an object of point arrays; check its attribute JSON.');
+  for (const [name, value] of [
+    ['series', c.series],
+    ['guides', c.guides],
+  ] as const)
+    if (!Array.isArray(value))
+      throw new TypeError(`Plot ${name} must be an array; check its attribute JSON.`);
+  for (const [name, value] of [
+    ['grid', c.grid],
+    ['auto-range', c.autoRange],
+  ] as const)
+    if (!isRecord(value))
+      throw new TypeError(`Plot ${name} must be an object; check its attribute JSON.`);
+  for (const [name, value] of [
+    ['x-axis', c.xAxis],
+    ['y-axis', c.yAxis],
+  ] as const)
+    if (value !== false && !isRecord(value))
+      throw new TypeError(`Plot ${name} must be false or an object; check its attribute JSON.`);
   if (
     !['static', 'scroll', 'push'].includes(c.mode) ||
     !['auto', 'incremental', 'full'].includes(c.renderStrategy) ||
@@ -158,8 +216,14 @@ export function validatePlot(c: PlotConfiguration): void {
       throw new Error('Plot line width must be nonnegative.');
     if (s.interpolation && !['linear', 'step-before', 'step-after'].includes(s.interpolation))
       throw new Error('Invalid Plot interpolation.');
-    if (s.fill && (!Number.isFinite(s.fill.baseline) || !opacity(s.fill.opacity)))
+    if (
+      s.fill &&
+      (!Number.isFinite(s.fill.baseline) ||
+        !opacity(s.fill.opacity) ||
+        (s.fill.gradient !== undefined && typeof s.fill.gradient !== 'boolean'))
+    )
       throw new Error('Invalid Plot fill.');
+    if (s.marker !== undefined && s.marker !== 'latest') throw new Error('Invalid Plot marker.');
     if (s.negativeFill && !opacity(s.negativeFill.opacity))
       throw new Error('Invalid negative Plot fill.');
     validateDash(s.lineDash);
@@ -170,9 +234,11 @@ export function validatePlot(c: PlotConfiguration): void {
     validateDash(g.dash);
     if (
       (g.width !== undefined && (!Number.isFinite(g.width) || g.width < 0)) ||
-      (g.layer !== undefined && !['back', 'front'].includes(g.layer))
+      (g.layer !== undefined && !['back', 'front'].includes(g.layer)) ||
+      (g.labelAlign !== undefined && !['start', 'end'].includes(g.labelAlign)) ||
+      (g.labelSide !== undefined && !['below', 'above'].includes(g.labelSide))
     )
-      throw new Error('Plot guide width or layer is invalid.');
+      throw new Error('Plot guide width, layer or label placement is invalid.');
   }
   if (new Set(c.guides.map((g) => g.id)).size !== c.guides.length)
     throw new Error('Plot guide IDs must be unique.');

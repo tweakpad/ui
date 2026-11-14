@@ -12,6 +12,8 @@ interface Args {
   interaction: 'none' | 'inspect';
   lineWidth: number;
   fill: boolean;
+  gradient: boolean;
+  crosshair: boolean;
   size: 'sm' | 'default' | 'lg';
 }
 const points = Array.from({ length: 240 }, (_, i) => [i, Math.sin((i * Math.PI) / 40)] as const);
@@ -27,6 +29,8 @@ const meta: Meta<Args> = {
     interaction: 'none',
     lineWidth: 1.5,
     fill: true,
+    gradient: false,
+    crosshair: false,
     size: 'default',
   },
   argTypes: {
@@ -37,6 +41,8 @@ const meta: Meta<Args> = {
     interaction: { control: 'select', options: ['none', 'inspect'] },
     lineWidth: { control: { type: 'number', min: 0, max: 6, step: 0.5 } },
     fill: { control: 'boolean' },
+    gradient: { control: 'boolean' },
+    crosshair: { control: 'boolean' },
     size: { control: 'select', options: ['sm', 'default', 'lg'] },
   },
   render: (args) => {
@@ -48,6 +54,7 @@ const meta: Meta<Args> = {
       .yAxis=${args.axes ? {} : false}
       .legend=${args.legend ? {} : false}
       .interaction=${args.interaction}
+      .crosshair=${args.crosshair}
       .size=${args.size}
       mode="scroll"
       follow="clock"
@@ -57,7 +64,7 @@ const meta: Meta<Args> = {
       .partPresentation=${{
         'plot-label': { styleHook: { display: 'none' } },
       }}
-      .series=${[{ id: 'signal', label: 'Signal', color: 'var(--tp-chart-1)', lineWidth: args.lineWidth, fill: args.fill ? { baseline: 0, opacity: 0.07 } : false }] satisfies PlotSeries[]}
+      .series=${[{ id: 'signal', label: 'Signal', color: 'var(--tp-chart-1)', lineWidth: args.lineWidth, fill: args.fill ? (args.gradient ? { baseline: 0, gradient: true } : { baseline: 0, opacity: 0.07 }) : false }] satisfies PlotSeries[]}
       ${ref((element?: Element) => {
         dispose?.();
         dispose = undefined;

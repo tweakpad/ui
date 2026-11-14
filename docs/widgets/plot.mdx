@@ -34,6 +34,17 @@ setTimeout(tick, 100);`}
 
 A Plot can show a bare signal, several overlapping monitors or an area around a baseline. Supply samples as numeric `[x, y]` pairs. A `null` y leaves a gap. Configuration and data belong to the application; inspecting a sample leaves it unchanged.
 
+Every option except the callbacks and `stream` also takes JSON in its attribute (`data`, `series`, `guides`, `x-axis`, `y-axis`, `grid`, `legend`, `auto-range`, `crosshair`), so a template or binding that writes attributes can drive the plot. Push live samples through a `stream`; they never go through an attribute.
+
+<Preview
+  title="Attributes"
+  align="stretch"
+  code={`<tp-plot label="Queue depth" style="height:10rem"
+  series='[{"id":"queue","label":"Queue","fill":{"baseline":0}}]'
+  data='{"queue":[[0,4],[1,7],[2,5],[3,9],[4,6],[5,8]]}'
+  y-axis=""></tp-plot>`}
+/>
+
 ### Histograms
 
 A histogram shows the count in each interval. Fill a short horizontal segment to zero for each bar, and separate the bars with gaps. Dotted guides show the scale without adding axes or labels.
@@ -69,6 +80,17 @@ A fill closes to its baseline. Separate negative colors make changes around zero
 plot.series = [{ id: 'load', label: 'Deviation', fill: { baseline: 0 }, negativeColor: 'var(--tp-destructive)' }];
 plot.data = { load: Array.from({ length: 160 }, (_, i) => [i, Math.sin(i / 8) * Math.cos(i / 17)]) };
 plot.guides = [{ id: 'zero', axis: 'y', value: 0 }];`}
+/>
+
+A `gradient` fill fades the series color from the edge of the domain to nothing at its baseline.
+
+<Preview
+  title="Gradient area"
+  align="stretch"
+  code={`<tp-plot id="plot-gradient" label="Requests" style="height:12rem"></tp-plot>`}
+  script={`const plot = document.querySelector('#plot-gradient');
+plot.series = [{ id: 'requests', label: 'Requests', fill: { baseline: 0, gradient: true } }];
+plot.data = { requests: Array.from({ length: 160 }, (_, i) => [i, 40 + 25 * Math.sin(i / 14) + 8 * Math.sin(i / 3)]) };`}
 />
 
 ### Overlapping series
@@ -164,6 +186,14 @@ plot.guides = [
 ];`}
 />
 
+`labelAlign: 'end'` moves a guide's label to its end and `labelSide: 'above'` puts it above a horizontal guide. A series with `marker: 'latest'` marks its last sample with a dot that follows new data.
+
+<Code
+  language="typescript"
+  code={`plot.series = [{ id: 'price', label: 'Price', marker: 'latest' }];
+plot.guides = [{ id: 'open', axis: 'y', value: 712.8, label: 'Open 712.80', dash: [1, 3], labelAlign: 'end', labelSide: 'above' }];`}
+/>
+
 ### Sampling and paint limits
 
 A stream retains observations independently of the paint rate. Share a scheduler across monitors to limit aggregate work. Collect FPS in the existing application loop; slower metrics can use an explicit sampler.
@@ -199,6 +229,20 @@ Optional inspection reads original samples, including those reduced for drawing.
 plot.series = [{ id: 'frame', label: 'Milliseconds' }];
 plot.data = { frame: [[0, 12], [1, 15], [2, 22], [3, null], [4, 13], [5, 14]] };
 plot.guides = [{ id: 'target', axis: 'y', value: 16.7, label: 'Target' }];`}
+/>
+
+`crosshair` adds a dashed line at the inspected x, dots on its samples and, with an x axis, a chip showing that x. The hint then follows the line along the top edge, or the bottom with `crosshair: { hint: 'bottom' }`. A series' `format` writes its value in the hint. Hovering only moves these marks; it never repaints the graph.
+
+<Preview
+  title="Crosshair"
+  align="stretch"
+  code={`<tp-plot id="plot-crosshair" label="Price" interaction="inspect" crosshair time-zone="UTC" style="height:14rem"></tp-plot>`}
+  script={`const plot = document.querySelector('#plot-crosshair');
+const start = Date.UTC(2026, 0, 5, 9, 30);
+plot.series = [{ id: 'price', label: 'Price', fill: { baseline: 96, gradient: true }, format: (value) => value.toFixed(2) }];
+plot.data = { price: Array.from({ length: 390 }, (_, i) => [start + i * 60000, 100 + 2 * Math.sin(i / 40) + Math.sin(i / 7) / 2]) };
+plot.xAxis = { type: 'time' };
+plot.yAxis = {};`}
 />
 
 ### Keyboard

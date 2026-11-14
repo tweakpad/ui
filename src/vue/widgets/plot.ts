@@ -13,6 +13,7 @@ export const Plot = /*#__PURE__*/ createBinding(TpPlot, 'Plot', {
   | 'autoRange'
   | 'background'
   | 'clock'
+  | 'crosshair'
   | 'data'
   | 'decimation'
   | 'density'

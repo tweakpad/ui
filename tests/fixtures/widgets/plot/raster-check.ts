@@ -9,6 +9,7 @@ export function verifyPlotRaster(
   filled = true,
   sliding = true,
   updates = 40,
+  gradient = false,
 ) {
   const results: unknown[] = [];
   for (const interpolation of ['linear', 'step-before', 'step-after'] as const) {
@@ -28,7 +29,7 @@ export function verifyPlotRaster(
         id: 'a',
         label: 'A',
         interpolation,
-        fill: { baseline: 0 },
+        fill: { baseline: 0, gradient },
         negativeColor: 'var(--tp-destructive)',
       },
       {
@@ -36,7 +37,7 @@ export function verifyPlotRaster(
         label: 'B',
         interpolation,
         lineDash: [4, 3],
-        fill: { baseline: 10, opacity: 0.3 },
+        fill: { baseline: 10, opacity: 0.3, gradient },
       },
     ] satisfies PlotSeries[];
     if (!filled) p.series = p.series.map((s) => ({ ...s, fill: false }));

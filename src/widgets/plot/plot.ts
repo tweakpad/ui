@@ -16,12 +16,15 @@ import { plotStyles } from './styles.js';
 import {
   arrayView,
   domainConverter,
+  jsonOption,
+  jsonAxisOption,
+  crosshairOption,
   plotDomains,
   validatePlot,
   lowerBound,
   plotKeyIndex,
 } from './geometry.js';
-import { PlotDecorations, plotRect, axisFormat } from './decorations.js';
+import { PlotDecorations, plotRect, axisFormat, crosshairFormat } from './decorations.js';
 import { PlotHistoryRaster } from './history-raster.js';
 import {
   plotFrameDeadline,
@@ -37,11 +40,13 @@ import type {
   PlotDomain,
   PlotDomainInput,
   PlotGrid,
+  PlotCrosshair,
   PlotGuide,
   PlotInspection,
   PlotLegend,
   PlotMode,
   PlotPaint,
+  PlotPoint,
   PlotRenderStats,
   PlotSamples,
   PlotSeries,
@@ -51,7 +56,8 @@ import type {
 
 /**
  * Numeric lines and areas, from static arrays or a bounded live history. Push mode reuses
- * rasterized history; incoming samples do not render the element's template.
+ * rasterized history; incoming samples do not render the element's template. Every option except
+ * the callbacks (`format`, `clock`) and `stream` also takes JSON in its attribute.
  * @slot table - An application supplied text or Table alternative to the graph.
  * @slot - Supplementary content below the graph.
  * @fires {PlotInspection | null} tp-inspection-change - The inspected sample changed or cleared.
@@ -60,6 +66,9 @@ import type {
  * @cssprop --tp-plot-surface - Solid graph background color.
  * @cssprop --tp-plot-grid - Grid lines and dots.
  * @cssprop --tp-plot-guide - Default guide stroke and text.
+ * @csspart plot-crosshair - The inspected x's vertical guide line, with `crosshair`.
+ * @csspart plot-marker - A dot on an inspected sample, or on a series' latest sample.
+ * @csspart plot-crosshair-label - The x axis chip with the inspected x, with `crosshair`.
  */
 export class TpPlot extends TpElement {
   static tagName = 'tp-plot';
@@ -70,8 +79,8 @@ export class TpPlot extends TpElement {
     strings: { attribute: false },
     label: { type: String },
     description: { type: String },
-    data: { attribute: false },
-    series: { attribute: false },
+    data: { converter: jsonOption({}) },
+    series: { converter: jsonOption([]) },
     stream: { attribute: false },
     mode: { type: String, reflect: true },
     xDomain: { attribute: 'x-domain', converter: domainConverter },
@@ -79,15 +88,16 @@ export class TpPlot extends TpElement {
     window: { type: Number },
     follow: { type: String },
     clock: { attribute: false },
-    autoRange: { attribute: false },
-    xAxis: { attribute: false },
-    yAxis: { attribute: false },
+    autoRange: { attribute: 'auto-range', converter: jsonOption({}) },
+    xAxis: { attribute: 'x-axis', converter: jsonAxisOption },
+    yAxis: { attribute: 'y-axis', converter: jsonAxisOption },
     background: { type: String, reflect: true },
-    grid: { attribute: false },
-    guides: { attribute: false },
-    legend: { attribute: false },
+    grid: { converter: jsonOption({}) },
+    guides: { converter: jsonOption([]) },
+    legend: { converter: jsonAxisOption },
     interaction: { type: String, reflect: true },
     inspectMode: { type: String, attribute: 'inspect-mode' },
+    crosshair: { converter: crosshairOption },
     offscreen: { type: String },
     size: { type: String, reflect: true },
     paused: { type: Boolean, reflect: true },
@@ -103,8 +113,9 @@ export class TpPlot extends TpElement {
   strings: Partial<PlotStrings> = {};
   /** Accessible and visible name of the graph. */ label = 'Plot';
   /** Application supplied interpretation of the data. */ description = '';
-  /** Immutable datasets by series ID; publish a new object to replace them. */ data: PlotData = {};
-  /** Explicit stable IDs, labels, colors, strokes and optional signed fills. */ series: readonly PlotSeries[] =
+  /** Immutable datasets by series ID, or JSON in its attribute; publish a new object to replace them. */ data: PlotData =
+    {};
+  /** Explicit stable IDs, labels, colors, strokes and optional signed fills, or JSON in its attribute. */ series: readonly PlotSeries[] =
     [];
   /** Application owned history; mutually exclusive with nonempty data. */ stream:
     PlotStream | undefined;
@@ -117,23 +128,31 @@ export class TpPlot extends TpElement {
   /** Scrolling window in x units, or sample intervals in push mode. */ window = 10000;
   /** Advance on the latest sample or an explicit clock. */ follow: 'latest' | 'clock' = 'latest';
   /** Returns x in source units when follow is clock. */ clock: (() => number) | undefined;
-  /** Padding and optional zero inclusion for automatic y ranges. */ autoRange: {
+  /** Padding and optional zero inclusion for automatic y ranges, or JSON in its attribute. */ autoRange: {
     padding?: number;
     includeZero?: boolean;
   } = {};
-  /** Optional independent x axis; timestamps use epoch milliseconds. */ xAxis: false | PlotAxis =
-    false;
-  /** Optional independent y axis. */ yAxis: false | PlotAxis = false;
+  /** Optional independent x axis, or JSON in its attribute; timestamps use epoch milliseconds. */ xAxis:
+    false | PlotAxis = false;
+  /** Optional independent y axis, or JSON in its attribute. */ yAxis: false | PlotAxis = false;
   /** No background, solid surface, dots or a grid. */ background:
     'none' | 'solid' | 'dots' | 'grid' = 'none';
-  /** Grid directions, coordinate units, spacing, origin and major frequency. */ grid: PlotGrid =
+  /** Grid directions, coordinate units, spacing, origin and major frequency, or JSON in its attribute. */ grid: PlotGrid =
     {};
-  /** Application supplied horizontal or vertical guides. */ guides: readonly PlotGuide[] = [];
-  /** Optional informational legend and value formatter. */ legend: false | PlotLegend = false;
+  /** Application supplied horizontal or vertical guides, or JSON in its attribute. */ guides: readonly PlotGuide[] =
+    [];
+  /** Optional informational legend and value formatter, or JSON in its attribute. */ legend:
+    false | PlotLegend = false;
   /** Optional keyboard and pointer inspection of original samples. */
   interaction: 'none' | 'inspect' = 'none';
   /** Inspect each series at or before x, or the nearest sample in screen space. */
   inspectMode: 'nearest-x' | 'nearest-point' = 'nearest-x';
+  /**
+   * While inspecting, a vertical guide at the inspected x, dots on its samples, an x axis chip and
+   * a hint that follows them along the top or bottom edge; an object, or JSON in the attribute,
+   * configures each.
+   */
+  crosshair: boolean | PlotCrosshair = false;
   /** Suspend offscreen painting by default; render keeps it eligible. */
   offscreen: 'suspend' | 'render' = 'suspend';
   /** Shared text and spacing density; CSS owns graph dimensions. */
@@ -167,6 +186,8 @@ export class TpPlot extends TpElement {
   #paint: PlotPaint | undefined;
   #end: number | undefined;
   #domains: { x: PlotDomain; y: PlotDomain } = { x: [0, 1], y: [0, 1] };
+  /** The plot rectangle of the last paint, in CSS pixels; absent before the first paint. */
+  #overlay: { left: number; top: number; width: number; height: number } | undefined;
   #active: PlotInspection | null = null;
   #pendingPointer: readonly [number, number] | undefined;
   #activeKey: number | undefined;
@@ -254,6 +275,9 @@ export class TpPlot extends TpElement {
     }
   }
   override disconnectedCallback(): void {
+    if (this.#pointerFrame)
+      (this.ownerDocument.defaultView ?? window).cancelAnimationFrame(this.#pointerFrame);
+    this.#pointerFrame = 0;
     this.#disconnect();
     this.#environment.disconnect();
     super.disconnectedCallback();
@@ -272,6 +296,12 @@ export class TpPlot extends TpElement {
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    for (const name of ['legend', 'crosshair'] as const)
+      if (changed.has(name) && typeof this[name] === 'string')
+        this.diagnose('plot-attribute', `Plot ${name} attribute is not valid JSON.`, {
+          once: true,
+        });
+    this.#placeOverlay();
     if (changed.has('partPresentation') || changed.has('size')) this.invalidate();
     if (changed.has('legend')) this.#queue();
     if (changed.has('disabled') && this.disabled) this.#inspect(null);
@@ -586,6 +616,16 @@ export class TpPlot extends TpElement {
         this.#generation + this.#configurationVersion,
         'front',
       );
+      // The overlay geometry only matters to inspection and latest-sample dots; plots without
+      // them pay nothing for it after a paint.
+      if (this.interaction === 'inspect' || c.series.some((s) => s.marker === 'latest')) {
+        const o = (this.#overlay ??= { left: 0, top: 0, width: 0, height: 0 });
+        o.left = rect.left / r;
+        o.top = rect.top / r;
+        o.width = rect.width / r;
+        o.height = rect.height / r;
+        this.#placeOverlay();
+      }
     } catch (error) {
       const message = String(error);
       if (message !== this.#diagnostic) {
@@ -595,7 +635,7 @@ export class TpPlot extends TpElement {
     }
   }
   #updateLegend(): void {
-    if (!this.legend) return;
+    if (!this.#legendOptions) return;
     for (const entry of this.renderRoot.querySelectorAll<HTMLElement>(
       '.series-entry[data-series]',
     )) {
@@ -604,15 +644,22 @@ export class TpPlot extends TpElement {
       if (mark && color && mark.style.getPropertyValue('--_tp-series-color') !== color)
         mark.style.setProperty('--_tp-series-color', color);
     }
-    if (!this.legend.format) return;
+    if (!this.#legendOptions.format) return;
     for (const node of this.renderRoot.querySelectorAll<HTMLElement>('[data-latest]')) {
       const id = node.dataset.latest!,
         view = this.#views.get(id),
         series = this.#config?.series.find((s) => s.id === id);
       if (!series) continue;
-      const text = this.legend.format(view?.length ? view.at(view.length - 1)[1] : null, series);
+      const text = this.#legendOptions.format(
+        view?.length ? view.at(view.length - 1)[1] : null,
+        series,
+      );
       if (node.textContent !== text) node.textContent = text;
     }
+  }
+  /** The legend's options; text that was not JSON shows no legend (and reports a diagnostic). */
+  get #legendOptions(): false | PlotLegend {
+    return typeof this.legend === 'object' ? this.legend : false;
   }
   #layoutConfig(): PlotConfiguration {
     const c = this.#config!;
@@ -747,10 +794,25 @@ export class TpPlot extends TpElement {
     this.#activeKey = view.key?.(index);
     this.#inspect({ seriesId: id, x: point[0], y: point[1], source: 'keyboard' });
   };
+  /**
+   * Hovering resolves the sample once per animation frame against the last painted domains and
+   * moves the overlay; it never repaints the canvas, so a hover costs no series raster.
+   */
+  #pointerFrame = 0;
   #pointer = (event: PointerEvent): void => {
     if (this.disabled || this.interaction !== 'inspect') return;
     this.#pendingPointer = [event.clientX, event.clientY];
-    this.#queue();
+    if (!this.#overlay) {
+      // Nothing painted yet: the first paint resolves the pointer.
+      this.#queue();
+      return;
+    }
+    if (this.#pointerFrame) return;
+    const view = this.ownerDocument.defaultView ?? window;
+    this.#pointerFrame = view.requestAnimationFrame(() => {
+      this.#pointerFrame = 0;
+      this.#resolvePointer();
+    });
   };
   #resolvePointer(): void {
     const position = this.#pendingPointer;
@@ -840,20 +902,190 @@ export class TpPlot extends TpElement {
     }
     this.#inspect(nearest);
   }
+  /** The crosshair's options, or null when it is off. */
+  #crosshair():
+    | (Required<Pick<PlotCrosshair, 'line' | 'marker' | 'label' | 'hint'>> &
+        Pick<PlotCrosshair, 'format' | 'dash'>)
+    | null {
+    if (!this.crosshair || this.interaction !== 'inspect' || typeof this.crosshair === 'string')
+      return null;
+    const options = this.crosshair === true ? {} : this.crosshair;
+    return {
+      line: options.line ?? true,
+      marker: options.marker ?? true,
+      label: options.label ?? true,
+      hint: options.hint ?? 'top',
+      ...(options.format ? { format: options.format } : {}),
+      ...(options.dash ? { dash: options.dash } : {}),
+    };
+  }
+  /** Samples at the inspected x: one per inspected series that has one there. */
+  #rows(): { id: string; x: number; y: number | null }[] {
+    const active = this.#active;
+    if (!active) return [];
+    return this.#inspectionRows(active).map((row) => ({
+      id: String(row.dataKey),
+      x: active.x,
+      y: row.value,
+    }));
+  }
+  /** The CSS-pixel position of a data point inside the viewport. */
+  #at(x: number, y: number): [number, number] {
+    const o = this.#overlay!,
+      { x: dx, y: dy } = this.#domains;
+    return [
+      o.left + ((x - dx[0]) / (dx[1] - dx[0])) * o.width,
+      o.top + o.height - ((y - dy[0]) / (dy[1] - dy[0])) * o.height,
+    ];
+  }
+  /**
+   * Moves the crosshair, the sample dots, the x chip, the hint and the latest-sample dots to the
+   * last painted geometry with transform writes; runs after each paint and each render.
+   */
+  #placeOverlay(): void {
+    const o = this.#overlay;
+    if (!o || (!this.#active && !this.#config?.series.some((s) => s.marker === 'latest'))) return;
+    const root = this.renderRoot;
+    // Dots take their series color from the resolved paint, which the first paint produces.
+    for (const dot of root.querySelectorAll<HTMLElement>('.marker')) {
+      const color = this.#paint?.colors[dot.dataset.latest ?? dot.dataset.series ?? ''];
+      if (color && dot.style.getPropertyValue('--_tp-series-color') !== color)
+        dot.style.setProperty('--_tp-series-color', color);
+    }
+    for (const dot of root.querySelectorAll<HTMLElement>('.marker[data-latest]')) {
+      const view = this.#views.get(dot.dataset.latest!);
+      let point: PlotPoint | undefined;
+      for (let i = (view?.length ?? 0) - 1; i >= 0 && view; i--) {
+        const p = view.at(i);
+        if (p[1] !== null) {
+          point = p;
+          break;
+        }
+      }
+      const shown = !!point && point[0] >= this.#domains.x[0] && point[0] <= this.#domains.x[1];
+      dot.hidden = !shown;
+      if (shown) {
+        const [left, top] = this.#at(point![0], point![1]!);
+        dot.style.transform = `translate(${left}px, ${top}px)`;
+      }
+    }
+    const active = this.#active;
+    if (!active) return;
+    const [lineX] = this.#at(active.x, this.#domains.y[0]);
+    const line = root.querySelector<HTMLElement>('.crosshair');
+    if (line) {
+      line.style.transform = `translate(${lineX}px, ${o.top}px)`;
+      line.style.blockSize = `${o.height}px`;
+    }
+    const rows = root.querySelector('.marker[data-series]') ? this.#rows() : [];
+    for (const dot of root.querySelectorAll<HTMLElement>('.marker[data-series]')) {
+      const row = rows.find((r) => r.id === dot.dataset.series);
+      const shown = !!row && row.y !== null;
+      dot.hidden = !shown;
+      if (shown) {
+        const [left, top] = this.#at(row!.x, row!.y!);
+        dot.style.transform = `translate(${left}px, ${top}px)`;
+      }
+    }
+    const chip = root.querySelector<HTMLElement>('.crosshair-label');
+    if (chip) {
+      const width = chip.offsetWidth;
+      const left = Math.max(o.left, Math.min(o.left + o.width - width, lineX - width / 2));
+      chip.style.transform = `translate(${left}px, ${o.top + o.height}px)`;
+    }
+    const hint = root.querySelector<HTMLElement>('.inspection[data-edge]');
+    if (hint) {
+      const width = hint.offsetWidth,
+        height = hint.offsetHeight,
+        gap = 8;
+      // Beside the line on its trailing side, or its leading side when the trailing one runs out.
+      const rtl = this.#paint?.direction === 'rtl';
+      const after = rtl ? lineX - gap - width : lineX + gap;
+      const before = rtl ? lineX + gap : lineX - gap - width;
+      const fits = (left: number) => left >= o.left && left + width <= o.left + o.width;
+      const left = Math.max(
+        o.left,
+        Math.min(o.left + o.width - width, fits(after) ? after : before),
+      );
+      const top = hint.dataset.edge === 'bottom' ? o.top + o.height - height - 4 : o.top + 4;
+      hint.style.transform = `translate(${left}px, ${top}px)`;
+    }
+  }
   protected override render(): unknown {
     const provider = this.#metadata(),
       active = this.#active;
-    const legend = this.legend
+    const crosshair = this.#crosshair();
+    const chip = crosshair?.label && this.xAxis ? crosshair : null;
+    const chipText = (x: number) =>
+      chip?.format ? chip.format(x) : crosshairFormat(this.#config!, this.xAxis || {}, x);
+    const valueText = (value: unknown, id: string) => {
+      if (value === null) return this.strings.missing ?? plotStrings.missing;
+      if (typeof value !== 'number') return value;
+      const series = this.#config?.series.find((s) => s.id === id);
+      return series?.format
+        ? series.format(value, active?.x ?? 0)
+        : axisFormat(this.#config!, this.yAxis || {}, value);
+    };
+    const latest = (this.#config?.series ?? []).filter(
+      (s) => s.marker === 'latest' && s.visible !== false,
+    );
+    const dash = crosshair?.dash
+      ? `--_tp-crosshair-dash: ${crosshair.dash[0] ?? 0}px; --_tp-crosshair-gap: ${crosshair.dash[1] ?? crosshair.dash[0] ?? 0}px`
+      : undefined;
+    const overlay = html`${latest.map(
+      (s) =>
+        html`<span
+          class="marker"
+          part="plot-marker"
+          data-latest=${s.id}
+          aria-hidden="true"
+          hidden
+        ></span>`,
+    )}${
+      active && crosshair
+        ? html`${
+            crosshair.line
+              ? html`<span
+                  class="crosshair"
+                  part="plot-crosshair"
+                  style=${dash ?? nothing}
+                  aria-hidden="true"
+                ></span>`
+              : nothing
+          }${
+            crosshair.marker
+              ? this.#rows().map(
+                  (row) =>
+                    html`<span
+                      class="marker"
+                      part="plot-marker"
+                      data-series=${row.id}
+                      aria-hidden="true"
+                      hidden
+                    ></span>`,
+                )
+              : nothing
+          }${
+            chip
+              ? html`<span class="crosshair-label" part="plot-crosshair-label" aria-hidden="true"
+                  >${chipText(active.x)}</span
+                >`
+              : nothing
+          }`
+        : nothing
+    }`;
+
+    const legend = this.#legendOptions
       ? visualizationLegendContent(
           provider,
           (this.#config?.series ?? [])
             .filter((s) => s.visible !== false)
             .map((s) => ({ dataKey: s.id, name: s.id, value: s.label })),
           {
-            placement: this.legend.placement ?? 'bottom',
+            placement: this.#legendOptions.placement ?? 'bottom',
             formatter: (label, item) =>
               html`<span>${label}</span>
-                ${this.legend && this.legend.format ? html`<span class="series-value" data-latest=${String(item.dataKey)}></span>` : nothing}`,
+                ${this.#legendOptions && this.#legendOptions.format ? html`<span class="series-value" data-latest=${String(item.dataKey)}></span>` : nothing}`,
           },
         )
       : nothing;
@@ -868,7 +1100,7 @@ export class TpPlot extends TpElement {
       },
       content: html`
         ${this.label ? this.renderPart('plot-label', Object.freeze({}), { tag: 'div', properties: { part: 'plot-label' }, content: this.label }) : nothing}
-        ${this.legend && this.legend.placement === 'top' ? legend : nothing}
+        ${this.#legendOptions && this.#legendOptions.placement === 'top' ? legend : nothing}
         <div
           class="viewport"
           tabindex=${keyboard ? '0' : nothing}
@@ -883,9 +1115,10 @@ export class TpPlot extends TpElement {
         >
           ${this.renderPart('plot-surface', Object.freeze({}), { tag: 'canvas', properties: { part: 'plot-surface', 'aria-hidden': 'true' }, content: html`<span class="probe" aria-hidden="true"></span>` })}
           ${!this.#hasData ? this.renderPart('plot-empty', Object.freeze({}), { tag: 'span', properties: { part: 'plot-empty', class: 'empty' }, content: this.strings.empty ?? plotStrings.empty }) : nothing}
-          ${active ? this.renderPart('plot-inspection', Object.freeze({ source: active.source }), { tag: 'div', properties: { part: 'plot-inspection', class: 'inspection', 'aria-live': active.source === 'keyboard' ? 'polite' : 'off' }, content: visualizationTooltipContent(provider, { active: true, label: axisFormat(this.#config!, this.xAxis || {}, active.x), payload: this.#inspectionRows(active), source: active.source === 'keyboard' ? 'focus' : 'pointer' }, { formatter: (value, name) => html`<span>${name}</span><span class="series-value">${value === null ? (this.strings.missing ?? plotStrings.missing) : typeof value === 'number' ? axisFormat(this.#config!, this.yAxis || {}, value) : value}</span>` }) }) : nothing}
+          ${overlay}
+          ${active ? this.renderPart('plot-inspection', Object.freeze({ source: active.source }), { tag: 'div', properties: { part: 'plot-inspection', class: 'inspection', 'data-edge': crosshair ? crosshair.hint : nothing, 'aria-live': active.source === 'keyboard' ? 'polite' : 'off' }, content: visualizationTooltipContent(provider, { active: true, label: chip ? chipText(active.x) : axisFormat(this.#config!, this.xAxis || {}, active.x), payload: this.#inspectionRows(active), source: active.source === 'keyboard' ? 'focus' : 'pointer' }, { hideLabel: !!chip && active.source === 'pointer', formatter: (value, name, item) => html`<span>${name}</span><span class="series-value">${valueText(value, String(item.dataKey))}</span>` }) }) : nothing}
         </div>
-        ${this.legend && this.legend.placement !== 'top' ? legend : nothing}
+        ${this.#legendOptions && this.#legendOptions.placement !== 'top' ? legend : nothing}
         ${this.description ? this.renderPart('plot-description', Object.freeze({}), { tag: 'figcaption', properties: { part: 'plot-description', id: `${this.#id}-description` }, content: this.description }) : nothing}
         <slot name="table"></slot><slot></slot>
       `,

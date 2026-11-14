@@ -160,3 +160,46 @@ A live Chrome trace returned CLS 0 and no further insight sets. Exporting the ra
 local tmp path was denied by the MCP server's workspace policy; total GPU and GC timings remain
 unverified. The background full regression run was terminated when the user raised contention;
 only focused changed-area regressions are used for this follow-up.
+
+## Gradient fills and crosshair hover (2026-11-15)
+
+Chrome via DevTools MCP, macOS, DPR 2, Vite dev modules. "HEAD" is commit `f174a65b`'s Plot,
+rebuilt unchanged under `tmp/plot-head/` and registered as `tp-plot` on its own page, so both
+builds ran in the same session conditions, interleaved. Each cell is a mean over the scenario's
+paints (`fixture.benchmark`), three runs each.
+
+| Solid fill (no gradient) | HEAD batch ms (3 runs) | Change batch ms (3 runs) |
+| --- | --- | --- |
+| 1 plot, 100 incremental updates | 0.257 / 0.190 / 0.196 | 0.234 / 0.177 / 0.248 |
+| 32 plots, incremental | 1.695 / 1.040 / 1.710 | 1.225 / 0.930 / 0.920 |
+| 32 plots, full | 2.375 / 1.945 / 1.905 | 1.680 / 2.105 / 1.330 |
+| Dashboard, 32 plots on a shared scheduler (frame work mean) | 0.623 | 0.660 |
+
+Plots without gradients stay within run-to-run noise: the solid branch of `paintPlotSeries` is
+unchanged, the gradient cache is only created when a series asks for one (checked on
+configuration change, not per frame), and the overlay does no work after a paint unless the plot
+inspects or shows latest markers. Explicit full redraws of an inspected 2000-sample static plot
+measured a 0.2–0.3 ms median on both builds (0.1 ms timer resolution).
+
+| Gradient fill | Change batch ms (2 runs) |
+| --- | --- |
+| 1 plot, 100 incremental updates | 0.249 / 0.235 |
+| 32 plots, incremental | 1.175 / 1.100 |
+| 32 plots, full | 1.540 / 1.560 |
+
+A gradient costs about the same as a solid fill once cached: one cached `CanvasGradient` per
+series and side, rebuilt only when the vertical mapping or the color changes. Auto y-domains,
+which already repaint fully, rebuild it whenever the domain moves.
+
+Hover (`fixture.hover(2000, 60)`, a 640 × 200 static plot with `interaction="inspect"`):
+
+| | HEAD | Change |
+| --- | --- | --- |
+| Full redraws caused by 60 pointer moves | 60 | 0 |
+
+Each HEAD move repainted every series (about 0.25 ms on this plot); the change resolves the
+sample once per animation frame and only moves the DOM overlay.
+
+Raster equivalence with gradients (`verifyPlotRaster(…, gradient = true)`): incremental against
+full, visible mean difference at most 0.106/255 (sparse linear) and 0.069/255 (dense), at most
+0.000125 of channels over 24 — the same order as solid fills (0.081/255).

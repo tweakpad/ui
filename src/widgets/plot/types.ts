@@ -16,9 +16,17 @@ export interface PlotSeries {
   lineWidth?: number;
   lineDash?: readonly number[];
   interpolation?: 'linear' | 'step-before' | 'step-after';
-  fill?: false | { baseline: number; opacity?: number };
+  /**
+   * The area between the line and `baseline`: a solid color at `opacity` (0.2), or with `gradient`
+   * the series color at `opacity` (0.4) at the domain's edge fading to nothing at the baseline.
+   */
+  fill?: false | { baseline: number; opacity?: number; gradient?: boolean };
   negativeFill?: { color?: string; opacity?: number };
   visible?: boolean;
+  /** Formats this series' values in the inspection hint and the legend. */
+  format?: (value: number | null, x: number) => string;
+  /** `latest` marks the series' last sample with a dot that follows it as data arrives. */
+  marker?: 'latest';
 }
 export interface PlotAxis {
   type?: 'number' | 'time';
@@ -48,6 +56,25 @@ export interface PlotGuide {
   width?: number;
   dash?: readonly number[];
   layer?: 'back' | 'front';
+  /** Where the label sits along the guide: its start (default) or its end. */
+  labelAlign?: 'start' | 'end';
+  /** The side of a horizontal guide the label sits on: below (default) or above. */
+  labelSide?: 'below' | 'above';
+}
+/** The pointer's crosshair while inspecting: a guide line, sample dots, an x chip and the hint. */
+export interface PlotCrosshair {
+  /** A vertical line at the inspected x (default true). */
+  line?: boolean;
+  /** The line's dash pattern in CSS pixels (default [3, 3]); an empty list draws it solid. */
+  dash?: readonly number[];
+  /** A dot on each inspected sample (default true). */
+  marker?: boolean;
+  /** A chip on the x axis with the inspected x, when the x axis shows (default true). */
+  label?: boolean;
+  /** The chip's text; defaults to the full date and time on time axes, the number otherwise. */
+  format?: (x: number) => string;
+  /** The edge of the plot the hint follows the crosshair along (default top). */
+  hint?: 'top' | 'bottom';
 }
 export interface PlotLegend {
   placement?: 'top' | 'bottom';

@@ -22,6 +22,19 @@ const definition: ComponentDefinition = {
     { name: 'plot-series', description: 'A series label and mark in the legend.' },
     { name: 'plot-inspection', description: 'The inspected sample, without editing controls.' },
     { name: 'plot-empty', description: 'The empty dataset message.' },
+    {
+      name: 'plot-crosshair',
+      description: 'The vertical guide at the inspected x, drawn with `crosshair`.',
+    },
+    {
+      name: 'plot-marker',
+      description:
+        "A dot on an inspected sample (`data-series`) or on a series' latest sample (`data-latest`).",
+    },
+    {
+      name: 'plot-crosshair-label',
+      description: 'The chip on the x axis with the inspected x, drawn with `crosshair`.',
+    },
   ],
 };
 export const plotPresentation = definePresentation({ definition, sources: [plotAppearance] });

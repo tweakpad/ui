@@ -15,7 +15,11 @@ No samples or benchmark timers run automatically after the initial data setup.
   `paused` and default offscreen suspension also stop paints. Reconnect after detaching to check cleanup.
 - Inspect light/dark and scoped chart tokens, RTL, narrow containers, DPR 1/1.25/2/high-cap,
   zero layout, context restoration, missing data and all four reference styles.
-- `await fixture.benchmark(1, 'incremental', 1024)` measures twenty explicit paint updates.
+- `await fixture.benchmark(1, 'incremental', 1024)` measures twenty explicit paint updates; a
+  seventh argument `true` paints the area as a gradient.
+- `await fixture.hover(2000, 60)` moves the pointer sixty times over an inspected static plot and
+  reports the full redraws hovering caused (none: hover only moves the overlay) and the cost of an
+  explicit full redraw; `fixture.dashboard()` measures 32 plots on a shared scheduler.
   Repeat with capacity 16384, `full`, then count 32. Run separately, while builds/tests are idle.
   This is an opt-in paint stress test, not a claim about total GPU cost or a 10 Hz scheduler.
   Use a Chrome trace for raster/composite/GC and separate scheduling checks at the intended rate.
@@ -23,7 +27,8 @@ No samples or benchmark timers run automatically after the initial data setup.
 
 Record actual results under `plans/widgets/plot/`, with local logs under `tmp/component-verification/plot/`.
 
-- `verifyPlotRaster` in `raster-check.ts` accepts `sliding` (default true) and `updates` (default 40).
+- `verifyPlotRaster` in `raster-check.ts` accepts `sliding` (default true), `updates` (default 40)
+  and `gradient` (default false), which turns both fills into gradient areas.
   Compare the two-viewport atlas with the legacy linear cache and full renderer; 400 sparse updates
   exercise repeated atlas compaction. This fixture uses readback-friendly test canvases only.
 - `await verifySmoothPlot()` from `smooth-check.ts` compares the real element's clock-follow

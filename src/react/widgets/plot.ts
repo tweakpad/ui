@@ -12,6 +12,7 @@ export type PlotProps = ElementProps<
   | 'autoRange'
   | 'background'
   | 'clock'
+  | 'crosshair'
   | 'data'
   | 'decimation'
   | 'density'

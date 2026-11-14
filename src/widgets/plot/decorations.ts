@@ -1,4 +1,6 @@
 import type { PlotAxis, PlotConfiguration, PlotDomain, PlotPaint } from './types.js';
+import { dateTimeFormatter } from '../../foundation/date-locale.js';
+import { numberFormatter } from '../../foundation/intl.js';
 export interface PlotRect {
   left: number;
   top: number;
@@ -68,7 +70,7 @@ export function axisFormat(c: PlotConfiguration, axis: PlotAxis, value: number, 
   if (axis.format) return axis.format(value);
   const locale = c.locale || undefined;
   return axis.type === 'time'
-    ? new Intl.DateTimeFormat(locale, {
+    ? dateTimeFormatter(locale, {
         ...(span >= 86400000
           ? {
               year: span >= 31536000000 ? ('numeric' as const) : undefined,
@@ -83,7 +85,18 @@ export function axisFormat(c: PlotConfiguration, axis: PlotAxis, value: number, 
             }),
         ...(c.timeZone ? { timeZone: c.timeZone } : {}),
       }).format(value)
-    : new Intl.NumberFormat(locale, { maximumFractionDigits: 5 }).format(value);
+    : numberFormatter(locale, { maximumFractionDigits: 5 }).format(value);
+}
+/** An inspected x in full: date and time on time axes, the number otherwise. */
+export function crosshairFormat(c: PlotConfiguration, axis: PlotAxis, value: number): string {
+  const locale = c.locale || undefined;
+  return axis.type === 'time'
+    ? dateTimeFormatter(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        ...(c.timeZone ? { timeZone: c.timeZone } : {}),
+      }).format(value)
+    : axisFormat(c, axis, value);
 }
 /** Separate fixed patterns from domain-dependent guides/ticks; neither is baked into history. */
 export class PlotDecorations {
@@ -264,12 +277,25 @@ export class PlotDecorations {
       if ((guide.width ?? 1) > 0) ctx.stroke();
       if (guide.label) {
         ctx.font = font;
-        ctx.textBaseline = 'top';
+        const above = guide.axis === 'y' && guide.labelSide === 'above';
+        ctx.textBaseline = above ? 'bottom' : 'top';
         const textWidth = ctx.measureText(guide.label).width;
+        // `end` places the label at the guide's inline end (the right, or the left in RTL).
+        const end = (guide.labelAlign === 'end') !== (paint.direction === 'rtl');
+        const along =
+          guide.axis === 'x' ? pos + 4 * r : end ? l + w - textWidth - 4 * r : l + 4 * r;
+        const across =
+          guide.axis === 'y'
+            ? above
+              ? Math.max(t + 14 * r, pos - 4 * r)
+              : Math.min(t + h - 14 * r, pos + 4 * r)
+            : guide.labelAlign === 'end'
+              ? t + h - 18 * r
+              : t + 4 * r;
         ctx.fillText(
           guide.label,
-          Math.max(l, Math.min(l + w - textWidth, (guide.axis === 'x' ? pos : l) + 4 * r)),
-          Math.max(t, Math.min(t + h - 14 * r, (guide.axis === 'y' ? pos : t) + 4 * r)),
+          Math.max(l, Math.min(l + w - textWidth, along)),
+          Math.max(t, across),
         );
       }
       ctx.restore();

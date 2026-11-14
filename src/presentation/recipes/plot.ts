@@ -16,6 +16,29 @@ export const plotAppearance: PresentationDictionary = {
   'plot-description': [{ declarations: { color: 'var(--tp-muted-foreground)' } }],
   'plot-empty': [{ declarations: { color: 'var(--tp-muted-foreground)' } }],
   'plot-inspection': dataVisualizationAppearance['data-visualization-inspection-surface']!,
+  // The crosshair is a dashed line in the guide color; its dash and gap follow `crosshair.dash`.
+  'plot-crosshair': [
+    {
+      declarations: {
+        background:
+          'repeating-linear-gradient(to bottom, var(--tp-plot-guide, var(--tp-muted-foreground)) 0 var(--_tp-crosshair-dash, 3px), transparent 0 calc(var(--_tp-crosshair-dash, 3px) + var(--_tp-crosshair-gap, 3px)))',
+      },
+    },
+  ],
+  // A sample dot in the series color, ringed with the surface so it reads over the line.
+  'plot-marker': [
+    {
+      declarations: {
+        'border-radius': '50%',
+        background: 'var(--_tp-series-color)',
+        'box-shadow': '0 0 0 2px var(--tp-background)',
+      },
+    },
+  ],
+  'plot-crosshair-label': [
+    ...dataVisualizationAppearance['data-visualization-inspection-surface']!,
+    { declarations: { 'margin-block-start': 'var(--tp-space-1)', 'min-inline-size': '0' } },
+  ],
   'plot-surface': [
     {
       declarations: {

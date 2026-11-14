@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-11-14T13:27:47.653Z",
+  "generatedAt": "2026-11-14T14:43:17.017Z",
   "version": "0.4.0",
   "method": "Each row imports and registers one component or widget from its public package entry. Rolldown tree-shakes and minifies an independent production JavaScript bundle, then measures its output before and after gzip. Required dependencies and embedded styles are included; Lit, optional engines, source maps and the separate global stylesheet are excluded. Each row's React and Vue sizes import its binding from @tweakpad/ui/react and @tweakpad/ui/vue the same way (the framework excluded); each adapter is measured alone. Sizes use kB of 1000 bytes.",
   "lit": { "bytes": 15977, "gzip": 6060 },
   "reactAdapter": { "bytes": 1100, "gzip": 603 },
   "vueAdapter": { "bytes": 1440, "gzip": 779 },
   "full": { "bytes": 2080051, "gzip": 587593 },
-  "fullWidgets": { "bytes": 2016963, "gzip": 585205 },
+  "fullWidgets": { "bytes": 2025518, "gzip": 587815 },
   "components": [
     {
       "name": "Flow",
@@ -821,6 +821,17 @@
       "includes": ["tp-button", "tp-icon", "tp-kbd", "tp-spinner"]
     },
     {
+      "name": "Plot",
+      "tagName": "tp-plot",
+      "section": "widgets",
+      "react": { "bytes": 92486, "gzip": 29258 },
+      "vue": { "bytes": 92759, "gzip": 29418 },
+      "bytes": 91582,
+      "gzip": 28948,
+      "modules": 46,
+      "includes": []
+    },
+    {
       "name": "Field group",
       "tagName": "tp-field-group",
       "section": "components",
@@ -830,17 +841,6 @@
       "gzip": 27522,
       "modules": 61,
       "includes": ["tp-button", "tp-icon", "tp-spinner", "tp-toggle"]
-    },
-    {
-      "name": "Plot",
-      "tagName": "tp-plot",
-      "section": "widgets",
-      "react": { "bytes": 83671, "gzip": 26628 },
-      "vue": { "bytes": 83944, "gzip": 26778 },
-      "bytes": 82766,
-      "gzip": 26345,
-      "modules": 44,
-      "includes": []
     },
     {
       "name": "Form",

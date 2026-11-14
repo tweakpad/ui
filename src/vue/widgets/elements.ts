@@ -660,6 +660,7 @@ type Tags = {
     | 'autoRange'
     | 'background'
     | 'clock'
+    | 'crosshair'
     | 'data'
     | 'decimation'
     | 'density'

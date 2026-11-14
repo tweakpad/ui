@@ -56,7 +56,7 @@
       <tp-plot id="wave" label="Waveform"></tp-plot>
     </main>
     <script type="module">
-      import { benchmarkPlot } from './benchmark.ts';
+      import { benchmarkPlot, benchmarkPlotDashboard, benchmarkPlotHover } from './benchmark.ts';
       import { TpPlot, createPlotStream } from '/src/widgets/plot/index.ts';
       import { defineElement } from '/src/foundation/define.ts';
       defineElement(TpPlot.tagName, TpPlot);
@@ -79,6 +79,8 @@
       wave.data = { wave: Array.from({ length: 500 }, (_, i) => [i, Math.sin(i * 0.04)]) };
       window.fixture = {
         benchmark: benchmarkPlot,
+        dashboard: benchmarkPlotDashboard,
+        hover: benchmarkPlotHover,
         stream,
         push: (n) => {
           for (let i = 0; i < n; i++)

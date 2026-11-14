@@ -1,5 +1,59 @@
 import type { PlotPoint, PlotSeries, PlotDomain, PlotPaint } from './types.js';
 
+/** The default top opacity of a gradient area, which fades to nothing at its baseline. */
+export const PLOT_GRADIENT_OPACITY = 0.4;
+
+/**
+ * Vertical area gradients, one per series and side of the baseline. A gradient runs from the
+ * y-domain's edge to the baseline, so it depends on the vertical mapping alone: pixels shifted
+ * horizontally by an incremental paint stay identical to a full repaint. Entries are rebuilt only
+ * when that mapping or the color changes; solid fills never reach this cache.
+ */
+export class PlotGradientCache {
+  readonly #entries = new Map<string, { key: string; gradient: CanvasGradient }>();
+
+  get(
+    context: CanvasRenderingContext2D,
+    id: string,
+    below: boolean,
+    color: string,
+    from: number,
+    to: number,
+  ): CanvasGradient {
+    const slot = `${below ? '-' : '+'}${id}`;
+    const key = `${color}|${from}|${to}`;
+    const cached = this.#entries.get(slot);
+    if (cached?.key === key) return cached.gradient;
+    // The fade keeps the color and drops its alpha, so the middle of the ramp never darkens.
+    context.fillStyle = color;
+    const solid = context.fillStyle;
+    const clear = transparentOf(solid);
+    const gradient = context.createLinearGradient(0, from, 0, to);
+    gradient.addColorStop(0, solid);
+    gradient.addColorStop(1, clear);
+    this.#entries.set(slot, { key, gradient });
+    return gradient;
+  }
+
+  clear(): void {
+    this.#entries.clear();
+  }
+}
+
+/** A canvas-normalized color (`#rrggbb`, `rgba()` or `color()`) with its alpha set to 0. */
+function transparentOf(color: string): string {
+  if (color.startsWith('#') && color.length === 7) {
+    const value = Number.parseInt(color.slice(1), 16);
+    return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, 0)`;
+  }
+  const rgba = /^rgba?\(([^,]+),([^,]+),([^,)]+)/u.exec(color);
+  if (rgba) return `rgba(${rgba[1]},${rgba[2]},${rgba[3]}, 0)`;
+  // A wide-gamut color: replace or add its alpha.
+  const open = color.lastIndexOf(')');
+  if (open > 0) return `${color.slice(0, open).replace(/\s*\/\s*[^)]*$/u, '')} / 0)`;
+  return 'transparent';
+}
+
 /** Draw a clipped set of ordered paths; signed paint is clipped at the exact baseline. */
 export function paintPlotSeries(
   context: CanvasRenderingContext2D,
@@ -14,6 +68,7 @@ export function paintPlotSeries(
   dashOffset: (point: PlotPoint) => number = () => 0,
   segmentDashes = false,
   pixelOffset = 0,
+  gradients?: PlotGradientCache,
 ): void {
   const px = (n: number) => ((n - x[0]) / (x[1] - x[0])) * width + pixelOffset;
   const py = (n: number) => height - ((n - y[0]) / (y[1] - y[0])) * height;
@@ -70,6 +125,22 @@ export function paintPlotSeries(
             context.lineTo(px(r.at(-1)![0]), py(fill.baseline));
             context.lineTo(px(r[0]![0]), py(fill.baseline));
             context.closePath();
+            if (fill.gradient && gradients) {
+              // From the domain's edge (full color) to the baseline (none), in device space.
+              context.globalAlpha = below
+                ? (series.negativeFill?.opacity ?? fill.opacity ?? PLOT_GRADIENT_OPACITY)
+                : (fill.opacity ?? PLOT_GRADIENT_OPACITY);
+              context.fillStyle = gradients.get(
+                context,
+                series.id,
+                below,
+                below ? (paint.negativeFills[series.id] ?? negative) : positive,
+                below ? height : 0,
+                py(fill.baseline),
+              );
+              context.fill();
+              return;
+            }
             context.globalAlpha = below
               ? (series.negativeFill?.opacity ?? fill.opacity ?? 0.2)
               : (fill.opacity ?? 0.2);

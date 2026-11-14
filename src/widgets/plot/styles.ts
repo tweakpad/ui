@@ -39,6 +39,43 @@ export const plotStyles = [
       pointer-events: none;
     }
 
+    /* With a crosshair the hint follows the line along an edge, placed by a transform. Overlay
+       positions are physical: the graph's time axis never mirrors, so they are measured from the
+       canvas's left edge in either direction. */
+    .inspection[data-edge] {
+      inset: 0 auto auto 0;
+      white-space: nowrap;
+    }
+
+    .crosshair,
+    .marker,
+    .crosshair-label {
+      position: absolute;
+      inset: 0 auto auto 0;
+      pointer-events: none;
+    }
+
+    .crosshair {
+      display: block;
+      inline-size: 1px;
+      translate: -0.5px 0;
+    }
+
+    .marker {
+      display: block;
+      inline-size: var(--_tp-plot-marker-size, 8px);
+      block-size: var(--_tp-plot-marker-size, 8px);
+      margin: calc(var(--_tp-plot-marker-size, 8px) / -2);
+    }
+
+    .marker[hidden] {
+      display: none;
+    }
+
+    .crosshair-label {
+      white-space: nowrap;
+    }
+
     .probe {
       position: absolute;
       visibility: hidden;
