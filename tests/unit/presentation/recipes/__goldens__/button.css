@@ -2,12 +2,12 @@
 /* button */
 &{appearance:none;border:var(--tp-border-width) var(--tp-border-style) transparent;border-radius:var(--tp-radius-lg);font:inherit;font-weight:var(--tp-font-medium);text-decoration:none}
 /* button-variant-default */
-&{background:var(--tp-primary);color:var(--tp-primary-foreground);border-color:var(--tp-primary);--_tp-variant-edge:initial}
-:where(&)::before{background-color:color-mix(in oklab, var(--tp-primary) 80%, light-dark(var(--tp-foreground), var(--tp-background)))}
+&{background:var(--tp-primary-subtle-foreground);color:var(--tp-primary-subtle);border-color:var(--tp-primary-subtle-foreground);--_tp-variant-edge:var(--tp-primary-subtle-foreground)}
+:where(&)::before{background-color:color-mix(in oklab, var(--tp-primary-subtle-foreground) 85%, var(--tp-foreground))}
 &:where(:not(:disabled, [aria-disabled="true"]):is(:hover, [data-popup-open]))::before{opacity:1}
 /* button-variant-secondary */
-&{background:var(--tp-secondary);color:var(--tp-secondary-foreground);border-color:var(--tp-secondary);--_tp-variant-edge:initial}
-:where(&)::before{background-color:color-mix(in oklab, var(--tp-secondary) 80%, light-dark(var(--tp-foreground), var(--tp-background)))}
+&{background:color-mix(in oklab, var(--tp-secondary) 45%, var(--tp-background));color:var(--tp-secondary-foreground);border-color:var(--tp-edge);--_tp-variant-edge:var(--tp-edge)}
+:where(&)::before{background-color:color-mix(in oklab, var(--tp-secondary) 12%, color-mix(in oklab, var(--tp-secondary) 45%, var(--tp-background)))}
 &:where(:not(:disabled, [aria-disabled="true"]):is(:hover, [data-popup-open]))::before{opacity:1}
 /* button-variant-destructive */
 &{background:var(--tp-destructive-subtle);color:var(--tp-destructive-subtle-foreground);border-color:var(--tp-destructive-border);--_tp-variant-edge:var(--tp-destructive-border)}

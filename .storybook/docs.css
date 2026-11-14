@@ -195,10 +195,11 @@ body:has(.sbdocs-wrapper) {
   outline-offset: 1px;
 }
 
-/* A Properties row's badges: `attr` (filled) when an attribute also sets the property, its tooltip
-   (hover or focus) naming the attribute, and `read-only` (outline). They belong after the name,
-   but Storybook's name column takes text only: they are written with the description and placed
-   after the row's name with anchor positioning, `read-only` after `attr` when both show. */
+/* A Properties row's badges, drawn like the library Badge: `attr` (default, the tinted primary)
+   when an attribute also sets the property, its tooltip (hover or focus) naming the attribute,
+   and `read-only` (outline). They belong after the name, but Storybook's name column takes text
+   only: they are written with the description and placed after the row's name with anchor
+   positioning, `read-only` after `attr` when both show. */
 .sbdocs .docblock-argstable tbody tr {
   position: relative;
   anchor-scope: --tp-docs-name, --tp-docs-attr;
@@ -224,9 +225,10 @@ body:has(.sbdocs-wrapper) {
 }
 
 .sbdocs .tp-docs-attr {
+  border-color: var(--tp-primary-border);
   anchor-name: --tp-docs-attr;
-  background: var(--tp-primary);
-  color: var(--tp-primary-foreground);
+  background: var(--tp-primary-subtle);
+  color: var(--tp-primary-subtle-foreground);
   cursor: help;
 }
 

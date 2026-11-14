@@ -42,7 +42,10 @@ const button: Record<string, readonly PresentationRule[]> = {
 for (const part of Object.keys(button)) {
   for (const variant of ['default', 'secondary', 'destructive', 'outline', 'ghost', 'link'])
     button[`${part}-variant-${variant}`] =
-      part === 'button' ? variantPresentation(variant, true) : [];
+      part === 'button'
+        ? // The primary action keeps its weight: the inverted primary tint.
+          variantPresentation(variant, true, { emphasis: 'inverted' })
+        : [];
   if (part === 'button')
     button['button-variant-outline'] = [...button['button-variant-outline']!, outlineFieldPaint];
   for (const size of buttonSizes)

@@ -1,6 +1,12 @@
 import { motionTransition } from '../../motion.js';
 import type { PresentationRule } from '../../resolver.js';
-import { controlFillStrong, divider, statusEdge, variantEdgeProperty } from './edges.js';
+import {
+  controlFillStrong,
+  divider,
+  statusEdge,
+  surfaceEdge,
+  variantEdgeProperty,
+} from './edges.js';
 import { fillColor, fillShown } from './fill.js';
 
 export const rule = (
@@ -18,6 +24,11 @@ const primitive = ':where(&)';
 /** No visible edge: a joined group cuts the seam through the fills. */
 const noEdge = { [variantEdgeProperty]: 'initial' };
 
+/** How strongly a variant paints its role: `inverted` is the action emphasis (Button). */
+export interface VariantOptions {
+  emphasis?: 'tint' | 'inverted';
+}
+
 /**
  * Shared paint only. Geometry and interaction policy are not inferred from a variant. Each variant
  * names its visible edge (`--_tp-variant-edge`), which a joined group draws as the seam.
@@ -25,6 +36,7 @@ const noEdge = { [variantEdgeProperty]: 'initial' };
 export function variantPresentation(
   variant: string,
   isInteractive = false,
+  options: VariantOptions = {},
 ): readonly PresentationRule[] {
   if (variant === 'subdued')
     return [
@@ -53,23 +65,51 @@ export function variantPresentation(
         ...noEdge,
       }),
     ];
-  // Solid role fills: primary and secondary with their foreground pair.
-  if (variant === 'default' || variant === 'secondary') {
-    const role = variant === 'default' ? 'primary' : variant;
+  // Role variants, tinted like the status ones. `default` is the status treatment of the
+  // `primary` role (an informational Alert's tint): its subtle fill, its text tone and its role
+  // edge. `secondary` is the neutral counterpart: a tint of `secondary`, its foreground and the
+  // surface edge. Both edges go transparent in a flat appearance; hover deepens the tint.
+  // An action's `default` (`emphasis: 'inverted'`) swaps the primary tint's two tones, so the one
+  // call to action keeps its weight: the role's text tone as the fill, its subtle fill as the text.
+  if (variant === 'default' && options.emphasis === 'inverted') {
+    const fill = 'var(--tp-primary-subtle-foreground)';
     const rules = [
       rule({
-        background: `var(--tp-${role})`,
-        color: `var(--tp-${role}-foreground)`,
-        'border-color': `var(--tp-${role})`,
-        ...noEdge,
+        background: fill,
+        color: 'var(--tp-primary-subtle)',
+        'border-color': fill,
+        [variantEdgeProperty]: fill,
       }),
     ];
     if (isInteractive)
       rules.push(
-        fillColor(
-          `color-mix(in oklab, var(--tp-${role}) 80%, light-dark(var(--tp-foreground), var(--tp-background)))`,
-          primitive,
-        ),
+        // Hover moves the fill away from its text, toward the foreground, in either scheme.
+        fillColor(`color-mix(in oklab, ${fill} 85%, var(--tp-foreground))`, primitive),
+        fillShown(interactive),
+      );
+    return rules;
+  }
+  if (variant === 'default' || variant === 'secondary') {
+    const role = variant === 'default' ? 'primary' : 'secondary';
+    const fill =
+      role === 'primary'
+        ? 'var(--tp-primary-subtle)'
+        : 'color-mix(in oklab, var(--tp-secondary) 45%, var(--tp-background))';
+    const edge = role === 'primary' ? statusEdge('primary').color : surfaceEdge.color;
+    const rules = [
+      rule({
+        background: fill,
+        color:
+          role === 'primary'
+            ? 'var(--tp-primary-subtle-foreground)'
+            : 'var(--tp-secondary-foreground)',
+        'border-color': edge,
+        [variantEdgeProperty]: edge,
+      }),
+    ];
+    if (isInteractive)
+      rules.push(
+        fillColor(`color-mix(in oklab, var(--tp-${role}) 12%, ${fill})`, primitive),
         fillShown(interactive),
       );
     return rules;

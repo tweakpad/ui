@@ -94,6 +94,48 @@
         gap: var(--tp-space-3);
         max-inline-size: 36rem;
       }
+      .usage-group {
+        display: grid;
+        gap: var(--tp-space-3);
+      }
+      .usage-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+        gap: var(--tp-space-4);
+      }
+      .usage-item {
+        display: grid;
+        align-content: start;
+        gap: var(--tp-space-2);
+        margin: 0;
+        padding: var(--tp-space-3);
+        border: var(--tp-border-width) var(--tp-border-style) var(--tp-border);
+        border-radius: var(--tp-radius-lg);
+      }
+      .usage-sample {
+        min-block-size: 3rem;
+        display: grid;
+        align-items: center;
+        justify-items: start;
+      }
+      .usage-sample > .stack {
+        inline-size: 100%;
+      }
+      .usage-item figcaption {
+        display: grid;
+        justify-items: start;
+        gap: var(--tp-space-1);
+        font-size: var(--tp-text-xs);
+      }
+      .usage-item code {
+        color: var(--tp-muted-foreground);
+        font-family: var(--tp-font-mono);
+      }
+      .usage-swatch {
+        inline-size: 1.5rem;
+        block-size: 1.5rem;
+        border-radius: var(--tp-radius-sm);
+      }
     </style>
   </head>
   <body>

@@ -284,7 +284,7 @@ function update() {
       </aside>
       <main class="surface" appearance=${appearance}>
         <span class="probe" aria-hidden="true"></span>
-        <div class="section-list" ?hidden=${query.trim() !== ''}>${preview}</div>
+        <div class="section-list" ?hidden=${query.trim() !== ''}>${usage}${preview}</div>
         <h2 class="part-heading">Every component</h2>
         ${components.map(
           ({ name, example }) =>
@@ -306,6 +306,254 @@ let query = '';
 
 const statusVariants = ['default', 'secondary', 'destructive', 'success', 'warning'];
 const title = (variant: string) => variant[0]!.toUpperCase() + variant.slice(1);
+
+/**
+ * The color-usage board: real components grouped by the global role their paint comes from, each
+ * captioned with its source and whether it goes through a shared role or helper or makes its own
+ * choice. For reviewing the library's color system visually, one theme at a time.
+ */
+type Verdict = 'shared' | 'own' | 'literal';
+const VERDICT = {
+  shared: { variant: 'success', text: 'Shared role' },
+  own: { variant: 'warning', text: 'Own choice' },
+  literal: { variant: 'destructive', text: 'Own color' },
+} as const;
+const usageItem = (name: string, source: string, verdict: Verdict, content: unknown) => html`
+  <figure class="usage-item">
+    <div class="usage-sample">${content}</div>
+    <figcaption>
+      <strong>${name}</strong>
+      <code>${source}</code>
+      <tp-badge variant=${VERDICT[verdict].variant}>${VERDICT[verdict].text}</tp-badge>
+    </figcaption>
+  </figure>
+`;
+const swatch = (token: string) =>
+  html`<span class="usage-swatch" style="background: var(${token})" title=${token}></span>`;
+const usageGroup = (heading: string, note: string, items: unknown) => html`
+  <section class="usage-group">
+    <h2>${heading}</h2>
+    <p class="note">${note}</p>
+    <div class="usage-grid">${items}</div>
+  </section>
+`;
+const usage = html`
+  <h2 class="part-heading">Color usage</h2>
+  ${usageGroup(
+    'Primary emphasis',
+    'The strongest accent: the primary action, and selected, checked or active state. Most components write --tp-primary themselves, so a theme cannot retune "emphasis" in one place.',
+    html`
+      ${usageItem(
+        'Button default',
+        'primary-subtle-foreground / primary-subtle (inverted)',
+        'shared',
+        html`<tp-button>Save station</tp-button>`,
+      )}
+      ${usageItem(
+        'Calendar selected day',
+        '--tp-primary + --tp-primary-foreground',
+        'own',
+        html`<tp-calendar
+          label="Survey day"
+          today="2026-11-02"
+          default-value="2026-11-05"
+        ></tp-calendar>`,
+      )}
+      ${usageItem(
+        'Checkbox checked',
+        '--tp-primary + --tp-primary-foreground',
+        'own',
+        html`<tp-checkbox default-checked>Notify crew</tp-checkbox>`,
+      )}
+      ${usageItem(
+        'Radio selected',
+        '--tp-choice / --tp-choice-foreground',
+        'shared',
+        html`<tp-radio-group default-value="hourly" label="Interval">
+          <tp-radio-group-item value="hourly">Hourly</tp-radio-group-item>
+          <tp-radio-group-item value="daily">Daily</tp-radio-group-item>
+        </tp-radio-group>`,
+      )}
+      ${usageItem(
+        'Switch on',
+        '--tp-primary fill, light-dark(background, primary-foreground) thumb',
+        'own',
+        html`<tp-switch default-checked>Live readings</tp-switch>`,
+      )}
+      ${usageItem(
+        'Toggle pressed',
+        '--tp-pressed / --tp-pressed-foreground',
+        'shared',
+        html`<tp-toggle-group label="Range" variant="outline" default-value='["week"]'>
+          <tp-toggle value="day">Day</tp-toggle>
+          <tp-toggle value="week">Week</tp-toggle>
+        </tp-toggle-group>`,
+      )}
+      ${usageItem(
+        'Slider range',
+        '--tp-primary',
+        'own',
+        html`<tp-slider label="Sample depth" default-value="40"></tp-slider>`,
+      )}
+      ${usageItem(
+        'Progress',
+        '--tp-primary',
+        'own',
+        html`<tp-progress
+          value="56"
+          label="Uploading readings"
+          style="inline-size: 12rem"
+        ></tp-progress>`,
+      )}
+      ${usageItem(
+        'Avatar badge',
+        '--tp-primary + --tp-primary-foreground',
+        'own',
+        html`<tp-avatar fallback="MC" alt="Maya Chen"
+          ><span slot="badge" role="img" aria-label="Online"></span
+        ></tp-avatar>`,
+      )}
+      ${usageItem(
+        'Status dot default',
+        '--tp-primary (own variant map)',
+        'own',
+        html`<tp-status-dot label="Running" show-label></tp-status-dot>`,
+      )}
+    `,
+  )}
+  ${usageGroup(
+    'Role tints',
+    'A role over the background: <role>-subtle fill, -subtle-foreground text, -border edge. The same three tokens are composed by hand in several places.',
+    html`
+      ${usageItem(
+        'Badge variants',
+        'variantPresentation (shared)',
+        'shared',
+        html`<div class="row">
+          ${statusVariants.map(
+            (variant) => html`<tp-badge variant=${variant}>${title(variant)}</tp-badge>`,
+          )}
+        </div>`,
+      )}
+      ${usageItem(
+        'Alert severities',
+        'calloutTint: the same triple written again',
+        'own',
+        html`<div class="stack">
+          <tp-alert title="Survey window opens Monday">Crews can book boats.</tp-alert>
+          <tp-alert severity="danger" title="Sensor offline">Station 3 stopped.</tp-alert>
+        </div>`,
+      )}
+      ${usageItem(
+        'Attachment error',
+        'destructive-subtle + -subtle-foreground, no edge (inline)',
+        'own',
+        html`<tp-attachment
+          filename="readings-0412.raw"
+          status="error"
+          error-message="This format isn't supported."
+        ></tp-attachment>`,
+      )}
+      ${usageItem(
+        'File upload invalid',
+        '--tp-destructive edge + destructive-subtle (inline)',
+        'own',
+        html`<tp-file-upload name="usage-upload" invalid></tp-file-upload>`,
+      )}
+    `,
+  )}
+  ${usageGroup(
+    'Highlight and neutral',
+    'Row highlight (accent) and the quiet muted pair. A shared rowHighlight and the subdued variant exist; most rows and chips inline the tokens instead.',
+    html`
+      ${usageItem(
+        'List item selected',
+        '--tp-accent / --tp-accent-foreground (inline)',
+        'own',
+        html`<tp-list aria-label="Stations">
+          <tp-list-item selected>North buoy</tp-list-item>
+          <tp-list-item>Station 7</tp-list-item>
+        </tp-list>`,
+      )}
+      ${usageItem(
+        'Bubble subdued',
+        'variantPresentation subdued (shared)',
+        'shared',
+        html`<tp-bubble variant="subdued">The north buoy reported at 06:40.</tp-bubble>`,
+      )}
+      ${usageItem(
+        'Kbd',
+        '--tp-muted + own text color (inline)',
+        'own',
+        html`<tp-kbd-group separator="none"
+          ><tp-kbd value="mod"></tp-kbd><tp-kbd value="K"></tp-kbd
+        ></tp-kbd-group>`,
+      )}
+      ${usageItem(
+        'Avatar fallback',
+        '--tp-muted + --tp-muted-foreground (inline)',
+        'own',
+        html`<tp-avatar fallback="DK" alt="Daniel Kim"></tp-avatar>`,
+      )}
+    `,
+  )}
+  ${usageGroup(
+    'Categorical palette',
+    'Two palettes: chart-1..5 are fixed hex values that do not follow the color scheme (Plot, Data visualization, Flow tones, glow borders); content-* are nine scheme-aware hues used only by the text editor.',
+    html`
+      ${usageItem(
+        'Chart (5, fixed)',
+        '--tp-chart-1 … --tp-chart-5',
+        'literal',
+        html`<div class="row">
+          ${[1, 2, 3, 4, 5].map((index) => swatch(`--tp-chart-${index}`))}
+        </div>`,
+      )}
+      ${usageItem(
+        'Content hues (9, scheme-aware)',
+        '--tp-content-gray … --tp-content-red',
+        'shared',
+        html`<div class="row">
+          ${['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'].map(
+            (hue) => swatch(`--tp-content-${hue}`),
+          )}
+        </div>`,
+      )}
+      ${usageItem(
+        'Marker tones',
+        'own tone → role map',
+        'own',
+        html`<div class="stack">
+          <tp-marker tone="accent">Review requested from Priya</tp-marker>
+          <tp-marker tone="success">All checks passed</tp-marker>
+          <tp-marker tone="danger">Deploy failed</tp-marker>
+        </div>`,
+      )}
+    `,
+  )}
+  ${usageGroup(
+    'Own colors',
+    'Literal colors or scheme swaps written in a component instead of a role.',
+    html`
+      ${usageItem(
+        'Glow border',
+        'chart-2/1/5 + light-dark(transparent, #fff) core',
+        'literal',
+        html`<tp-mo-glow-border style="inline-size: 16rem"
+          ><tp-card size="sm"><span slot="header">North buoy</span></tp-card></tp-mo-glow-border
+        >`,
+      )}
+      ${usageItem(
+        'Card shadow',
+        'rgb(0 0 0 / 16–20%) (fixed black)',
+        'literal',
+        html`<tp-card size="sm" style="box-shadow: var(--tp-shadow-md)"
+          ><span slot="header">Raised card</span></tp-card
+        >`,
+      )}
+    `,
+  )}
+`;
 const preview = html`
   <section>
     <h2>Badge</h2>
