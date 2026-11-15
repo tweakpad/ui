@@ -9,6 +9,7 @@ export type {
   TreeSelectionMode,
   TreeSelectionBehavior,
   TreeViewDragActivation,
+  TreeViewDragAndDrop,
   TreeViewDropIndicator,
   TreeViewDropTarget,
   TreeViewExpansionTrigger,

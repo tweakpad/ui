@@ -1,0 +1,133 @@
+---
+title: File explorer
+description: Files and folders from any source, as an operating system shows them, with a folder tree, five views, fuzzy search, selection, a status bar and proposals to rename, move, create, delete and upload.
+tag: tp-file-explorer
+---
+
+<Preview
+  title="File explorer"
+  align="stretch"
+  code={`<tp-file-explorer id="file-explorer-hero" label="Observatory archive" default-folder="plates" details style="block-size: 30rem"></tp-file-explorer>`}
+  script={`import { createMemorySource } from '@tweakpad/ui/file-explorer';
+const day = 86400000;
+const now = Date.now();
+const entries = [
+  { id: 'logs', name: 'Night logs', kind: 'folder', parentId: null },
+  { id: 'plates', name: 'Plate scans', kind: 'folder', parentId: null },
+  { id: 'spectra', name: 'Spectra', kind: 'folder', parentId: null },
+  { id: 'log-1', name: 'night-04.log', kind: 'file', parentId: 'logs', size: 18200, modified: now - 2 * day },
+  { id: 'log-2', name: 'night-08.log', kind: 'file', parentId: 'logs', size: 22400, modified: now - day },
+  { id: 'plate-1', name: 'Andromeda.tif', kind: 'file', parentId: 'plates', size: 48200000, type: 'image/tiff', modified: now - 6 * day },
+  { id: 'plate-2', name: 'Orion nebula.tif', kind: 'file', parentId: 'plates', size: 61900000, type: 'image/tiff', modified: now - 3 * day },
+  { id: 'plate-3', name: 'Ring nebula.tif', kind: 'file', parentId: 'plates', size: 39400000, type: 'image/tiff', modified: now - 9 * day },
+  { id: 'vega', name: 'vega-spectrum.csv', kind: 'file', parentId: 'spectra', size: 812000, type: 'text/csv', modified: now - 4 * day },
+];
+document.querySelector('#file-explorer-hero').source = createMemorySource(entries);`}
+/>
+
+## Usage
+
+The explorer shows what a `source` gives it. A source is an object with a `list` operation, which returns a folder's entries, and any of the others: `path`, `metadata`, `search`, `rename`, `move`, `createFolder`, `remove`, `upload` and `thumbnail`. Each operation receives a request with an abort signal and returns its result or a promise of it, so a source can read a server, a browser storage API or both. `createMemorySource` keeps a whole file system in the page.
+
+<Code
+  language="typescript"
+  code={`explorer.source = {
+  async list({ folder, signal }) {
+    const response = await fetch(\`/api/files?folder=\${folder ?? ''}\`, { signal });
+    return { entries: await response.json() };
+  },
+};`}
+/>
+
+An entry has an `id`, a `name`, a `kind` (`folder` or `file`) and its `parentId`, and may have a `size`, a `modified` time, a media `type`, a `thumbnail`, `permissions` and application `metadata`. `folder` holds the open folder and each change is a cancelable `tp-folder-change`; `value` holds the selected ids. Opening a file with <Keys keys="Enter" /> or a double click fires `tp-open`.
+
+### Views
+
+The switcher offers details, a compact list, icons, a gallery of previews and columns, where each folder of the path is a column and selecting a folder opens the next. `views` limits the choice, and the first is the default. In the details view, `columns` adds your own columns after name, size, modified and kind, and `visible-columns` chooses which show.
+
+<Preview
+  title="Columns"
+  align="stretch"
+  code={`<tp-file-explorer id="file-explorer-columns" label="Observatory archive" default-view="columns" default-folder="logs" style="block-size: 22rem"></tp-file-explorer>`}
+  script={`import { createMemorySource } from '@tweakpad/ui/file-explorer';
+document.querySelector('#file-explorer-columns').source = createMemorySource([
+  { id: 'logs', name: 'Night logs', kind: 'folder', parentId: null },
+  { id: 'spectra', name: 'Spectra', kind: 'folder', parentId: null },
+  { id: 'august', name: 'August', kind: 'folder', parentId: 'logs' },
+  { id: 'september', name: 'September', kind: 'folder', parentId: 'logs' },
+  { id: 'a-1', name: 'night-04.log', kind: 'file', parentId: 'august', size: 18200 },
+  { id: 'a-2', name: 'night-08.log', kind: 'file', parentId: 'august', size: 22400 },
+  { id: 's-1', name: 'night-12.log', kind: 'file', parentId: 'september', size: 9100 },
+  { id: 'vega', name: 'vega-spectrum.csv', kind: 'file', parentId: 'spectra', size: 812000 },
+]);`}
+/>
+
+### Search
+
+The search field finds entries by name, close matches included, under the open folder by default; `search-scope` widens it to everything or narrows it to the folder. Results replace the listing with a Location column and the matched letters marked, and Escape clears the search.
+
+Every operation passes through `layers` before the source. The default layers keep listings in a cache, load metadata, search on the client and sort folders first; a layer is an object with a hook per operation that receives the request and `next`, and returns what `next` returns, a changed result, or its own. When your server searches, give the source a `search` operation: the client search steps aside for it.
+
+<Code
+  language="typescript"
+  code={`import { defaultFileLayers } from '@tweakpad/ui/file-explorer';
+
+explorer.layers = [
+  {
+    name: 'audit',
+    async move(request, next) {
+      const result = await next();
+      log('moved', request.ids, request.to);
+      return result;
+    },
+  },
+  ...defaultFileLayers(),
+];`}
+/>
+
+### Metadata
+
+A column that reads heavy metadata names its `fields`. The explorer asks the source's `metadata` operation for them as rows show, in batches, and shows a placeholder until they arrive, so a folder lists at once and owners, dimensions or checksums follow.
+
+<Code
+  language="typescript"
+  code={`explorer.columns = [
+  { id: 'observer', header: 'Observer', fields: ['observer'], value: (entry) => entry.metadata?.observer },
+];`}
+/>
+
+### Changes
+
+The explorer proposes changes and the source makes them: <Keys keys="F2" /> renames in place, dragging moves selected entries onto a folder in the view, the tree or the path, <Keys keys="mod+X" /> and <Keys keys="mod+V" /> move them from the keyboard, <Keys keys="Delete" /> deletes, and dropping files from the computer uploads them with their progress in the status bar. `createFolder()`, `deleteSelection()` and `upload(files)` start the same changes from your own buttons. Each change is a cancelable event before it reaches the source, where you can confirm a deletion; a failure shows in the status bar and as `tp-operation-error`.
+
+`operations` limits the changes the explorer offers, `readonly` turns them off, and an entry's `permissions` mark what each one allows. `root` keeps navigation inside one folder, so a picker for a single folder is a compact list without the sidebar and search.
+
+<Preview
+  title="Picker"
+  align="stretch"
+  code={`<tp-file-explorer id="file-explorer-picker" label="Pick a spectrum" root="spectra" views="compact" sidebar="false" search="false" status-bar="false" selection-mode="single" readonly style="block-size: 14rem"></tp-file-explorer>`}
+  script={`import { createMemorySource } from '@tweakpad/ui/file-explorer';
+const picker = document.querySelector('#file-explorer-picker');
+picker.source = createMemorySource([
+  { id: 'spectra', name: 'Spectra', kind: 'folder', parentId: null },
+  { id: 'vega', name: 'vega-spectrum.csv', kind: 'file', parentId: 'spectra', size: 812000 },
+  { id: 'deneb', name: 'deneb-spectrum.csv', kind: 'file', parentId: 'spectra', size: 294000 },
+  { id: 'sirius', name: 'sirius-spectrum.csv', kind: 'file', parentId: 'spectra', size: 845000 },
+]);
+picker.addEventListener('tp-value-change', (event) => console.log('Picked', event.detail.value));`}
+/>
+
+### Keyboard
+
+The path, the search field, the view switcher, the tree and the view are each one tab stop.
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="ArrowUp" />, <Keys keys="ArrowDown" /> | Move between entries; with <Keys keys="Shift" />, extend the selection |
+| <Keys keys="ArrowLeft" />, <Keys keys="ArrowRight" /> | In the columns view, move to the parent's or the selected folder's column |
+| <Keys keys="Enter" /> | Open the folder or the file |
+| <Keys keys="Alt+ArrowUp" /> | Open the parent folder |
+| <Keys keys="F2" /> | Rename the entry; <Keys keys="Enter" /> keeps the name and <Keys keys="Escape" /> cancels |
+| <Keys keys="mod+X" />, <Keys keys="mod+V" /> | Cut the selection, then move it into the open folder |
+| <Keys keys="Delete" /> | Delete the selection |
+| <Keys keys="mod+A" /> | Select every entry |

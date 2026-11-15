@@ -21,10 +21,13 @@ export const DataView = /*#__PURE__*/ createBinding(TpDataView, 'DataView', {
   | 'defaultValue'
   | 'density'
   | 'disabled'
+  | 'dragAndDrop'
   | 'error'
   | 'getRowId'
+  | 'header'
   | 'invalid'
   | 'label'
+  | 'layout'
   | 'loading'
   | 'messages'
   | 'middleware'
@@ -40,6 +43,8 @@ export const DataView = /*#__PURE__*/ createBinding(TpDataView, 'DataView', {
   | 'required'
   | 'rows'
   | 'scrollEdgeFade'
+  | 'selectionBehavior'
+  | 'selectionCheckboxes'
   | 'selectionMode'
   | 'size'
   | 'sort'
@@ -53,7 +58,7 @@ export const DataView = /*#__PURE__*/ createBinding(TpDataView, 'DataView', {
     'tp-retry': CustomEvent<NonNullable<unknown>>;
     'tp-row-activate': CustomEvent<componentsDataViewTypes.DataViewActivateDetail<DataViewDefault>>;
     'tp-sort-change': foundationEvents.TpValueChangeEvent<componentsDataViewTypes.DataViewSort | null>;
-    'tp-value-change': foundationEvents.TpValueChangeEvent<string | null>;
+    'tp-value-change': foundationEvents.TpValueChangeEvent<readonly string[]>;
   },
   'sort' | 'value',
   'value'

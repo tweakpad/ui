@@ -22,6 +22,7 @@ export const widgetCatalog = [
   ['Layers', 'tp-layers', 'flattening-compound'],
   ['Heatmap', 'tp-heatmap', 'flattening-compound'],
   ['Image editor', 'tp-image-editor', 'flattening-compound'],
+  ['File explorer', 'tp-file-explorer', 'flattening-compound'],
 ] as const satisfies readonly WidgetTuple[];
 
 export const widgetEntries: readonly WidgetEntry[] = widgetCatalog.map((entry: WidgetTuple) => ({

@@ -286,7 +286,7 @@ for (const component of components) {
 components.sort((a, b) => b.gzip - a.gzip);
 const isWidgetModule = (id) =>
   /\/dist\/(?:widgets\/|widgets\.js$|presentation\/(?:families\/)?widgets\.js$)/u.test(id) ||
-  /\/dist\/(?:foundation\/(?:text-editor|emoji|flow|color-palette)\/|(?:text-editor|emoji|flow|color-palette)(?:\/[^/]+)*\.js$)/u.test(
+  /\/dist\/(?:foundation\/(?:text-editor|emoji|flow|color-palette|file-explorer)\/|(?:text-editor|emoji|flow|color-palette|file-explorer)(?:\/[^/]+)*\.js$)/u.test(
     id,
   );
 const full = results.get('register-all');

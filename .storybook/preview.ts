@@ -41,6 +41,7 @@ installPreviewModules(
     '@tweakpad/ui/drag-drop': () => import('../src/foundation/drag-drop/index.js'),
     '@tweakpad/ui/emoji': () => import('../src/foundation/emoji/index.js'),
     '@tweakpad/ui/color-palette': () => import('../src/foundation/color-palette/index.js'),
+    '@tweakpad/ui/file-explorer': () => import('../src/foundation/file-explorer/index.js'),
     '@tweakpad/ui/color-palette/collections/css-named': () =>
       import('../src/foundation/color-palette/collections/css-named/index.js'),
     '@tweakpad/ui/color-palette/collections/riso': () =>

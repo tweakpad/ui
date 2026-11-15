@@ -1240,10 +1240,13 @@ type Tags = {
     | 'defaultValue'
     | 'density'
     | 'disabled'
+    | 'dragAndDrop'
     | 'error'
     | 'getRowId'
+    | 'header'
     | 'invalid'
     | 'label'
+    | 'layout'
     | 'loading'
     | 'messages'
     | 'middleware'
@@ -1257,6 +1260,8 @@ type Tags = {
     | 'required'
     | 'rows'
     | 'scrollEdgeFade'
+    | 'selectionBehavior'
+    | 'selectionCheckboxes'
     | 'selectionMode'
     | 'size'
     | 'sort'
@@ -1270,7 +1275,7 @@ type Tags = {
       'tp-retry': CustomEvent<NonNullable<unknown>>;
       'tp-row-activate': CustomEvent<componentsDataViewTypes.DataViewActivateDetail<unknown>>;
       'tp-sort-change': foundationEvents.TpValueChangeEvent<componentsDataViewTypes.DataViewSort | null>;
-      'tp-value-change': foundationEvents.TpValueChangeEvent<string | null>;
+      'tp-value-change': foundationEvents.TpValueChangeEvent<readonly string[]>;
     }
   >;
   'tp-data-visualization': Tag<
@@ -5542,6 +5547,7 @@ type Tags = {
     | 'density'
     | 'disabled'
     | 'dragActivation'
+    | 'dragAndDrop'
     | 'dropIndicator'
     | 'expanded'
     | 'expansionTrigger'

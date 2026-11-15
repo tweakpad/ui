@@ -47,6 +47,7 @@ export const TreeView = /*#__PURE__*/ createBinding(TpTreeView, 'TreeView', {
   | 'density'
   | 'disabled'
   | 'dragActivation'
+  | 'dragAndDrop'
   | 'dropIndicator'
   | 'expanded'
   | 'expansionTrigger'

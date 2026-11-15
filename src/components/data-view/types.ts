@@ -1,4 +1,5 @@
 import type { TpValueChangeEvent } from '../../foundation/events.js';
+import type { DragDropManager } from '../../foundation/drag-drop/manager.js';
 import type { ComponentPartContract } from '../../foundation/part.js';
 
 /** A sort: the column it orders by and its direction. */
@@ -11,7 +12,33 @@ export interface DataViewSort {
 export type DataViewSorting = 'local' | 'manual';
 
 /** Whether a row can be selected. */
-export type DataViewSelectionMode = 'none' | 'single';
+export type DataViewSelectionMode = 'none' | 'single' | 'multiple';
+
+/**
+ * How a press selects under `multiple`: `toggle` adds or removes the pressed row; `replace`
+ * selects only it, with Ctrl or Cmd toggling and Shift extending from the last pressed row.
+ */
+export type DataViewSelectionBehavior = 'toggle' | 'replace';
+
+/** How rows lay out: a table of columns, or a grid of tiles that flows into as many columns as fit. */
+export type DataViewLayout = 'table' | 'grid';
+
+/** Whether the header row shows; a hidden header still names each cell's column. */
+export type DataViewHeaderVisibility = 'visible' | 'hidden';
+
+/**
+ * Connects the mounted rows to a drag and drop manager the owner shares with other surfaces. Rows
+ * `source` returns data for become draggable, and rows `target` accepts become drop targets; the
+ * view marks the target under a drag with `data-drop-target` and never interprets the drop: the
+ * owner reads the manager's events.
+ */
+export interface DataViewDragAndDrop<T = unknown> {
+  readonly manager: DragDropManager;
+  /** The data a row's drag carries, or `null` when the row does not drag. */
+  source?(row: T, rowId: string): Record<string, unknown> | null;
+  /** Whether a row receives drops. */
+  target?(row: T, rowId: string): boolean;
+}
 
 /** What arrow keys move: a cell, header cells included, or a whole row. */
 export type DataViewNavigation = 'cell' | 'row';
@@ -106,6 +133,20 @@ export interface DataViewStateContext {
   retry(): void;
 }
 
+/** What a tile renderer receives under `layout="grid"`; also the state of the tile part. */
+export type DataViewTileContext<T = unknown> = {
+  readonly row: T;
+  readonly rowId: string;
+  readonly rowIndex: number;
+  readonly columns: readonly DataViewColumn<T>[];
+  readonly selected: boolean;
+  readonly focused: boolean;
+  /** A column's cell content through the middleware, as the table would show it. */
+  renderCell(column: DataViewColumn<T> | string): unknown;
+  /** A column's text. */
+  text(column: DataViewColumn<T> | string): string;
+};
+
 /** Renders the next layer: the remaining middleware, then the built-in content. */
 export type DataViewNext = () => unknown;
 
@@ -131,6 +172,8 @@ export interface DataViewMiddleware<T = unknown> {
   columnHeader?(context: DataViewHeaderContext<T>, next: DataViewNext): unknown;
   /** The sort indicator's content, for sortable columns. */
   sortIndicator?(context: DataViewHeaderContext<T>, next: DataViewNext): unknown;
+  /** A tile's content under `layout="grid"`. */
+  tile?(context: DataViewTileContext<T>, next: DataViewNext): unknown;
   /** The empty state's content when the `empty` slot is not filled. */
   empty?(context: DataViewStateContext, next: DataViewNext): unknown;
   /** The error state's content when the `error` slot is not filled. */
@@ -158,7 +201,14 @@ export interface DataViewPartStates<T = unknown> {
   'data-view-cell': DataViewCellContext<T>;
   'data-view-state': { readonly status: 'empty' | 'error' | 'loading' };
   'data-view-skeleton': { readonly columnIndex: number };
+  'data-view-selection-header': DataViewSelectionState;
+  'data-view-selection-cell': DataViewRowState<T>;
+  'data-view-selection-box': DataViewSelectionState;
+  'data-view-tile': DataViewTileContext<T>;
 }
+
+/** Whether every, none or only some rows are selected; the state of the selection boxes. */
+export type DataViewSelectionState = { readonly checked: boolean | 'mixed' };
 
 /** Typed `partContracts` for a Data view: rendering contracts by part name. */
 export type DataViewPartContracts<T = unknown> = {
@@ -173,6 +223,10 @@ export interface DataViewMessages {
   readonly loading: string;
   readonly retry: string;
   readonly errorTitle: string;
+  /** The name of the select-all box in the selection column's header. */
+  readonly selectAll: string;
+  /** The selection column's header name. */
+  readonly selection: string;
   /** Announced after a sort, for example "Sorted by Battery, descending". */
   sorted(column: string, direction: DataViewSort['direction'] | null): string;
 }
@@ -185,6 +239,6 @@ export interface DataViewActivateDetail<T = unknown> {
 }
 
 /** Called with each `tp-value-change` proposal of a selected row id. */
-export type DataViewValueChangeCallback = (event: TpValueChangeEvent<string | null>) => void;
+export type DataViewValueChangeCallback = (event: TpValueChangeEvent<readonly string[]>) => void;
 /** Called with each `tp-sort-change` proposal of a sort. */
 export type DataViewSortChangeCallback = (event: TpValueChangeEvent<DataViewSort | null>) => void;

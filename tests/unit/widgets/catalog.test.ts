@@ -53,7 +53,7 @@ const reachable = (entry: string, seen = new Set<string>()): Set<string> => {
 };
 /** The folder of a widget's companion entry (`@tweakpad/ui/<name>`) that holds a module. */
 const companionFolder = (file: string): string | undefined =>
-  /^foundation\/(text-editor|emoji|flow|color-palette)\//u.exec(file)?.[1];
+  /^foundation\/(text-editor|emoji|flow|color-palette|file-explorer)\//u.exec(file)?.[1];
 const mainEntries = [
   'index.ts',
   'register.ts',

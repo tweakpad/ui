@@ -19,10 +19,13 @@ export type DataViewProps<T = DataViewDefaults[0]> = ElementProps<
   | 'defaultValue'
   | 'density'
   | 'disabled'
+  | 'dragAndDrop'
   | 'error'
   | 'getRowId'
+  | 'header'
   | 'invalid'
   | 'label'
+  | 'layout'
   | 'loading'
   | 'messages'
   | 'middleware'
@@ -38,6 +41,8 @@ export type DataViewProps<T = DataViewDefaults[0]> = ElementProps<
   | 'required'
   | 'rows'
   | 'scrollEdgeFade'
+  | 'selectionBehavior'
+  | 'selectionCheckboxes'
   | 'selectionMode'
   | 'size'
   | 'sort'
@@ -51,7 +56,7 @@ export type DataViewProps<T = DataViewDefaults[0]> = ElementProps<
     onTpRetry: CustomEvent<NonNullable<unknown>>;
     onTpRowActivate: CustomEvent<componentsDataViewTypes.DataViewActivateDetail<T>>;
     onTpSortChange: foundationEvents.TpValueChangeEvent<componentsDataViewTypes.DataViewSort | null>;
-    onTpValueChange: foundationEvents.TpValueChangeEvent<string | null>;
+    onTpValueChange: foundationEvents.TpValueChangeEvent<readonly string[]>;
   }
 >;
 /** `<tp-data-view>` as a React component. */

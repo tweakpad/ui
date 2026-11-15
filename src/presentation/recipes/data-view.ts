@@ -1,5 +1,7 @@
 import type { PresentationDictionary } from '../resolver.js';
+import { dropInto } from './shared/drop-line.js';
 import { insetFocusRing } from './shared/focus.js';
+import { checkboxRules } from './shared/selection-control.js';
 import {
   tableBorders,
   tableCellBox,
@@ -22,6 +24,15 @@ import {
 // Component Library Data view presentation: the shared rule of tabular data (header, sort
 // chevron and cell text; flat-aware lines by `borders`; stripe, hover and selected fills) on
 // fixed-height rows. Public `--tp-data-view-*` hooks set on the host win over these defaults.
+
+/** A layer over a whole row, above its pinned cells, for the row's rings. */
+const rowOverlay = {
+  content: "''",
+  position: 'absolute',
+  inset: '0',
+  'z-index': '2',
+  'pointer-events': 'none',
+};
 
 /** A row's fill, which its pinned cells paint over the surface so scrolled cells never show. */
 const rowFill = '--_tp-data-view-row-fill';
@@ -101,7 +112,10 @@ export const dataViewAppearance: PresentationDictionary = {
     { selector: '&[data-stripe]', declarations: { [rowFill]: tableStripeFill } },
     { selector: '&:hover', declarations: { [rowFill]: tableRowHover } },
     { selector: '&[data-selected]', declarations: { [rowFill]: tableSelectedFill } },
-    { selector: '&:focus-visible', declarations: insetFocusRing },
+    // The focus ring and the drop-into ring of a whole row lie over its pinned cells.
+    { selector: '&:focus-visible', declarations: { outline: 'none' } },
+    { selector: '&:focus-visible::after', declarations: { ...rowOverlay, ...insetFocusRing } },
+    { selector: '&[data-drop-target]::after', declarations: { ...rowOverlay, ...dropInto } },
   ],
   'data-view-cell': [
     { declarations: { ...tableCellBox, ...tableCellLines } },
@@ -116,4 +130,26 @@ export const dataViewAppearance: PresentationDictionary = {
     { selector: '&[data-status="loading"]', declarations: { background: 'transparent' } },
   ],
   'data-view-skeleton': [],
+  'data-view-selection-box': [...checkboxRules],
+  // Tiles take the rows' fills in the same order of strength, on a rounded surface.
+  'data-view-tile': [
+    {
+      declarations: {
+        gap: 'var(--tp-space-1)',
+        padding: 'var(--tp-space-2)',
+        'border-radius': 'var(--tp-radius-md)',
+        [rowFill]: 'transparent',
+        background: `var(${rowFill})`,
+      },
+    },
+    { selector: '&:hover', declarations: { [rowFill]: tableRowHover } },
+    { selector: '&[data-selected]', declarations: { [rowFill]: tableSelectedFill } },
+    { selector: '&[data-drop-target]', declarations: dropInto },
+    { selector: '&:focus-visible', declarations: insetFocusRing },
+    { selector: '& .tile-title', declarations: { 'font-weight': 'var(--tp-font-medium)' } },
+    {
+      selector: '& .tile-subtitle',
+      declarations: { color: 'var(--tp-muted-foreground)', 'font-size': 'var(--tp-text-xs)' },
+    },
+  ],
 };

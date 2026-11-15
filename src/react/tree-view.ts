@@ -52,6 +52,7 @@ export type TreeViewProps<T = TreeViewDefaults[0]> = ElementProps<
   | 'density'
   | 'disabled'
   | 'dragActivation'
+  | 'dragAndDrop'
   | 'dropIndicator'
   | 'expanded'
   | 'expansionTrigger'

@@ -6,6 +6,7 @@ import type { TpColorPalette } from '../../widgets/color-palette/color-palette.j
 import type { TpColorPicker } from '../../widgets/color-picker/color-picker.js';
 import type { TpEasingEditor } from '../../widgets/easing-editor/easing-editor.js';
 import type { TpEmojiPicker } from '../../widgets/emoji-picker/emoji-picker.js';
+import type { TpFileExplorer } from '../../widgets/file-explorer/file-explorer.js';
 import type { TpFlow } from '../../widgets/flow/flow.js';
 import type { TpGradientPicker } from '../../widgets/gradient-picker/gradient-picker.js';
 import type { TpGradientStop } from '../../widgets/gradient-picker/gradient-stop.js';
@@ -15,6 +16,7 @@ import type { TpLayer, TpLayerState, TpLayerStateValue } from '../../widgets/lay
 import type { TpLayers } from '../../widgets/layers/layers.js';
 import type { TpPlot } from '../../widgets/plot/plot.js';
 import type { TpTextEditor } from '../../widgets/text-editor/text-editor.js';
+import type * as componentsDataViewTypes from '../../components/data-view/types.js';
 import type * as foundationCalendar from '../../foundation/calendar.js';
 import type * as foundationColorPaletteTypes from '../../foundation/color-palette/types.js';
 import type * as foundationColorPalette from '../../foundation/color/palette.js';
@@ -34,6 +36,7 @@ import type * as widgetsColorPaletteTypes from '../../widgets/color-palette/type
 import type * as widgetsColorPickerColorHarmony from '../../widgets/color-picker/color/harmony.js';
 import type * as widgetsColorPickerTypes from '../../widgets/color-picker/types.js';
 import type * as widgetsEmojiPickerTypes from '../../widgets/emoji-picker/types.js';
+import type * as widgetsFileExplorerTypes from '../../widgets/file-explorer/types.js';
 import type * as widgetsFlowTypes from '../../widgets/flow/types.js';
 import type * as widgetsGradientPickerGradientPicker from '../../widgets/gradient-picker/gradient-picker.js';
 import type * as widgetsHeatmapTypes from '../../widgets/heatmap/types.js';
@@ -296,6 +299,60 @@ type Tags = {
       >;
       'tp-value-change': foundationEvents.TpValueChangeEvent<string>;
       'tp-value-commit': foundationEvents.TpValueCommitEvent<string>;
+    }
+  >;
+  'tp-file-explorer': Tag<
+    TpFileExplorer,
+    | 'appearance'
+    | 'columns'
+    | 'defaultFolder'
+    | 'defaultSort'
+    | 'defaultValue'
+    | 'defaultView'
+    | 'density'
+    | 'details'
+    | 'disabled'
+    | 'folder'
+    | 'invalid'
+    | 'label'
+    | 'layers'
+    | 'messages'
+    | 'middleware'
+    | 'motionPolicy'
+    | 'operations'
+    | 'orientation'
+    | 'partContracts'
+    | 'partPresentation'
+    | 'query'
+    | 'readOnly'
+    | 'required'
+    | 'root'
+    | 'search'
+    | 'searchScope'
+    | 'selectionMode'
+    | 'showHidden'
+    | 'sidebar'
+    | 'sort'
+    | 'source'
+    | 'statusBar'
+    | 'value'
+    | 'view'
+    | 'views'
+    | 'visibleColumns',
+    {
+      'tp-create-folder': CustomEvent<widgetsFileExplorerTypes.FileExplorerOperationDetail>;
+      'tp-delete': CustomEvent<widgetsFileExplorerTypes.FileExplorerOperationDetail>;
+      'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
+      'tp-folder-change': foundationEvents.TpValueChangeEvent<string | null>;
+      'tp-move': CustomEvent<widgetsFileExplorerTypes.FileExplorerOperationDetail>;
+      'tp-open': CustomEvent<widgetsFileExplorerTypes.FileExplorerOpenDetail>;
+      'tp-operation-error': CustomEvent<widgetsFileExplorerTypes.FileExplorerErrorDetail>;
+      'tp-query-change': CustomEvent<{ value: string }>;
+      'tp-rename': CustomEvent<widgetsFileExplorerTypes.FileExplorerOperationDetail>;
+      'tp-sort-change': foundationEvents.TpValueChangeEvent<componentsDataViewTypes.DataViewSort | null>;
+      'tp-upload': CustomEvent<widgetsFileExplorerTypes.FileExplorerOperationDetail>;
+      'tp-value-change': foundationEvents.TpValueChangeEvent<readonly string[]>;
+      'tp-view-change': foundationEvents.TpValueChangeEvent<widgetsFileExplorerTypes.FileExplorerView>;
     }
   >;
   'tp-flow': Tag<

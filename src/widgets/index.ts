@@ -10,6 +10,7 @@ export * from './flow/index.js';
 export * from './gradient-picker/index.js';
 export * from './heatmap/index.js';
 export * from './image-editor/index.js';
+export * from './file-explorer/index.js';
 export * from './plot/index.js';
 export * from './text-editor/index.js';
 export * from './catalog.js';

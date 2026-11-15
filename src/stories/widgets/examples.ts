@@ -3,6 +3,8 @@ import type { widgetCatalog } from '../../widgets/catalog.js';
 import { todayCalendarDate } from '../../foundation/calendar.js';
 import { focusSessions } from './heatmap-samples.js';
 import { sampleHarbor } from '../images.js';
+import { createMemorySource } from '../../foundation/file-explorer/memory-source.js';
+import { observatoryArchive } from './file-explorer.examples.js';
 
 export type WidgetTag = (typeof widgetCatalog)[number][1];
 
@@ -71,6 +73,12 @@ const examples = {
       alt="A harbor town at dusk with a lighthouse and sailing boats"
       controls="zoom fit actual"
     ></tp-image-editor>`,
+  'tp-file-explorer': () =>
+    html`<tp-file-explorer
+      label="Ridgeline archive"
+      default-folder="plates"
+      .source=${createMemorySource(observatoryArchive())}
+    ></tp-file-explorer>`,
 } satisfies Record<WidgetTag, () => TemplateResult>;
 
 export function renderWidgetExample(tagName: WidgetTag): TemplateResult {

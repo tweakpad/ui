@@ -1,4 +1,6 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { createMemorySource } from '../../../foundation/file-explorer/memory-source.js';
+import type { FileEntry } from '../../../foundation/file-explorer/types.js';
 import { plusIcon } from '../../../icons/plus.js';
 import { eyeIcon } from '../../../icons/eye.js';
 import { eyeOffIcon } from '../../../icons/eye-off.js';
@@ -283,7 +285,57 @@ function hiddenLayers(layers: readonly Layer[], hidden = new Set<string>(), pare
   return hidden;
 }
 
-type FilesTab = 'files' | 'media' | 'campaign';
+type FilesTab = 'files' | 'media' | 'campaign' | 'browse';
+
+/** The project's folders and files as explorer entries, created once per load. */
+let projectSource: ReturnType<typeof createMemorySource> | undefined;
+function projectFiles() {
+  if (projectSource) return projectSource;
+  const entries: FileEntry[] = [];
+  const visit = (items: readonly Folder[], parentId: string | null) => {
+    for (const folder of items) {
+      if (folder.file) {
+        entries.push({
+          id: folder.value,
+          name: folder.label,
+          kind: 'file',
+          parentId,
+          size: 2_400,
+          type: 'text/markdown',
+          modified: daysAgo(1),
+        });
+        continue;
+      }
+      entries.push({
+        id: folder.value,
+        name: folder.label,
+        kind: 'folder',
+        parentId,
+        modified: daysAgo(2),
+      });
+      folderFiles(folder).forEach((file, index) =>
+        entries.push({
+          id: `${folder.value}/${index}`,
+          name: file.name,
+          kind: 'file',
+          parentId: folder.value,
+          size: file.size,
+          modified: daysAgo(file.days),
+          metadata: { owner: file.owner },
+        }),
+      );
+      visit(folder.children ?? [], folder.value);
+    }
+  };
+  visit(folders, null);
+  return (projectSource = createMemorySource(entries));
+}
+const ownerColumn = {
+  id: 'owner',
+  header: 'Owner',
+  width: '9rem',
+  value: (entry: FileEntry) => entry.metadata?.['owner'],
+};
 
 /** The selected folder's files, the README when it is selected, and a drop zone for uploads. */
 function renderFolder(host: WorkspaceHost, value: string) {
@@ -595,6 +647,7 @@ export function renderFiles(host: WorkspaceHost): PageView {
     <button slot="tab" value="files">All files</button>
     <button slot="tab" value="media">Media</button>
     <button slot="tab" value="campaign">Campaign</button>
+    <button slot="tab" value="browse">Browse</button>
     <div slot="panel" value="files" class="files-panel">
       ${
         tab === 'files'
@@ -627,6 +680,20 @@ export function renderFiles(host: WorkspaceHost): PageView {
     </div>
     <div slot="panel" value="campaign" class="files-panel">
       ${tab === 'campaign' ? renderCampaign(host) : nothing}
+    </div>
+    <div slot="panel" value="browse" class="files-panel">
+      ${
+        tab === 'browse'
+          ? html`<tp-file-explorer
+              class="files-explorer"
+              label="Project files"
+              default-folder="atlas"
+              details
+              .columns=${[ownerColumn]}
+              .source=${projectFiles()}
+            ></tp-file-explorer>`
+          : nothing
+      }
     </div>
   </tp-tabs>`;
   return {

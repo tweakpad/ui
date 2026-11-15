@@ -37,7 +37,7 @@ const definition: ComponentDefinition = {
     {
       name: 'data-view-row',
       description:
-        'One row; `data-stripe` (alternate rows while `striped`), `data-selected` and, under row navigation, `data-focused` mark it.',
+        'One row; `data-stripe` (alternate rows while `striped`), `data-selected`, `data-drop-target` (under a drag) and, under row navigation, `data-focused` mark it.',
     },
     {
       name: 'data-view-cell',
@@ -50,6 +50,25 @@ const definition: ComponentDefinition = {
         'The empty or error layer under the header, or the loading Progress bar along the header; `data-status` names it.',
     },
     { name: 'data-view-skeleton', description: 'A placeholder bar of a loading row.' },
+    {
+      name: 'data-view-selection-header',
+      description:
+        "The selection column's header, also a `data-view-column-header`: the select-all box under `multiple`.",
+    },
+    {
+      name: 'data-view-selection-cell',
+      description: "A row's cell in the selection column, also a `data-view-cell`.",
+    },
+    {
+      name: 'data-view-tile',
+      description:
+        'A row as a tile under `layout="grid"`; `data-selected`, `data-focused` and `data-drop-target` mark it.',
+    },
+    {
+      name: 'data-view-selection-box',
+      description:
+        'A selection box; `data-checked` while selected and `data-indeterminate` on the select-all box while only some rows are.',
+    },
   ],
 };
 
@@ -66,6 +85,8 @@ export const dataViewPresentation = definePresentation({
       '[part~="data-view-cell"]': 'data-view-cell',
       '[part~="data-view-state"]': 'data-view-state',
       '[part~="data-view-skeleton"]': 'data-view-skeleton',
+      '[part~="data-view-selection-box"]': 'data-view-selection-box',
+      '[part~="data-view-tile"]': 'data-view-tile',
     },
   },
   sources: [dataViewAppearance],

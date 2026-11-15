@@ -438,7 +438,7 @@ export const laneRows: LaneRow[] = [
     entry: 'tp-data-view',
     binding: 'DataView',
     lane: 'value',
-    initial: 'a',
+    initial: ['a'],
     propose: call('selectRow', 'b'),
     props: {
       label: 'Stations',
@@ -457,6 +457,14 @@ export const laneRows: LaneRow[] = [
     initial: { x: 0, y: 0, width: 400, height: 300, rotation: 0 },
     propose: call('setValue', { x: 40, y: 20, width: 200, height: 150, rotation: 90 }),
     props: { label: 'Cover' },
+  },
+  {
+    entry: 'tp-file-explorer',
+    binding: 'FileExplorer',
+    lane: 'view',
+    initial: 'details',
+    propose: call('setView', 'icons'),
+    props: { label: 'Archive' },
   },
   {
     entry: 'tp-heatmap',

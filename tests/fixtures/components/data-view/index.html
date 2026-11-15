@@ -36,6 +36,23 @@
   <body>
     <main>
       <h1>Data view verification</h1>
+      <tp-data-view
+        id="multi"
+        label="Stations to service"
+        selection-mode="multiple"
+        selection-behavior="replace"
+        selection-checkboxes
+        striped
+      ></tp-data-view>
+      <tp-data-view id="headless" label="Station names" header="hidden" size="sm"></tp-data-view>
+      <tp-data-view
+        id="tiles"
+        label="Station tiles"
+        layout="grid"
+        selection-mode="multiple"
+        selection-behavior="replace"
+        selection-checkboxes
+      ></tp-data-view>
       <section id="telemetry-section">
         <tp-input id="telemetry-search" placeholder="Search stations" aria-label="Search stations"></tp-input>
         <tp-data-view

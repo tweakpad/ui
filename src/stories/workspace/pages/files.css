@@ -183,3 +183,7 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.files-explorer {
+  block-size: 34rem;
+}

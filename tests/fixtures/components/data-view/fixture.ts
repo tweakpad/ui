@@ -1,6 +1,6 @@
 // Browser fixture for tp-data-view, driven only through Chrome DevTools MCP (see README.md).
 // The controlled owner supplies its value before the element upgrades.
-(document.getElementById('controlled') as unknown as { value: string }).value = 'st-0001';
+(document.getElementById('controlled') as unknown as { value: string[] }).value = ['st-0001'];
 const built = new URLSearchParams(location.search).has('built');
 await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
 const { html } = await import('lit');
@@ -73,6 +73,13 @@ search.addEventListener('input', () => {
   filter();
 });
 
+view('multi').columns = columns;
+view('multi').rows = stations.slice(0, 24);
+view('headless').columns = [stationColumns[0]!, stationColumns[1]!];
+view('headless').rows = stations.slice(0, 12);
+view('tiles').columns = [stationColumns[0]!, stationColumns[1]!, statusColumn];
+view('tiles').rows = stations;
+
 for (const id of ['rows', 'flat', 'rtl', 'wide', 'loading-rows']) {
   view(id).columns = columns;
   view(id).rows = stations;
@@ -95,9 +102,9 @@ controlled.columns = columns;
 controlled.rows = stations;
 controlled.addEventListener('tp-value-change', (event) => {
   const detail = (
-    event as CustomEvent<{ value: string | null; metadata?: { row?: { status: string } } }>
+    event as CustomEvent<{ value: string[]; metadata?: { rows?: { status: string }[] } }>
   ).detail;
-  if (detail.metadata?.row?.status === 'offline') event.preventDefault();
+  if (detail.metadata?.rows?.some((row) => row.status === 'offline')) event.preventDefault();
   else controlled.value = detail.value;
 });
 

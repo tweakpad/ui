@@ -205,6 +205,7 @@ import {
   ColorPicker,
   EasingEditor,
   EmojiPicker,
+  FileExplorer,
   Flow,
   GradientPicker,
   GradientStop,
@@ -447,6 +448,7 @@ import type { TpColorPalette as TpColorPaletteType } from '../../../src/widgets/
 import type { TpColorPicker as TpColorPickerType } from '../../../src/widgets/color-picker/color-picker.js';
 import type { TpEasingEditor as TpEasingEditorType } from '../../../src/widgets/easing-editor/easing-editor.js';
 import type { TpEmojiPicker as TpEmojiPickerType } from '../../../src/widgets/emoji-picker/emoji-picker.js';
+import type { TpFileExplorer as TpFileExplorerType } from '../../../src/widgets/file-explorer/file-explorer.js';
 import type { TpFlow as TpFlowType } from '../../../src/widgets/flow/flow.js';
 import type { TpGradientPicker as TpGradientPickerType } from '../../../src/widgets/gradient-picker/gradient-picker.js';
 import type { TpGradientStop as TpGradientStopType } from '../../../src/widgets/gradient-picker/gradient-stop.js';
@@ -686,6 +688,7 @@ export const elements: ReactElement[] = [
   <ColorPicker ref={(element: TpColorPickerType | null) => void element} />,
   <EasingEditor ref={(element: TpEasingEditorType | null) => void element} />,
   <EmojiPicker ref={(element: TpEmojiPickerType | null) => void element} />,
+  <FileExplorer ref={(element: TpFileExplorerType | null) => void element} />,
   <Flow ref={(element: TpFlowType | null) => void element} />,
   <GradientPicker ref={(element: TpGradientPickerType | null) => void element} />,
   <GradientStop ref={(element: TpGradientStopType | null) => void element} />,

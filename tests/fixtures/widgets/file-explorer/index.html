@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>File explorer verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 1200px;
+        display: grid;
+        gap: 40px;
+      }
+      #full {
+        block-size: 560px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>File explorer verification</h1>
+      <tp-file-explorer id="full" label="Ridgeline archive" details></tp-file-explorer>
+      <tp-file-explorer
+        id="picker"
+        label="Pick a spectrum"
+        root="spectra"
+        views="compact"
+        sidebar="false"
+        search="false"
+        selection-mode="single"
+        readonly
+      ></tp-file-explorer>
+      <tp-file-explorer id="slow" label="Slow source" default-folder="plates"></tp-file-explorer>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

@@ -13,6 +13,7 @@ import { TpLayers } from '../widgets/layers/layers.js';
 import { TpLayer, TpLayerState, TpLayerStateValue } from '../widgets/layers/layer.js';
 import { TpHeatmap } from '../widgets/heatmap/heatmap.js';
 import { TpImageEditor } from '../widgets/image-editor/image-editor.js';
+import { TpFileExplorer } from '../widgets/file-explorer/file-explorer.js';
 import { defineElement } from '../foundation/define.js';
 
 defineElement(TpColorPicker.tagName, TpColorPicker);
@@ -30,5 +31,6 @@ defineElement(TpLayerState.tagName, TpLayerState);
 defineElement(TpLayerStateValue.tagName, TpLayerStateValue);
 defineElement(TpHeatmap.tagName, TpHeatmap);
 defineElement(TpImageEditor.tagName, TpImageEditor);
+defineElement(TpFileExplorer.tagName, TpFileExplorer);
 
 export * from '../widgets/index.js';

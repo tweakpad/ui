@@ -109,7 +109,7 @@ const publishedGraph = (...entries) => {
 // included), `/emoji` or `/flow`.
 const optInModule = (file) =>
   /^dist\/(?:widgets\/|widgets\.js$|presentation\/(?:families\/)?widgets\.js$)/u.test(file) ||
-  /^dist\/(?:foundation\/(?:text-editor|emoji|flow|color-palette)\/|(?:text-editor|emoji|flow|color-palette)(?:\/[^/]+)*\.js$)/u.test(
+  /^dist\/(?:foundation\/(?:text-editor|emoji|flow|color-palette|file-explorer)\/|(?:text-editor|emoji|flow|color-palette|file-explorer)(?:\/[^/]+)*\.js$)/u.test(
     file,
   );
 for (const entry of ['dist/index.js', 'dist/register.js']) {
@@ -216,8 +216,8 @@ if (!elements.get('tp-input')?.events?.some((event) => event.name === 'tp-value-
 const editorProblems = textEditorManifestProblems(elementsManifest);
 if (editorProblems.length) fail(`custom-elements.json: ${editorProblems.join('; ')}`);
 const megabytes = (bytes) => bytes / 1024 / 1024;
-if (megabytes(pack.size) > 8)
-  fail(`tarball is ${megabytes(pack.size).toFixed(1)} MB (budget 8 MB)`);
+if (megabytes(pack.size) > 9)
+  fail(`tarball is ${megabytes(pack.size).toFixed(1)} MB (budget 9 MB)`);
 console.log(
   `pack-smoke: ${pack.filename} ${megabytes(pack.size).toFixed(1)} MB packed, ${megabytes(pack.unpackedSize).toFixed(1)} MB unpacked, ${files.size} files`,
 );
@@ -269,6 +269,7 @@ import * as markdown from '@tweakpad/ui/markdown';
 import * as qr from '@tweakpad/ui/qr';
 import * as emoji from '@tweakpad/ui/emoji';
 import * as colorPalette from '@tweakpad/ui/color-palette';
+import * as fileExplorer from '@tweakpad/ui/file-explorer';
 import cssNamedColors from '@tweakpad/ui/color-palette/collections/css-named';
 import * as flow from '@tweakpad/ui/flow';
 import * as textEditor from '@tweakpad/ui/text-editor';
@@ -287,7 +288,7 @@ const editor: HTMLElementTagNameMap['tp-text-editor'] = document.createElement('
 editor.value = editor.value;
 const pageIds: DocsIndex['pages'][number]['id'][] = docsIndex.pages.map((page) => page.id);
 const patternTitles: DocsIndex['patterns'][number]['title'][] = docsIndex.patterns.map((pattern) => pattern.title);
-export const used = [TpIcon, editor, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, emoji.builtinEmojiData().emojis.length, colorPalette.defaultColorCollection.colors.length, cssNamedColors.colors.length, flow.FLOW_DOCUMENT_VERSION, textEditor, textEditorTiptap, textEditorLexical, widgetEntries.length, packageJson.version, parseDoc, elementApi, literalCode().name, pageIds.length, patternTitles.length, googleMarkUrl.length];
+export const used = [TpIcon, editor, plusIcon.viewBox, createId(), carousel, dragDrop, media, map, code, markdown, qr.encodeQr('x').size, emoji.builtinEmojiData().emojis.length, colorPalette.defaultColorCollection.colors.length, typeof fileExplorer.createMemorySource, cssNamedColors.colors.length, flow.FLOW_DOCUMENT_VERSION, textEditor, textEditorTiptap, textEditorLexical, widgetEntries.length, packageJson.version, parseDoc, elementApi, literalCode().name, pageIds.length, patternTitles.length, googleMarkUrl.length];
 `,
 );
 writeFileSync(join(consumer, 'css.d.ts'), "declare module '*.css';\n");
@@ -386,6 +387,18 @@ run(
   consumer,
 );
 console.log('pack-smoke: @tweakpad/ui/color-palette runs in Node');
+
+// The file explorer data layer is DOM-free: a memory source behind the default layers runs in Node.
+run(
+  process.execPath,
+  [
+    '--input-type=module',
+    '-e',
+    "const { createMemorySource, createFilePipeline, defaultFileLayers } = await import('@tweakpad/ui/file-explorer'); const pipeline = createFilePipeline(createMemorySource([{ id: 'a', name: 'Notes.txt', kind: 'file', parentId: null }]), defaultFileLayers()); const signal = new AbortController().signal; const listed = await pipeline.run('list', { folder: null, signal }); const found = await pipeline.run('search', { query: 'notes', folder: null, scope: 'all', limit: 5, signal }); if (listed.entries.length !== 1 || found.hits.length !== 1) process.exit(1);",
+  ],
+  consumer,
+);
+console.log('pack-smoke: @tweakpad/ui/file-explorer runs in Node');
 
 // The flow engine is DOM-free as well: model, routing and layout must run in Node (and workers).
 run(

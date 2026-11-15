@@ -1,7 +1,10 @@
 import { Scrollable } from '../../foundation/scrollable.js';
 import { NativeScrollEdges } from '../shared/scroll-edges.js';
 import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
+import { Droppable } from '../../foundation/drag-drop/entities.js';
+import type { DragEvent as DropEvent } from '../../foundation/drag-drop/types.js';
 import { TpElement } from '../../foundation/element.js';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState, orderedValuesEqual } from '../../foundation/controllable-state.js';
@@ -62,6 +65,7 @@ import type {
   TreeViewDropTarget,
   TreeViewExpansionTrigger,
   TreeViewDragActivation,
+  TreeViewDragAndDrop,
   TreeViewDropIndicator,
   TreeViewGuides,
   TreeViewHandlePlacement,
@@ -151,6 +155,7 @@ export class TpTreeView<T = TreeViewItem>
     itemSize: { type: Number, attribute: 'item-size' },
     overscan: { type: Number },
     reorderable: { type: Boolean, reflect: true },
+    dragAndDrop: { attribute: false },
     dragActivation: { type: String, attribute: 'drag-activation', reflect: true },
     dropIndicator: { type: String, attribute: 'drop-indicator', reflect: true },
     handlePlacement: { type: String, attribute: 'handle-placement', reflect: true },
@@ -267,6 +272,8 @@ export class TpTreeView<T = TreeViewItem>
   overscan = 4;
   /** Lets people drag items, or move them with the keyboard, to a new place; the tree proposes each move through `tp-items-change`. */
   reorderable = false;
+  /** Makes items drop targets of a drag and drop manager shared with other surfaces; see `TreeViewDragAndDrop`. */
+  dragAndDrop: TreeViewDragAndDrop<T> | undefined;
   /**
    * Where a pointer drag starts: on the handle, or anywhere on the row; presses on the row's
    * controls and on a parent's chevron stay theirs, and the handle stays shown.
@@ -701,6 +708,7 @@ export class TpTreeView<T = TreeViewItem>
   }
 
   override disconnectedCallback(): void {
+    this.#releaseDropTargets();
     this.#observer?.disconnect();
     this.#observer = null;
     this.#loader.abortPending();
@@ -723,6 +731,8 @@ export class TpTreeView<T = TreeViewItem>
       this.#expandedSet = new Set(this.#expansion.value);
       this.#rebuild();
       this.#initialScroll();
+      // Expanded items start loading here, so their loading state is part of the first render.
+      this.#ensureLoaded(this.expanded);
     }
     if (changed.has('selectionMode') && this.hasUpdated) {
       const constrained = constrainSelection(this.value, this.selectionMode);
@@ -752,12 +762,9 @@ export class TpTreeView<T = TreeViewItem>
     this.#direction = this.direction;
   }
 
-  protected override firstUpdated(): void {
-    this.#ensureLoaded(this.expanded);
-  }
-
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
+    if (changed.has('dragAndDrop') || changed.has('items')) this.#refreshDropTargets();
     if (this.#records) {
       this.#mounted.clear();
       for (const element of this.renderRoot.querySelectorAll<TpTreeItem>('.list tp-tree-item')) {
@@ -950,6 +957,94 @@ export class TpTreeView<T = TreeViewItem>
     );
   }
 
+  // ── External drop targets ──────────────────────────────────────────────────
+
+  #dropTargets = new Map<string, { element: Element; droppable: Droppable | undefined }>();
+  #dropReferences = new Map<string, (element: Element | undefined) => void>();
+  #dropScope = `tree-view-${createId()}`;
+  #dropManager: TreeViewDragAndDrop<T>['manager'] | undefined;
+  #releaseDropMonitor: (() => void) | undefined;
+  #externalTarget: string | null = null;
+  #hoverExpand: { id: string; timer: ReturnType<typeof setTimeout> } | null = null;
+
+  /** The reference that binds a mounted item to the shared manager, stable per item. */
+  #dropReference(id: string): (element: Element | undefined) => void {
+    let reference = this.#dropReferences.get(id);
+    if (!reference) {
+      reference = (element) => this.#bindDropTarget(id, element);
+      this.#dropReferences.set(id, reference);
+    }
+    return reference;
+  }
+
+  #bindDropTarget(id: string, element: Element | undefined): void {
+    this.#dropTargets.get(id)?.droppable?.destroy();
+    this.#dropTargets.delete(id);
+    const config = this.dragAndDrop;
+    const node = this.#model.get(id);
+    if (!element || !config || !node) return;
+    this.#watchDropManager();
+    const droppable = config.target?.(node.item as T, id)
+      ? new Droppable(
+          {
+            id: `${this.#dropScope}:${id}`,
+            element,
+            data: { itemId: id, item: node.item, tree: this },
+          },
+          config.manager,
+        )
+      : undefined;
+    this.#dropTargets.set(id, { element, droppable });
+  }
+
+  /** Follows the shared manager's drags to mark the item under them. */
+  #watchDropManager(): void {
+    const manager = this.dragAndDrop?.manager;
+    if (manager === this.#dropManager) return;
+    this.#releaseDropMonitor?.();
+    this.#releaseDropMonitor = undefined;
+    this.#dropManager = manager;
+    if (!manager) return;
+    const releases = [
+      manager.monitor.addEventListener('dragover', (event: DropEvent) => this.#markExternal(event)),
+      manager.monitor.addEventListener('dragend', () => this.#markExternal(null)),
+    ];
+    this.#releaseDropMonitor = () => releases.forEach((release) => release());
+  }
+
+  #markExternal(event: DropEvent | null): void {
+    const target = event?.operation.target;
+    const prefix = `${this.#dropScope}:`;
+    const id =
+      target && String(target.id).startsWith(prefix)
+        ? String(target.id).slice(prefix.length)
+        : null;
+    if (id === this.#externalTarget) return;
+    this.#externalTarget = id;
+    if (this.#hoverExpand) clearTimeout(this.#hoverExpand.timer);
+    this.#hoverExpand = null;
+    // A collapsed item opens after a short hover, so a drag can reach its children.
+    if (id && this.#model.get(id)?.expandable && !this.#expandedSet.has(id))
+      this.#hoverExpand = { id, timer: setTimeout(() => this.#toggle(id, true, 'drag'), 500) };
+    this.requestUpdate();
+  }
+
+  /** Rebinds the mounted items after the items or the hooks changed. */
+  #refreshDropTargets(): void {
+    this.#watchDropManager();
+    for (const [id, entry] of [...this.#dropTargets]) this.#bindDropTarget(id, entry.element);
+  }
+
+  #releaseDropTargets(): void {
+    for (const entry of this.#dropTargets.values()) entry.droppable?.destroy();
+    this.#dropTargets.clear();
+    this.#releaseDropMonitor?.();
+    this.#releaseDropMonitor = undefined;
+    this.#dropManager = undefined;
+    if (this.#hoverExpand) clearTimeout(this.#hoverExpand.timer);
+    this.#hoverExpand = null;
+  }
+
   #renderRow(id: string, leaving = false): TemplateResult {
     const node = this.#model.get(id);
     if (!node) return html``;
@@ -972,6 +1067,7 @@ export class TpTreeView<T = TreeViewItem>
       : nothing;
     const reorder = this.#reorder.enabled;
     return html`<tp-tree-item
+      ${ref(this.#dropReference(id))}
       part="item"
       exportparts=${ITEM_PARTS}
       .owner=${this}
@@ -1012,7 +1108,7 @@ export class TpTreeView<T = TreeViewItem>
       expansionTrigger: this.expansionTrigger,
       transition: id === this.#transitionId,
       dragging: this.#reorder.isSource(id),
-      dropInto: this.#reorder.isDropInto(id),
+      dropInto: this.#reorder.isDropInto(id) || this.#externalTarget === id,
       handlePlacement: this.handlePlacement === 'start' ? 'start' : 'end',
       direction: this.#direction,
     };

@@ -3,6 +3,7 @@ export * from './color-palette.js';
 export * from './color-picker.js';
 export * from './easing-editor.js';
 export * from './emoji-picker.js';
+export * from './file-explorer.js';
 export * from './flow.js';
 export * from './gradient-picker.js';
 export * from './heatmap.js';

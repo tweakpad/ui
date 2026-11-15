@@ -76,6 +76,7 @@ export default defineConfig({
         code: resolve(import.meta.dirname, 'src/foundation/code/index.ts'),
         emoji: resolve(import.meta.dirname, 'src/foundation/emoji/index.ts'),
         'color-palette': resolve(import.meta.dirname, 'src/foundation/color-palette/index.ts'),
+        'file-explorer': resolve(import.meta.dirname, 'src/foundation/file-explorer/index.ts'),
         ...collectionEntries,
         markdown: resolve(import.meta.dirname, 'src/foundation/markdown/index.ts'),
         qr: resolve(import.meta.dirname, 'src/foundation/qr/index.ts'),

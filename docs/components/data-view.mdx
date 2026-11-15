@@ -87,7 +87,7 @@ const ordered = sortDataViewRows(stations, { column: 'battery', direction: 'desc
 
 ### Selection and activation
 
-`selection-mode="single"` lets a press or <Keys keys="Space" /> select one row; `value` holds its id and each change is a cancelable `tp-value-change` that carries the row. <Keys keys="Enter" /> or a double click fires `tp-row-activate`, where you open the record. Presses on links and buttons inside cells keep their own behavior.
+`selection-mode="single"` lets a press or <Keys keys="Space" /> select one row; `value` holds the selected ids and each change is a cancelable `tp-value-change` that carries the rows. <Keys keys="Enter" /> or a double click fires `tp-row-activate`, where you open the record. Presses on links and buttons inside cells keep their own behavior.
 
 <Preview
   title="Selection"
@@ -106,6 +106,49 @@ view.rows = [
   { id: 'st-04', name: 'Dovetail Pass', region: 'Highlands', sensors: 4 },
 ];
 view.addEventListener('tp-row-activate', (event) => console.log('Open', event.detail.rowId));`}
+/>
+
+`selection-mode="multiple"` selects several rows. A press toggles a row; with `selection-behavior="replace"` it selects only that row, <Keys keys="mod" /> toggles and <Keys keys="Shift" /> extends, and arrow keys select as they move. `selection-checkboxes` adds a pinned column of boxes with a select-all box in its header.
+
+<Preview
+  title="Several rows"
+  align="stretch"
+  code={`<tp-data-view id="data-view-multiple" label="Stations to service" selection-mode="multiple" selection-behavior="replace" selection-checkboxes style="block-size: 14rem"></tp-data-view>`}
+  script={`const view = document.querySelector('#data-view-multiple');
+view.columns = [
+  { id: 'name', header: 'Station', rowHeader: true },
+  { id: 'region', header: 'Region' },
+  { id: 'battery', header: 'Battery', align: 'end', width: '6rem', format: (value) => value + '%' },
+];
+view.rows = [
+  { id: 'st-01', name: 'Alder Flats', region: 'Coast', battery: 92 },
+  { id: 'st-02', name: 'Brindle Cove', region: 'Islands', battery: 41 },
+  { id: 'st-03', name: 'Cinder Ridge', region: 'Highlands', battery: 77 },
+  { id: 'st-04', name: 'Dovetail Pass', region: 'Highlands', battery: 18 },
+];`}
+/>
+
+### Tiles
+
+`layout="grid"` shows each row as a tile, as many to a row as fit, at least `--tp-data-view-tile-size` wide. A tile shows the first column's content above the second column's text; the middleware's `tile` hook renders it any other way, with `renderCell` and `text` to reuse the columns. Selection, sorting and the states work as in the table, and arrow keys move in two dimensions.
+
+<Preview
+  title="Tiles"
+  align="stretch"
+  code={`<tp-data-view id="data-view-tiles" label="Field stations" layout="grid" selection-mode="multiple" selection-behavior="replace" style="block-size: 14rem"></tp-data-view>`}
+  script={`const view = document.querySelector('#data-view-tiles');
+view.columns = [
+  { id: 'name', header: 'Station' },
+  { id: 'region', header: 'Region' },
+];
+view.rows = [
+  { id: 'st-01', name: 'Alder Flats', region: 'Coast' },
+  { id: 'st-02', name: 'Brindle Cove', region: 'Islands' },
+  { id: 'st-03', name: 'Cinder Ridge', region: 'Highlands' },
+  { id: 'st-04', name: 'Dovetail Pass', region: 'Highlands' },
+  { id: 'st-05', name: 'Ember Hollow', region: 'Valley' },
+  { id: 'st-06', name: 'Gannet Point', region: 'Coast' },
+];`}
 />
 
 ### Loading, empty and error
@@ -283,6 +326,8 @@ The grid is one tab stop. With `navigation="cell"`, the default, arrow keys move
 | <Keys keys="mod+Home" />, <Keys keys="mod+End" /> | Move to the first or last cell of the grid |
 | <Keys keys="PageUp" />, <Keys keys="PageDown" /> | Move by a viewport of rows |
 | <Keys keys="Enter" /> | On a header, sort; on a row, open it, or move into the cell's link or button |
-| <Keys keys="Space" /> | On a header, sort; on a row, select it |
+| <Keys keys="Space" /> | On a header, sort; on a row, select it, or toggle it under `multiple` |
+| <Keys keys="Shift+ArrowDown" />, <Keys keys="Shift+Space" /> | Extend the selection under `multiple` |
+| <Keys keys="mod+A" />, <Keys keys="Escape" /> | Select every row, or clear the selection, under `multiple` |
 | <Keys keys="Alt+ArrowDown" /> | On a header, move into its column action |
 | <Keys keys="Escape" /> | From a cell's link or button, or a header's action, back to the cell |

@@ -141,3 +141,45 @@ function moveRow(
     }
   }
 }
+
+/**
+ * The tile a key moves to in a grid of `count` tiles flowing `columns` per row: arrows step along
+ * the reading order (wrapping between rows) or down a column, landing on the last tile from a
+ * shorter last row; Home and End reach the row's ends, with Ctrl or Cmd the first and last tiles;
+ * Page Up and Page Down move `pageRows` rows. Null when the move leaves the tiles.
+ */
+export function moveTile(
+  index: number,
+  count: number,
+  columns: number,
+  move: GridKeyMove,
+  pageRows: number,
+): number | null {
+  if (count <= 0) return null;
+  const width = Math.max(1, Math.floor(columns) || 1);
+  const row = Math.floor(index / width);
+  const last = count - 1;
+  const lastRow = Math.floor(last / width);
+  let next: number;
+  switch (move.kind) {
+    case 'step':
+      if (move.rows) {
+        const target = row + move.rows;
+        if (target < 0 || target > lastRow) return null;
+        next = Math.min(last, index + move.rows * width);
+      } else next = index + move.columns;
+      break;
+    case 'line':
+      next = move.edge === 'start' ? row * width : Math.min(last, row * width + width - 1);
+      break;
+    case 'grid':
+      next = move.edge === 'start' ? 0 : last;
+      break;
+    case 'page': {
+      const target = Math.max(0, Math.min(lastRow, row + move.direction * Math.max(1, pageRows)));
+      next = Math.min(last, target * width + (index % width));
+      break;
+    }
+  }
+  return next >= 0 && next <= last ? next : null;
+}

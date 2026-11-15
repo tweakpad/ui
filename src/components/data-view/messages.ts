@@ -7,6 +7,8 @@ export const DEFAULT_DATA_VIEW_MESSAGES: DataViewMessages = {
   loading: 'Loading',
   retry: 'Retry',
   errorTitle: 'The rows could not be loaded',
+  selectAll: 'Select all rows',
+  selection: 'Selection',
   sorted: (column, direction) =>
     direction ? `Sorted by ${column}, ${direction}` : `Sorting by ${column} removed`,
 };

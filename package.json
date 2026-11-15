@@ -57,6 +57,11 @@
       "import": "./dist/emoji.js",
       "default": "./dist/emoji.js"
     },
+    "./file-explorer": {
+      "types": "./dist/foundation/file-explorer/index.d.ts",
+      "import": "./dist/file-explorer.js",
+      "default": "./dist/file-explorer.js"
+    },
     "./color-palette": {
       "types": "./dist/foundation/color-palette/index.d.ts",
       "import": "./dist/color-palette.js",

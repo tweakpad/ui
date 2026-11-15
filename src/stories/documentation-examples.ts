@@ -28,6 +28,7 @@ const PUBLISHED_FOUNDATION_ENTRIES: readonly string[] = [
   'flow',
   'text-editor',
   'color-palette',
+  'file-explorer',
 ];
 
 /** Rewrites repository-relative icon imports (any depth) to the published `@tweakpad/ui/icons/*`. */

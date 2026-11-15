@@ -3,6 +3,7 @@ import type { GridKeyMove } from '../../../../src/foundation/grid-navigation.js'
 import {
   clampPosition,
   firstPosition,
+  moveTile,
   movePosition,
   type DataViewGrid,
 } from '../../../../src/components/data-view/navigation.js';
@@ -92,5 +93,31 @@ describe('positions', () => {
     expect(clampPosition(grid('cell', 2), { row: 7, column: 9 })).toEqual({ row: 1, column: 2 });
     expect(clampPosition(grid('row', 2), { row: 7, column: 1 })).toEqual({ row: 1, column: -1 });
     expect(clampPosition(grid('row'), { row: -1, column: 1 })).toEqual({ row: -1, column: 0 });
+  });
+});
+
+describe('moveTile', () => {
+  const step = (columns: -1 | 0 | 1, rows: -1 | 0 | 1) =>
+    ({ kind: 'step', columns, rows }) as const;
+  // 10 tiles, 4 per row: rows [0-3], [4-7], [8-9].
+  it('steps along the reading order, wrapping between rows', () => {
+    expect(moveTile(3, 10, 4, step(1, 0), 2)).toBe(4);
+    expect(moveTile(4, 10, 4, step(-1, 0), 2)).toBe(3);
+    expect(moveTile(9, 10, 4, step(1, 0), 2)).toBeNull();
+    expect(moveTile(0, 10, 4, step(-1, 0), 2)).toBeNull();
+  });
+  it('steps down a column, landing on the last tile of a shorter row', () => {
+    expect(moveTile(1, 10, 4, step(0, 1), 2)).toBe(5);
+    expect(moveTile(7, 10, 4, step(0, 1), 2)).toBe(9);
+    expect(moveTile(9, 10, 4, step(0, 1), 2)).toBeNull();
+    expect(moveTile(2, 10, 4, step(0, -1), 2)).toBeNull();
+  });
+  it('reaches row ends, the grid ends and pages of rows', () => {
+    expect(moveTile(5, 10, 4, { kind: 'line', edge: 'start' }, 2)).toBe(4);
+    expect(moveTile(8, 10, 4, { kind: 'line', edge: 'end' }, 2)).toBe(9);
+    expect(moveTile(5, 10, 4, { kind: 'grid', edge: 'end' }, 2)).toBe(9);
+    expect(moveTile(5, 10, 4, { kind: 'grid', edge: 'start' }, 2)).toBe(0);
+    expect(moveTile(1, 10, 4, { kind: 'page', direction: 1, large: false }, 2)).toBe(9);
+    expect(moveTile(9, 10, 4, { kind: 'page', direction: -1, large: false }, 1)).toBe(5);
   });
 });

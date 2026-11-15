@@ -1,3 +1,4 @@
+import type { DragDropManager } from '../../foundation/drag-drop/manager.js';
 import type { TemplateResult } from 'lit';
 import type {
   TreeCheckedState,
@@ -89,6 +90,17 @@ export type TreeViewRenderItem<T> = (
   item: T,
   context: TreeViewRenderContext,
 ) => TemplateResult | string | Node | readonly unknown[] | null | undefined;
+
+/**
+ * Makes items drop targets on a drag and drop manager the owner shares with other surfaces, apart
+ * from the tree's own reordering: the item under a drag carries `data-drop-into`, a collapsed one
+ * expands after a short hover, and the owner reads the drop from the manager's events.
+ */
+export interface TreeViewDragAndDrop<T> {
+  readonly manager: DragDropManager;
+  /** Whether an item receives drops. */
+  target?(item: T, id: string): boolean;
+}
 
 /**
  * A Tree view's `loadChildren`, which loads an item's children on its first expansion; the signal

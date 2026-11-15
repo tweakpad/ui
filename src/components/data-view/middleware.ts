@@ -62,6 +62,12 @@ const defaultLayer: DataViewMiddleware<unknown> = {
   name: 'defaults',
   cell: (context) => html`<span class="text">${context.renderText()}</span>`,
   text: (context) => context.text,
+  tile: (context) => {
+    const [title, subtitle] = context.columns;
+    return html`${title ? html`<span class="tile-title">${context.renderCell(title)}</span>` : nothing}${
+      subtitle ? html`<span class="tile-subtitle">${context.text(subtitle)}</span>` : nothing
+    }`;
+  },
   columnHeader: (context) =>
     html`<span class="label">${context.column.header}</span
       >${context.sortIndicator()}${context.action}`,
