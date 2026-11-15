@@ -3,6 +3,7 @@ import { ManualFrames, styledDocument } from './fakes.test.js';
 import { FrameLoop } from '../../../src/foundation/frame-loop.js';
 import {
   AUTO_PAN_SPEED,
+  DOUBLE_TAP_SLOP,
   PanZoomController,
   WHEEL_LATCH_SLOP,
   WHEEL_LATCH_TIMEOUT,
@@ -14,6 +15,7 @@ import {
   type PanZoomOptions,
   type PanZoomPoint,
   type PanZoomPolicy,
+  type PanZoomSize,
   type PanZoomViewport,
 } from '../../../src/foundation/pan-zoom.js';
 
@@ -22,6 +24,7 @@ class FakeWindow extends EventTarget {
   readonly #timers = new Map<number, { at: number; callback: () => void }>();
   #next = 0;
   #now = 0;
+  readonly performance = { now: () => this.#now };
   get frames(): FrameRequestCallback[] {
     return [...this.#frames.values()];
   }
@@ -139,17 +142,23 @@ interface SetupOptions {
   frameLoop?: PanZoomOptions['frameLoop'];
   /** Reads wheels on a separate container element. */
   wheelElement?: boolean;
+  clamp?: PanZoomOptions['clamp'];
+  /** Makes the fake window the element's view, so the tap recognizer's timers run on it. */
+  taps?: boolean;
 }
 
 function setup(options: SetupOptions = {}) {
   const owner = new FakeWindow();
   const element = new FakeElement();
+  if (options.taps)
+    Object.defineProperty(element, 'ownerDocument', { value: { defaultView: owner } });
   const wheelElement = options.wheelElement ? new FakeElement() : element;
   const model = { viewport: options.viewport ?? { x: 0, y: 0, zoom: 1 } };
   const policy: PanZoomPolicy = { ...DEFAULT_POLICY, ...options.policy };
   const limits: PanZoomLimits = { minZoom: 0.25, maxZoom: 4, ...options.limits };
   const calls: string[] = [];
   const viewports: PanZoomViewport[] = [];
+  const rotations: { delta: number; center: PanZoomPoint; event: Event }[] = [];
   const handlers = {
     start: vi.fn((reason: string) => {
       calls.push(`start:${reason}`);
@@ -165,6 +174,10 @@ function setup(options: SetupOptions = {}) {
     cancel: vi.fn(() => {
       calls.push('cancel');
     }),
+    rotate: vi.fn((delta: number, center: PanZoomPoint, event: Event) => {
+      rotations.push({ delta, center, event });
+      calls.push('rotate');
+    }),
   };
   const controller = new PanZoomController({
     element: element as unknown as HTMLElement,
@@ -176,6 +189,7 @@ function setup(options: SetupOptions = {}) {
     ...(options.filter ? { filter: options.filter } : {}),
     ...(options.frameLoop ? { frameLoop: options.frameLoop } : {}),
     ...(options.wheelElement ? { wheelElement: wheelElement as unknown as HTMLElement } : {}),
+    ...(options.clamp ? { clamp: options.clamp } : {}),
   });
   controller.connect();
   return {
@@ -188,6 +202,7 @@ function setup(options: SetupOptions = {}) {
     controller,
     calls,
     viewports,
+    rotations,
     handlers,
   };
 }
@@ -797,5 +812,211 @@ describe('PanZoomController', () => {
     controller.connect();
     element.dispatchEvent(pointer('pointerdown'));
     expect(calls.at(-1)).toBe('start:drag');
+  });
+
+  it('routes every computed viewport through the clamp option after the zoom range, not the extent', async () => {
+    const seen: { viewport: PanZoomViewport; size: PanZoomSize }[] = [];
+    // Keeps x at or below 0 and pins y; the translate extent below would push both elsewhere.
+    const bound = (viewport: PanZoomViewport, size: PanZoomSize): PanZoomViewport => {
+      seen.push({ viewport, size });
+      return { x: Math.min(0, viewport.x), y: 7, zoom: viewport.zoom };
+    };
+    const frames = new ManualFrames();
+    const { owner, element, controller, viewports } = setup({
+      clamp: bound,
+      frameLoop: new FrameLoop(frames),
+      limits: {
+        maxZoom: 2,
+        translateExtent: [
+          [0, 0],
+          [400, 300],
+        ],
+      },
+    });
+    element.dispatchEvent(pointer('pointerdown'));
+    element.dispatchEvent(pointer('pointermove', { clientX: 60, clientY: 50 }));
+    owner.flush();
+    expect(viewports.at(-1)).toEqual({ x: 0, y: 7, zoom: 1 });
+    element.dispatchEvent(pointer('pointermove', { clientX: -40, clientY: 50 }));
+    owner.flush();
+    expect(viewports.at(-1)).toEqual({ x: -50, y: 7, zoom: 1 });
+    element.dispatchEvent(pointer('pointerup', { clientX: -40, clientY: 50 }));
+    // The zoom range applies before the hook sees the viewport.
+    element.dispatchEvent(wheel({ deltaY: -10000 }));
+    expect(seen.at(-1)!.viewport.zoom).toBe(2);
+    expect(seen.at(-1)!.size).toEqual({ width: 200, height: 100 });
+    expect(viewports.at(-1)).toMatchObject({ y: 7, zoom: 2 });
+    owner.advance(WHEEL_LATCH_TIMEOUT);
+    element.dispatchEvent(doubleClick({ shiftKey: true }));
+    expect(viewports.at(-1)).toMatchObject({ y: 7, zoom: 2 / 1.2 });
+    controller.panBy({ x: 500, y: 500 });
+    expect(viewports.at(-1)).toMatchObject({ x: 0, y: 7 });
+    controller.zoomAround({ x: 0, y: 0 }, 100);
+    expect(viewports.at(-1)).toEqual({ x: 0, y: 7, zoom: 2 });
+    const settled = controller.animateTo(
+      { x: 300, y: 300, zoom: 1 },
+      { duration: 100, easing: (t) => t },
+    );
+    frames.tick(50);
+    expect(viewports.at(-1)!.y).toBe(7);
+    frames.tick(50);
+    await expect(settled).resolves.toBe(true);
+    expect(viewports.at(-1)).toEqual({ x: 0, y: 7, zoom: 1 });
+    controller.autoPan({ x: 190, y: 50 });
+    frames.tick();
+    controller.stopAutoPan();
+    expect(viewports.at(-1)).toEqual({ x: -AUTO_PAN_SPEED * 0.75, y: 7, zoom: 1 });
+    // Every reported viewport is one the hook returned.
+    expect(viewports.every((viewport) => viewport.y === 7)).toBe(true);
+  });
+
+  it('pans sideways for a horizontal or Shift wheel under the zoom wheel with wheelCrossAxisPans', () => {
+    const { element, viewports, calls } = setup({ policy: { wheelCrossAxisPans: true } });
+    element.dispatchEvent(wheel({ deltaX: 30, deltaY: 10 }));
+    expect(viewports[0]).toEqual({ x: -30, y: 0, zoom: 1 });
+    // Line deltas count 20 pixels, as for the pan wheel.
+    element.dispatchEvent(wheel({ deltaX: 2, deltaMode: 1 }));
+    expect(viewports[1]).toEqual({ x: -70, y: 0, zoom: 1 });
+    // Shift turns a vertical wheel sideways; a platform-swapped Shift wheel keeps its deltaX.
+    element.dispatchEvent(wheel({ deltaY: 20, shiftKey: true }));
+    expect(viewports[2]).toEqual({ x: -90, y: 0, zoom: 1 });
+    element.dispatchEvent(wheel({ deltaX: 10, deltaY: 0, shiftKey: true }));
+    expect(viewports[3]).toEqual({ x: -100, y: 0, zoom: 1 });
+    // A mostly vertical wheel still zooms, and so does a Ctrl wheel whatever its axis.
+    element.dispatchEvent(wheel({ deltaX: 5, deltaY: -100 }));
+    expect(viewports[4]!.zoom).toBeCloseTo(2 ** 0.2);
+    expect(calls.filter((call) => call === 'start:wheel')).toHaveLength(1);
+    const pinch = setup({ policy: { wheelCrossAxisPans: true } });
+    pinch.element.dispatchEvent(wheel({ deltaX: 50, deltaY: -10, ctrlKey: true }));
+    expect(pinch.viewports[0]!.zoom).toBeCloseTo(2 ** 0.02);
+  });
+
+  it('zooms on a horizontal or Shift wheel under the default zoom wheel policy', () => {
+    const { element, viewports } = setup({ viewport: { x: 10, y: 20, zoom: 1 } });
+    element.dispatchEvent(wheel({ deltaX: 30, deltaY: 10 }));
+    const factor = 2 ** -0.02;
+    near(viewports[0]!, { x: 100 - 90 * factor, y: 50 - 30 * factor, zoom: factor });
+    element.dispatchEvent(wheel({ deltaX: 40, deltaY: 0 }));
+    expect(viewports[1]!.zoom).toBeCloseTo(factor);
+    element.dispatchEvent(wheel({ deltaY: -10, shiftKey: true }));
+    expect(viewports[2]!.zoom).toBeCloseTo(1);
+  });
+
+  it('reports the pinch turn once per frame before the move and keeps the content under the center', () => {
+    const { owner, element, calls, viewports, rotations } = setup({
+      policy: { pinchRotate: true },
+    });
+    // Element-relative (50, 50) and (150, 50): center (100, 50), distance 100, angle 0.
+    element.dispatchEvent(pointer('pointerdown', { pointerId: 1, clientX: 60, clientY: 70 }));
+    element.dispatchEvent(pointer('pointerdown', { pointerId: 2, clientX: 160, clientY: 70 }));
+    // A quarter turn clockwise around the same center: (100, 0) and (100, 100).
+    element.dispatchEvent(pointer('pointermove', { pointerId: 1, clientX: 110, clientY: 20 }));
+    element.dispatchEvent(pointer('pointermove', { pointerId: 2, clientX: 110, clientY: 120 }));
+    expect(rotations).toEqual([]);
+    owner.flush();
+    expect(calls).toEqual(['start:drag', 'rotate', 'move:drag']);
+    expect(rotations).toHaveLength(1);
+    expect(rotations[0]!.delta).toBeCloseTo(90, 6);
+    nearPoint(rotations[0]!.center, { x: 100, y: 50 });
+    expect(rotations[0]!.event.type).toBe('pointermove');
+    // The flow point (100, 50) stays under the center for a content turn about the flow origin.
+    near(viewports[0]!, { x: 150, y: -50, zoom: 1 });
+
+    // Turning on past half a turn reports the short way round, not a jump of a full turn.
+    const at = (degrees: number, sign: 1 | -1) => {
+      const radians = (degrees * Math.PI) / 180;
+      return {
+        clientX: 110 + sign * 50 * Math.cos(radians),
+        clientY: 70 + sign * 50 * Math.sin(radians),
+      };
+    };
+    element.dispatchEvent(pointer('pointermove', { pointerId: 1, ...at(200, -1) }));
+    element.dispatchEvent(pointer('pointermove', { pointerId: 2, ...at(200, 1) }));
+    owner.flush();
+    expect(rotations[1]!.delta).toBeCloseTo(110, 6);
+    // The total 200° turn: the center's offset (100, 50) from the origin is turned by 200°.
+    const radians = (200 * Math.PI) / 180;
+    near(viewports[1]!, {
+      x: 100 - (Math.cos(radians) * 100 - Math.sin(radians) * 50),
+      y: 50 - (Math.sin(radians) * 100 + Math.cos(radians) * 50),
+      zoom: 1,
+    });
+    // A frame without a turn reports no rotation.
+    element.dispatchEvent(pointer('pointermove', { pointerId: 1, ...at(200, -1) }));
+    owner.flush();
+    expect(rotations).toHaveLength(2);
+    expect(calls.at(-1)).toBe('move:drag');
+  });
+
+  it('reports no turn and pinches as before without pinchRotate', () => {
+    const { owner, element, calls, viewports, rotations } = setup();
+    element.dispatchEvent(pointer('pointerdown', { pointerId: 1, clientX: 60, clientY: 70 }));
+    element.dispatchEvent(pointer('pointerdown', { pointerId: 2, clientX: 160, clientY: 70 }));
+    element.dispatchEvent(pointer('pointermove', { pointerId: 1, clientX: 110, clientY: 20 }));
+    element.dispatchEvent(pointer('pointermove', { pointerId: 2, clientX: 110, clientY: 120 }));
+    owner.flush();
+    expect(rotations).toEqual([]);
+    expect(calls).toEqual(['start:drag', 'move:drag']);
+    // The midpoint stayed and the distance stayed: the view does not move.
+    near(viewports[0]!, { x: 0, y: 0, zoom: 1 });
+  });
+
+  it('zooms around a touch double tap with doubleTapZoom and ignores the touch dblclick', () => {
+    const tap = (target: FakeElement, init: Record<string, unknown> = {}, up = init) => {
+      target.dispatchEvent(
+        pointer('pointerdown', { pointerType: 'touch', clientX: 110, clientY: 70, ...init }),
+      );
+      target.dispatchEvent(
+        pointer('pointerup', { pointerType: 'touch', clientX: 110, clientY: 70, ...up }),
+      );
+    };
+    const { owner, element, calls, viewports, controller } = setup({
+      taps: true,
+      viewport: { x: 10, y: 20, zoom: 1 },
+      policy: { doubleTapZoom: true },
+    });
+    tap(element);
+    owner.advance(100);
+    tap(element);
+    // Each press pans (and settles) on its own; the second one's release zooms.
+    expect(calls).toEqual([
+      'start:drag',
+      'end:drag',
+      'start:drag',
+      'end:drag',
+      'start:gesture',
+      'move:gesture',
+      'end:gesture',
+    ]);
+    expect(controller.active).toBe(false);
+    near(viewports[0]!, { x: 100 - 90 * 1.2, y: 50 - 30 * 1.2, zoom: 1.2 });
+    // A dblclick the browser synthesizes for the same taps would zoom twice: it is ignored.
+    const synthesized = doubleClick();
+    element.dispatchEvent(synthesized);
+    expect(synthesized.defaultPrevented).toBe(false);
+    expect(viewports).toHaveLength(1);
+    // A mouse double click still zooms.
+    element.dispatchEvent(pointer('pointerdown'));
+    element.dispatchEvent(pointer('pointerup'));
+    element.dispatchEvent(doubleClick());
+    expect(viewports.at(-1)!.zoom).toBeCloseTo(1.44);
+
+    // A press that travels past the slop is a pan: it never forms a double tap.
+    owner.advance(1000);
+    const travelled = setup({ taps: true, policy: { doubleTapZoom: true } });
+    tap(travelled.element, {}, { clientX: 110 + DOUBLE_TAP_SLOP + 1 });
+    travelled.owner.advance(100);
+    tap(travelled.element);
+    tap(travelled.element, {}, { clientX: 110 + DOUBLE_TAP_SLOP + 1 });
+    expect(travelled.calls.filter((call) => call.endsWith(':gesture'))).toEqual([]);
+
+    // Without the policy a touch double tap only pans and a touch dblclick zooms as before.
+    const plain = setup({ taps: true });
+    tap(plain.element);
+    plain.owner.advance(100);
+    tap(plain.element);
+    expect(plain.calls).toEqual(['start:drag', 'end:drag', 'start:drag', 'end:drag']);
+    plain.element.dispatchEvent(doubleClick());
+    expect(plain.calls.slice(-3)).toEqual(['start:gesture', 'move:gesture', 'end:gesture']);
   });
 });

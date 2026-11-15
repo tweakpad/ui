@@ -6,6 +6,7 @@ export * from './emoji-picker.js';
 export * from './flow.js';
 export * from './gradient-picker.js';
 export * from './heatmap.js';
+export * from './image-editor.js';
 export * from './layers.js';
 export * from './plot.js';
 export * from './text-editor.js';

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Image editor verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 1100px;
+        display: grid;
+        gap: 32px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 24px;
+        align-items: start;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <tp-image-editor
+        id="inspect"
+        label="inspect"
+        src="/src/stories/assets/images/harbor.jpg"
+        alt="Harbor"
+        controls="zoom fit actual rotate reset"
+      ></tp-image-editor>
+      <div class="row">
+        <tp-image-editor
+          id="avatar"
+          label="avatar"
+          src="/src/stories/assets/images/portrait.jpg"
+          alt="Portrait"
+          crop="circle"
+          fit="cover"
+          controls="zoom"
+        ></tp-image-editor>
+        <tp-image-editor
+          id="adjustable"
+          label="adjustable"
+          src="/src/stories/assets/images/harbor.jpg"
+          alt="Harbor"
+          crop="rect"
+          aspect-ratio="16/9"
+          fit="cover"
+          region-mode="adjustable"
+          guides
+        ></tp-image-editor>
+        <tp-image-editor
+          id="pan-drag"
+          label="pan-drag"
+          src="/src/stories/assets/images/harbor.jpg"
+          alt="Harbor"
+          crop="rect"
+          aspect-ratio="1"
+          fit="cover"
+          region-mode="adjustable"
+          region-drag="pan"
+          region-width="60%"
+        ></tp-image-editor>
+        <tp-image-editor
+          id="free"
+          label="free"
+          src="/src/stories/assets/images/sticker.png"
+          alt="Sticker"
+          crop="rect"
+          region-mode="adjustable"
+          region-min-width="80px"
+          region-min-height="60px"
+          controls="rotate rotation reset"
+          pinch-rotate
+        ></tp-image-editor>
+        <tp-image-editor
+          id="none"
+          label="none"
+          src="/src/stories/assets/images/sticker.png"
+          alt="Sticker"
+          fit="none"
+          min-zoom="4rem"
+          wheel="pan"
+        ></tp-image-editor>
+        <tp-image-editor
+          id="controlled"
+          label="controlled"
+          src="/src/stories/assets/images/portrait.jpg"
+          alt="Portrait"
+          crop="rect"
+          aspect-ratio="4/5"
+          fit="cover"
+          controls="zoom rotate"
+        ></tp-image-editor>
+        <tp-image-editor
+          id="rtl"
+          dir="rtl"
+          label="rtl"
+          src="/src/stories/assets/images/portrait.jpg"
+          alt="Portrait"
+          crop="circle"
+          fit="cover"
+          region-mode="adjustable"
+          controls="zoom rotate"
+        ></tp-image-editor>
+        <tp-image-editor
+          id="error"
+          label="error"
+          src="/missing-image.jpg"
+          alt="Missing"
+        ></tp-image-editor>
+        <tp-image-editor
+          id="disabled"
+          label="disabled"
+          src="/src/stories/assets/images/portrait.jpg"
+          alt="Portrait"
+          crop="circle"
+          fit="cover"
+          controls="zoom"
+          disabled
+        ></tp-image-editor>
+        <form id="form">
+          <tp-image-editor
+            id="form-editor"
+            name="crop"
+            label="form"
+            src="/src/stories/assets/images/portrait.jpg"
+            alt="Portrait"
+            crop="circle"
+            fit="cover"
+          ></tp-image-editor>
+          <button type="reset">Reset form</button>
+        </form>
+      </div>
+      <div
+        style="block-size: 60vh; overflow: auto; border: 1px solid var(--tp-border)"
+        id="scroller"
+      >
+        <p style="block-size: 40vh">Scroll down to the cooperative editor.</p>
+        <tp-image-editor
+          id="cooperative"
+          label="cooperative"
+          src="/src/stories/assets/images/harbor.jpg"
+          alt="Harbor"
+          cooperative-gestures
+        ></tp-image-editor>
+        <p style="block-size: 60vh">After the cooperative editor.</p>
+      </div>
+      <p>After image editors</p>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

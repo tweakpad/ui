@@ -10,6 +10,7 @@ import type { TpFlow } from '../../widgets/flow/flow.js';
 import type { TpGradientPicker } from '../../widgets/gradient-picker/gradient-picker.js';
 import type { TpGradientStop } from '../../widgets/gradient-picker/gradient-stop.js';
 import type { TpHeatmap } from '../../widgets/heatmap/heatmap.js';
+import type { TpImageEditor } from '../../widgets/image-editor/image-editor.js';
 import type { TpLayer, TpLayerState, TpLayerStateValue } from '../../widgets/layers/layer.js';
 import type { TpLayers } from '../../widgets/layers/layers.js';
 import type { TpPlot } from '../../widgets/plot/plot.js';
@@ -36,6 +37,7 @@ import type * as widgetsEmojiPickerTypes from '../../widgets/emoji-picker/types.
 import type * as widgetsFlowTypes from '../../widgets/flow/types.js';
 import type * as widgetsGradientPickerGradientPicker from '../../widgets/gradient-picker/gradient-picker.js';
 import type * as widgetsHeatmapTypes from '../../widgets/heatmap/types.js';
+import type * as widgetsImageEditorTypes from '../../widgets/image-editor/types.js';
 import type * as widgetsLayersTypes from '../../widgets/layers/types.js';
 import type * as widgetsPlotTypes from '../../widgets/plot/types.js';
 import type * as widgetsTextEditorTypes from '../../widgets/text-editor/types.js';
@@ -558,6 +560,64 @@ type Tags = {
       'tp-level-filter-change': foundationEvents.TpValueChangeEvent<readonly number[] | null>;
       'tp-value-change': foundationEvents.TpValueChangeEvent<foundationCalendar.CalendarValue>;
       'tp-value-commit': foundationEvents.TpValueCommitEvent<foundationCalendar.CalendarValue>;
+    }
+  >;
+  'tp-image-editor': Tag<
+    TpImageEditor,
+    | 'alt'
+    | 'appearance'
+    | 'aspectRatio'
+    | 'background'
+    | 'controls'
+    | 'controlsPosition'
+    | 'cooperativeGestures'
+    | 'crop'
+    | 'crossOrigin'
+    | 'defaultValue'
+    | 'density'
+    | 'disabled'
+    | 'fit'
+    | 'formOwner'
+    | 'guides'
+    | 'inputElementReference'
+    | 'invalid'
+    | 'label'
+    | 'maxZoom'
+    | 'messages'
+    | 'minZoom'
+    | 'motionPolicy'
+    | 'name'
+    | 'orientation'
+    | 'partContracts'
+    | 'partPresentation'
+    | 'pinchRotate'
+    | 'readOnly'
+    | 'regionDrag'
+    | 'regionHeight'
+    | 'regionMaxHeight'
+    | 'regionMaxWidth'
+    | 'regionMinHeight'
+    | 'regionMinWidth'
+    | 'regionMode'
+    | 'regionWidth'
+    | 'required'
+    | 'src'
+    | 'value'
+    | 'wheel'
+    | 'zoom',
+    {
+      'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
+      'tp-error': CustomEvent<{ src: string }>;
+      'tp-field-value': CustomEvent<{
+        value: widgetsImageEditorTypes.ImageEditorValue | undefined;
+        previousValue: widgetsImageEditorTypes.ImageEditorValue | undefined;
+        reason: foundationTypes.ChangeReason;
+      }>;
+      'tp-load': CustomEvent<{ naturalWidth: number; naturalHeight: number }>;
+      'tp-value-change': foundationEvents.TpValueChangeEvent<
+        widgetsImageEditorTypes.ImageEditorValue | undefined
+      >;
+      'tp-value-commit': foundationEvents.TpValueCommitEvent<widgetsImageEditorTypes.ImageEditorValue>;
     }
   >;
   'tp-layer': Tag<

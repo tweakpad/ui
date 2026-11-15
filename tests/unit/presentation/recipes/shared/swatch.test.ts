@@ -23,6 +23,15 @@ describe('shared swatch fill box', () => {
     ]);
   });
 
+  it('paints the checker squares in a given color, the muted role when none is given', () => {
+    expect(swatchFill('P', 'T', 'var(--tp-muted)')).toEqual(swatchFill('P', 'T'));
+    const layer = 'linear-gradient(45deg, C 25%, transparent 25% 75%, C 75%)';
+    expect(swatchFill('P', 'T', 'C')).toEqual({
+      ...swatchFill('P', 'T'),
+      'background-image': `P, ${layer}, ${layer}`,
+    });
+  });
+
   it('rounds the flat recent strip, not its gapless cells, with the medium radius (`cinp-q8`)', () => {
     expect(swatchCorner).toBe('var(--tp-radius-md)');
     const item = colorPickerAppearance['color-picker-swatch-item']?.find(

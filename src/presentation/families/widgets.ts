@@ -9,6 +9,7 @@ import { plotPresentation } from './plot.js';
 import { textEditorPresentation } from './text-editor.js';
 import { layersPresentation } from './layers.js';
 import { heatmapPresentation } from './heatmap.js';
+import { imageEditorPresentation } from './image-editor.js';
 
 /**
  * Every widget family, in widget catalog order. Widgets never import this list; each widget
@@ -26,4 +27,5 @@ export const widgetPresentationFamilies: readonly PresentationFamily[] = [
   colorPalettePresentation,
   layersPresentation,
   heatmapPresentation,
+  imageEditorPresentation,
 ];

@@ -73,6 +73,19 @@ function general(host: SettingsHost) {
         .defaultValue=${'A calmer workspace for product teams, launching to five pilot cities.'}
       ></tp-text-area
     ></tp-field>
+    <tp-field label="Cover image" description="Drag and zoom to frame the project's banner."
+      ><tp-image-editor
+        name="cover"
+        src="images/harbor.jpg"
+        alt="A harbor town at dusk"
+        crop="rect"
+        aspect-ratio="3/1"
+        fit="cover"
+        controls="zoom"
+        cooperative-gestures
+        style="block-size: calc(var(--tp-spacing) * 56)"
+      ></tp-image-editor
+    ></tp-field>
     <div class="workspace-grid">
       <tp-field label="Timezone"
         ><tp-select

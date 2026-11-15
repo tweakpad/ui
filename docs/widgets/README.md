@@ -56,6 +56,7 @@ of a canvas.
 - [Gradient picker](gradient-picker.mdx): `tp-gradient-picker`.
 - [Layers](layers.mdx): `tp-layers`.
 - [Heatmap](heatmap.mdx): `tp-heatmap`.
+- [Image editor](image-editor.mdx): `tp-image-editor`.
 - [Text editor](text-editor.mdx): `tp-text-editor`, with the engine contract and the editor
   tools in `@tweakpad/ui/text-editor` and one entry per engine adapter,
   `@tweakpad/ui/text-editor/adapters/tiptap` and `@tweakpad/ui/text-editor/adapters/lexical`.

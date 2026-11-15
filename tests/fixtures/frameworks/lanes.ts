@@ -435,6 +435,14 @@ export const laneRows: LaneRow[] = [
     },
   },
   {
+    entry: 'tp-image-editor',
+    binding: 'ImageEditor',
+    lane: 'value',
+    initial: { x: 0, y: 0, width: 400, height: 300, rotation: 0 },
+    propose: call('setValue', { x: 40, y: 20, width: 200, height: 150, rotation: 90 }),
+    props: { label: 'Cover' },
+  },
+  {
     entry: 'tp-heatmap',
     binding: 'Heatmap',
     lane: 'value',

@@ -4,6 +4,7 @@ import { resolveMotionTiming } from './motion.js';
 import { parseEasing } from './motion-easing.js';
 import { componentHandlingPrevented } from './part.js';
 import { CleanupScope, Scheduler } from './services.js';
+import { TapGestureRecognizer, type TapGestureActivation } from './tap-gestures.js';
 
 /**
  * Pan and zoom owner for canvas surfaces (Flow, future graph editors) on raw pointer and wheel
@@ -14,7 +15,8 @@ import { CleanupScope, Scheduler } from './services.js';
  *
  * The owner keeps no viewport of its own: it reads the model through `viewport()` and reports
  * every computed viewport through `handlers.move`, clamped to the zoom range and the translate
- * extent. Pointer movement is coalesced to one `move` per animation
+ * extent, or to the zoom range and then `options.clamp` when the owner supplies its own bounds
+ * (a rotated image). Pointer movement is coalesced to one `move` per animation
  * frame; wheel movement applies per event (the browser already paces wheels per frame) with a
  * synthesized start and a 150 ms debounced end. Programmatic steps
  * (`panBy`, `zoomAround`, `animateTo`, `autoPan`) go through the same clamp and handler.
@@ -26,6 +28,11 @@ import { CleanupScope, Scheduler } from './services.js';
  * under a stationary pointer never interrupts it. A stream ends when wheels pause for
  * `WHEEL_LATCH_TIMEOUT`, the pointer leaves the first wheel's slop region, or the zoom modifier
  * changes (a pinch after a scroll is a new gesture).
+ *
+ * Opt-in policy extensions leave the defaults alone: `wheelCrossAxisPans` lets a horizontal or
+ * Shift wheel pan sideways under the `zoom` wheel; `pinchRotate` reports the pinch's turn through
+ * `handlers.rotate`; `doubleTapZoom` zooms on a touch double tap, which the browser does not
+ * reliably report as `dblclick` on a `touch-action: none` surface.
  *
  * Surfaces that pan on touch need `touch-action: none`; a handled press prevents the default
  * action (text selection, compatibility mouse events) so focus belongs to `handlers.start`.
@@ -70,6 +77,19 @@ export interface PanZoomPolicy {
   readonly activationHeld: boolean;
   /** Whether a single touch pans. */
   readonly panOnTouch: boolean;
+  /**
+   * Under the `zoom` wheel, a wheel that moves mostly sideways, or a Shift wheel, pans
+   * horizontally instead of zooming. `ctrl`/`meta` wheels still zoom.
+   */
+  readonly wheelCrossAxisPans?: boolean;
+  /**
+   * A two-pointer pinch also turns: `handlers.rotate` receives the angle change, and the reported
+   * viewports keep the content under the pinch center for a content rotation about the flow
+   * origin (screen = translation + zoom × rotation × flow point).
+   */
+  readonly pinchRotate?: boolean;
+  /** A touch double tap zooms like a double click; a touch `dblclick` is then ignored. */
+  readonly doubleTapZoom?: boolean;
 }
 
 export type PanZoomReason = 'drag' | 'wheel' | 'gesture' | 'programmatic';
@@ -83,6 +103,12 @@ export interface PanZoomHandlers {
   end?(reason: PanZoomReason, event: Event | null): void;
   /** The pointer gesture was abandoned (`pointercancel`, disposal). */
   cancel?(): void;
+  /**
+   * Under `policy.pinchRotate`, the pinch turned by `deltaDegrees` (clockwise positive in screen
+   * coordinates) since the last report, around the element-relative pinch `center`. It runs once
+   * per frame, before that frame's `move`.
+   */
+  rotate?(deltaDegrees: number, center: PanZoomPoint, event: Event): void;
 }
 
 export interface PanZoomFrameSubscription {
@@ -118,6 +144,12 @@ export interface PanZoomOptions {
    * spares a forced layout per clamp. Defaults to the element's bounding rect.
    */
   readonly size?: () => PanZoomSize;
+  /**
+   * Bounds every computed viewport in place of the translate extent, after the zoom range clamp:
+   * pointer, pinch, wheel and double-click steps, `panBy`, `zoomAround`, `animateTo` targets and
+   * frames, and `autoPan`.
+   */
+  readonly clamp?: (viewport: PanZoomViewport, size: PanZoomSize) => PanZoomViewport;
 }
 
 export interface PanZoomAnimationOptions {
@@ -141,6 +173,8 @@ export const AUTO_PAN_EDGE = 40;
 export const AUTO_PAN_SPEED = 15;
 /** Zoom factor of a double click. */
 export const DOUBLE_CLICK_ZOOM_FACTOR = 1.2;
+/** Travel, in CSS pixels, beyond which a touch press is a pan rather than a double-tap tap. */
+export const DOUBLE_TAP_SLOP = 10;
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 /**
@@ -216,6 +250,9 @@ interface PointerGesture {
   frame: (() => void) | undefined;
   /** Pointer movement since the last reported viewport. */
   moved: boolean;
+  /** Pinch angle at the last report, in degrees, and the turn since the phase base. */
+  angle: number;
+  turn: number;
 }
 
 interface WheelGesture {
@@ -252,6 +289,9 @@ export class PanZoomController {
   #autoPanPoint: PanZoomPoint | null = null;
   #autoPanFrames: PanZoomFrameSubscription | undefined;
   readonly #mac: boolean;
+  #taps: TapGestureRecognizer | undefined;
+  #tapOrigin: { readonly pointerId: number; readonly x: number; readonly y: number } | null = null;
+  #lastPointerType = '';
 
   constructor(options: PanZoomOptions) {
     this.#options = options;
@@ -283,6 +323,16 @@ export class PanZoomController {
     scope.listen(wheelElement, 'wheel', this.#latchedWheel, { passive: false, capture: true });
     scope.listen(wheelElement, 'wheel', this.#wheelEvent, { passive: false });
     scope.listen(element, 'dblclick', this.#doubleClick);
+    // Before the recognizer's own release listener: a press that travelled is no tap.
+    scope.listen(element, 'pointerup', this.#tapTravel, { capture: true });
+    const taps = (this.#taps = new TapGestureRecognizer(element));
+    scope.add(() => taps.dispose());
+    taps.add({
+      type: 'doubletap',
+      pointer: 'touch',
+      disabled: () => this.#options.policy().doubleTapZoom !== true,
+      handler: this.#doubleTap,
+    });
   }
 
   disconnect(): void {
@@ -298,6 +348,8 @@ export class PanZoomController {
     this.#connection?.dispose();
     this.#connection = undefined;
     this.#scheduler = undefined;
+    this.#taps = undefined;
+    this.#tapOrigin = null;
   }
 
   /** Shifts the viewport by a screen delta. */
@@ -419,7 +471,11 @@ export class PanZoomController {
   }
 
   #clamp(viewport: PanZoomViewport): PanZoomViewport {
-    return clampViewport(viewport, this.#options.limits(), this.#size());
+    const bound = this.#options.clamp;
+    const limits = this.#options.limits();
+    if (!bound) return clampViewport(viewport, limits, this.#size());
+    const zoom = clamp(viewport.zoom, limits.minZoom, limits.maxZoom);
+    return bound({ x: viewport.x, y: viewport.y, zoom }, this.#size());
   }
 
   #apply(viewport: PanZoomViewport, reason: PanZoomReason, event: Event | null): PanZoomViewport {
@@ -507,6 +563,9 @@ export class PanZoomController {
   }
 
   readonly #pointerDown = (event: PointerEvent): void => {
+    this.#lastPointerType = event.pointerType;
+    if (event.pointerType === 'touch')
+      this.#tapOrigin = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
     const gesture = this.#gesture;
     if (gesture) {
       if (gesture.pointers.has(event.pointerId) || !this.#allowed(event)) return;
@@ -540,6 +599,8 @@ export class PanZoomController {
       latest: event,
       frame: undefined,
       moved: false,
+      angle: 0,
+      turn: 0,
     };
     this.#gesture = session;
     scope.add(() => session.frame?.());
@@ -554,10 +615,12 @@ export class PanZoomController {
   #rebase(gesture: PointerGesture): void {
     const points = [...gesture.pointers.values()];
     gesture.base = gesture.current;
+    gesture.turn = 0;
     if (points.length >= 2) {
       const [a, b] = points as [PanZoomPoint, PanZoomPoint];
       gesture.baseCenter = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       gesture.baseDistance = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      gesture.angle = pinchAngle(a, b, 0);
     } else {
       gesture.baseCenter = points[0] ?? gesture.baseCenter;
       gesture.baseDistance = 0;
@@ -573,6 +636,20 @@ export class PanZoomController {
       const center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       const distance = Math.hypot(b.x - a.x, b.y - a.y) || gesture.baseDistance;
       const zoom = base.zoom * (distance / gesture.baseDistance);
+      if (gesture.turn) {
+        // The base center's offset from the flow origin turns with the content.
+        const radians = (gesture.turn * Math.PI) / 180;
+        const cos = Math.cos(radians);
+        const sin = Math.sin(radians);
+        const scale = zoom / base.zoom;
+        const dx = baseCenter.x - base.x;
+        const dy = baseCenter.y - base.y;
+        return {
+          x: center.x - scale * (cos * dx - sin * dy),
+          y: center.y - scale * (sin * dx + cos * dy),
+          zoom,
+        };
+      }
       const flowX = (baseCenter.x - base.x) / base.zoom;
       const flowY = (baseCenter.y - base.y) / base.zoom;
       return { x: center.x - flowX * zoom, y: center.y - flowY * zoom, zoom };
@@ -587,7 +664,21 @@ export class PanZoomController {
 
   #emit(gesture: PointerGesture, event: Event | null): void {
     gesture.moved = false;
+    this.#rotate(gesture, event ?? gesture.latest);
     gesture.current = this.#apply(this.#measure(gesture), 'drag', event);
+  }
+
+  /** Reports the pinch's turn since the last report, under `policy.pinchRotate`. */
+  #rotate(gesture: PointerGesture, event: Event): void {
+    const rotate = this.#options.handlers.rotate;
+    if (gesture.pointers.size < 2 || !rotate || this.#options.policy().pinchRotate !== true) return;
+    const [a, b] = [...gesture.pointers.values()] as [PanZoomPoint, PanZoomPoint];
+    const angle = pinchAngle(a, b, gesture.angle);
+    const delta = angle - gesture.angle;
+    if (!delta) return;
+    gesture.angle = angle;
+    gesture.turn += delta;
+    rotate.call(this.#options.handlers, delta, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, event);
   }
 
   /** Reports unreported movement now, so the gesture settles where the pointers last were. */
@@ -721,9 +812,20 @@ export class PanZoomController {
       next = zoomToPoint(viewport, viewport.zoom * factor, point, limits);
     } else if (policy.wheel === 'none' || policy.cooperative) {
       return false;
-    } else if (policy.wheel === 'zoom') {
+    } else if (
+      policy.wheel === 'zoom' &&
+      !(
+        policy.wheelCrossAxisPans &&
+        (event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY))
+      )
+    ) {
       const factor = wheelZoomFactor(event.deltaY, event.deltaMode);
       next = zoomToPoint(viewport, viewport.zoom * factor, point, limits);
+    } else if (policy.wheel === 'zoom') {
+      // The cross axis pans sideways; Shift turns a vertical-only wheel into one.
+      const lines = event.deltaMode === 1 ? 20 : 1;
+      const deltaX = (event.deltaX || (event.shiftKey ? event.deltaY : 0)) * lines;
+      next = { x: viewport.x - deltaX, y: viewport.y, zoom: viewport.zoom };
     } else {
       const lines = event.deltaMode === 1 ? 20 : 1;
       let deltaX = event.deltaX * lines;
@@ -760,11 +862,18 @@ export class PanZoomController {
   // Double click
 
   readonly #doubleClick = (event: MouseEvent): void => {
-    if (this.#gesture || !this.#options.policy().doubleClickZoom || !this.#allowed(event)) return;
+    const policy = this.#options.policy();
+    if (this.#gesture || !policy.doubleClickZoom || !this.#allowed(event)) return;
+    // The tap recognizer owns touch double taps; a synthesized one would zoom twice.
+    if (policy.doubleTapZoom && this.#lastPointerType === 'touch') return;
     event.preventDefault();
+    this.#zoomStep(event);
+  };
+
+  /** Zooms by the double-click factor around the event point; Shift zooms out. */
+  #zoomStep(event: MouseEvent): void {
     this.cancelAnimation();
     const viewport = this.#options.viewport();
-    // Shift zooms out.
     const factor = event.shiftKey ? 1 / DOUBLE_CLICK_ZOOM_FACTOR : DOUBLE_CLICK_ZOOM_FACTOR;
     const next = zoomToPoint(
       viewport,
@@ -775,5 +884,31 @@ export class PanZoomController {
     this.#options.handlers.start?.('gesture', event);
     this.#apply(next, 'gesture', event);
     this.#options.handlers.end?.('gesture', event);
+  }
+
+  // Double tap
+
+  /** Capture phase: a touch press that travelled past the slop pans and breaks the double tap. */
+  readonly #tapTravel = (event: PointerEvent): void => {
+    const origin = this.#tapOrigin;
+    if (!origin || origin.pointerId !== event.pointerId) return;
+    this.#tapOrigin = null;
+    if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > DOUBLE_TAP_SLOP)
+      this.#taps?.reset();
   };
+
+  readonly #doubleTap = ({ event }: TapGestureActivation): void => {
+    if (!this.#allowed(event)) return;
+    // The second tap's own pan press settles first, so its release cannot undo the zoom.
+    const gesture = this.#gesture;
+    if (gesture?.pointers.has(event.pointerId)) this.#finish(gesture, event);
+    else if (gesture) return;
+    this.#zoomStep(event);
+  };
+}
+
+/** The angle from `a` to `b` in degrees, unwrapped to lie within half a turn of `previous`. */
+function pinchAngle(a: PanZoomPoint, b: PanZoomPoint, previous: number): number {
+  const angle = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+  return angle + 360 * Math.round((previous - angle) / 360);
 }

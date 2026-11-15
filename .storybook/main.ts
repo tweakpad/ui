@@ -60,6 +60,8 @@ const config: StorybookConfig = {
     { from: '../src/stories/assets/avatars', to: '/avatars' },
     // Sample pages the examples embed (the text editor's tide table).
     { from: '../src/stories/assets/pages', to: '/pages' },
+    // Original sample images for the image editor, served at `images/`.
+    { from: '../src/stories/assets/images', to: '/images' },
   ],
   framework: {
     name: '@storybook/web-components-vite',

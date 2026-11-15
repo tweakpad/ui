@@ -1,6 +1,7 @@
 import { ambientAnimation, motionTransition, presenceMotion } from '../motion.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import { divider, floatEdge, surfaceEdge } from './shared/edges.js';
+import { floatingSet } from './shared/floating-set.js';
 import { focusRing } from './shared/focus.js';
 import { activeRing, thumb } from './shared/handle.js';
 import { inlineControlLabel } from './shared/inline-control.js';
@@ -582,11 +583,7 @@ export const flowAppearance: PresentationDictionary = {
   'flow-controls': [
     {
       selector: '& > :not(slot), & > slot::slotted(*)',
-      declarations: {
-        'background-color': 'var(--tp-background)',
-        'border-radius': 'var(--tp-radius-md)',
-        'box-shadow': 'var(--tp-shadow-sm)',
-      },
+      declarations: floatingSet,
     },
   ],
   'flow-control': [],

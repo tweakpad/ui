@@ -2,6 +2,7 @@ import { html, type TemplateResult } from 'lit';
 import type { widgetCatalog } from '../../widgets/catalog.js';
 import { todayCalendarDate } from '../../foundation/calendar.js';
 import { focusSessions } from './heatmap-samples.js';
+import { sampleHarbor } from '../images.js';
 
 export type WidgetTag = (typeof widgetCatalog)[number][1];
 
@@ -63,6 +64,13 @@ const examples = {
       size="sm"
       .data=${focusSessions(todayCalendarDate())}
     ></tp-heatmap>`,
+  'tp-image-editor': () =>
+    html`<tp-image-editor
+      label="Harbor at dusk"
+      src=${sampleHarbor}
+      alt="A harbor town at dusk with a lighthouse and sailing boats"
+      controls="zoom fit actual"
+    ></tp-image-editor>`,
 } satisfies Record<WidgetTag, () => TemplateResult>;
 
 export function renderWidgetExample(tagName: WidgetTag): TemplateResult {

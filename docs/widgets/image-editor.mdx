@@ -1,0 +1,74 @@
+---
+title: Image editor
+description: An image in a viewport to zoom, pan and rotate, at full quality, with an optional crop region, fixed or adjustable, for avatars and picked images.
+tag: tp-image-editor
+---
+
+<Preview
+  title="Image editor"
+  align="stretch"
+  code={`<tp-image-editor label="Harbor at dusk" src="images/harbor.jpg" alt="A harbor town at dusk with a lighthouse and sailing boats" controls="zoom fit actual"></tp-image-editor>`}
+/>
+
+## Usage
+
+The editor fills its box, `20rem` tall by default, and opens with the whole image in view. The wheel zooms toward the pointer, a sideways swipe pans, and dragging pans. On touch, one finger pans and two fingers pinch. A zoom of `1` shows the image at its natural size, so `actual` in the controls or the <Keys keys="1" /> key shows every pixel.
+
+`fit` sets how small the image may get. `contain` stops when the whole image fits, `cover` while it still fills the frame, and `none` lets it shrink further, down to `min-zoom`: a zoom such as `0.25`, or a length such as `8rem` for the image's longer side. Panning keeps to the same rule, so a covering image never shows a gap.
+
+### Avatars
+
+A crop region frames the part of the image to keep and dims the rest. `crop="circle"` with `fit="cover"` is the familiar profile-photo picker: the circle stays put, the image moves and zooms under it, and it always fills the circle.
+
+<Preview
+  title="Profile photo"
+  code={`<tp-image-editor label="Profile photo" src="images/portrait.jpg" alt="Portrait" crop="circle" fit="cover" controls="zoom" style="max-inline-size: 24rem"></tp-image-editor>`}
+/>
+
+The value is the frame in image space: `{ x, y, width, height, rotation }` in the image's natural pixels. Store it to reopen the editor where it was, or send it with the original file to crop on a server. `toBlob()` cuts the region in the browser, at natural resolution or scaled down with `maxSize`; a circle exports its square.
+
+<Code
+  language="typescript"
+  code={`editor.addEventListener('tp-value-commit', (event) => save(event.detail.value));
+const blob = await editor.toBlob({ type: 'image/webp', quality: 0.9, maxSize: 512 });`}
+/>
+
+### Adjustable region
+
+`region-mode="adjustable"` adds handles, so people choose both the part and its size. A drag inside the region moves it and a drag outside pans the image; `region-drag="pan"` makes every drag pan the image and leaves the region to its handles. `aspect-ratio` holds the region's shape while it resizes, and without one, Shift keeps the current shape. `region-min-width` and its siblings bound the size, as lengths or percentages of the viewport, and `guides` shows thirds while it changes.
+
+<Preview
+  title="Cover image"
+  align="stretch"
+  code={`<tp-image-editor label="Cover image" src="images/harbor.jpg" alt="A harbor town at dusk with a lighthouse and sailing boats" crop="rect" aspect-ratio="16/9" fit="cover" region-mode="adjustable" guides></tp-image-editor>`}
+/>
+
+### Rotation and controls
+
+`controls` lists the bar's controls in order: zoom, rotate, straighten, fit, actual size and reset. Rotation turns the image about the frame's centre, and with `cover` the zoom rises as needed to keep the frame filled. `pinch-rotate` lets two fingers turn the image as they pinch. A transparent image shows the checker behind it, sized and colored with `--tp-image-editor-checker-size` and `--tp-image-editor-checker-color`.
+
+<Preview
+  title="Sticker"
+  align="stretch"
+  code={`<tp-image-editor label="Sticker" src="images/sticker.png" alt="A purple release day sticker" crop="rect" region-mode="adjustable" controls="rotate rotation reset" pinch-rotate></tp-image-editor>`}
+/>
+
+### In a scrolling page
+
+On a page that scrolls, an editor that takes every wheel and touch traps the reader. `cooperative-gestures` gives plain wheels and single-finger drags back to the page; Control or Meta with the wheel, a trackpad pinch or two fingers still zoom and pan the image. `wheel="pan"` makes the wheel pan instead of zoom.
+
+### Keyboard
+
+The image is one tab stop, and an adjustable region is a second one.
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="ArrowLeft" />, <Keys keys="ArrowRight" />, <Keys keys="ArrowUp" />, <Keys keys="ArrowDown" /> | Pan the image; with Shift in larger steps, with Alt in smaller ones |
+| <Keys keys="+" />, <Keys keys="-" /> | Zoom in or out |
+| <Keys keys="0" />, <Keys keys="1" /> | Fit the image, or show it at its natural size |
+| <Keys keys="Home" />, <Keys keys="End" /> | Zoom to the smallest or largest size |
+| <Keys keys="[" />, <Keys keys="]" /> | Rotate a quarter turn left or right |
+| <Keys keys="shift+[" />, <Keys keys="shift+]" /> | Rotate a degree left or right |
+| Arrow keys on the region | Move the region; with Shift in larger steps |
+| <Keys keys="alt+ArrowRight" />, <Keys keys="alt+ArrowDown" /> and their opposites | Resize the region from its end edge |
+| <Keys keys="Escape" /> | While moving or resizing the region, put it back |

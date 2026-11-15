@@ -208,6 +208,7 @@ import {
   GradientPicker,
   GradientStop,
   Heatmap,
+  ImageEditor,
   Layer,
   LayerState,
   LayerStateValue,
@@ -448,6 +449,7 @@ import type { TpFlow as TpFlowType } from '../../../src/widgets/flow/flow.js';
 import type { TpGradientPicker as TpGradientPickerType } from '../../../src/widgets/gradient-picker/gradient-picker.js';
 import type { TpGradientStop as TpGradientStopType } from '../../../src/widgets/gradient-picker/gradient-stop.js';
 import type { TpHeatmap as TpHeatmapType } from '../../../src/widgets/heatmap/heatmap.js';
+import type { TpImageEditor as TpImageEditorType } from '../../../src/widgets/image-editor/image-editor.js';
 import type {
   TpLayer as TpLayerType,
   TpLayerState as TpLayerStateType,
@@ -685,6 +687,7 @@ export const elements: ReactElement[] = [
   <GradientPicker ref={(element: TpGradientPickerType | null) => void element} />,
   <GradientStop ref={(element: TpGradientStopType | null) => void element} />,
   <Heatmap ref={(element: TpHeatmapType | null) => void element} />,
+  <ImageEditor ref={(element: TpImageEditorType | null) => void element} />,
   <Layer ref={(element: TpLayerType | null) => void element} />,
   <LayerState ref={(element: TpLayerStateType | null) => void element} />,
   <LayerStateValue ref={(element: TpLayerStateValueType | null) => void element} />,
