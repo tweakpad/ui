@@ -1,5 +1,0 @@
----
-'@tweakpad/ui': minor
----
-
-Calendar: `variant="strip"` shows a row of consecutive days, each a weekday over its number, under the month caption instead of the month grid. `visible-days` sets how many days show (5 by default). A single selection stays in the middle: the arrows beside the days select the previous or next selectable day, and a day pressed at either side slides to the middle. With a range or several dates, the arrows slide the days a day at a time, or a whole row with `paged-navigation`; longer jumps fade the new days in. The slide is the `strip` motion role, which a `tp-motion-request` listener can claim, and reduced motion or `motion-policy="reduce"` moves the days at once. The caption names the month of the middle day, and its arrows move to the same day of the previous or next month. New parts: `calendar-strip`, `calendar-strip-previous`, `calendar-strip-next`, `calendar-days`, `calendar-day-weekday` and `calendar-day-number`. New `messages.previousDay`/`messages.nextDay` (single selection) and `messages.previousDays`/`messages.nextDays` name the strip arrows.
