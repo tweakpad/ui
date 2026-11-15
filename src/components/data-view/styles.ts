@@ -265,6 +265,11 @@ export const dataViewStyles = [
       box-sizing: border-box;
     }
 
+    /* A press on a draggable row or tile starts a drag, never a text selection. */
+    [data-draggable] {
+      user-select: none;
+    }
+
     [part~='data-view-tile'] {
       position: relative;
       display: flex;

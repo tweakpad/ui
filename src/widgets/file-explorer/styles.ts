@@ -2,6 +2,36 @@ import { css } from 'lit';
 
 /** Geometry the presentation cannot replace: the toolbar row, the panels and the status line. */
 export const fileExplorerStyles = css`
+  /* The drag overlay covers the dragged row or tile, transparent; the chip sits at the press. */
+  .drag-frame {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    overflow: visible;
+  }
+
+  .drag-chip {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    max-inline-size: 18rem;
+    white-space: nowrap;
+    translate: var(--tp-space-3) var(--tp-space-3);
+  }
+
+  .drag-chip tp-icon {
+    flex: none;
+    inline-size: var(--tp-icon-size-md);
+    block-size: var(--tp-icon-size-md);
+  }
+
+  .drag-chip-name {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   :host {
     display: block;
     min-inline-size: 0;

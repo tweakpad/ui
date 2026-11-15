@@ -31,6 +31,10 @@ const definition: ComponentDefinition = {
     },
     { name: 'file-explorer-details', description: 'The details pane of the selection.' },
     { name: 'file-explorer-status', description: 'The status bar.' },
+    {
+      name: 'file-explorer-drag-preview',
+      description: 'The chip under the pointer while entries are dragged: icon, name and count.',
+    },
   ],
 };
 
@@ -45,6 +49,7 @@ export const fileExplorerPresentation = definePresentation({
       '[part~="file-explorer-column"]': 'file-explorer-column',
       '[part~="file-explorer-details"]': 'file-explorer-details',
       '[part~="file-explorer-status"]': 'file-explorer-status',
+      '[part~="file-explorer-drag-preview"]': 'file-explorer-drag-preview',
     },
   },
   sources: [fileExplorerAppearance],

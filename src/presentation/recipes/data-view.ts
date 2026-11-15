@@ -54,6 +54,24 @@ const pinned = (surface: string) => [
   },
 ];
 
+/**
+ * A dragged row or tile lifts onto the page surface with a shadow, in place of the top layer's
+ * default frame; the copy it leaves in the list stays dimmed until the drop.
+ */
+const dragFeedback = [
+  {
+    selector: '&[data-dragging]',
+    declarations: {
+      border: 'none',
+      'border-radius': 'var(--tp-radius-md)',
+      background: `linear-gradient(var(${rowFill}) 0 0), var(--tp-background)`,
+      'box-shadow': 'var(--tp-shadow-lg)',
+      overflow: 'hidden',
+    },
+  },
+  { selector: '&[data-preview]', declarations: { opacity: '0.4' } },
+];
+
 const size = (row: string, header: string, text: string) => [
   {
     declarations: {
@@ -116,6 +134,7 @@ export const dataViewAppearance: PresentationDictionary = {
     { selector: '&:focus-visible', declarations: { outline: 'none' } },
     { selector: '&:focus-visible::after', declarations: { ...rowOverlay, ...insetFocusRing } },
     { selector: '&[data-drop-target]::after', declarations: { ...rowOverlay, ...dropInto } },
+    ...dragFeedback,
   ],
   'data-view-cell': [
     { declarations: { ...tableCellBox, ...tableCellLines } },
@@ -146,6 +165,7 @@ export const dataViewAppearance: PresentationDictionary = {
     { selector: '&[data-selected]', declarations: { [rowFill]: tableSelectedFill } },
     { selector: '&[data-drop-target]', declarations: dropInto },
     { selector: '&:focus-visible', declarations: insetFocusRing },
+    ...dragFeedback,
     { selector: '& .tile-title', declarations: { 'font-weight': 'var(--tp-font-medium)' } },
     {
       selector: '& .tile-subtitle',

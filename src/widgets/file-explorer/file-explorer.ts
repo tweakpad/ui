@@ -1,9 +1,9 @@
-import { html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { html, nothing, render, type PropertyValues, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { LiveAnnouncer } from '../../foundation/announcer.js';
 import { ControllableState, orderedValuesEqual } from '../../foundation/controllable-state.js';
 import { defaultTrue } from '../../foundation/converters.js';
-import { Droppable } from '../../foundation/drag-drop/entities.js';
+import { type Draggable, Droppable } from '../../foundation/drag-drop/entities.js';
 import { DragDropManager } from '../../foundation/drag-drop/manager.js';
 import { DistanceConstraint } from '../../foundation/drag-drop/sensors/activation.js';
 import { PointerSensor } from '../../foundation/drag-drop/sensors/pointer.js';
@@ -43,6 +43,7 @@ import { navigationIcons } from '../../icons/navigation.js';
 import type { IconDefinition } from '../../icons/types.js';
 import { fileExplorerPresentation } from '../../presentation/families/file-explorer.js';
 import { TpBreadcrumb } from '../../components/breadcrumb/breadcrumb.js';
+import { TpBadge } from '../../components/badge/badge.js';
 import { TpButton } from '../../components/button/button.js';
 import { TpDataView } from '../../components/data-view/data-view.js';
 import type {
@@ -203,6 +204,7 @@ interface FolderRecord {
  * @csspart file-explorer-view - The Data view that lists the open folder.
  * @csspart file-explorer-column - One folder's Data view in the columns view.
  * @csspart file-explorer-columns - The scrolling row of the columns view.
+ * @csspart file-explorer-drag-preview - The chip under the pointer while entries are dragged.
  * @csspart file-explorer-tile-media - A tile's icon or preview, in the icons and gallery views.
  * @cssprop --tp-file-explorer-tile-size - The least width of a tile in the icons view.
  * @cssprop --tp-file-explorer-gallery-tile-size - The least width of a tile in the gallery view.
@@ -212,6 +214,7 @@ export class TpFileExplorer extends TpElement {
   static get elementDependencies(): readonly CustomElementConstructorWithTag[] {
     return [
       TpBreadcrumb,
+      TpBadge,
       TpButton,
       TpDataView,
       TpDescriptionList,
@@ -1101,8 +1104,62 @@ export class TpFileExplorer extends TpElement {
         feedback: 'clone',
       });
       this.#manager.monitor.addEventListener('dragend', (event: DropEvent) => this.#dropped(event));
+      this.#manager.monitor.addEventListener('beforedragstart', (event: DropEvent) =>
+        this.#beginDrag(event),
+      );
+      this.#manager.monitor.addEventListener('settled', () => this.#endDrag());
     }
     return this.#manager;
+  }
+
+  /** The entries the current drag carries, read when it starts. */
+  #dragIds: string[] | null = null;
+  #dragOverlay: { element: HTMLElement; source: Draggable } | null = null;
+
+  /**
+   * A drag shows a chip under the pointer (the entry's icon and name, and how many entries move)
+   * while the rows and tiles stay in place, so no row or tile is lifted out of its layout.
+   */
+  #beginDrag(event: DropEvent): void {
+    this.#endDrag();
+    const snapshot = event.operation.source;
+    const source = snapshot ? this.#manager?.registry.draggables.get(snapshot.id) : undefined;
+    const rowId = (snapshot?.data as { rowId?: string } | undefined)?.rowId;
+    const entry = rowId === undefined ? undefined : this.#known.get(rowId);
+    if (!source || !entry || !source.element) return;
+    const ids = (this.#dragIds = this.#dragged(entry.id));
+    const frame = this.ownerDocument.createElement('div');
+    frame.className = 'drag-frame';
+    frame.setAttribute('inert', '');
+    frame.setAttribute('aria-hidden', 'true');
+    const press = event.operation.activatorEvent as PointerEvent | null;
+    const bounds = source.element.getBoundingClientRect();
+    const offset = (value: number | undefined, start: number) =>
+      value === undefined ? 0 : Math.max(0, value - start);
+    render(
+      html`<div
+        class="drag-chip"
+        part="file-explorer-drag-preview"
+        style=${`left: ${offset(press?.clientX, bounds.left)}px; top: ${offset(press?.clientY, bounds.top)}px`}
+      >
+        <tp-icon aria-hidden="true" .icon=${fileIconOf(entry)}></tp-icon>
+        <span class="drag-chip-name">${entry.name}</span>
+        ${ids.length > 1 ? html`<tp-badge>${ids.length}</tp-badge>` : nothing}
+      </div>`,
+      frame,
+      { host: this },
+    );
+    this.renderRoot.append(frame);
+    source.update({ overlay: frame });
+    this.#dragOverlay = { element: frame, source };
+  }
+
+  #endDrag(): void {
+    this.#dragIds = null;
+    if (!this.#dragOverlay) return;
+    this.#dragOverlay.source.update({ overlay: null });
+    this.#dragOverlay.element.remove();
+    this.#dragOverlay = null;
   }
 
   /** The entries a drag carries: the selection when it holds the dragged entry. */
@@ -1166,7 +1223,7 @@ export class TpFileExplorer extends TpElement {
   #dropped(event: DropEvent): void {
     const { source, target } = event.operation;
     if (event.canceled || !source || !target) return;
-    const ids = (source.data as { ids?: string[] } | undefined)?.ids ?? [];
+    const ids = this.#dragIds ?? (source.data as { ids?: string[] } | undefined)?.ids ?? [];
     const data = target.data as
       { rowId?: string; itemId?: string; folder?: string | null } | undefined;
     const to =
@@ -1613,7 +1670,7 @@ export class TpFileExplorer extends TpElement {
       gallery && entry.thumbnail
         ? html`<tp-image
             class="tile-preview"
-            .src=${entry.thumbnail}
+            src=${entry.thumbnail}
             alt=""
             fit="cover"
             loading="lazy"

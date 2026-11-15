@@ -1,6 +1,7 @@
 import type { PresentationDictionary } from '../resolver.js';
 import { dropInto } from './shared/drop-line.js';
 import { surfaceEdge } from './shared/edges.js';
+import { surfaceAppearance } from './shared/surface.js';
 
 // UI Widgets File explorer presentation: the regions keep the theme's gaps and text; every view,
 // the tree and the controls keep their own families.
@@ -48,6 +49,19 @@ export const fileExplorerAppearance: PresentationDictionary = {
       declarations: { 'inline-size': 'var(--tp-space-12)', 'block-size': 'var(--tp-space-12)' },
     },
     { selector: '& .details-name', declarations: { 'font-weight': 'var(--tp-font-medium)' } },
+  ],
+  // The drag chip is a small floating surface, as popups are.
+  'file-explorer-drag-preview': [
+    ...surfaceAppearance,
+    {
+      declarations: {
+        gap: 'var(--tp-space-2)',
+        padding: 'var(--tp-space-1) var(--tp-space-2)',
+        'border-radius': 'var(--tp-radius-md)',
+        'font-size': 'var(--tp-text-sm)',
+        'font-weight': 'var(--tp-font-medium)',
+      },
+    },
   ],
   'file-explorer-status': [
     {

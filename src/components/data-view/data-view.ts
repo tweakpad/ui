@@ -1459,6 +1459,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
         'data-selected': selected,
         'data-focused': state.focused,
         'data-drop-target': this.#dropTarget === id,
+        'data-draggable': !!this.dragAndDrop?.source,
       },
       content: cells,
       ...(reference ? { reference } : {}),
@@ -1535,6 +1536,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
         'data-selected': selected,
         'data-focused': focused,
         'data-drop-target': this.#dropTarget === id,
+        'data-draggable': !!this.dragAndDrop?.source,
       },
       content: html`${
         this.selectionCheckboxes && this.#selectable
