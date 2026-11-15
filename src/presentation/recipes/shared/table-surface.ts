@@ -61,14 +61,31 @@ export const tableCellFillLayer: PresentationDeclarations = {
 
 /**
  * The boundary of pinned columns while other columns scroll under them: the start edge draws its
- * column line, the end edge a line at its inline start, in every `borders` mode.
+ * column line, the end edge a line at its inline start, in every `borders` mode, and both cast the
+ * theme's shadow over the scrolled columns. The shadow is clipped to the side it falls on, so it
+ * never darkens the rows above and below or the pinned cells themselves.
  */
+// The theme's shadows are a light-scheme black that a dark surface swallows: the shade is the
+// surface itself, darkened, and stronger in the dark scheme, so it reads on either.
+const shade = (alpha: number) => `oklch(from var(--tp-background) calc(l * 0.2) c h / ${alpha})`;
+const pinnedShade = `light-dark(${shade(0.22)}, ${shade(0.9)})`;
+const pinnedShadow = `0 0 var(--tp-space-5) ${pinnedShade}`;
+const reach = 'calc(var(--tp-space-6) * -1)';
+const towardRight = `inset(0 ${reach} 0 0)`;
+const towardLeft = `inset(0 0 0 ${reach})`;
 export const tablePinnedStartEdge: PresentationDeclarations = {
   [columnLineWidth]: 'var(--tp-border-width)',
+  'box-shadow': pinnedShadow,
+  'clip-path': towardRight,
 };
 export const tablePinnedEndEdge: PresentationDeclarations = {
   'border-inline-start': surfaceEdge.border,
+  'box-shadow': pinnedShadow,
+  'clip-path': towardLeft,
 };
+/** Right to left, the shadows fall the other way. */
+export const tablePinnedStartEdgeRtl: PresentationDeclarations = { 'clip-path': towardLeft };
+export const tablePinnedEndEdgeRtl: PresentationDeclarations = { 'clip-path': towardRight };
 
 /** How a table draws its lines. */
 export type TableBorders = 'rows' | 'grid' | 'none';

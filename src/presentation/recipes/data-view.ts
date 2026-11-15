@@ -8,7 +8,9 @@ import {
   tableHeaderType,
   tableLastColumn,
   tablePinnedEndEdge,
+  tablePinnedEndEdgeRtl,
   tablePinnedStartEdge,
+  tablePinnedStartEdgeRtl,
   tableRowHeaderType,
   tableRowHover,
   tableSelectedFill,
@@ -31,6 +33,14 @@ const pinned = (surface: string) => [
     declarations: tablePinnedStartEdge,
   },
   { selector: '[data-overflow~="end"] &[data-pin-edge="end"]', declarations: tablePinnedEndEdge },
+  {
+    selector: '[data-overflow~="start"] &[data-pin-edge="start"]:dir(rtl)',
+    declarations: tablePinnedStartEdgeRtl,
+  },
+  {
+    selector: '[data-overflow~="end"] &[data-pin-edge="end"]:dir(rtl)',
+    declarations: tablePinnedEndEdgeRtl,
+  },
 ];
 
 const size = (row: string, header: string, text: string) => [

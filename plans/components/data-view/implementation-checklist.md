@@ -107,6 +107,7 @@
 | V-23 | C-04; regression (user report) | horizontal scroll with pinned columns; mask sampled in the scroll's own frame | no clipped pinned cells mid-scroll | every pinned cell inside the mask region at each delta (both pins, RTL single pin) | evaluate | passed | Fixed: fades lagged a frame and clipped pinned cells; pinned edges no longer fade; shared mask sides without a band reach the content edge |
 | V-24 | C-04; behavior (user request) | vertical rubber band on the rows scroller | none | `overscroll-behavior-y: none` computed | evaluate | passed | Trackpad overscroll not drivable through DevTools; user to confirm |
 | V-25 | C-13; accessibility + regression | axe on the fixture; render cost of a full window swap; full suite | 0 violations; budget | axe 0 (scroller now role rowgroup); 1.8 ms median / 5.3 ms max for 12×14 cells; 470 files / 6484 tests; lint, typecheck, docs check pass | axe-core + evaluate + commands | passed | Render cost measured in dev mode |
+| V-26 | C-04, C-14; visual (user report) | `#telemetry` scrolled 420 px, both pins; dark and light schemes | pinned edges cast a shadow over the scrolled columns, header included | box-shadow 0 0 20px, darkened surface at 0.9 (dark) / 0.22 (light), clipped to the scrolled side (`inset(0 -24px 0 0)` start, mirrored end and RTL); visible in both screenshots | evaluate + screenshots | passed | Theme shadow tokens are scheme-independent black and vanished on dark; the shade derives from the surface |
 
 ## Early integration checkpoint
 
