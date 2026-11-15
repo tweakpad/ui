@@ -10,6 +10,11 @@ another driver). The record lives in `plans/widgets/heatmap/implementation-check
 3. Heatmaps:
    - `#year`: the default arrangement (week columns by weekday rows), stretched; the cell four days
      before today carries the hint `Release Atlas shipped`.
+   - `#separated`: `groups="separated"` with Monday-first weeks: one block of columns per month,
+     one cell apart; a week across a month's start splits into the days before the 1st and the days
+     from it, and arrows cross the split without a stop.
+   - `#separated-trim`, `#separated-scroll`: the same blocks trimmed to the latest whole widths
+     and scrolling; `#separated-vertical` separates week rows into months.
    - `#vertical`: months by day of the month for 2026; February 29–31, April 31 and the other
      missing dates have no cell; at 18rem the month labels take their narrow form.
    - `#scroll`, `#scroll-vertical`: `fit="scroll"` across and down; both open at the latest data,

@@ -51,6 +51,19 @@ export interface HeatmapAxis<K = never> {
   of(key: K, position: number): string | number | undefined;
   /** The text of a tick in a given form; defaults to the tick's `label`. */
   label?(tick: HeatmapTick, width: CalendarLabelWidth): string;
+  /**
+   * The group a tick belongs to: `auto` labels mark where the group changes, and
+   * `groups="separated"` spaces the groups apart. Undefined leaves the tick in no group.
+   */
+  group?(tick: HeatmapTick): HeatmapGroup | undefined;
+}
+
+/** A run of ticks that belong together, such as the weeks of a month. */
+export interface HeatmapGroup {
+  /** Identity of the group, unique on its axis. */
+  id: string;
+  /** The text a change-point label shows for it. */
+  label: string;
 }
 
 /**
@@ -82,6 +95,12 @@ export type HeatmapAggregate = 'sum' | 'mean' | 'max' | 'min' | 'count';
 export type HeatmapScale = 'linear' | 'quantile';
 /** How the grid meets its inline size. */
 export type HeatmapFit = 'stretch' | 'scroll' | 'trim';
+/**
+ * How an axis shows its groups (the months of week or day ticks, the days of hour ticks, or a
+ * custom axis's groups): side by side like every other tick, or as blocks with space between them,
+ * a tick that spans two groups split into one tick per group.
+ */
+export type HeatmapGroups = 'joined' | 'separated';
 /** Which tick labels an axis shows. */
 export type HeatmapLabels = 'auto' | 'all' | 'alternate' | 'none';
 /** The cell size, gap, radius and label text. */

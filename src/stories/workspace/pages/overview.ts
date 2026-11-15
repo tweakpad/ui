@@ -430,6 +430,7 @@ export function renderOverview(host: WorkspaceHost): PageView {
         <tp-heatmap
           label="Team contributions"
           fit="trim"
+          groups="separated"
           start=${gregorianCalendarAdapter.addDays(todayCalendarDate(), -(activityWeeks * 7 - 1))}
           .data=${activity.data}
           .messages=${activityMessages}

@@ -19,6 +19,8 @@ import type {
   HeatmapAggregate,
   HeatmapAxis,
   HeatmapDatum,
+  HeatmapGroup,
+  HeatmapGroups,
   HeatmapProjection,
   HeatmapScale,
   HeatmapSummary,
@@ -33,6 +35,8 @@ export interface HeatmapModelInput {
   today: string;
   columns: HeatmapProjection | undefined;
   rows: HeatmapProjection | undefined;
+  /** With `separated`, a tick whose keys fall in two groups splits into one tick per group. */
+  groups: HeatmapGroups;
   data: readonly HeatmapDatum[];
   aggregate: HeatmapAggregate;
   adapter: CalendarAdapter;
@@ -52,7 +56,15 @@ export interface HeatmapTickModel {
   /** Its label in a form; empty when the axis has no label for it. */
   label(width: CalendarLabelWidth): string;
   /** The coarser group whose changes `auto` labels mark (a week's month), when it has one. */
-  readonly group: { id: string; label: string } | undefined;
+  readonly group: HeatmapGroup | undefined;
+}
+
+/** The indices of the ticks that start a group, the first tick excluded. */
+export function groupStarts(ticks: readonly Pick<HeatmapTickModel, 'group'>[]): number[] {
+  const starts: number[] = [];
+  for (let index = 1; index < ticks.length; index += 1)
+    if (ticks[index]!.group?.id !== ticks[index - 1]!.group?.id) starts.push(index);
+  return starts;
 }
 
 /** One cell: a column and row pair that at least one key of the range lands on. */
@@ -179,6 +191,11 @@ export function buildHeatmapModel(input: HeatmapModelInput): HeatmapModel {
   const cells = new Map<string, CellAccumulator>();
   const keyCells = new Map<string | number, CellAccumulator>();
 
+  // With separated groups, the parts of a tick that spans two groups (a week across a month's
+  // start) are ticks of their own: the first keeps the tick's id, a later one takes its first
+  // key's date, and they follow each other in the tick's place.
+  const separated = input.groups === 'separated';
+  const parts = new Map<Map<string | number, TickAccumulator>, Map<string | number, number>>();
   const place = (item: SequenceKey, raw: unknown): CellAccumulator | undefined => {
     const column = project(columns, item, context, wrap, raw, axisOrders.get(columns!));
     const row = project(rows, item, context, wrap, raw, axisOrders.get(rows!));
@@ -188,23 +205,29 @@ export function buildHeatmapModel(input: HeatmapModelInput): HeatmapModel {
       projected: typeof column,
       axis: HeatmapProjection | undefined,
     ) => {
-      let record = map.get(projected.id);
+      const group = separated ? changePointGroup(axis, item.date, context) : undefined;
+      const mapKey = group ? `${String(projected.id)}\u0000${group.id}` : projected.id;
+      let record = map.get(mapKey);
       if (!record) {
+        let counts = parts.get(map);
+        if (!counts) parts.set(map, (counts = new Map()));
+        const part = group ? (counts.get(projected.id) ?? 0) : 0;
+        if (group) counts.set(projected.id, part + 1);
         record = {
-          id: projected.id,
-          order: projected.order,
+          id: part ? (item.date ?? String(item.key)) : projected.id,
+          order: projected.order + part / 16,
           date: item.date,
           hour: item.hour,
           custom:
             typeof axis === 'object' ? axisTickRecords.get(axis)?.get(projected.id) : undefined,
         };
-        map.set(projected.id, record);
+        map.set(mapKey, record);
       }
       return record;
     };
     const columnTick = tick(columnTicks, column, columns);
     const rowTick = tick(rowTicks, row, rows);
-    const cellKey = `${String(column.id)}\u0000${String(row.id)}`;
+    const cellKey = `${String(columnTick.id)}\u0000${String(rowTick.id)}`;
     let cell = cells.get(cellKey);
     if (!cell) {
       cell = {
@@ -328,7 +351,10 @@ export function buildHeatmapModel(input: HeatmapModelInput): HeatmapModel {
     ticks.map<HeatmapTickModel>((tick, index) => ({
       id: tick.id,
       index,
-      group: changePointGroup(projection, tick.date, context),
+      group:
+        typeof projection === 'object'
+          ? (projection as HeatmapAxis<unknown>).group?.(tick.custom ?? { id: tick.id })
+          : changePointGroup(projection, tick.date, context),
       label: (width) => {
         if (typeof projection === 'object') {
           const record = tick.custom ?? { id: tick.id };

@@ -30,6 +30,41 @@
   <body>
     <main>
       <tp-heatmap id="year" label="year" today="2026-11-13"></tp-heatmap>
+      <tp-heatmap
+        id="separated"
+        label="separated"
+        groups="separated"
+        week-starts-on="1"
+        today="2026-11-13"
+      ></tp-heatmap>
+      <div class="row">
+        <tp-heatmap
+          id="separated-trim"
+          label="separated trim"
+          groups="separated"
+          fit="trim"
+          today="2026-11-13"
+          style="inline-size: 24rem"
+        ></tp-heatmap>
+        <tp-heatmap
+          id="separated-scroll"
+          label="separated scroll"
+          groups="separated"
+          fit="scroll"
+          today="2026-11-13"
+          style="inline-size: 20rem"
+        ></tp-heatmap>
+        <tp-heatmap
+          id="separated-vertical"
+          label="separated vertical"
+          groups="separated"
+          columns="weekday"
+          rows="week"
+          start="2026-08-01"
+          today="2026-11-13"
+          size="sm"
+        ></tp-heatmap>
+      </div>
       <div class="row">
         <tp-heatmap
           id="vertical"

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { gregorianCalendarAdapter as adapter } from '../../../../src/foundation/calendar.js';
 import {
   buildHeatmapModel,
+  groupStarts,
   type HeatmapModelInput,
 } from '../../../../src/widgets/heatmap/model.js';
 import { heatmapLevelScale } from '../../../../src/widgets/heatmap/scale.js';
@@ -14,6 +15,7 @@ const base: HeatmapModelInput = {
   today: '2026-11-13',
   columns: undefined,
   rows: undefined,
+  groups: 'joined',
   data: [],
   aggregate: 'sum',
   adapter,
@@ -184,5 +186,101 @@ describe('heatmap levels', () => {
   it('uses an explicit datum level', () => {
     const result = model({ data: [{ key: '2026-11-13', value: 1, level: 3 }] });
     expect(result.byId.get('2026-11-13')!.level).toBe(3);
+  });
+});
+
+describe('heatmap groups', () => {
+  // Monday-first weeks: Sunday Feb 1, 2026 closes the week of Monday Jan 26.
+  const range = { start: '2026-01-19', end: '2026-02-14', weekStart: 1 } as const;
+
+  it('keeps a week that spans two months as one column when groups are joined', () => {
+    const result = model(range);
+    expect(result.columns.map((column) => column.id)).toEqual([
+      '2026-01-19',
+      '2026-01-26',
+      '2026-02-02',
+      '2026-02-09',
+    ]);
+    expect(groupStarts(result.columns)).toEqual([2]);
+  });
+
+  it('splits a week across a month start into one column per month', () => {
+    const result = model({ ...range, groups: 'separated' });
+    expect(result.columns.map((column) => column.id)).toEqual([
+      '2026-01-19',
+      '2026-01-26',
+      '2026-02-01',
+      '2026-02-02',
+      '2026-02-09',
+    ]);
+    expect(result.columns.map((column) => column.group?.label)).toEqual([
+      'Jan',
+      'Jan',
+      'Feb',
+      'Feb',
+      'Feb',
+    ]);
+    expect(groupStarts(result.columns)).toEqual([2]);
+    // Monday Jan 26 to Saturday Jan 31 close January; Sunday Feb 1 opens February.
+    const january = result.cells.filter((cell) => cell.column === 1).map((cell) => cell.id);
+    const february = result.cells.filter((cell) => cell.column === 2).map((cell) => cell.id);
+    expect(january).toEqual([
+      '2026-01-26',
+      '2026-01-27',
+      '2026-01-28',
+      '2026-01-29',
+      '2026-01-30',
+      '2026-01-31',
+    ]);
+    expect(february).toEqual(['2026-02-01']);
+    expect(result.at(2, 6)!.id).toBe('2026-02-01');
+    expect(result.at(2, 0)).toBeUndefined();
+  });
+
+  it('never splits day or hour ticks, which hold one group each', () => {
+    const days = model({ ...range, groups: 'separated', columns: 'day', rows: undefined });
+    expect(days.columns).toHaveLength(27);
+    expect(groupStarts(days.columns)).toEqual([13]);
+    const hours = model({
+      unit: 'hour',
+      start: '2026-03-01T22',
+      end: '2026-03-02T01',
+      groups: 'separated',
+      columns: 'hour',
+      rows: undefined,
+    });
+    expect(hours.columns.map((column) => column.id)).toEqual([
+      '2026-03-01T22',
+      '2026-03-01T23',
+      '2026-03-02T00',
+      '2026-03-02T01',
+    ]);
+    expect(groupStarts(hours.columns)).toEqual([2]);
+  });
+
+  it('takes the groups of a custom axis', () => {
+    const shifts: HeatmapAxis<number> = {
+      ticks: Array.from({ length: 6 }, (_, id) => ({ id, label: `${id * 4}h` })),
+      of: (key) => Math.floor(key / 4),
+      group: (tick) =>
+        (tick.id as number) < 3 ? { id: 'am', label: 'Morning' } : { id: 'pm', label: 'Evening' },
+    };
+    const result = model({
+      unit: 'index',
+      start: '0',
+      end: '23',
+      columns: shifts,
+      rows: undefined,
+      groups: 'separated',
+    });
+    expect(result.columns.map((column) => column.group?.label)).toEqual([
+      'Morning',
+      'Morning',
+      'Morning',
+      'Evening',
+      'Evening',
+      'Evening',
+    ]);
+    expect(groupStarts(result.columns)).toEqual([3]);
   });
 });

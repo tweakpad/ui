@@ -28,6 +28,7 @@ export type HeatmapProps = ElementProps<
   | 'end'
   | 'fit'
   | 'formatters'
+  | 'groups'
   | 'interaction'
   | 'invalid'
   | 'label'

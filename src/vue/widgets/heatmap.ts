@@ -31,6 +31,7 @@ export const Heatmap = /*#__PURE__*/ createBinding(TpHeatmap, 'Heatmap', {
   | 'end'
   | 'fit'
   | 'formatters'
+  | 'groups'
   | 'interaction'
   | 'invalid'
   | 'label'

@@ -19,7 +19,18 @@ const year = values(400, 7).map((value, offset) => ({ key: day(offset), value })
 year[3] = { ...year[3]!, hint: 'Release Atlas shipped' };
 
 const heatmap = (id: string) => document.getElementById(id) as Heatmap;
-for (const id of ['year', 'scroll', 'scroll-vertical', 'trim', 'range', 'rtl'])
+for (const id of [
+  'year',
+  'separated',
+  'separated-trim',
+  'separated-scroll',
+  'separated-vertical',
+  'scroll',
+  'scroll-vertical',
+  'trim',
+  'range',
+  'rtl',
+])
   heatmap(id).data = year;
 heatmap('vertical').data = values(365, 3).map((value, offset) => ({
   key: new Date(Date.UTC(2026, 0, 1) + offset * 864e5).toISOString().slice(0, 10),

@@ -7,7 +7,7 @@ tag: tp-heatmap
 <Preview
   title="Heatmap"
   align="stretch"
-  code={`<tp-heatmap id="heatmap-hero" label="Focus sessions"></tp-heatmap>`}
+  code={`<tp-heatmap id="heatmap-hero" label="Focus sessions" groups="separated"></tp-heatmap>`}
   script={`const day = (offset) => new Date(Date.now() - offset * 864e5).toISOString().slice(0, 10);
 document.querySelector('#heatmap-hero').data = Array.from({ length: 371 }, (_, offset) => ({
   key: day(offset),

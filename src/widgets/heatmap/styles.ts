@@ -13,7 +13,10 @@ export const heatmapStyles = css`
     min-block-size: 0;
   }
 
+  /* The spacer between separated groups: with the cell gap on both sides, the group gap. */
   .root {
+    --_group-space: max(0px, calc(var(--_group-gap) - 2 * var(--_gap)));
+
     position: relative;
     display: flex;
     flex: 1 1 auto;
@@ -24,12 +27,18 @@ export const heatmapStyles = css`
 
   /* The plot: row labels beside the cells, column labels above them. Unless the grid scrolls, all
      three share one grid, the strips and the cells as subgrids, so labels follow the cell tracks
-     whatever size the cells stretch to. */
+     whatever size the cells stretch to. Each axis's tracks come from the element: one track per
+     tick and, between separated groups, a spacer that makes the space between them the group gap
+     (the cell gap sits on both sides of it). A tick's track stretches with the plot, or keeps the
+     cell size in trim and scroll. */
   .plot {
+    --_column-track: minmax(var(--_cell), 1fr);
+    --_row-track: auto;
+
     display: grid;
     flex: 0 1 auto;
-    grid-template-columns: max-content repeat(var(--_columns), minmax(var(--_cell), 1fr));
-    grid-template-rows: auto repeat(var(--_rows), auto);
+    grid-template-columns: max-content var(--_column-tracks);
+    grid-template-rows: auto var(--_row-tracks);
     gap: var(--_gap);
     min-inline-size: 0;
     min-block-size: 0;
@@ -43,13 +52,18 @@ export const heatmapStyles = css`
     overflow-clip-margin: calc(var(--tp-ring-width, 2px) + var(--tp-ring-offset, 2px) + 1px);
   }
 
-  /* The minimum cell size, measured to know when stretched cells no longer fit. */
+  /* The minimum cell size and the group spacer, measured to know when stretched cells no longer
+     fit and how many trimmed columns do. */
   .probe {
     position: absolute;
     inline-size: var(--_cell);
     block-size: 0;
     visibility: hidden;
     pointer-events: none;
+  }
+
+  .probe[data-group] {
+    inline-size: var(--_group-space);
   }
 
   .corner {
@@ -89,6 +103,9 @@ export const heatmapStyles = css`
      Scroll area, whose edges carry the shadows; the label strips stay outside it and follow its
      scroll position. */
   [data-scroll] .plot {
+    --_column-track: var(--_cell);
+    --_row-track: var(--_cell);
+
     flex: 1 1 auto;
     grid-template-columns: max-content minmax(0, max-content);
     grid-template-rows: auto minmax(0, max-content);
@@ -118,11 +135,11 @@ export const heatmapStyles = css`
   }
 
   [data-scroll] .column-labels .track {
-    grid-template-columns: repeat(var(--_columns), var(--_cell));
+    grid-template-columns: var(--_column-tracks);
   }
 
   [data-scroll] .row-labels .track {
-    grid-template-rows: repeat(var(--_rows), var(--_cell));
+    grid-template-rows: var(--_row-tracks);
     inline-size: auto;
   }
 
@@ -134,14 +151,15 @@ export const heatmapStyles = css`
   }
 
   [data-scroll] .cells {
-    grid-template-columns: repeat(var(--_columns), var(--_cell));
-    grid-template-rows: repeat(var(--_rows), var(--_cell));
+    grid-template-columns: var(--_column-tracks);
+    grid-template-rows: var(--_row-tracks);
     gap: var(--_gap);
     inline-size: max-content;
   }
 
   :host([fit='trim']) .plot {
-    grid-template-columns: max-content repeat(var(--_columns), var(--_cell));
+    --_column-track: var(--_cell);
+
     justify-content: start;
   }
 
@@ -168,6 +186,11 @@ export const heatmapStyles = css`
   .column-label[data-fit] {
     overflow: visible;
     justify-self: center;
+    text-align: center;
+  }
+
+  /* A separated group's label spans only its group: it centers over it. */
+  :host([groups='separated']) .column-label[data-span] {
     text-align: center;
   }
 

@@ -6,6 +6,7 @@ import type {
   HeatmapCellState,
   HeatmapColor,
   HeatmapFit,
+  HeatmapGroups,
   HeatmapLabels,
   HeatmapSelectionMode,
   HeatmapShape,
@@ -18,6 +19,7 @@ interface Args {
   size: HeatmapSize;
   shape: HeatmapShape;
   fit: HeatmapFit;
+  groups: HeatmapGroups;
   color: HeatmapColor;
   levels: number;
   columnLabels: HeatmapLabels;
@@ -42,6 +44,7 @@ const meta: Meta<Args> = {
     size: 'default',
     shape: 'rounded',
     fit: 'stretch',
+    groups: 'separated',
     color: 'primary',
     levels: 5,
     columnLabels: 'auto',
@@ -57,6 +60,7 @@ const meta: Meta<Args> = {
     size: { control: 'select', options: ['xs', 'sm', 'default', 'lg'] },
     shape: { control: 'select', options: ['square', 'rounded', 'circle'] },
     fit: { control: 'select', options: ['stretch', 'scroll', 'trim'] },
+    groups: { control: 'select', options: ['joined', 'separated'] },
     color: {
       control: 'select',
       options: ['primary', 'success', 'warning', 'destructive'],
@@ -78,6 +82,7 @@ const meta: Meta<Args> = {
       .size=${args.size}
       .shape=${args.shape}
       .fit=${args.fit}
+      .groups=${args.groups}
       .color=${args.color}
       .levels=${args.levels}
       .columnLabels=${args.columnLabels}

@@ -512,6 +512,7 @@ type Tags = {
     | 'end'
     | 'fit'
     | 'formatters'
+    | 'groups'
     | 'interaction'
     | 'invalid'
     | 'label'

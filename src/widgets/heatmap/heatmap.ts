@@ -38,7 +38,13 @@ import { TpTooltip } from '../../components/tooltip/tooltip.js';
 import { TpScrollArea } from '../../components/scroll-area/scroll-area.js';
 import { TpToggleGroup } from '../../components/toggle-group/toggle-group.js';
 import { TpToggle } from '../../components/toggle/toggle.js';
-import { buildHeatmapModel, type HeatmapCellModel, type HeatmapModel } from './model.js';
+import {
+  buildHeatmapModel,
+  groupStarts,
+  type HeatmapCellModel,
+  type HeatmapModel,
+  type HeatmapTickModel,
+} from './model.js';
 import { DEFAULT_HEATMAP_MESSAGES, resolveHeatmapMessages } from './strings.js';
 import { heatmapStyles } from './styles.js';
 import type {
@@ -48,6 +54,7 @@ import type {
   HeatmapColor,
   HeatmapDatum,
   HeatmapFit,
+  HeatmapGroups,
   HeatmapFormatters,
   HeatmapInspectionDetail,
   HeatmapInteraction,
@@ -63,6 +70,13 @@ import type {
 } from './types.js';
 
 /** The selected cell ids, with a range's ends. */
+/** An axis's grid tracks: the group starts, the track list and a tick index's grid line. */
+interface AxisLayout {
+  readonly starts: readonly number[];
+  readonly tracks: string;
+  track(index: number): number;
+}
+
 interface SelectedCells {
   ids: Set<string>;
   from?: string;
@@ -166,6 +180,7 @@ function libraryColor(name: string): string | undefined {
  * @fires tp-cell-activate - A cell was clicked or activated with Enter or Space.
  * @cssprop --tp-heatmap-cell-size - The cell size, and the minimum cell size with `fit="stretch"`.
  * @cssprop --tp-heatmap-gap - The space between cells.
+ * @cssprop --tp-heatmap-group-gap - The space between groups with `groups="separated"`.
  * @cssprop --tp-heatmap-radius - The cell corner radius; `shape` sets it by default.
  * @cssprop --tp-heatmap-color - The ramp's strong color; `color` sets it from an interface role.
  * @cssprop --tp-heatmap-subtle-color - The ramp's first color after the empty one; `color` sets it.
@@ -201,6 +216,7 @@ export class TpHeatmap extends TpElement {
     size: { type: String, reflect: true },
     shape: { type: String, reflect: true },
     fit: { type: String, reflect: true },
+    groups: { type: String, reflect: true },
     scrollAnchor: { type: String, attribute: 'scroll-anchor' },
     columnLabels: { type: String, attribute: 'column-labels' },
     rowLabels: { type: String, attribute: 'row-labels' },
@@ -282,6 +298,12 @@ export class TpHeatmap extends TpElement {
    * fixed cells without the oldest columns that do not fit.
    */
   fit: HeatmapFit = 'stretch';
+  /**
+   * How groups show (the months of week or day ticks, the days of hour ticks, a custom axis's
+   * groups): side by side, or `separated` into blocks with space between them, a week that spans
+   * two months split into one column per month.
+   */
+  groups: HeatmapGroups = 'joined';
   /** With `fit="scroll"`, the end shown first: the latest data (`end`) or the range start. */
   scrollAnchor: 'end' | 'start' = 'end';
   /** Which column labels show. */
@@ -462,6 +484,7 @@ export class TpHeatmap extends TpElement {
       today: this.today,
       columns: this.columns,
       rows: this.rows,
+      groups: this.groups,
       data: this.data ?? [],
       aggregate: this.aggregate,
       adapter: this.calendarAdapter,
@@ -583,6 +606,7 @@ export class TpHeatmap extends TpElement {
       'end',
       'columns',
       'rows',
+      'groups',
       'aggregate',
       'locale',
       'weekStartsOn',
@@ -722,13 +746,31 @@ export class TpHeatmap extends TpElement {
       const cell = probe.getBoundingClientRect().width;
       const gap = parseFloat(getComputedStyle(plot).columnGap) || 0;
       const labels = plot.querySelector<HTMLElement>('.row-labels')?.getBoundingClientRect().width;
-      const columns = this.#ensureModel().columns.length;
-      const needed = (labels === undefined ? 0 : labels + gap) + columns * (cell + gap) - gap;
+      const columns = this.#ensureModel().columns;
+      const spacers = this.#columnSpacers(columns).length;
+      const needed =
+        (labels === undefined ? 0 : labels + gap) +
+        columns.length * (cell + gap) +
+        spacers * (this.#groupSpace() + gap) -
+        gap;
       overflowing = cell > 0 && needed > root.clientWidth + 0.5;
     }
     if (overflowing === this.#overflowing) return;
     this.#overflowing = overflowing;
     this.requestUpdate();
+  }
+
+  /** The column indices that start a separated group, where a spacer track sits before them. */
+  #columnSpacers(columns: readonly HeatmapTickModel[]): number[] {
+    return this.groups === 'separated' ? groupStarts(columns) : [];
+  }
+
+  /** The measured width of the spacer between separated groups. */
+  #groupSpace(): number {
+    return (
+      this.renderRoot.querySelector<HTMLElement>('.probe[data-group]')?.getBoundingClientRect()
+        .width ?? 0
+    );
   }
 
   /** Drops the oldest columns that do not fit, keeping the latest ones. */
@@ -740,8 +782,21 @@ export class TpHeatmap extends TpElement {
     const gap = parseFloat(getComputedStyle(plot).columnGap) || 0;
     const pitch = cell.getBoundingClientRect().width + gap;
     const available = plot.clientWidth - (rowLabels?.getBoundingClientRect().width ?? 0) - gap;
-    const total = this.#ensureModel().columns.length;
-    const fits = pitch > 0 ? Math.max(1, Math.floor((available + gap) / pitch)) : total;
+    const columns = this.#ensureModel().columns;
+    const total = columns.length;
+    // From the latest column back: each column takes a pitch, and a group it closes a spacer.
+    const spacers = new Set(this.#columnSpacers(columns));
+    const spacer = this.#groupSpace() + gap;
+    let fits = total;
+    if (pitch > 0) {
+      let width = pitch - gap;
+      fits = 1;
+      for (let index = total - 2; index >= 0; index -= 1) {
+        width += pitch + (spacers.has(index + 1) ? spacer : 0);
+        if (width > available + 0.5) break;
+        fits += 1;
+      }
+    }
     const trim = Math.max(0, total - fits);
     if (trim !== this.#trim) {
       this.#trim = trim;
@@ -947,6 +1002,17 @@ export class TpHeatmap extends TpElement {
     if (move.kind === 'step') {
       const next = stepGridCell(visible, column, cell.row, move.columns, move.rows);
       target = next ? model.at(next.column + this.#trim, next.row) : undefined;
+      // A split tick ends its group short: a row step past its end continues with the next key,
+      // the start of the next group's first tick (Saturday Jan 31 down to Sunday Feb 1).
+      if (!target && move.columns === 0 && this.groups === 'separated') {
+        const neighbor = model.cells[this.#sequence(cell.id) + Math.sign(move.rows)];
+        if (
+          neighbor &&
+          neighbor.column >= this.#trim &&
+          neighbor.row === cell.row + Math.sign(move.rows)
+        )
+          target = neighbor;
+      }
     } else if (move.kind === 'line') {
       const next = rowEdgeCell(visible, move.edge, cell.row);
       target = next ? model.at(next.column + this.#trim, next.row) : undefined;
@@ -1070,6 +1136,33 @@ export class TpHeatmap extends TpElement {
     return ticks[0]!.label('short') ? 'all' : 'none';
   }
 
+  /**
+   * The grid tracks of an axis's ticks: one per tick and, with separated groups, a spacer where a
+   * group starts. `track` maps a tick's index to its grid line.
+   */
+  #axisLayout(ticks: readonly HeatmapTickModel[], placeholder: string): AxisLayout {
+    const starts = this.groups === 'separated' ? groupStarts(ticks) : [];
+    const count = Math.max(1, ticks.length);
+    if (!starts.length)
+      return {
+        starts,
+        tracks: `repeat(${count}, var(${placeholder}))`,
+        track: (index) => index + 1,
+      };
+    const runs = [0, ...starts, ticks.length].slice(1).map((end, index, ends) => {
+      const start = index === 0 ? 0 : ends[index - 1]!;
+      return `repeat(${end - start}, var(${placeholder}))`;
+    });
+    return {
+      starts,
+      tracks: runs.join(' var(--_group-space) '),
+      track: (index) => index + 1 + starts.filter((start) => start <= index).length,
+    };
+  }
+
+  #columnLayout: AxisLayout = { starts: [], tracks: '', track: (index) => index + 1 };
+  #rowLayout: AxisLayout = { starts: [], tracks: '', track: (index) => index + 1 };
+
   #renderColumnLabels(model: HeatmapModel): TemplateResult | typeof nothing {
     const mode = this.#labelMode('columns');
     if (mode === 'none') return nothing;
@@ -1082,16 +1175,17 @@ export class TpHeatmap extends TpElement {
       const starts = ticks.filter(
         (tick, index) => index === 0 || tick.group?.id !== ticks[index - 1]!.group?.id,
       );
+      const { track } = this.#columnLayout;
       labels = starts.map((tick, index) => {
         const column = tick.index - this.#trim;
         const next = starts[index + 1];
-        const span = (next ? next.index - this.#trim : ticks.length) - column;
+        const last = (next ? next.index - this.#trim : ticks.length) - 1;
         const text = custom?.({ id: tick.id, label: tick.group!.label }) ?? tick.group!.label;
         return html`<span
           class="column-label"
           part="heatmap-column-label"
           data-span
-          style="grid-column: ${column + 1} / span ${span}"
+          style="grid-column: ${track(column)} / ${track(last) + 1}"
           ><span>${text}</span></span
         >`;
       });
@@ -1104,7 +1198,7 @@ export class TpHeatmap extends TpElement {
           class="column-label"
           part="heatmap-column-label"
           data-fit
-          style="grid-column: ${index + 1}"
+          style="grid-column: ${this.#columnLayout.track(index)}"
           ><span class="label-short">${short}</span
           ><span class="label-narrow">${narrow}</span></span
         >`;
@@ -1128,7 +1222,10 @@ export class TpHeatmap extends TpElement {
     const shown = mode === 'all' || (mode === 'alternate' && row % 2 === 1) || changePoint;
     const short = changePoint ? tick.group!.label : tick.label('short');
     const text = shown ? (this.formatters.rowLabel?.({ id: tick.id, label: short }) ?? short) : '';
-    return html`<span class="row-label" part="heatmap-row-label" style="grid-row: ${row + 1}"
+    return html`<span
+      class="row-label"
+      part="heatmap-row-label"
+      style="grid-row: ${this.#rowLayout.track(row)}"
       >${text}</span
     >`;
   }
@@ -1154,7 +1251,7 @@ export class TpHeatmap extends TpElement {
       ?data-range-end=${inRange && cell.id === (selection.to ?? selection.from)}
       ?data-range-middle=${inRange && cell.id !== selection.from && cell.id !== (selection.to ?? selection.from)}
       data-modifiers=${state.modifiers.join(' ') || nothing}
-      style="grid-column: ${cell.column - this.#trim + 1}; --tp-heatmap-level-color: ${this.#levelColor(this.loading ? 0 : cell.level, model.levels)}"
+      style="grid-column: ${this.#columnLayout.track(cell.column - this.#trim)}; --tp-heatmap-level-color: ${this.#levelColor(this.loading ? 0 : cell.level, model.levels)}"
       tabindex=${this.interaction === 'none' ? nothing : cell.id === focusable ? '0' : '-1'}
       aria-label=${this.loading ? nothing : [this.#cellName(state), ...hints].join('. ')}
       aria-selected=${selectable ? String(state.selected) : nothing}
@@ -1240,6 +1337,8 @@ export class TpHeatmap extends TpElement {
 
   override render(): unknown {
     const model = this.#ensureModel();
+    this.#columnLayout = this.#axisLayout(model.columns.slice(this.#trim), '--_column-track');
+    this.#rowLayout = this.#axisLayout(model.rows, '--_row-track');
     // Computed only when the cells render (see the guard below), once per render.
     let selectionCache: SelectedCells | undefined;
     const selection = () => (selectionCache ??= this.#selectedIds());
@@ -1309,7 +1408,7 @@ export class TpHeatmap extends TpElement {
           this.#cellsRendered = true;
           return rowsOfCells().map(
             (row, index) =>
-              html`<div class="row" role="row" style="--_row: ${index + 1}">
+              html`<div class="row" role="row" style="--_row: ${this.#rowLayout.track(index)}">
                 ${
                   model.rows[index]!.label('long')
                     ? html`<span class="visually-hidden" role="rowheader"
@@ -1337,7 +1436,7 @@ export class TpHeatmap extends TpElement {
       },
       content: html`<div
           class="plot"
-          style="--_columns: ${Math.max(1, model.columns.length - this.#trim)}; --_rows: ${Math.max(1, model.rows.length)}"
+          style="--_column-tracks: ${this.#columnLayout.tracks}; --_row-tracks: ${this.#rowLayout.tracks}"
           ?data-error=${Boolean(model.error)}
           ?data-no-column-labels=${this.#labelMode('columns') === 'none'}
           ?data-no-row-labels=${rowMode === 'none'}
@@ -1353,6 +1452,7 @@ export class TpHeatmap extends TpElement {
           }
         </div>
         <span class="probe" aria-hidden="true"></span>
+        <span class="probe" data-group aria-hidden="true"></span>
         <div class="footer" part="heatmap-footer" ?hidden=${!footerFilled}>
           <slot name="footer" @slotchange=${this.#footerChange}></slot>
           ${this.#renderLegend(model)}

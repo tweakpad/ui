@@ -32,6 +32,8 @@ export const heatmapAppearance: PresentationDictionary = {
         // The default size, which the size keys replace.
         '--_cell': 'var(--tp-heatmap-cell-size, 0.75rem)',
         '--_gap': 'var(--tp-heatmap-gap, 3px)',
+        // Separated groups sit one cell apart, at every size.
+        '--_group-gap': 'var(--tp-heatmap-group-gap, var(--_cell))',
         '--_legend-cell': 'var(--tp-heatmap-cell-size, 0.75rem)',
         'font-size': 'var(--tp-text-xs)',
         '--_empty': 'var(--tp-muted)',
