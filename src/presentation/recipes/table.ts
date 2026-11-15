@@ -2,25 +2,31 @@ import { fillLayer, fillLayerHost } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 import { fillColor } from './shared/fill.js';
 import { divider } from './shared/edges.js';
+import {
+  tableCellBox,
+  tableHeaderBlockSize,
+  tableHeaderType,
+  tableRowHover,
+  tableSelectedFill,
+  tableText,
+} from './shared/table-surface.js';
 
 /** Whether a row's cells show their fill layer; each row resets it for nested tables. */
 const rowFill = '--_tp-table-row-fill';
-// Row hover reaches every cell, including sticky cells that paint the row's fill themselves.
-const rowHover = 'color-mix(in oklab, var(--tp-muted) 50%, var(--tp-background))';
+// Table cells also align vertically; the shared box keeps its divider last.
+const { 'border-block-end': cellDivider, ...cellBox } = tableCellBox;
 const cells = [
   {
     declarations: {
-      padding: 'var(--tp-space-2)',
-      'box-sizing': 'border-box',
-      'text-align': 'start',
+      ...cellBox,
       'vertical-align': 'middle',
-      'border-block-end': divider.border,
+      'border-block-end': cellDivider!,
     },
   },
   { selector: '&[data-sticky-column]', declarations: { background: 'inherit' } },
   // The last row of a body or footer section has no bottom border.
   { selector: '&[data-last-row]', declarations: { 'border-block-end-width': '0' } },
-  fillColor(rowHover),
+  fillColor(tableRowHover),
 ];
 /** Native Table regions; all insets and type use the common theme. */
 export const tableAppearance: PresentationDictionary = {
@@ -31,9 +37,7 @@ export const tableAppearance: PresentationDictionary = {
         'inline-size': '100%',
         'border-collapse': 'collapse',
         'caption-side': 'bottom',
-        'font-size': 'var(--tp-text-sm)',
-        color: 'var(--tp-foreground)',
-        background: 'var(--tp-background)',
+        ...tableText,
       },
     },
     {
@@ -69,15 +73,15 @@ export const tableAppearance: PresentationDictionary = {
     {
       selector:
         ':host([selection-presentation="row"]) &[data-selected], &[data-selection-presentation="row"][data-selected]',
-      declarations: { background: 'var(--tp-muted)', [rowFill]: '0' },
+      declarations: { background: tableSelectedFill, [rowFill]: '0' },
     },
   ],
   'table-column-header': [
     ...cells,
     {
       declarations: {
-        'block-size': 'var(--tp-space-10)',
-        'font-weight': 'var(--tp-font-medium)',
+        'block-size': tableHeaderBlockSize,
+        ...tableHeaderType,
       },
     },
   ],

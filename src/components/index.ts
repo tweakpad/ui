@@ -68,6 +68,7 @@ export * from './spinner/index.js';
 export * from './status-dot/index.js';
 export * from './switch/index.js';
 export * from './table/index.js';
+export * from './data-view/index.js';
 export * from './table-of-contents/index.js';
 export * from './tabs/index.js';
 export * from './text-area/index.js';

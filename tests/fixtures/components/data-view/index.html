@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Data view verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        margin: 24px auto;
+        padding: 20px;
+        max-width: 1100px;
+        display: grid;
+        gap: 32px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 24px;
+      }
+      tp-data-view {
+        block-size: 18rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Data view verification</h1>
+      <tp-data-view id="many" label="Readings" selection-mode="single" size="sm"></tp-data-view>
+      <tp-data-view
+        id="rows"
+        label="Stations by row"
+        navigation="row"
+        selection-mode="single"
+      ></tp-data-view>
+      <tp-data-view
+        id="manual"
+        label="Manual sort"
+        sorting="manual"
+        default-sort="name"
+      ></tp-data-view>
+      <tp-data-view id="controlled" label="Controlled" selection-mode="single"></tp-data-view>
+      <tp-data-view id="links" label="With links"></tp-data-view>
+      <tp-data-view id="wide" label="Wide" style="inline-size: 420px"></tp-data-view>
+      <tp-data-view id="rtl" dir="rtl" label="RTL" size="lg"></tp-data-view>
+      <div class="row">
+        <tp-data-view id="loading" label="Loading" loading></tp-data-view>
+        <tp-data-view id="loading-rows" label="Refreshing" loading></tp-data-view>
+        <tp-data-view id="empty" label="Empty"></tp-data-view>
+        <tp-data-view id="empty-slot" label="Empty slot"
+          ><p slot="empty">Nothing matches the filters.</p></tp-data-view
+        >
+        <tp-data-view
+          id="error"
+          label="Error"
+          error="The station service did not answer."
+        ></tp-data-view>
+      </div>
+      <div>
+        <tp-table id="table" label="Table">
+          <tp-table-header>
+            <tp-table-row>
+              <tp-table-head scope="col">Station</tp-table-head>
+              <tp-table-head scope="col">Region</tp-table-head>
+            </tp-table-row>
+          </tp-table-header>
+          <tp-table-body>
+            <tp-table-row>
+              <tp-table-cell>Alder Flats</tp-table-cell>
+              <tp-table-cell>Coast</tp-table-cell>
+            </tp-table-row>
+          </tp-table-body>
+        </tp-table>
+      </div>
+      <p>After data views</p>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

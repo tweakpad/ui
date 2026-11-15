@@ -1,0 +1,168 @@
+---
+title: Data view
+description: Your records as a compact, read-only grid of rows and columns, with sorting, optional row selection and loading, empty and error states, fast at any number of rows.
+tag: tp-data-view
+---
+
+<Preview
+  title="Data view"
+  align="stretch"
+  code={`<tp-data-view id="data-view-hero" label="Field stations" default-sort="name" style="block-size: 18rem"></tp-data-view>`}
+  script={`const view = document.querySelector('#data-view-hero');
+view.columns = [
+  { id: 'name', header: 'Station', sortable: true, rowHeader: true, width: 'minmax(10rem, 2fr)' },
+  { id: 'region', header: 'Region', sortable: true },
+  { id: 'sensors', header: 'Sensors', sortable: true, align: 'end', width: '6rem' },
+  { id: 'battery', header: 'Battery', sortable: true, align: 'end', width: '6rem', format: (value) => value + '%' },
+];
+view.rows = [
+  { id: 'st-01', name: 'Alder Flats', region: 'Coast', sensors: 8, battery: 92 },
+  { id: 'st-02', name: 'Brindle Cove', region: 'Islands', sensors: 5, battery: 41 },
+  { id: 'st-03', name: 'Cinder Ridge', region: 'Highlands', sensors: 11, battery: 77 },
+  { id: 'st-04', name: 'Dovetail Pass', region: 'Highlands', sensors: 4, battery: 18 },
+  { id: 'st-05', name: 'Ember Hollow', region: 'Valley', sensors: 9, battery: 64 },
+  { id: 'st-06', name: 'Gannet Point', region: 'Coast', sensors: 6, battery: 88 },
+];`}
+/>
+
+## Usage
+
+`rows` is your array of records and `columns` says what each column shows. A column reads the property named by its `id` unless it has a `value` accessor, and `format` turns the value into the cell's text. Every row needs a stable identity: `row.id` by default, or whatever `getRowId` returns. Focus, selection and the virtual window follow that identity when the rows change or re-sort.
+
+<Code
+  language="typescript"
+  code={`view.getRowId = (row) => row.stationCode;
+view.columns = [
+  { id: 'name', header: 'Station', rowHeader: true },
+  { id: 'battery', header: 'Battery', align: 'end', format: (value) => value + '%' },
+  { id: 'reading', header: 'Last reading', value: (row) => row.readings.at(-1)?.time },
+];`}
+/>
+
+The view fills its box, about ten rows tall by default, and scrolls inside it with the header pinned. Every row has the same height, set by `size`, so only the rows near the viewport are in the page.
+
+### Custom cells
+
+A column's `render` returns the cell's content: a Badge, a Status dot, a link or any template. It receives the row and the cell's context (its value, text, and whether the row is selected or the cell focused). The cell keeps its height and its place in the keyboard order; links and buttons in it are reached with <Keys keys="Enter" />.
+
+<Preview
+  title="Status badges"
+  align="stretch"
+  code={`<tp-data-view id="data-view-cells" label="Field stations" style="block-size: 14rem"></tp-data-view>`}
+  script={`import { html } from 'lit';
+const view = document.querySelector('#data-view-cells');
+const variant = { online: 'success', degraded: 'warning', offline: 'destructive' };
+view.columns = [
+  { id: 'name', header: 'Station', rowHeader: true },
+  { id: 'region', header: 'Region' },
+  { id: 'status', header: 'Status', width: '8rem', render: (row) => html\`<tp-badge variant=\${variant[row.status]}>\${row.status}</tp-badge>\` },
+];
+view.rows = [
+  { id: 'st-01', name: 'Alder Flats', region: 'Coast', status: 'online' },
+  { id: 'st-02', name: 'Brindle Cove', region: 'Islands', status: 'degraded' },
+  { id: 'st-03', name: 'Cinder Ridge', region: 'Highlands', status: 'offline' },
+  { id: 'st-04', name: 'Dovetail Pass', region: 'Highlands', status: 'online' },
+];`}
+/>
+
+### Sorting
+
+A `sortable` column sorts when its header is pressed: ascending, then descending, then back to the given order. By default the view shows a sorted copy of `rows`. Text compares in the reader's language with numbers in order, numbers and dates by value, and empty values always go last; a column's `compare` replaces that. `sort` and `default-sort` hold the sort, and each change is a cancelable `tp-sort-change`.
+
+When the order comes from elsewhere, such as a server query, set `sorting="manual"`: the header still shows and proposes the sort, and you pass the rows in that order. `sortDataViewRows` is the view's own sort, for when you sort a copy yourself.
+
+<Code
+  language="typescript"
+  code={`import { sortDataViewRows } from '@tweakpad/ui';
+
+view.sorting = 'manual';
+view.addEventListener('tp-sort-change', async (event) => {
+  view.loading = true;
+  view.rows = await fetchStations({ sort: event.detail.value });
+  view.loading = false;
+});
+
+const ordered = sortDataViewRows(stations, { column: 'battery', direction: 'descending' }, columns);`}
+/>
+
+### Selection and activation
+
+`selection-mode="single"` lets a press or <Keys keys="Space" /> select one row; `value` holds its id and each change is a cancelable `tp-value-change` that carries the row. <Keys keys="Enter" /> or a double click fires `tp-row-activate`, where you open the record. Presses on links and buttons inside cells keep their own behavior.
+
+<Preview
+  title="Selection"
+  align="stretch"
+  code={`<tp-data-view id="data-view-select" label="Field stations" selection-mode="single" default-value="st-02" style="block-size: 14rem"></tp-data-view>`}
+  script={`const view = document.querySelector('#data-view-select');
+view.columns = [
+  { id: 'name', header: 'Station', rowHeader: true },
+  { id: 'region', header: 'Region' },
+  { id: 'sensors', header: 'Sensors', align: 'end', width: '6rem' },
+];
+view.rows = [
+  { id: 'st-01', name: 'Alder Flats', region: 'Coast', sensors: 8 },
+  { id: 'st-02', name: 'Brindle Cove', region: 'Islands', sensors: 5 },
+  { id: 'st-03', name: 'Cinder Ridge', region: 'Highlands', sensors: 11 },
+  { id: 'st-04', name: 'Dovetail Pass', region: 'Highlands', sensors: 4 },
+];
+view.addEventListener('tp-row-activate', (event) => console.log('Open', event.detail.rowId));`}
+/>
+
+### Loading, empty and error
+
+`loading` shows placeholder rows until the first rows arrive, and a busy grid with a Progress bar under the header while rows are already shown. Without rows the view shows an empty state, which the `empty` slot replaces. `error` shows its message with a Retry Button that fires `tp-retry`; the `error` slot replaces it.
+
+<Preview
+  title="States"
+  align="stretch"
+  code={`<div style="display: grid; gap: 1rem">
+  <tp-data-view id="data-view-loading" label="Loading stations" loading style="block-size: 11rem"></tp-data-view>
+  <tp-data-view id="data-view-error" label="Stations" style="block-size: 13rem"></tp-data-view>
+</div>`}
+  script={`const columns = [
+  { id: 'name', header: 'Station' },
+  { id: 'region', header: 'Region' },
+  { id: 'battery', header: 'Battery', align: 'end', width: '6rem' },
+];
+document.querySelector('#data-view-loading').columns = columns;
+const failed = document.querySelector('#data-view-error');
+failed.columns = columns;
+failed.error = 'The station service did not answer.';
+failed.addEventListener('tp-retry', () => (failed.error = null));`}
+/>
+
+### Many rows
+
+Rows that are far from the viewport are not in the page, so ten thousand rows scroll and sort like ten. Search, filters and paging stay in your application: filter your array and pass the result as `rows`.
+
+<Preview
+  title="Ten thousand rows"
+  align="stretch"
+  code={`<tp-data-view id="data-view-many" label="Readings" size="sm" style="block-size: 20rem"></tp-data-view>`}
+  script={`const view = document.querySelector('#data-view-many');
+view.columns = [
+  { id: 'id', header: 'Reading', sortable: true, rowHeader: true },
+  { id: 'station', header: 'Station', sortable: true },
+  { id: 'temperature', header: 'Temperature', sortable: true, align: 'end', format: (value) => value.toFixed(1) + ' °C' },
+];
+const stations = ['Alder Flats', 'Brindle Cove', 'Cinder Ridge', 'Dovetail Pass', 'Ember Hollow'];
+view.rows = Array.from({ length: 10000 }, (_, index) => ({
+  id: 'r-' + (index + 1),
+  station: stations[index % stations.length],
+  temperature: Math.sin(index / 40) * 12 + 8,
+}));`}
+/>
+
+### Keyboard
+
+The grid is one tab stop. With `navigation="cell"`, the default, arrow keys move between cells, header cells included; with `navigation="row"` they move between rows, and Up from the first row reaches the sortable headers.
+
+| Key | Action |
+| --- | --- |
+| <Keys keys="ArrowLeft" />, <Keys keys="ArrowRight" />, <Keys keys="ArrowUp" />, <Keys keys="ArrowDown" /> | Move to the next cell, or the next row under row navigation |
+| <Keys keys="Home" />, <Keys keys="End" /> | Move to the first or last cell of the row, or the first or last row |
+| <Keys keys="mod+Home" />, <Keys keys="mod+End" /> | Move to the first or last cell of the grid |
+| <Keys keys="PageUp" />, <Keys keys="PageDown" /> | Move by a viewport of rows |
+| <Keys keys="Enter" /> | On a header, sort; on a row, open it, or move into the cell's link or button |
+| <Keys keys="Space" /> | On a header, sort; on a row, select it |
+| <Keys keys="Escape" /> | From a cell's link or button, back to the cell |

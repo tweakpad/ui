@@ -13,6 +13,7 @@ const modules: Record<string, () => Promise<Record<string, unknown>>> = {
   TpFileUpload: () => import('../../../../src/components/file-upload/index.js'),
   TpQrCode: () => import('../../../../src/components/qr-code/index.js'),
   TpCursor: () => import('../../../../src/components/cursor/index.js'),
+  TpDataView: () => import('../../../../src/components/data-view/index.js'),
   TpDescriptionList: () => import('../../../../src/components/description-list/index.js'),
   TpOverflowList: () => import('../../../../src/components/overflow-list/index.js'),
   TpStatusDot: () => import('../../../../src/components/status-dot/index.js'),
@@ -20,6 +21,7 @@ const modules: Record<string, () => Promise<Record<string, unknown>>> = {
   TpVisuallyHidden: () => import('../../../../src/components/visually-hidden/index.js'),
 };
 const markup: Record<string, string> = {
+  TpDataView: '<tp-data-view label="Empty" error="Offline"></tp-data-view>',
   TpButton: '<tp-button loading>Save</tp-button>',
   TpCarousel:
     '<tp-carousel label="Numbers"><div>One</div><div>Two</div><div>Three</div></tp-carousel>',

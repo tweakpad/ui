@@ -1,6 +1,7 @@
 import { html, nothing } from 'lit';
 import { repeat } from 'lit/directives/repeat.js';
 import type { StatusDotMotion, StatusDotVariant } from '../../../components/status-dot/index.js';
+import type { DataViewColumn } from '../../../components/data-view/index.js';
 import type { TpTextArea } from '../../../components/text-area/index.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import type { EmojiPickerItem } from '../../../widgets/emoji-picker/index.js';
@@ -228,6 +229,61 @@ function turn(messages: Message[], conversation: Conversation) {
 }
 
 /** Team conversation with history and a composer, plus who is around and what is coming up. */
+interface LogEntry {
+  readonly id: string;
+  readonly time: Date;
+  readonly who: string;
+  readonly action: string;
+  readonly target: string;
+}
+
+const logActions = ['updated', 'commented on', 'moved', 'reviewed', 'shared', 'archived'];
+const logTargets = [
+  'Launch checklist',
+  'Pilot city brief',
+  'Pricing page copy',
+  'Onboarding flow',
+  'Press kit',
+  'Support macros',
+  'Release notes',
+];
+
+/** A deterministic audit trail of the launch work, newest first. */
+function activityLog(members: readonly string[]): LogEntry[] {
+  let seed = 7;
+  const next = (count: number) => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return Math.floor((seed / 2147483648) * count);
+  };
+  const now = Date.now();
+  return Array.from({ length: 500 }, (_, index) => ({
+    id: `log-${index}`,
+    time: new Date(now - index * 37 * 60_000 - next(30) * 60_000),
+    who: members[next(members.length)] ?? 'Someone',
+    action: logActions[next(logActions.length)]!,
+    target: logTargets[next(logTargets.length)]!,
+  }));
+}
+
+const logTime = new Intl.DateTimeFormat('en', {
+  weekday: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+const logColumns: DataViewColumn<LogEntry>[] = [
+  {
+    id: 'time',
+    header: 'When',
+    sortable: true,
+    width: '9rem',
+    format: (value) => logTime.format(value as Date),
+  },
+  { id: 'who', header: 'Who', sortable: true, width: 'minmax(8rem, 1fr)' },
+  { id: 'action', header: 'Action', width: '8rem' },
+  { id: 'target', header: 'Item', sortable: true, rowHeader: true, width: 'minmax(10rem, 2fr)' },
+];
+
 export function renderActivity(host: WorkspaceHost): PageView {
   const messages = host.view<Message[]>('activity.messages', initialMessages);
   const loaded = host.view('activity.history', false);
@@ -280,7 +336,8 @@ export function renderActivity(host: WorkspaceHost): PageView {
     ]);
     details.form.reset();
   };
-  const body = html`<div class="workspace-columns">
+  const log = host.view<LogEntry[]>('activity.log', activityLog(host.members));
+  const columns = html`<div class="workspace-columns">
     <tp-card class="activity-conversation"
       ><h2 slot="header">#atlas-launch</h2>
       <p slot="description">The team channel</p>
@@ -398,6 +455,22 @@ export function renderActivity(host: WorkspaceHost): PageView {
         </tp-list>
       </tp-card>
     </div>
+  </div>`;
+  const body = html`<div class="workspace-stack-lg">
+    ${columns}
+    <tp-card
+      ><h2 slot="header">Audit log</h2>
+      <p slot="description">Every change to the launch work, newest first</p>
+      <tp-data-view
+        class="activity-log"
+        label="Audit log"
+        size="sm"
+        navigation="row"
+        default-sort="time:descending"
+        .columns=${logColumns}
+        .rows=${log}
+      ></tp-data-view>
+    </tp-card>
   </div>`;
   return {
     title: 'Activity',

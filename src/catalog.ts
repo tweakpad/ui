@@ -94,6 +94,7 @@ export const catalog = [
   ['Skeleton', 'tp-skeleton', 'thin-wrapper'],
   ['Status dot', 'tp-status-dot', 'presentational-primitive'],
   ['Table', 'tp-table', 'presentational-primitive'],
+  ['Data view', 'tp-data-view', 'flattening-compound'],
   ['Text transform', 'tp-text-transform', 'presentational-primitive'],
   ['Time', 'tp-time', 'presentational-primitive'],
   ['Visually hidden', 'tp-visually-hidden', 'presentational-primitive'],

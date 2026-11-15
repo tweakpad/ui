@@ -435,6 +435,22 @@ export const laneRows: LaneRow[] = [
     },
   },
   {
+    entry: 'tp-data-view',
+    binding: 'DataView',
+    lane: 'value',
+    initial: 'a',
+    propose: call('selectRow', 'b'),
+    props: {
+      label: 'Stations',
+      selectionMode: 'single',
+      columns: [{ id: 'name', header: 'Station' }],
+      rows: [
+        { id: 'a', name: 'Alder Flats' },
+        { id: 'b', name: 'Brindle Cove' },
+      ],
+    },
+  },
+  {
     entry: 'tp-image-editor',
     binding: 'ImageEditor',
     lane: 'value',

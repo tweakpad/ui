@@ -30,6 +30,7 @@ import type { TpCommandList } from '../components/command-palette/list.js';
 import type { TpCopyButton } from '../components/copy-button/copy-button.js';
 import type { TpCursorZone } from '../components/cursor/cursor-zone.js';
 import type { TpCursor } from '../components/cursor/cursor.js';
+import type { TpDataView } from '../components/data-view/data-view.js';
 import type { TpDataVisualization } from '../components/data-visualization/data-visualization.js';
 import type { TpDescriptionListItem } from '../components/description-list/description-list-item.js';
 import type { TpDescriptionList } from '../components/description-list/description-list.js';
@@ -214,6 +215,7 @@ import type { TpVisuallyHidden } from '../components/visually-hidden/visually-hi
 import type * as componentsCodeBlockCodeBlock from '../components/code-block/code-block.js';
 import type * as componentsCopyButtonCopyButton from '../components/copy-button/copy-button.js';
 import type * as componentsCursorCursor from '../components/cursor/cursor.js';
+import type * as componentsDataViewTypes from '../components/data-view/types.js';
 import type * as componentsDataVisualizationTypes from '../components/data-visualization/types.js';
 import type * as componentsDrawerTypes from '../components/drawer/types.js';
 import type * as componentsFieldGroupFieldGroup from '../components/field-group/field-group.js';
@@ -1225,6 +1227,43 @@ type Tags = {
     | 'stick'
     | 'stiffness',
     { 'tp-diagnostic': CustomEvent<foundationServices.Diagnostic> }
+  >;
+  'tp-data-view': Tag<
+    TpDataView<unknown>,
+    | 'appearance'
+    | 'columns'
+    | 'defaultSort'
+    | 'defaultValue'
+    | 'density'
+    | 'disabled'
+    | 'error'
+    | 'getRowId'
+    | 'invalid'
+    | 'label'
+    | 'loading'
+    | 'messages'
+    | 'motionPolicy'
+    | 'navigation'
+    | 'orientation'
+    | 'overscan'
+    | 'partContracts'
+    | 'partPresentation'
+    | 'readOnly'
+    | 'required'
+    | 'rows'
+    | 'scrollEdgeFade'
+    | 'selectionMode'
+    | 'size'
+    | 'sort'
+    | 'sorting'
+    | 'value',
+    {
+      'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
+      'tp-retry': CustomEvent<NonNullable<unknown>>;
+      'tp-row-activate': CustomEvent<componentsDataViewTypes.DataViewActivateDetail<unknown>>;
+      'tp-sort-change': foundationEvents.TpValueChangeEvent<componentsDataViewTypes.DataViewSort | null>;
+      'tp-value-change': foundationEvents.TpValueChangeEvent<string | null>;
+    }
   >;
   'tp-data-visualization': Tag<
     TpDataVisualization,

@@ -1,4 +1,5 @@
 import { dataVisualizationExample } from './data-visualization.examples.js';
+import { fieldStations, stationColumns, statusColumn } from './data-view.examples.js';
 import { renderFormExample } from './form.examples.js';
 import { skeletonProfile } from './skeleton.examples.js';
 import {
@@ -612,6 +613,15 @@ const examples = {
         <div><tp-time datetime="2026-03-21" mode="absolute" pattern="MMM d"></tp-time></div>
       </tp-timeline-item>
     </tp-timeline>
+  `,
+  'tp-data-view': () => html`
+    <tp-data-view
+      label="Field stations"
+      default-sort="name"
+      selection-mode="single"
+      .columns=${[...stationColumns, statusColumn]}
+      .rows=${fieldStations(40)}
+    ></tp-data-view>
   `,
   // Without an engine the map shows its empty status; see the Map stories for engines.
   'tp-map': () => html`

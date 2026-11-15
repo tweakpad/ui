@@ -32,6 +32,7 @@ import {
   CopyButton,
   Cursor,
   CursorZone,
+  DataView,
   DataVisualization,
   DescriptionList,
   DescriptionListItem,
@@ -251,6 +252,7 @@ import type { TpCommandList as TpCommandListType } from '../../../src/components
 import type { TpCopyButton as TpCopyButtonType } from '../../../src/components/copy-button/copy-button.js';
 import type { TpCursorZone as TpCursorZoneType } from '../../../src/components/cursor/cursor-zone.js';
 import type { TpCursor as TpCursorType } from '../../../src/components/cursor/cursor.js';
+import type { TpDataView as TpDataViewType } from '../../../src/components/data-view/data-view.js';
 import type { TpDataVisualization as TpDataVisualizationType } from '../../../src/components/data-visualization/data-visualization.js';
 import type { TpDescriptionListItem as TpDescriptionListItemType } from '../../../src/components/description-list/description-list-item.js';
 import type { TpDescriptionList as TpDescriptionListType } from '../../../src/components/description-list/description-list.js';
@@ -491,6 +493,7 @@ export const elements: ReactElement[] = [
   <CopyButton ref={(element: TpCopyButtonType | null) => void element} />,
   <Cursor ref={(element: TpCursorType | null) => void element} />,
   <CursorZone ref={(element: TpCursorZoneType | null) => void element} />,
+  <DataView ref={(element: TpDataViewType<never> | null) => void element} />,
   <DataVisualization ref={(element: TpDataVisualizationType | null) => void element} />,
   <DescriptionList ref={(element: TpDescriptionListType | null) => void element} />,
   <DescriptionListItem ref={(element: TpDescriptionListItemType | null) => void element} />,

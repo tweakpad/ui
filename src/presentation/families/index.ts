@@ -73,6 +73,7 @@ import { skeletonPresentation } from './skeleton.js';
 import { statusDotPresentation } from './status-dot.js';
 import { visuallyHiddenPresentation } from './visually-hidden.js';
 import { tablePresentation } from './table.js';
+import { dataViewPresentation } from './data-view.js';
 import { navigationPanelPresentation } from './navigation-panel.js';
 import { mediaPlayerPresentation } from './media-player.js';
 import { mapPresentation } from './map.js';
@@ -163,6 +164,7 @@ export { skeletonPresentation } from './skeleton.js';
 export { statusDotPresentation } from './status-dot.js';
 export { visuallyHiddenPresentation } from './visually-hidden.js';
 export { tablePresentation } from './table.js';
+export { dataViewPresentation } from './data-view.js';
 export { navigationPanelPresentation } from './navigation-panel.js';
 export { mediaPlayerPresentation } from './media-player.js';
 export { mapPresentation } from './map.js';
@@ -256,6 +258,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   statusDotPresentation,
   visuallyHiddenPresentation,
   tablePresentation,
+  dataViewPresentation,
   navigationPanelPresentation,
   mediaPlayerPresentation,
   mapPresentation,

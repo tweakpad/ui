@@ -52,3 +52,8 @@
 .activity-send {
   margin-inline-start: auto;
 }
+
+/* The audit log shows a dozen rows and scrolls the rest. */
+.activity-log {
+  block-size: calc(var(--tp-space-8) * 13);
+}

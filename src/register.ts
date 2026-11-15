@@ -180,6 +180,7 @@ import {
   TpTableCaption,
 } from './components/table/parts.js';
 import { TpTable } from './components/table/table.js';
+import { TpDataView } from './components/data-view/data-view.js';
 import { TpTabs } from './components/tabs/tabs.js';
 import { TpTextArea } from './components/text-area/text-area.js';
 import { TpFileUpload } from './components/file-upload/file-upload.js';
@@ -320,6 +321,7 @@ defineElement(TpMessageGroup.tagName, TpMessageGroup);
 defineElement(TpSkeleton.tagName, TpSkeleton);
 defineElement(TpStatusDot.tagName, TpStatusDot);
 defineElement(TpTable.tagName, TpTable);
+defineElement(TpDataView.tagName, TpDataView);
 defineElement(TpTextTransform.tagName, TpTextTransform);
 defineElement(TpTime.tagName, TpTime);
 defineElement(TpVisuallyHidden.tagName, TpVisuallyHidden);

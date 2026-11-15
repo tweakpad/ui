@@ -24,6 +24,7 @@ export * from './color-input.js';
 export * from './command-palette.js';
 export * from './copy-button.js';
 export * from './cursor.js';
+export * from './data-view.js';
 export * from './data-visualization.js';
 export * from './description-list.js';
 export * from './dialog.js';
