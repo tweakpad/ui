@@ -1231,6 +1231,7 @@ type Tags = {
   'tp-data-view': Tag<
     TpDataView<unknown>,
     | 'appearance'
+    | 'borders'
     | 'columns'
     | 'defaultSort'
     | 'defaultValue'
@@ -1242,6 +1243,7 @@ type Tags = {
     | 'label'
     | 'loading'
     | 'messages'
+    | 'middleware'
     | 'motionPolicy'
     | 'navigation'
     | 'orientation'
@@ -1256,6 +1258,9 @@ type Tags = {
     | 'size'
     | 'sort'
     | 'sorting'
+    | 'stickyEndColumns'
+    | 'stickyStartColumns'
+    | 'striped'
     | 'value',
     {
       'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
@@ -4948,6 +4953,7 @@ type Tags = {
   'tp-table': Tag<
     TpTable,
     | 'appearance'
+    | 'borders'
     | 'density'
     | 'disabled'
     | 'invalid'
@@ -4964,7 +4970,8 @@ type Tags = {
     | 'stickyEndColumns'
     | 'stickyFooter'
     | 'stickyHeader'
-    | 'stickyStartColumns',
+    | 'stickyStartColumns'
+    | 'striped',
     { 'tp-diagnostic': CustomEvent<foundationServices.Diagnostic> }
   >;
   'tp-table-body': Tag<

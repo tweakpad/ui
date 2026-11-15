@@ -156,7 +156,12 @@ export class TpTableCaption extends TablePart {
   static override partName = 'table-caption';
 }
 
-export type TableSection = { element: HTMLElement; rows: HTMLTableCellElement[][] };
+export type TableSection = {
+  element: HTMLElement;
+  rows: HTMLTableCellElement[][];
+  /** The native row of each entry in `rows`, once it has rendered. */
+  rowElements: (HTMLElement | null)[];
+};
 /** Native and custom compositions use the same geometry and sticky implementation. */
 export function tableSections(table: HTMLTableElement, owner: HTMLElement): TableSection[] {
   if (table.parentNode === owner) {
@@ -166,6 +171,7 @@ export function tableSections(table: HTMLTableElement, owner: HTMLElement): Tabl
             {
               element: section,
               rows: [...section.rows].map((row) => [...row.cells]),
+              rowElements: [...section.rows],
             },
           ]
         : [],
@@ -178,21 +184,17 @@ export function tableSections(table: HTMLTableElement, owner: HTMLElement): Tabl
       !section.nativeElement
     )
       return [];
+    const rows = [...section.children].filter((row) => row instanceof TpTableRow);
     return [
       {
         element: section.nativeElement,
-        rows: [...section.children].flatMap((row) =>
-          row instanceof TpTableRow
-            ? [
-                [...row.children].flatMap((cell) =>
-                  cell instanceof TpTableHead || cell instanceof TpTableCell
-                    ? cell.nativeElement
-                      ? [cell.nativeElement as HTMLTableCellElement]
-                      : []
-                    : [],
-                ),
-              ]
-            : [],
+        rowElements: rows.map((row) => row.nativeElement),
+        rows: rows.map((row) =>
+          [...row.children].flatMap((cell) =>
+            (cell instanceof TpTableHead || cell instanceof TpTableCell) && cell.nativeElement
+              ? [cell.nativeElement as HTMLTableCellElement]
+              : [],
+          ),
         ),
       },
     ];

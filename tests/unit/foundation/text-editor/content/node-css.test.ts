@@ -3,10 +3,8 @@ import {
   defineTextEditorBlock,
   defineTextEditorInline,
 } from '../../../../../src/foundation/text-editor/nodes.js';
-import {
-  isContainedCss,
-  nodeCssText,
-} from '../../../../../src/foundation/text-editor/content/node-css.js';
+import { isContainedCss } from '../../../../../src/foundation/contained-css.js';
+import { nodeCssText } from '../../../../../src/foundation/text-editor/content/node-css.js';
 
 const SCOPE = '[part~="text-editor-content"]';
 

@@ -6,7 +6,15 @@ import type {
   DataViewSize,
   DataViewSorting,
 } from '../components/data-view/index.js';
-import { fieldStations, stationColumns, statusColumn } from './data-view.examples.js';
+import {
+  fieldStations,
+  stationColumns,
+  stationTelemetry,
+  statusColumn,
+  telemetryColumns,
+  telemetryMiddleware,
+  telemetryPartContracts,
+} from './data-view.examples.js';
 import { libraryDocs } from './library-docs.js';
 
 interface Args {
@@ -88,4 +96,52 @@ export const States: Story = {
         .columns=${stationColumns}
       ></tp-data-view>
     </div>`,
+};
+
+/**
+ * Fourteen columns with the station and its action pinned, middleware for header units, search
+ * marks and a filtered empty state, and part contracts for row and cell styling.
+ */
+export const Customized: Story = {
+  tags: ['!autodocs'],
+  render: () => {
+    const readings = stationTelemetry(48);
+    let query = '';
+    const root = document.createElement('div');
+    root.style.cssText = 'display: grid; gap: var(--tp-space-3)';
+    root.innerHTML = `<tp-input placeholder="Search stations" aria-label="Search stations"></tp-input>
+      <tp-data-view label="Station telemetry" selection-mode="single" striped
+        sticky-start-columns="1" sticky-end-columns="1" default-sort="name"
+        style="block-size: calc(var(--tp-spacing) * 100)"></tp-data-view>`;
+    const search = root.querySelector('tp-input') as HTMLElement & { value: string };
+    const view = root.querySelector('tp-data-view')!;
+    const filter = () => {
+      const q = query.trim().toLowerCase();
+      view.rows = q
+        ? readings.filter((row) =>
+            telemetryColumns.some((column) =>
+              String((row as unknown as Record<string, unknown>)[column.id] ?? '')
+                .toLowerCase()
+                .includes(q),
+            ),
+          )
+        : readings;
+    };
+    view.columns = telemetryColumns as never;
+    view.middleware = telemetryMiddleware({
+      query: () => query,
+      clear: () => {
+        query = '';
+        search.value = '';
+        filter();
+      },
+    }) as never;
+    view.partContracts = telemetryPartContracts as never;
+    search.addEventListener('input', () => {
+      query = search.value;
+      filter();
+    });
+    filter();
+    return root;
+  },
 };

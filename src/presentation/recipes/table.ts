@@ -1,48 +1,48 @@
 import { fillLayer, fillLayerHost } from '../motion.js';
 import type { PresentationDictionary } from '../resolver.js';
 import { fillColor } from './shared/fill.js';
-import { divider } from './shared/edges.js';
 import {
+  tableBorders,
   tableCellBox,
+  tableCellFillLayer,
+  tableCellLines,
   tableHeaderBlockSize,
   tableHeaderType,
+  tableLastColumn,
+  tableLastRow,
   tableRowHover,
   tableSelectedFill,
+  tableStripeFill,
   tableText,
 } from './shared/table-surface.js';
 
 /** Whether a row's cells show their fill layer; each row resets it for nested tables. */
 const rowFill = '--_tp-table-row-fill';
-// Table cells also align vertically; the shared box keeps its divider last.
-const { 'border-block-end': cellDivider, ...cellBox } = tableCellBox;
 const cells = [
-  {
-    declarations: {
-      ...cellBox,
-      'vertical-align': 'middle',
-      'border-block-end': cellDivider!,
-    },
-  },
+  { declarations: { ...tableCellBox, 'vertical-align': 'middle', ...tableCellLines } },
   { selector: '&[data-sticky-column]', declarations: { background: 'inherit' } },
+  { selector: '&[data-last-column]', declarations: tableLastColumn },
   // The last row of a body or footer section has no bottom border.
-  { selector: '&[data-last-row]', declarations: { 'border-block-end-width': '0' } },
+  { selector: '&[data-last-row]', declarations: tableLastRow },
   fillColor(tableRowHover),
 ];
 /** Native Table regions; all insets and type use the common theme. */
 export const tableAppearance: PresentationDictionary = {
-  table: [],
+  table: [{ declarations: tableBorders('rows') }],
+  'table-borders-rows': [{ declarations: tableBorders('rows') }],
+  'table-borders-grid': [{ declarations: tableBorders('grid') }],
+  'table-borders-none': [{ declarations: tableBorders('none') }],
   'table-table': [
     {
       declarations: {
         'inline-size': '100%',
-        'border-collapse': 'collapse',
+        // Cells draw only their end lines, so separate borders never double. Each cell owns its
+        // lines, and a cleared line shows the row's fill rather than the table behind it.
+        'border-collapse': 'separate',
+        'border-spacing': '0',
         'caption-side': 'bottom',
         ...tableText,
       },
-    },
-    {
-      selector: '&[data-sticky-regions="true"]',
-      declarations: { 'border-collapse': 'separate', 'border-spacing': '0' },
     },
   ],
   'table-caption': [
@@ -63,17 +63,21 @@ export const tableAppearance: PresentationDictionary = {
       declarations: {
         background: 'color-mix(in oklab, var(--tp-muted) 50%, var(--tp-background))',
         'font-weight': 'var(--tp-font-medium)',
-        'border-block-start': divider.border,
       },
     },
   ],
   'table-row': [
     { declarations: { background: 'inherit', [rowFill]: '0' } },
+    // Alternate body rows: one fill under all the row's cells, which a selected row replaces.
+    { selector: '&[data-stripe]', declarations: { background: tableStripeFill } },
     { selector: '&:hover', declarations: { [rowFill]: '1' } },
     {
       selector:
         ':host([selection-presentation="row"]) &[data-selected], &[data-selection-presentation="row"][data-selected]',
-      declarations: { background: tableSelectedFill, [rowFill]: '0' },
+      declarations: {
+        background: tableSelectedFill,
+        [rowFill]: '0',
+      },
     },
   ],
   'table-column-header': [
@@ -91,7 +95,10 @@ export const tableAppearance: PresentationDictionary = {
 /** Every cell carries the fill layer; its row decides when it shows. */
 const cellLayer = [
   { declarations: fillLayerHost },
-  { selector: '&::before', declarations: { ...fillLayer(), opacity: `var(${rowFill}, 0)` } },
+  {
+    selector: '&::before',
+    declarations: { ...fillLayer(), ...tableCellFillLayer, opacity: `var(${rowFill}, 0)` },
+  },
 ];
 export const tableStructure: PresentationDictionary = {
   'table-column-header': cellLayer,

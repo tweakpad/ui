@@ -25,4 +25,35 @@ describe('content scroll masks', () => {
     expect(mask.composite).toBe('add,intersect,intersect,add');
     expect(mask.image).toContain('url("authored.svg")');
   });
+  it('covers the whole content along an axis without bands, so scrolling it shows no stale edge', () => {
+    const mask = scrollEdgeMask(
+      { left: 300, top: 0, width: 400, height: 200 },
+      { left: 0, right: 0, top: 0, bottom: 24 },
+      [],
+      'none',
+      { width: 1200, height: 2000 },
+    );
+    expect(mask.position).toBe('0px 0px,0px 0px');
+    expect(mask.size).toBe('1200px 200px,1200px 200px');
+    expect(mask.image).toContain('#000 176px,transparent 200px');
+  });
+  it('extends only the sides without a band', () => {
+    const mask = scrollEdgeMask(
+      { left: 300, top: 0, width: 400, height: 200 },
+      { left: 24, right: 0, top: 0, bottom: 0 },
+      [],
+      'none',
+      { width: 1200, height: 200 },
+    );
+    expect(mask.position).toBe('300px 0px,300px 0px');
+    expect(mask.size).toBe('900px 200px,900px 200px');
+    expect(mask.image).toContain('transparent 0px,#000 24px,#000 900px');
+  });
+  it('keeps the visible rect on axes that fade, with or without the content size', () => {
+    const rect = { left: 10, top: 20, width: 100, height: 80 };
+    const bands = { left: 8, right: 8, top: 8, bottom: 8 };
+    expect(scrollEdgeMask(rect, bands, [], 'none', { width: 500, height: 500 })).toEqual(
+      scrollEdgeMask(rect, bands, [], 'none'),
+    );
+  });
 });

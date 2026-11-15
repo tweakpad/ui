@@ -4,9 +4,18 @@
 const built = new URLSearchParams(location.search).has('built');
 await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
 const { html } = await import('lit');
-const { fieldStations, stationColumns, statusColumn } =
-  await import('../../../../src/stories/data-view.examples.ts');
+const {
+  fieldStations,
+  stationColumns,
+  statusColumn,
+  stationTelemetry,
+  telemetryColumns,
+  telemetryMiddleware,
+  telemetryPartContracts,
+} = await import('../../../../src/stories/data-view.examples.ts');
 const { sortDataViewRows } = await import('../../../../src/components/data-view/index.ts');
+const { ellipsisVerticalIcon: ellipsisIcon } = await import('../../../../src/icons/ellipsis.ts');
+(document.getElementById('station-actions') as HTMLElement & { icon: unknown }).icon = ellipsisIcon;
 
 type View = HTMLElement & Record<string, unknown> & { updateComplete: Promise<boolean> };
 const view = (id: string) => document.getElementById(id) as View;
@@ -31,7 +40,40 @@ view('many').rows = Array.from({ length: 10_000 }, (_, index) => ({
   temperature: Math.sin(index / 40) * 12 + 8,
 }));
 
-for (const id of ['rows', 'rtl', 'wide', 'loading-rows']) {
+// Heavy customization: pinned columns, middleware, part contracts and per-column parts.
+const telemetry = view('telemetry');
+const search = document.getElementById('telemetry-search') as HTMLElement & { value: string };
+const readings = stationTelemetry(48);
+let query = '';
+const filter = () => {
+  const q = query.trim().toLowerCase();
+  telemetry.rows = q
+    ? readings.filter((row) =>
+        telemetryColumns.some((column) =>
+          String((row as unknown as Record<string, unknown>)[column.id] ?? '')
+            .toLowerCase()
+            .includes(q),
+        ),
+      )
+    : readings;
+};
+telemetry.columns = telemetryColumns;
+telemetry.middleware = telemetryMiddleware({
+  query: () => query,
+  clear: () => {
+    query = '';
+    search.value = '';
+    filter();
+  },
+});
+telemetry.partContracts = telemetryPartContracts;
+filter();
+search.addEventListener('input', () => {
+  query = search.value;
+  filter();
+});
+
+for (const id of ['rows', 'flat', 'rtl', 'wide', 'loading-rows']) {
   view(id).columns = columns;
   view(id).rows = stations;
 }
@@ -92,6 +134,12 @@ Object.assign(window, {
     events,
     clear: () => events.splice(0),
     get: view,
+    /** Sets the telemetry search, as typing would. */
+    search: (value: string) => {
+      query = value;
+      search.value = value;
+      filter();
+    },
     /** Mounted rows and the scroll state of a view. */
     window: (id: string) => {
       const root = view(id).shadowRoot!;

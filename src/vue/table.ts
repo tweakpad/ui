@@ -18,6 +18,7 @@ export const Table = /*#__PURE__*/ createBinding(TpTable, 'Table', {
 }) as ElementBinding<
   TpTable,
   | 'appearance'
+  | 'borders'
   | 'density'
   | 'disabled'
   | 'invalid'
@@ -34,7 +35,8 @@ export const Table = /*#__PURE__*/ createBinding(TpTable, 'Table', {
   | 'stickyEndColumns'
   | 'stickyFooter'
   | 'stickyHeader'
-  | 'stickyStartColumns',
+  | 'stickyStartColumns'
+  | 'striped',
   {
     'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
   }

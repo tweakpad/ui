@@ -1,5 +1,10 @@
 import { html } from 'lit';
-import type { DataViewColumn } from '../components/data-view/index.js';
+import type {
+  DataViewColumn,
+  DataViewMiddleware,
+  DataViewPartContracts,
+} from '../components/data-view/index.js';
+import { chevronRightIcon } from '../icons/chevron-right.js';
 
 /** A weather field station, as an application might load it. */
 export interface FieldStation {
@@ -94,4 +99,175 @@ export const statusColumn: DataViewColumn<FieldStation> = {
   sortable: true,
   width: '7rem',
   render: (row) => html`<tp-badge variant=${statusVariant[row.status]}>${row.status}</tp-badge>`,
+};
+
+/** A station with its latest readings: many columns, wider than most views. */
+export interface StationTelemetry extends FieldStation {
+  /** Relative humidity, %. */
+  readonly humidity: number;
+  /** Wind speed, km/h. */
+  readonly wind: number;
+  /** Air pressure, hPa. */
+  readonly pressure: number;
+  /** Rain in the last 24 hours, mm. */
+  readonly rainfall: number;
+  /** Days since the last restart. */
+  readonly uptime: number;
+  readonly firmware: string;
+}
+
+/** `count` stations with deterministic readings. */
+export function stationTelemetry(count = 40): StationTelemetry[] {
+  return fieldStations(count).map((station, index) => ({
+    ...station,
+    humidity: 35 + ((index * 17) % 60),
+    wind: Math.round((((index * 7) % 45) + 2) * 10) / 10,
+    pressure: 990 + ((index * 13) % 40),
+    rainfall: Math.round(((index * 11) % 38) * 10) / 10,
+    uptime: (index * 23) % 180,
+    firmware: `4.${(index * 3) % 9}.${(index * 5) % 12}`,
+  }));
+}
+
+/** Units shown in the headers by the units layer. */
+export const telemetryUnits: Readonly<Record<string, string>> = {
+  temperature: '°C',
+  humidity: '%',
+  wind: 'km/h',
+  pressure: 'hPa',
+  rainfall: 'mm',
+  uptime: 'd',
+};
+
+const dotVariant = { online: 'success', degraded: 'warning', offline: 'destructive' } as const;
+const metric = (id: keyof StationTelemetry, header: string): DataViewColumn<StationTelemetry> => ({
+  id,
+  header,
+  sortable: true,
+  align: 'end',
+  width: '9.5rem',
+});
+
+/** Fourteen columns: the station and its actions pinned, the readings scrolling between them. */
+export const telemetryColumns: DataViewColumn<StationTelemetry>[] = [
+  {
+    id: 'name',
+    header: 'Station',
+    sortable: true,
+    rowHeader: true,
+    width: '13rem',
+    render: (row, cell) =>
+      html`<tp-status-dot variant=${dotVariant[row.status]} label=${row.status}></tp-status-dot>
+        <span>${cell.renderText()}</span>`,
+  },
+  { id: 'region', header: 'Region', sortable: true, width: '8rem' },
+  { ...metric('sensors', 'Sensors'), width: '6rem' },
+  {
+    id: 'battery',
+    header: 'Battery',
+    sortable: true,
+    width: '9rem',
+    render: (row) =>
+      html`<tp-progress
+          .value=${row.battery}
+          label=${`Battery of ${row.name}`}
+          style="flex: 1 1 0; min-inline-size: 0"
+        ></tp-progress
+        ><span>${row.battery}%</span>`,
+  },
+  {
+    ...metric('temperature', 'Temperature'),
+    width: '11rem',
+    format: (value) => (value as number).toFixed(1),
+  },
+  metric('humidity', 'Humidity'),
+  { ...metric('wind', 'Wind'), format: (value) => (value as number).toFixed(1) },
+  metric('pressure', 'Pressure'),
+  { ...metric('rainfall', 'Rainfall'), format: (value) => (value as number).toFixed(1) },
+  metric('uptime', 'Uptime'),
+  { id: 'firmware', header: 'Firmware', width: '7rem' },
+  {
+    id: 'lastReading',
+    header: 'Last reading',
+    sortable: true,
+    width: '10rem',
+    format: (value) => time.format(value as Date),
+  },
+  statusColumn as unknown as DataViewColumn<StationTelemetry>,
+  {
+    id: 'open',
+    header: 'Open',
+    width: '4.5rem',
+    align: 'center',
+    render: (row) =>
+      html`<tp-button
+        variant="ghost"
+        size="icon-sm"
+        aria-label=${`Open ${row.name}`}
+        data-open=${row.id}
+        ><tp-icon slot="icon-start" .icon=${chevronRightIcon}></tp-icon
+      ></tp-button>`,
+  },
+];
+
+/**
+ * The layers of the telemetry view, outermost first: units in the headers, the search query
+ * marked in plain text cells, and an empty state that names the query and clears it.
+ */
+export function telemetryMiddleware(search: {
+  query: () => string;
+  clear: () => void;
+}): DataViewMiddleware<StationTelemetry>[] {
+  return [
+    {
+      name: 'units',
+      columnHeader: (header, next) => {
+        const unit = telemetryUnits[header.column.id];
+        if (!unit) return next();
+        // The header keeps its sort indicator and action; only the text gains the unit.
+        return html`<span>${header.column.header} (${unit})</span>${header.sortIndicator()}${
+            header.action
+          }`;
+      },
+    },
+    {
+      name: 'search',
+      css: 'mark { background: var(--tp-primary-subtle); color: inherit; border-radius: var(--tp-radius-sm); }',
+      // The query is marked in every cell's text, including the Station renderer's.
+      text: (cell, next) => {
+        const query = search.query().trim().toLowerCase();
+        const at = query ? cell.text.toLowerCase().indexOf(query) : -1;
+        if (at < 0) return next();
+        const end = at + query.length;
+        return html`${cell.text.slice(0, at)}<mark>${cell.text.slice(at, end)}</mark>${cell.text.slice(end)}`;
+      },
+      empty: (state, next) => {
+        const query = search.query().trim();
+        if (!query) return next();
+        return html`<tp-empty-state
+          .title=${'No stations match'}
+          .description=${`Nothing matches “${query}”.`}
+          ><tp-button slot="actions" variant="outline" size="sm" @click=${search.clear}
+            >Clear search</tp-button
+          ></tp-empty-state
+        >`;
+      },
+    },
+  ];
+}
+
+/** Part contracts of the telemetry view: offline rows recede, a low battery stands out, firmware is mono. */
+export const telemetryPartContracts: DataViewPartContracts<StationTelemetry> = {
+  'data-view-row': {
+    styleHook: (row) =>
+      row.row.status === 'offline' ? { color: 'var(--tp-muted-foreground)' } : {},
+  },
+  'data-view-cell': {
+    styleHook: (cell) =>
+      cell.column.id === 'battery' && cell.row.battery < 15
+        ? { color: 'var(--tp-destructive-subtle-foreground)' }
+        : cell.column.id === 'firmware'
+          ? { 'font-family': 'var(--tp-font-mono)' }
+          : {},
+  },
 };

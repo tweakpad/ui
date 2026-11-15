@@ -17,6 +17,7 @@ import type * as foundationServices from '../foundation/services.js';
 export type TableProps = ElementProps<
   TpTable,
   | 'appearance'
+  | 'borders'
   | 'density'
   | 'disabled'
   | 'invalid'
@@ -33,7 +34,8 @@ export type TableProps = ElementProps<
   | 'stickyEndColumns'
   | 'stickyFooter'
   | 'stickyHeader'
-  | 'stickyStartColumns',
+  | 'stickyStartColumns'
+  | 'striped',
   {
     onTpDiagnostic: CustomEvent<foundationServices.Diagnostic>;
   }

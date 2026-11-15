@@ -7,13 +7,16 @@ const definition: ComponentDefinition = {
   name: 'Data view',
   tagName: 'tp-data-view',
   kind: 'flattening-compound',
-  axes: [{ name: 'size', values: ['sm', 'default', 'lg'], default: 'default' }],
+  axes: [
+    { name: 'size', values: ['sm', 'default', 'lg'], default: 'default' },
+    { name: 'borders', values: ['rows', 'grid', 'none'], default: 'rows' },
+  ],
   parts: [
     {
       name: 'data-view',
-      axes: ['size'],
+      axes: ['size', 'borders'],
       description:
-        'The root: the scrolling grid, then the state layer; `data-status` names its state.',
+        'The root: the scrolling grid, then the state layer; `data-status` names its state and `data-overflow` (`start`, `end`) the edges columns scroll past.',
     },
     { name: 'data-view-viewport', description: 'The scroller of the rows, under the header.' },
     {
@@ -23,20 +26,23 @@ const definition: ComponentDefinition = {
     {
       name: 'data-view-column-header',
       description:
-        'One column header; `data-sortable`, `data-sorted` (`ascending` or `descending`) and `data-align` mark it.',
+        'One column header; `data-sortable`, `data-sorted` (`ascending` or `descending`), `data-align`, and on pinned columns `data-pinned` and `data-pin-edge` (`start` or `end`) mark it.',
     },
     {
       name: 'data-view-sort-indicator',
-      description: 'The arrow of a sortable header; `data-active` while its column sorts.',
+      description:
+        'The indicator of a sortable header, by default a chevron up while ascending and down while descending; `data-active` while its column sorts.',
     },
     { name: 'data-view-body', description: 'The rows.' },
     {
       name: 'data-view-row',
-      description: 'One row; `data-selected` and, under row navigation, `data-focused` mark it.',
+      description:
+        'One row; `data-stripe` (alternate rows while `striped`), `data-selected` and, under row navigation, `data-focused` mark it.',
     },
     {
       name: 'data-view-cell',
-      description: 'One cell; `data-align`, `data-row-header` and `data-focused` mark it.',
+      description:
+        'One cell; `data-align`, `data-row-header`, `data-focused`, and on pinned columns `data-pinned` and `data-pin-edge` mark it.',
     },
     {
       name: 'data-view-state',

@@ -153,6 +153,125 @@ view.rows = Array.from({ length: 10000 }, (_, index) => ({
 }));`}
 />
 
+### Pinned columns
+
+When the columns are wider than the view, they scroll sideways under a header that follows them. `sticky-start-columns` keeps leading columns at the start and `sticky-end-columns` keeps trailing ones at the end; a line marks each pinned edge while columns pass under it.
+
+<Preview
+  title="Pinned columns"
+  align="stretch"
+  code={`<tp-data-view id="data-view-pinned" label="Field stations" sticky-start-columns="1" sticky-end-columns="1" style="block-size: 14rem"></tp-data-view>`}
+  script={`const view = document.querySelector('#data-view-pinned');
+const metric = (id, header) => ({ id, header, align: 'end', width: '9rem' });
+view.columns = [
+  { id: 'name', header: 'Station', rowHeader: true, width: '11rem' },
+  metric('temperature', 'Temperature'),
+  metric('humidity', 'Humidity'),
+  metric('wind', 'Wind'),
+  metric('pressure', 'Pressure'),
+  metric('rainfall', 'Rainfall'),
+  metric('sensors', 'Sensors'),
+  metric('uptime', 'Uptime'),
+  { id: 'status', header: 'Status', width: '8rem' },
+];
+view.rows = [
+  { id: 'st-01', name: 'Alder Flats', temperature: 11.2, humidity: 64, wind: 18, pressure: 1012, rainfall: 2.4, sensors: 8, uptime: 41, status: 'online' },
+  { id: 'st-02', name: 'Brindle Cove', temperature: 9.8, humidity: 71, wind: 26, pressure: 1006, rainfall: 6.1, sensors: 5, uptime: 12, status: 'online' },
+  { id: 'st-03', name: 'Cinder Ridge', temperature: 4.1, humidity: 48, wind: 34, pressure: 998, rainfall: 0.0, sensors: 11, uptime: 93, status: 'degraded' },
+  { id: 'st-04', name: 'Dovetail Pass', temperature: -1.5, humidity: 55, wind: 41, pressure: 991, rainfall: 12.8, sensors: 4, uptime: 3, status: 'offline' },
+];`}
+/>
+
+### Column actions
+
+A column's header has a slot named `header-action-` and the column id, at the header's far end. Put a Menu there for the column's actions; the view keeps its trigger out of the tab order, and <Keys keys="Alt+ArrowDown" /> on the header moves into it.
+
+<Preview
+  title="Column menu"
+  align="stretch"
+  code={`<tp-data-view id="data-view-actions" label="Field stations" style="block-size: 12rem">
+  <tp-menu slot="header-action-region" label="Region column" placement="block-end end">
+    <tp-button slot="trigger" variant="ghost" size="icon-sm" aria-label="Region column actions">
+      <tp-icon slot="icon-start"></tp-icon>
+    </tp-button>
+    <tp-menu-item value="group">Group by region</tp-menu-item>
+    <tp-menu-item value="hide">Hide column</tp-menu-item>
+  </tp-menu>
+</tp-data-view>`}
+  script={`import { ellipsisVerticalIcon } from '@tweakpad/ui/icons/ellipsis';
+const view = document.querySelector('#data-view-actions');
+view.querySelector('tp-icon').icon = ellipsisVerticalIcon;
+view.columns = [
+  { id: 'name', header: 'Station', rowHeader: true },
+  { id: 'region', header: 'Region' },
+  { id: 'sensors', header: 'Sensors', align: 'end', width: '6rem' },
+];
+view.rows = [
+  { id: 'st-01', name: 'Alder Flats', region: 'Coast', sensors: 8 },
+  { id: 'st-02', name: 'Brindle Cove', region: 'Islands', sensors: 5 },
+  { id: 'st-03', name: 'Cinder Ridge', region: 'Highlands', sensors: 11 },
+];`}
+/>
+
+### Customizing
+
+Three hooks reach every part of the view, and they combine.
+
+- `middleware` is a list of rendering layers around the built-in rendering. A layer has hooks for the content of a `cell`, its `text`, a `columnHeader`, the `sortIndicator` and the `empty` and `error` states; each receives the part's context and `next`, which renders the inner layers, so it can keep, wrap or replace that content. The view's own rendering is the innermost layer: a column's `render` and `renderHeader`, then the defaults. A layer's `css` styles what it renders.
+- `partContracts` customize the element of a part: `styleHook`, `classHook`, `hostProperties` and `content` receive its state (the row, its column, whether it is selected), and `renderDelegate` wraps the element itself. The rows, cells, headers, sort indicator and states each are a part.
+- Every cell and column header also carries a part named after its column, such as `data-view-cell-battery`, for document styles through `::part()`.
+
+Column renderers call `renderText()` for the cell's text, so a `text` layer such as a search mark reaches them too.
+
+<Preview
+  title="Search marks and receding rows"
+  align="stretch"
+  code={`<tp-stack gap="3">
+  <tp-input id="data-view-query" placeholder="Search stations" aria-label="Search stations"></tp-input>
+  <tp-data-view id="data-view-custom" label="Field stations" style="block-size: 14rem"></tp-data-view>
+</tp-stack>`}
+  script={`import { html } from 'lit';
+const view = document.querySelector('#data-view-custom');
+const input = document.querySelector('#data-view-query');
+const stations = [
+  { id: 'st-01', name: 'Alder Flats', region: 'Coast', status: 'online' },
+  { id: 'st-02', name: 'Brindle Cove', region: 'Islands', status: 'offline' },
+  { id: 'st-03', name: 'Cinder Ridge', region: 'Highlands', status: 'online' },
+  { id: 'st-04', name: 'Dovetail Pass', region: 'Highlands', status: 'offline' },
+];
+let query = '';
+view.columns = [
+  { id: 'name', header: 'Station', rowHeader: true },
+  { id: 'region', header: 'Region' },
+  { id: 'status', header: 'Status', width: '8rem', render: (row, cell) => html\`<tp-status-dot variant=\${row.status === 'online' ? 'success' : 'destructive'} label=\${row.status}></tp-status-dot><span>\${cell.renderText()}</span>\` },
+];
+view.middleware = [
+  {
+    name: 'search',
+    css: 'mark { background: var(--tp-primary-subtle); color: inherit; }',
+    text: (cell, next) => {
+      const at = query ? cell.text.toLowerCase().indexOf(query) : -1;
+      if (at < 0) return next();
+      const end = at + query.length;
+      return html\`\${cell.text.slice(0, at)}<mark>\${cell.text.slice(at, end)}</mark>\${cell.text.slice(end)}\`;
+    },
+  },
+];
+view.partContracts = {
+  'data-view-row': {
+    styleHook: (row) => (row.row.status === 'offline' ? { color: 'var(--tp-muted-foreground)' } : {}),
+  },
+};
+const filter = () => {
+  view.rows = stations.filter((row) => !query || [row.name, row.region, row.status].some((text) => text.toLowerCase().includes(query)));
+};
+input.addEventListener('input', () => {
+  query = input.value.trim().toLowerCase();
+  filter();
+});
+filter();`}
+/>
+
 ### Keyboard
 
 The grid is one tab stop. With `navigation="cell"`, the default, arrow keys move between cells, header cells included; with `navigation="row"` they move between rows, and Up from the first row reaches the sortable headers.
@@ -165,4 +284,5 @@ The grid is one tab stop. With `navigation="cell"`, the default, arrow keys move
 | <Keys keys="PageUp" />, <Keys keys="PageDown" /> | Move by a viewport of rows |
 | <Keys keys="Enter" /> | On a header, sort; on a row, open it, or move into the cell's link or button |
 | <Keys keys="Space" /> | On a header, sort; on a row, select it |
-| <Keys keys="Escape" /> | From a cell's link or button, back to the cell |
+| <Keys keys="Alt+ArrowDown" /> | On a header, move into its column action |
+| <Keys keys="Escape" /> | From a cell's link or button, or a header's action, back to the cell |

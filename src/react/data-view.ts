@@ -13,6 +13,7 @@ type DataViewDefaults = TpDataView extends TpDataView<infer T> ? [T] : never;
 export type DataViewProps<T = DataViewDefaults[0]> = ElementProps<
   TpDataView<T>,
   | 'appearance'
+  | 'borders'
   | 'columns'
   | 'defaultSort'
   | 'defaultValue'
@@ -24,6 +25,7 @@ export type DataViewProps<T = DataViewDefaults[0]> = ElementProps<
   | 'label'
   | 'loading'
   | 'messages'
+  | 'middleware'
   | 'motionPolicy'
   | 'navigation'
   | 'onSortChange'
@@ -40,6 +42,9 @@ export type DataViewProps<T = DataViewDefaults[0]> = ElementProps<
   | 'size'
   | 'sort'
   | 'sorting'
+  | 'stickyEndColumns'
+  | 'stickyStartColumns'
+  | 'striped'
   | 'value',
   {
     onTpDiagnostic: CustomEvent<foundationServices.Diagnostic>;

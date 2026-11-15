@@ -12,6 +12,9 @@ export const dataViewStyles = css`
     min-inline-size: 0;
     max-inline-size: 100%;
 
+    /* The columns scroll inside the view: their width never sizes the page or a parent track. */
+    contain: inline-size;
+
     /* About ten rows and the header; authors set the height they need. */
     block-size: calc(var(--tp-spacing) * 110);
   }
@@ -37,6 +40,7 @@ export const dataViewStyles = css`
   .head {
     flex: none;
     overflow: hidden;
+    scroll-padding-inline: var(--_pinned-start, 0) var(--_pinned-end, 0);
 
     /* A classic scrollbar takes width from the rows; the header gives up the same. */
     padding-inline-end: var(--_gutter, 0);
@@ -46,6 +50,18 @@ export const dataViewStyles = css`
     flex: 1 1 0;
     min-block-size: 0;
     overflow: auto;
+
+    /* No vertical rubber band: it drags the rows out from under the pinned cells and the header. */
+    overscroll-behavior-y: none;
+
+    /* A focused cell is revealed clear of the pinned columns. */
+    scroll-padding-inline: var(--_pinned-start, 0) var(--_pinned-end, 0);
+  }
+
+  /* Pinned columns stay at their edge, over the columns that scroll under them. */
+  [data-pinned] {
+    position: sticky;
+    z-index: 1;
   }
 
   /* Header and rows share the column tracks: both fill the width, and never shrink below the
@@ -115,15 +131,33 @@ export const dataViewStyles = css`
     justify-content: flex-start;
   }
 
-  .label,
-  .text {
+  /* Text in a span, built-in or from a renderer, clips with an ellipsis. */
+  :is([role='columnheader'], [role='gridcell'], [role='rowheader']) > span:not([part]) {
     min-inline-size: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
   [part~='data-view-sort-indicator'] {
+    display: inline-flex;
     flex: none;
+  }
+
+  [part~='data-view-sort-indicator'] > tp-icon {
+    inline-size: 1em;
+    block-size: 1em;
+  }
+
+  /* A header action sits at the far end from the label, whatever box its element makes. */
+  slot.action {
+    display: flex;
+    flex: none;
+    align-items: center;
+    margin-inline-start: auto;
+  }
+
+  [role='columnheader'][data-align='end'] slot.action {
+    margin-inline: 0 auto;
   }
 
   :host([selection-mode='single']) .body [role='row'] {
@@ -133,6 +167,10 @@ export const dataViewStyles = css`
   /* Placeholder bars sit where a cell's text would. */
   .skeleton-cell {
     padding-inline: var(--tp-space-2);
+  }
+
+  .skeleton-cell[data-pinned] {
+    background: var(--tp-background);
   }
 
   .skeleton-cell tp-skeleton {

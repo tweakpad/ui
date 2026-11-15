@@ -62,6 +62,16 @@ const properties = [
   '--_tp-scroll-edge-position',
   '--_tp-scroll-edge-composite',
 ];
+/**
+ * Whether a host asks for scroll-edge fades: `scroll-edge-fade` present, unless its value is
+ * `false`, so a default-on host can be turned off by attribute.
+ */
+function fadeEnabled(host: Element): boolean {
+  return (
+    host.hasAttribute('scroll-edge-fade') && host.getAttribute?.('scroll-edge-fade') !== 'false'
+  );
+}
+
 /** Shared content-layer adapter; it does not move nodes or replace native scrolling. */
 export class NativeScrollEdges implements ReactiveController {
   readonly #bindings = new Map<HTMLElement, Binding>();
@@ -91,7 +101,7 @@ export class NativeScrollEdges implements ReactiveController {
     host.addController(this);
   }
   hostConnected(): void {
-    if (!this.host.hasAttribute('scroll-edge-fade')) return;
+    if (!fadeEnabled(this.host)) return;
     this.#protected = new WeakMap();
     this.#owner = this.host.ownerDocument.defaultView;
     if (!this.#owner) return;
@@ -125,7 +135,7 @@ export class NativeScrollEdges implements ReactiveController {
     this.schedule();
   }
   hostUpdated(): void {
-    const enabled = this.host.hasAttribute('scroll-edge-fade');
+    const enabled = fadeEnabled(this.host);
     if (enabled && !this.#connected) this.hostConnected();
     else if (!enabled && this.#connected) this.hostDisconnected();
     else this.schedule();
@@ -366,7 +376,10 @@ export class NativeScrollEdges implements ReactiveController {
           height: visible.height,
         };
         const original = targetMasks.get(content)?.state.original ?? style.maskImage;
-        const mask = scrollEdgeMask(rect, bands, protectedRects, original);
+        const mask = scrollEdgeMask(rect, bands, protectedRects, original, {
+          width: target.width / scaleX,
+          height: target.height / scaleY,
+        });
         this.#apply(content, mask, original);
         next.add(content);
       }

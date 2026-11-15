@@ -7,14 +7,12 @@ import { TpElement } from '../../foundation/element.js';
 import { TpValueChangeEvent } from '../../foundation/events.js';
 import { gridKeyMove } from '../../foundation/grid-navigation.js';
 import { INTERACTIVE_TARGET_SELECTOR } from '../../foundation/interactive-target.js';
+import { adoptStyleText } from '../../foundation/generated-style.js';
 import { observeResize } from '../../foundation/observation.js';
 import { Scrollable } from '../../foundation/scrollable.js';
 import { resolveLocale } from '../../foundation/services.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import { VirtualList } from '../../foundation/virtual-list.js';
-import { arrowDownIcon, arrowUpIcon } from '../../icons/arrows.js';
-import { circleAlertIcon } from '../../icons/circle-alert.js';
-import { navigationIcons } from '../../icons/navigation.js';
 import { dataViewPresentation } from '../../presentation/families/data-view.js';
 import { TpButton } from '../button/button.js';
 import { TpEmptyState } from '../empty-state/empty-state.js';
@@ -32,6 +30,7 @@ import {
   type RowIdentities,
 } from './columns.js';
 import { resolveDataViewMessages } from './messages.js';
+import { DATA_VIEW_BUILT_IN_LAYERS, dataViewLayerCss, runDataViewHook } from './middleware.js';
 import {
   clampPosition,
   firstPosition,
@@ -43,14 +42,21 @@ import { nextSort, sortDataViewRows } from './sort.js';
 import { dataViewStyles } from './styles.js';
 import type {
   DataViewActivateDetail,
+  DataViewBorders,
+  DataViewCellContext,
   DataViewColumn,
+  DataViewHeaderContext,
   DataViewMessages,
+  DataViewMiddleware,
   DataViewNavigation,
+  DataViewPin,
+  DataViewRowState,
   DataViewSelectionMode,
   DataViewSize,
   DataViewSort,
   DataViewSortChangeCallback,
   DataViewSorting,
+  DataViewStateContext,
   DataViewValueChangeCallback,
 } from './types.js';
 
@@ -69,6 +75,12 @@ function normalizeSort(value: unknown): DataViewSort | null {
     ? { column, direction }
     : null;
 }
+
+/** On unless the attribute says `false`; reflected as present or `false`. */
+const fadeOnByDefault = {
+  fromAttribute: (value: string | null): boolean => value !== 'false',
+  toAttribute: (value: boolean): string => (value ? '' : 'false'),
+};
 
 /** A sort attribute: `column` (ascending) or `column:descending`. */
 const sortConverter = {
@@ -97,9 +109,15 @@ interface FocusKey {
  * and optional single-row selection, with loading, empty and error states. Filters, search,
  * pagination and actions belong to the application around it.
  *
+ * Rendering is layered: `middleware` wraps or replaces the content of cells, cell text, column
+ * headers, sort indicators and the empty and error states around the built-in rendering, and
+ * `partContracts` reach the element of every part below with the part's state.
+ *
  * @summary A read-only, virtualized grid of application records with sorting and selection.
  * @slot empty - Content shown when there are no rows; a default Empty state otherwise.
  * @slot error - Content shown when `error` is set; a default Empty state with a Retry Button otherwise.
+ * @slot header-action-<column id> - An action in a column's header, after its text, such as a Menu
+ * whose trigger is an icon Button; Alt+ArrowDown on the header moves into it.
  * @fires tp-sort-change - A cancelable proposal of a new sort from a header press or key, or `sortBy`. `detail.value` is the sort or `null`.
  * @fires tp-value-change - A cancelable proposal of a new selected row id (or `null`); `detail.metadata.row` is the row.
  * @fires tp-row-activate - Enter on a row or a double click on it; `detail` holds the `row` and its `rowId`.
@@ -108,12 +126,12 @@ interface FocusKey {
  * @cssprop --tp-data-view-header-height - The height of the header row.
  * @csspart data-view - The root: the viewport and the state layer.
  * @csspart data-view-viewport - The scroller of the rows, under the header.
- * @csspart data-view-header - The header row, pinned to the top of the viewport.
- * @csspart data-view-column-header - One column header.
- * @csspart data-view-sort-indicator - The sort arrow of a sortable header.
+ * @csspart data-view-header - The header row, above the viewport, following the rows sideways.
+ * @csspart data-view-column-header - One column header; it also carries `data-view-column-header-<column id>`.
+ * @csspart data-view-sort-indicator - The sort indicator of a sortable header: a chevron up while ascending, down while descending.
  * @csspart data-view-body - The rows.
  * @csspart data-view-row - One row.
- * @csspart data-view-cell - One cell.
+ * @csspart data-view-cell - One cell; it also carries `data-view-cell-<column id>`.
  * @csspart data-view-state - The empty or error layer under the header, or the loading Progress bar along the header's bottom edge.
  * @csspart data-view-skeleton - A placeholder bar of a loading row.
  */
@@ -134,13 +152,19 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     value: { type: String, noAccessor: true },
     defaultValue: { type: String, attribute: 'default-value' },
     sorting: { type: String },
+    striped: { type: Boolean, reflect: true },
+    borders: { type: String, reflect: true },
     selectionMode: { type: String, attribute: 'selection-mode', reflect: true },
     navigation: { type: String, reflect: true },
     size: { type: String, reflect: true },
     overscan: { type: Number },
+    stickyStartColumns: { type: Number, attribute: 'sticky-start-columns' },
+    stickyEndColumns: { type: Number, attribute: 'sticky-end-columns' },
+    middleware: { attribute: false },
     loading: { type: Boolean, reflect: true },
     error: { type: String },
     label: { type: String },
+    scrollEdgeFade: { converter: fadeOnByDefault, attribute: 'scroll-edge-fade', reflect: true },
     messages: { attribute: false },
     onValueChange: { attribute: false },
     onSortChange: { attribute: false },
@@ -162,18 +186,33 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
   sorting: DataViewSorting = 'local';
   /** Whether a row can be selected. */
   selectionMode: DataViewSelectionMode = 'none';
+  /** Fills alternate rows, apart from the hover and selected fills. */
+  striped = false;
+  /** The cell lines: row lines, a grid of row and column lines, or none. A flat appearance clears them. */
+  borders: DataViewBorders = 'rows';
   /** What arrow keys move: a cell, header cells included, or a whole row. */
   navigation: DataViewNavigation = 'cell';
   /** Row height, cell inset and text. */
   size: DataViewSize = 'default';
   /** Rows mounted beyond each edge of the viewport. */
   overscan = 4;
+  /** How many leading columns stay at the inline start while the others scroll sideways. */
+  stickyStartColumns = 0;
+  /** How many trailing columns stay at the inline end while the others scroll sideways. */
+  stickyEndColumns = 0;
+  /**
+   * Rendering layers, outermost first, around the built-in rendering of cells, column headers,
+   * sort indicators and the empty and error states; see `DataViewMiddleware`.
+   */
+  middleware: readonly DataViewMiddleware<T>[] = [];
   /** The rows are loading: placeholders without rows, a busy grid with them. */
   loading = false;
   /** An error message; shown with a Retry Button instead of the rows. */
   error: string | null = null;
   /** The grid's accessible name; `Data` by default. */
   label = '';
+  /** Fades the rows at the scroller's edges where more rows lie beyond; `scroll-edge-fade="false"` turns them off. */
+  override scrollEdgeFade = true;
   /** User-facing text; English by default. */
   messages: Partial<DataViewMessages> | undefined;
   /** Called with each `tp-value-change` proposal. */
@@ -192,6 +231,9 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
   #releaseResize: (() => void) | undefined;
   #pendingFocus = false;
   #announcer: LiveAnnouncer | undefined;
+  /** The adopted styles of the middleware, and their release. */
+  #layerCss = '';
+  #releaseLayerCss: (() => void) | undefined;
   readonly #scrollEdges: NativeScrollEdges;
 
   readonly #virtual = new VirtualList(this, {
@@ -237,6 +279,13 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     super();
     this.#scrollEdges = new NativeScrollEdges(this, {
       viewports: () => (this.#viewport ? [this.#viewport] : []),
+      // A pinned edge never fades: its column covers it. The fades are a mask on the rows that
+      // follows them a frame late, so pinned cells fade with their rows rather than being masked
+      // out of it, which would clip them while the columns scroll.
+      threshold: () => ({
+        xStart: this.#pinOf(0) === 'start' ? Number.MAX_SAFE_INTEGER : 0,
+        xEnd: this.#pinOf(this.columns.length - 1) === 'end' ? Number.MAX_SAFE_INTEGER : 0,
+      }),
     });
   }
 
@@ -315,7 +364,16 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     this.#viewport = null;
     this.#announcer?.dispose();
     this.#announcer = undefined;
+    this.#releaseLayerCss?.();
+    this.#releaseLayerCss = undefined;
+    this.#layerCss = '';
     super.disconnectedCallback();
+  }
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    // A reconnected view adopts its middleware styles again.
+    if (this.hasUpdated && this.middleware.length) this.requestUpdate();
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {
@@ -334,6 +392,10 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
         );
     }
     if (changed.has('size')) this.#rowHeight = 0;
+    // Fades are on by default: a removed attribute means the default, which the fade owner reads
+    // from the attribute's presence.
+    if (this.scrollEdgeFade && this.getAttribute('scroll-edge-fade') === null)
+      this.setAttribute('scroll-edge-fade', '');
     this.#prepareRows();
   }
 
@@ -348,13 +410,22 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
       this.#releaseResize = viewport
         ? observeResize(viewport, () => {
             this.#measureGutter();
+            this.#measurePins();
             this.#virtual.refresh();
           })
         : undefined;
       this.#measureGutter();
       this.#virtual.refresh();
     }
+    if (
+      changed.has('columns') ||
+      changed.has('stickyStartColumns') ||
+      changed.has('stickyEndColumns') ||
+      changed.has('size')
+    )
+      this.#measurePins();
     this.#syncHead();
+    this.#adoptLayerCss();
     // Rows have one fixed height; the first mounted row tells it once its styles apply.
     const row = this.renderRoot.querySelector<HTMLElement>('.body > [role="row"]');
     const height = row?.offsetHeight ?? 0;
@@ -364,6 +435,10 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     }
     // Mounted rows and states change the scroll extent the edge fades follow.
     this.#scrollEdges.invalidateContent();
+    // The grid is one tab stop: header actions are reached with Alt+ArrowDown.
+    for (const slot of this.renderRoot.querySelectorAll<HTMLSlotElement>('.header slot.action'))
+      for (const element of actionTargets(slot))
+        if (!element.hasAttribute('tabindex')) element.setAttribute('tabindex', '-1');
     // The grid is one tab stop: interactive content of a cell is reached with Enter.
     for (const element of this.renderRoot.querySelectorAll<HTMLElement>('.body [data-column] *'))
       if (element.matches(INTERACTIVE_TARGET_SELECTOR) && element.tabIndex >= 0)
@@ -384,7 +459,45 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     const viewport = this.#viewport;
     if (head && viewport && head.scrollLeft !== viewport.scrollLeft)
       head.scrollLeft = viewport.scrollLeft;
+    // Which inline edges have columns scrolled past them, for the pinned columns' edge.
+    const root = this.renderRoot.querySelector<HTMLElement>('.root');
+    if (!root || !viewport) return;
+    const offset = Math.abs(viewport.scrollLeft);
+    const range = viewport.scrollWidth - viewport.clientWidth;
+    const scrolled = [offset > 0.5 ? 'start' : '', offset < range - 0.5 ? 'end' : '']
+      .filter(Boolean)
+      .join(' ');
+    if ((root.getAttribute('data-overflow') ?? '') !== scrolled)
+      if (scrolled) root.setAttribute('data-overflow', scrolled);
+      else root.removeAttribute('data-overflow');
   };
+
+  /**
+   * Pinned columns stay at their edge at the summed widths of the pinned columns before them; the
+   * offsets and the pinned extents (which keep focused cells clear of them) live on the root.
+   */
+  #measurePins(): void {
+    const root = this.renderRoot.querySelector<HTMLElement>('.root');
+    if (!root) return;
+    const headers = [
+      ...this.renderRoot.querySelectorAll<HTMLElement>('.header > [role="columnheader"]'),
+    ];
+    const widths = headers.map((header) => header.getBoundingClientRect().width);
+    let start = 0;
+    let end = 0;
+    for (let index = 0; index < widths.length; index++)
+      if (this.#pinOf(index) === 'start') {
+        root.style.setProperty(`--_pin-${index}`, `${start}px`);
+        start += widths[index]!;
+      }
+    for (let index = widths.length - 1; index >= 0; index--)
+      if (this.#pinOf(index) === 'end') {
+        root.style.setProperty(`--_pin-${index}`, `${end}px`);
+        end += widths[index]!;
+      }
+    root.style.setProperty('--_pinned-start', `${start}px`);
+    root.style.setProperty('--_pinned-end', `${end}px`);
+  }
 
   #measureGutter(): void {
     const viewport = this.#viewport;
@@ -392,6 +505,17 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     if (!viewport || !root) return;
     const gutter = Math.max(0, viewport.offsetWidth - viewport.clientWidth);
     root.style.setProperty('--_gutter', `${gutter}px`);
+  }
+
+  /** Adopts the middleware's styles into the shadow root, replacing them when they change. */
+  #adoptLayerCss(): void {
+    const css = dataViewLayerCss(this.middleware as readonly DataViewMiddleware<unknown>[]);
+    if (css === this.#layerCss) return;
+    this.#releaseLayerCss?.();
+    this.#releaseLayerCss = undefined;
+    this.#layerCss = css;
+    if (css && this.renderRoot instanceof ShadowRoot)
+      this.#releaseLayerCss = adoptStyleText(this, this.renderRoot, css);
   }
 
   /** A wheel over the header scrolls the rows, as it would over a header inside them. */
@@ -627,6 +751,15 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     const { key } = target;
     if (key.row === null) {
       const column = this.columns.find((candidate) => candidate.id === key.column);
+      // Alt with ArrowDown moves into the column's header action, such as its menu trigger.
+      if (event.altKey && event.key === 'ArrowDown') {
+        const action = headerAction(target.element);
+        if (action) {
+          event.preventDefault();
+          action.focus();
+          return;
+        }
+      }
       if ((event.key === 'Enter' || event.key === ' ') && column?.sortable) {
         event.preventDefault();
         this.#sortColumn(column, 'keyboard', event);
@@ -674,100 +807,152 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     this.#activate(target.key.row, event);
   };
 
-  readonly #retry = (event: Event): void => {
-    event.stopPropagation();
-    this.emit('tp-retry', {});
-  };
-
   // ---- render --------------------------------------------------------------------------------
 
-  #renderHeader(stop: FocusKey | null): TemplateResult {
-    const sort = this.sort;
-    const cellMode = this.navigation !== 'row';
-    return html`<div class="header" part="data-view-header" role="row" aria-rowindex="1">
-      ${this.columns.map((column, index) => {
-        const sorted = sort?.column === column.id ? sort.direction : null;
-        const focusable = cellMode || !!column.sortable;
-        const isStop = stop?.row === null && stop.column === column.id;
-        return html`<div
-          part="data-view-column-header"
-          role="columnheader"
-          aria-colindex=${index + 1}
-          aria-sort=${column.sortable ? (sorted ?? 'none') : nothing}
-          tabindex=${focusable ? (isStop ? '0' : '-1') : nothing}
-          data-column=${column.id}
-          data-align=${column.align ?? 'start'}
-          ?data-sortable=${!!column.sortable}
-          data-sorted=${sorted ?? nothing}
-        >
-          <span class="label">${column.header}</span>${
-            column.sortable
-              ? html`<tp-icon
-                  part="data-view-sort-indicator"
-                  aria-hidden="true"
-                  ?data-active=${!!sorted}
-                  .icon=${
-                    sorted === 'ascending'
-                      ? arrowUpIcon
-                      : sorted === 'descending'
-                        ? arrowDownIcon
-                        : navigationIcons.selector
-                  }
-                ></tp-icon>`
-              : nothing
-          }
-        </div>`;
-      })}
-    </div>`;
+  /** The rendering layers: the view's middleware, then the built-in layers. */
+  get #layers(): readonly DataViewMiddleware<T>[] {
+    const own = Array.isArray(this.middleware) ? this.middleware : [];
+    return [...own, ...(DATA_VIEW_BUILT_IN_LAYERS as readonly DataViewMiddleware<T>[])];
   }
 
-  #renderRow(index: number, stop: FocusKey | null): TemplateResult {
+  /** The pinned edge of a column, from the sticky counts. */
+  #pinOf(index: number): DataViewPin | null {
+    const count = this.columns.length;
+    const whole = (value: number) =>
+      Number.isFinite(value) ? Math.max(0, Math.min(count, Math.floor(value))) : 0;
+    const start = whole(this.stickyStartColumns);
+    const end = Math.min(whole(this.stickyEndColumns), count - start);
+    return index < start ? 'start' : index >= count - end ? 'end' : null;
+  }
+
+  /** Placement of a pinned header or body cell: its sticky offset and edge marker. */
+  #pinProperties(index: number, pin: DataViewPin | null): Record<string, unknown> {
+    if (!pin) return {};
+    const edge =
+      (pin === 'start' && this.#pinOf(index + 1) !== 'start') ||
+      (pin === 'end' && this.#pinOf(index - 1) !== 'end');
+    return {
+      'data-pinned': pin,
+      'data-pin-edge': edge ? pin : nothing,
+      style: { [`inset-inline-${pin}`]: `var(--_pin-${index}, 0px)` },
+    };
+  }
+
+  #headerContext(column: DataViewColumn<T>, index: number, stop: FocusKey | null) {
+    const sort = this.sort;
+    const direction = sort?.column === column.id ? sort.direction : null;
+    const context: DataViewHeaderContext<T> = {
+      column,
+      columnIndex: index,
+      direction,
+      sortable: !!column.sortable,
+      focused: stop?.row === null && stop.column === column.id,
+      pinned: this.#pinOf(index),
+      sortIndicator: () =>
+        column.sortable
+          ? this.renderPart('data-view-sort-indicator', context, {
+              tag: 'span',
+              properties: { 'aria-hidden': 'true', 'data-active': !!direction },
+              content: runDataViewHook(this.#layers, 'sortIndicator', context),
+            })
+          : nothing,
+      action: html`<slot class="action" name=${`header-action-${column.id}`}></slot>`,
+    };
+    return context;
+  }
+
+  #renderHeader(stop: FocusKey | null): unknown {
+    const cellMode = this.navigation !== 'row';
+    const headers = this.columns.map((column, index) => {
+      const context = this.#headerContext(column, index, stop);
+      const focusable = cellMode || !!column.sortable;
+      return this.renderPart('data-view-column-header', context, {
+        properties: {
+          part: columnParts('data-view-column-header', column.id),
+          role: 'columnheader',
+          'aria-colindex': index + 1,
+          'aria-sort': column.sortable ? (context.direction ?? 'none') : nothing,
+          tabindex: focusable ? (context.focused ? '0' : '-1') : nothing,
+          'data-column': column.id,
+          'data-align': column.align ?? 'start',
+          'data-sortable': !!column.sortable,
+          'data-sorted': context.direction ?? nothing,
+          ...this.#pinProperties(index, context.pinned),
+        },
+        content: runDataViewHook(this.#layers, 'columnHeader', context),
+      });
+    });
+    return this.renderPart(
+      'data-view-header',
+      { sort: this.sort },
+      {
+        properties: { class: 'header', role: 'row', 'aria-rowindex': 1 },
+        content: headers,
+      },
+    );
+  }
+
+  #renderRow(index: number, stop: FocusKey | null): unknown {
     const row = this.#shown[index]!;
     const id = this.#identities.ids[index]!;
     const selected = this.selectionMode === 'single' && this.value === id;
     const rowMode = this.navigation === 'row';
     const focusRow = this.#focus?.row === id;
     const rowStop = stop?.row === id;
-    return html`<div
-      part="data-view-row"
-      role="row"
-      aria-rowindex=${index + 2}
-      aria-selected=${this.selectionMode === 'single' ? String(selected) : nothing}
-      tabindex=${rowMode ? (rowStop ? '0' : '-1') : nothing}
-      data-row=${id}
-      ?data-selected=${selected}
-      ?data-focused=${rowMode && focusRow}
-    >
-      ${this.columns.map((column, columnIndex) => {
-        const value = cellValue(column, row);
-        const text = cellText(column, row, value);
-        const focused = !rowMode && focusRow && this.#focus?.column === column.id;
-        const content = column.render
-          ? column.render(row, {
-              row,
-              rowId: id,
-              rowIndex: index,
-              column,
-              value,
-              text,
-              selected,
-              focused,
-            })
-          : html`<span class="text">${text}</span>`;
-        return html`<div
-          part="data-view-cell"
-          role=${column.rowHeader ? 'rowheader' : 'gridcell'}
-          aria-colindex=${columnIndex + 1}
-          tabindex=${rowMode ? nothing : rowStop && stop?.column === column.id ? '0' : '-1'}
-          data-column=${column.id}
-          data-align=${column.align ?? 'start'}
-          ?data-row-header=${!!column.rowHeader}
-          ?data-focused=${focused}
-        >
-          ${content}
-        </div>`;
-      })}
-    </div>`;
+    const striped = this.striped && index % 2 === 1;
+    const state: DataViewRowState<T> = {
+      row,
+      rowId: id,
+      rowIndex: index,
+      selected,
+      focused: rowMode && focusRow,
+      striped,
+    };
+    const layers = this.#layers;
+    const cells = this.columns.map((column, columnIndex) => {
+      const value = cellValue(column, row);
+      const pinned = this.#pinOf(columnIndex);
+      const context: DataViewCellContext<T> = {
+        row,
+        rowId: id,
+        rowIndex: index,
+        column,
+        columnIndex,
+        value,
+        text: cellText(column, row, value),
+        selected,
+        focused: !rowMode && focusRow && this.#focus?.column === column.id,
+        pinned,
+        renderText: () => runDataViewHook(layers, 'text', context),
+      };
+      return this.renderPart('data-view-cell', context, {
+        properties: {
+          part: columnParts('data-view-cell', column.id),
+          role: column.rowHeader ? 'rowheader' : 'gridcell',
+          'aria-colindex': columnIndex + 1,
+          tabindex: rowMode ? nothing : rowStop && stop?.column === column.id ? '0' : '-1',
+          'data-column': column.id,
+          'data-align': column.align ?? 'start',
+          'data-row-header': !!column.rowHeader,
+          'data-focused': context.focused,
+          ...this.#pinProperties(columnIndex, pinned),
+        },
+        content: runDataViewHook(layers, 'cell', context),
+      });
+    });
+    return this.renderPart('data-view-row', state, {
+      properties: {
+        role: 'row',
+        'aria-rowindex': index + 2,
+        'aria-selected': this.selectionMode === 'single' ? String(selected) : nothing,
+        tabindex: rowMode ? (rowStop ? '0' : '-1') : nothing,
+        'data-row': id,
+        'data-stripe': striped,
+        'data-selected': selected,
+        'data-focused': state.focused,
+      },
+      content: cells,
+    });
   }
 
   #renderBody(stop: FocusKey | null): unknown {
@@ -798,9 +983,22 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
       () =>
         html`<div class="skeleton-row" aria-hidden="true">
           ${this.columns.map(
-            (column) =>
-              html`<div class="skeleton-cell" data-align=${column.align ?? 'start'}>
-                <tp-skeleton part="data-view-skeleton" label=""></tp-skeleton>
+            (column, index) =>
+              html`<div
+                class="skeleton-cell"
+                data-align=${column.align ?? 'start'}
+                data-pinned=${this.#pinOf(index) ?? nothing}
+                style=${
+                  this.#pinOf(index)
+                    ? `inset-inline-${this.#pinOf(index)}:var(--_pin-${index}, 0px)`
+                    : nothing
+                }
+              >
+                ${this.renderPart(
+                  'data-view-skeleton',
+                  { columnIndex: index },
+                  { tag: 'tp-skeleton', properties: { label: '' } },
+                )}
               </div>`,
           )}
         </div>`,
@@ -808,38 +1006,43 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
   }
 
   #renderState(state: 'loading' | 'empty' | 'error' | 'rows'): unknown {
-    const text = this.#messages;
-    if (state === 'error')
-      return html`<div class="state" part="data-view-state" data-status="error" role="alert">
-        <slot name="error"
-          ><tp-empty-state
-            .title=${text.errorTitle}
-            .description=${this.error ?? ''}
-            media-treatment="icon"
-            ><tp-icon slot="media" .icon=${circleAlertIcon} aria-hidden="true"></tp-icon
-            ><tp-button slot="actions" variant="outline" size="sm" @click=${this.#retry}
-              >${text.retry}</tp-button
-            ></tp-empty-state
-          ></slot
-        >
-      </div>`;
-    if (state === 'empty')
-      return html`<div class="state" part="data-view-state" data-status="empty" role="status">
-        <slot name="empty"
-          ><tp-empty-state
-            .title=${text.empty}
-            .description=${text.emptyDescription}
-          ></tp-empty-state
-        ></slot>
-      </div>`;
+    const messages = this.#messages;
+    if (state === 'error' || state === 'empty') {
+      const context: DataViewStateContext = {
+        status: state,
+        message: state === 'error' ? (this.error ?? '') : messages.emptyDescription,
+        messages,
+        retry: () => this.emit('tp-retry', {}),
+      };
+      return this.renderPart(
+        'data-view-state',
+        { status: state },
+        {
+          properties: {
+            class: 'state',
+            'data-status': state,
+            role: state === 'error' ? 'alert' : 'status',
+          },
+          content: html`<slot name=${state}
+            >${runDataViewHook(this.#layers, state, context)}</slot
+          >`,
+        },
+      );
+    }
     if (this.loading)
-      return html`<tp-progress
-        class="busy"
-        part="data-view-state"
-        data-status="loading"
-        .value=${null}
-        .label=${text.loading}
-      ></tp-progress>`;
+      return this.renderPart(
+        'data-view-state',
+        { status: 'loading' },
+        {
+          tag: 'tp-progress',
+          properties: {
+            class: 'busy',
+            'data-status': 'loading',
+            '.value': null,
+            '.label': messages.loading,
+          },
+        },
+      );
     return nothing;
   }
 
@@ -851,7 +1054,13 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     const rowCount = state === 'rows' ? this.#identities.ids.length : 0;
     return this.renderPart(
       'data-view',
-      { size: this.size, navigation: this.navigation, loading: this.loading, state },
+      {
+        size: this.size,
+        borders: this.borders,
+        navigation: this.navigation,
+        loading: this.loading,
+        state,
+      },
       {
         tag: 'div',
         properties: {
@@ -877,22 +1086,38 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
             <div class="head" role="rowgroup" @wheel=${this.#headWheel}>
               ${this.#renderHeader(stop)}
             </div>
-            <div class="viewport" part="data-view-viewport">
-              <div class="body" part="data-view-body" role="rowgroup">
-                ${
-                  state === 'rows'
-                    ? this.#renderBody(stop)
-                    : state === 'loading'
-                      ? this.#renderSkeleton()
-                      : nothing
-                }
-              </div>
-            </div>
+            ${this.renderPart(
+              'data-view-viewport',
+              { state },
+              {
+                // The grid's cells are its one tab stop; the scroller never takes one of its own.
+                // A focusable element in a grid needs a grid role: the scroller is the rows' group.
+                properties: { class: 'viewport', role: 'rowgroup', tabindex: '-1' },
+                content: this.renderPart(
+                  'data-view-body',
+                  { rowCount },
+                  {
+                    properties: { class: 'body' },
+                    content:
+                      state === 'rows'
+                        ? this.#renderBody(stop)
+                        : state === 'loading'
+                          ? this.#renderSkeleton()
+                          : nothing,
+                  },
+                ),
+              },
+            )}
           </div>
           ${this.#renderState(state)}`,
       },
     );
   }
+}
+
+/** A part's name, and a per-column name when the column id is a valid part token. */
+function columnParts(part: string, id: string): string {
+  return /^[\w-]+$/.test(id) ? `${part} ${part}-${id}` : part;
 }
 
 /**
@@ -910,6 +1135,24 @@ function contentTarget(event: Event): HTMLElement | null {
 
 function localeOption(locale: string | undefined): { locale?: string } {
   return locale ? { locale } : {};
+}
+
+/** Focusable controls of a header action: the slotted elements and their descendants. */
+const ACTION_TARGET = 'tp-button, button, a[href], input, select, textarea, [tabindex]';
+
+function actionTargets(slot: HTMLSlotElement): HTMLElement[] {
+  return slot
+    .assignedElements({ flatten: true })
+    .flatMap((element) => [
+      ...(element.matches(ACTION_TARGET) ? [element as HTMLElement] : []),
+      ...element.querySelectorAll<HTMLElement>(ACTION_TARGET),
+    ]);
+}
+
+/** The first focusable control of a header cell's action, such as a Menu's trigger. */
+function headerAction(cell: HTMLElement): HTMLElement | null {
+  const slot = cell.querySelector<HTMLSlotElement>('slot.action');
+  return slot ? (actionTargets(slot)[0] ?? null) : null;
 }
 
 /** The first focusable element inside a cell's own content. */

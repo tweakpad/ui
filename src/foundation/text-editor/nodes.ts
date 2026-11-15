@@ -12,7 +12,7 @@ import { VOID_ELEMENTS } from '../markdown/html.js';
 import type { MarkdownBlock, MarkdownInline } from '../markdown/types.js';
 import { isRecord } from '../values.js';
 import { BUILTIN_TOOL_FEATURES } from './builtin-tools/ids.js';
-import { isContainedCss } from './content/node-css.js';
+import { isContainedCss } from '../contained-css.js';
 import type { TextEditorAttributeValue } from './model.js';
 
 // Attributes

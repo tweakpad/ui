@@ -43,6 +43,8 @@ export class TpTable extends Scrollable(TpElement) {
     stickyFooter: { type: Boolean, attribute: 'sticky-footer', reflect: true },
     stickyStartColumns: { type: Number, attribute: 'sticky-start-columns' },
     stickyEndColumns: { type: Number, attribute: 'sticky-end-columns' },
+    striped: { type: Boolean, reflect: true },
+    borders: { type: String, reflect: true },
   };
   static override styles = [
     TpElement.styles,
@@ -89,6 +91,10 @@ export class TpTable extends Scrollable(TpElement) {
   stickyStartColumns = 0;
   /** How many trailing columns stay pinned at the inline end; leading columns win where the counts overlap. */
   stickyEndColumns = 0;
+  /** Fills alternate body rows, apart from the hover and selected fills. */
+  striped = false;
+  /** The cell lines: row lines, a grid of row and column lines, or none. A flat appearance clears them. */
+  borders: 'rows' | 'grid' | 'none' = 'rows';
   #native = false;
   /** The table overflows its region, which is then a focusable named region. */
   #scrollable = false;
@@ -153,17 +159,31 @@ export class TpTable extends Scrollable(TpElement) {
     );
     this.#geometry.style(table, 'table-layout', this.layout === 'fixed' ? 'fixed' : 'auto');
     const sections = tableSections(table, this);
-    // Body and footer: the last row has no bottom border.
+    // Body and footer: the last row has no bottom border, except the body's last row above a
+    // footer, whose line separates them.
     // Cells live in nested shadow roots in the composed tree, so the row position is a marker.
+    const lastBody = sections.filter((section) => section.element.localName === 'tbody').at(-1);
+    const footed = sections.some((section) => section.element.localName === 'tfoot');
     for (const section of sections) {
-      if (section.element.localName === 'thead') continue;
+      if (section.element.localName === 'thead' || (footed && section === lastBody)) continue;
       section.rows.forEach((row, index) => {
         for (const cell of row)
           if (cell.rowSpan === 0 || index + Math.max(1, cell.rowSpan) >= section.rows.length)
             this.#geometry.marker(cell, 'data-last-row', '');
       });
     }
+    // Alternate body rows carry the stripe marker; the row paints one fill under all its cells.
+    if (this.striped)
+      for (const section of sections) {
+        if (section.element.localName !== 'tbody') continue;
+        section.rowElements.forEach((row, index) => {
+          if (row && index % 2 === 1) this.#geometry.marker(row, 'data-stripe', '');
+        });
+      }
     const { cells, count } = tableColumns(sections);
+    // The last column draws no column line.
+    for (const record of cells)
+      if (record.end === count) this.#geometry.marker(record.cell, 'data-last-column', '');
     const number = (value: number) =>
       Number.isFinite(value) ? Math.max(0, Math.min(count, Math.floor(value))) : 0;
     const start = number(this.stickyStartColumns),
@@ -221,9 +241,14 @@ export class TpTable extends Scrollable(TpElement) {
     if (changed.has('selectionPresentation'))
       for (const row of this.querySelectorAll('tp-table-row')) row.requestUpdate();
     if (
-      ['layout', 'stickyHeader', 'stickyFooter', 'stickyStartColumns', 'stickyEndColumns'].some(
-        (key) => changed.has(key as keyof TpTable),
-      )
+      [
+        'layout',
+        'stickyHeader',
+        'stickyFooter',
+        'stickyStartColumns',
+        'stickyEndColumns',
+        'striped',
+      ].some((key) => changed.has(key as keyof TpTable))
     )
       this.#schedule();
   }
@@ -255,7 +280,11 @@ export class TpTable extends Scrollable(TpElement) {
   protected override render() {
     return this.renderPart(
       'table',
-      { layout: this.layout, selectionPresentation: this.selectionPresentation },
+      {
+        layout: this.layout,
+        selectionPresentation: this.selectionPresentation,
+        borders: this.borders,
+      },
       {
         // Only a table that scrolls is a Tab stop, so keyboard users can scroll it.
         properties: this.#scrollable

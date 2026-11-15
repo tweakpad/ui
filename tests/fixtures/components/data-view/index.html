@@ -27,18 +27,52 @@
       tp-data-view {
         block-size: 18rem;
       }
+      /* A per-column part from document styles. */
+      #telemetry::part(data-view-cell-region) {
+        font-style: italic;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>Data view verification</h1>
-      <tp-data-view id="many" label="Readings" selection-mode="single" size="sm"></tp-data-view>
+      <section id="telemetry-section">
+        <tp-input id="telemetry-search" placeholder="Search stations" aria-label="Search stations"></tp-input>
+        <tp-data-view
+          id="telemetry"
+          label="Station telemetry"
+          selection-mode="single"
+          striped
+          sticky-start-columns="1"
+          sticky-end-columns="1"
+          default-sort="name"
+          style="block-size: 22rem; margin-block-start: 12px"
+        ></tp-data-view>
+      </section>
+      <tp-data-view id="many" label="Readings" selection-mode="single" size="sm"
+        ><tp-menu slot="header-action-station" label="Station column">
+          <tp-button
+            id="station-actions"
+            slot="trigger"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Station column actions"
+          ></tp-button>
+          <tp-menu-item value="hide">Hide column</tp-menu-item>
+          <tp-menu-item value="pin">Pin column</tp-menu-item>
+        </tp-menu></tp-data-view
+      >
       <tp-data-view
         id="rows"
         label="Stations by row"
         navigation="row"
         selection-mode="single"
+        striped
+        borders="grid"
       ></tp-data-view>
+      <div appearance="flat">
+        <tp-data-view id="flat" label="Flat" striped selection-mode="single"></tp-data-view>
+      </div>
       <tp-data-view
         id="manual"
         label="Manual sort"

@@ -6,10 +6,11 @@ const definition: ComponentDefinition = {
   name: 'Table',
   tagName: 'tp-table',
   kind: 'presentational-primitive',
-  axes: [],
+  axes: [{ name: 'borders', values: ['rows', 'grid', 'none'], default: 'rows' }],
   parts: [
     {
       name: 'table',
+      axes: ['borders'],
       description:
         'The overflow region that scrolls the table and holds its pinned edges; focusable while the table scrolls.',
     },
@@ -35,7 +36,8 @@ const definition: ComponentDefinition = {
     },
     {
       name: 'table-row',
-      description: 'A native row; selected rows carry the row emphasis.',
+      description:
+        'A native row; alternate body rows carry `data-stripe` when striped, selected rows the row emphasis.',
     },
     {
       name: 'table-column-header',

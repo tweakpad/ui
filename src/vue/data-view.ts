@@ -15,6 +15,7 @@ export const DataView = /*#__PURE__*/ createBinding(TpDataView, 'DataView', {
 }) as ElementBinding<
   TpDataView,
   | 'appearance'
+  | 'borders'
   | 'columns'
   | 'defaultSort'
   | 'defaultValue'
@@ -26,6 +27,7 @@ export const DataView = /*#__PURE__*/ createBinding(TpDataView, 'DataView', {
   | 'label'
   | 'loading'
   | 'messages'
+  | 'middleware'
   | 'motionPolicy'
   | 'navigation'
   | 'onSortChange'
@@ -42,6 +44,9 @@ export const DataView = /*#__PURE__*/ createBinding(TpDataView, 'DataView', {
   | 'size'
   | 'sort'
   | 'sorting'
+  | 'stickyEndColumns'
+  | 'stickyStartColumns'
+  | 'striped'
   | 'value',
   {
     'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
