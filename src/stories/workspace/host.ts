@@ -5,13 +5,26 @@ import { formatTime, resolveTime } from '../../foundation/time/index.js';
 import type { Task } from './data.js';
 
 /** Workspace pages reached from the sidebar. Settings is a dialog, not a page. */
-export type Section = 'overview' | 'work' | 'files' | 'brief' | 'activity' | 'sites';
+export type Section =
+  'overview' | 'work' | 'files' | 'brief' | 'activity' | 'sites' | 'automations';
 /** Sections of the Settings dialog. */
 export type SettingsSection =
   'general' | 'notifications' | 'members' | 'appearance' | 'security' | 'shortcuts' | 'danger';
 /** Overlays the shell owns; pages open them by name. */
 export type Overlay =
   '' | 'commands' | 'task' | 'invite' | 'discovery' | 'updates' | 'delete' | 'settings';
+
+/**
+ * A rendered page: the shell's one heading row (the section title, an optional badge and
+ * description, and the page's main controls with at most one primary Button) and the page body.
+ */
+export interface PageView {
+  readonly title: string;
+  readonly badge?: unknown;
+  readonly description?: unknown;
+  readonly actions?: unknown;
+  readonly body: unknown;
+}
 
 /**
  * What a page or the Settings dialog may read and do. The `catalog-workspace` shell implements
@@ -22,6 +35,8 @@ export interface WorkspaceHost extends HTMLElement {
   readonly mobile: boolean;
   readonly projectName: string;
   readonly deadline: string;
+  /** Settles after the pending render, so a page can reach elements it just asked for. */
+  readonly updateComplete: Promise<boolean>;
   /** Shared task list (Overview, Work table and board, task drawer). */
   tasks: Task[];
   /** Workspace members, in display order. */
@@ -31,8 +46,14 @@ export interface WorkspaceHost extends HTMLElement {
   go(section: Section): void;
   open(overlay: Overlay): void;
   openSettings(section?: SettingsSection): void;
-  notify(title: string): void;
+  /** Shows a Toast; `type` tints it as a status (success, info, warning, error). */
+  notify(
+    title: string,
+    options?: { description?: string; type?: 'success' | 'info' | 'warning' | 'error' },
+  ): void;
   newTask(): void;
+  /** Opens the Invite dialog from a press, keeping its interaction type for initial focus. */
+  invite(event: Event): void;
   edit(task: Task): void;
   /** Accepts a controlled value proposal unless it was cancelled, then applies it. */
   accept<T>(event: TpValueChangeEvent<T>, apply: (value: T) => void): void;

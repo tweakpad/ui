@@ -1,6 +1,6 @@
-/* Brief editor: a resizable editor/preview pair that fills a fixed working height. */
+/* Brief editor: a resizable editor/preview pair that fills the height under the page header. */
 .brief-editor {
-  block-size: calc(var(--tp-space-16) * 7);
+  block-size: max(calc(var(--tp-space-16) * 7), calc(100dvh - var(--tp-space-16) * 3));
 }
 
 .brief-pane {
@@ -16,8 +16,7 @@
   min-block-size: var(--tp-control-height-md);
 }
 
-.brief-pane tp-text-area,
-.brief-pane tp-text-area::part(text-area),
+.brief-pane tp-text-editor,
 .brief-scroll {
   block-size: 100%;
   min-block-size: 0;
@@ -38,42 +37,11 @@
 }
 
 .brief-preview {
-  display: grid;
-  gap: var(--tp-space-4);
-  margin: 0;
   font-family: var(--tp-font-sans);
-  line-height: var(--tp-leading-relaxed);
-}
-
-.brief-section > p {
-  margin: 0;
 }
 
 .brief-preview[data-font='mono'] {
   font-family: var(--tp-font-mono);
-}
-
-.brief-preview[data-bold] {
-  font-weight: var(--tp-font-semibold);
-}
-
-.brief-preview[data-italic] {
-  font-style: italic;
-}
-
-.brief-preview[data-align='center'] {
-  text-align: center;
-}
-
-.brief-preview[data-align='end'] {
-  text-align: end;
-}
-
-.brief-criteria {
-  display: grid;
-  gap: var(--tp-space-2);
-  margin: 0;
-  padding-inline-start: var(--tp-space-5);
 }
 
 @container workspace-content (width <= 40rem) {

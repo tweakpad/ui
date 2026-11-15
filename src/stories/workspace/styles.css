@@ -94,6 +94,13 @@ catalog-workspace {
   min-width: 0;
 }
 
+.settings-cover {
+  display: block;
+  block-size: var(--tp-space-10);
+  border-radius: var(--tp-radius-lg);
+  background: linear-gradient(90deg in oklab, var(--tp-chart-1), var(--tp-chart-2));
+}
+
 .workspace-stack-lg {
   display: flex;
   flex-direction: column;
@@ -146,7 +153,15 @@ catalog-workspace {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
   gap: var(--tp-space-6);
-  align-items: start;
+}
+
+/* Cards side by side share the row's height. A list that would make its card the taller one
+   scrolls inside it instead: it adds no height of its own and fills what the row leaves. */
+.workspace-fill-scroll {
+  display: block;
+  contain: size;
+  min-block-size: calc(var(--tp-spacing) * 48);
+  block-size: 100%;
 }
 
 .workspace-grid {
@@ -160,6 +175,11 @@ catalog-workspace {
   flex-direction: column;
   gap: var(--tp-space-6);
   min-width: 0;
+
+  /* A motion border's glow paints past its card; it may spread into the gutter beside the page
+     but never far enough to scroll the workspace sideways. */
+  overflow-x: clip;
+  overflow-clip-margin: var(--tp-space-3);
 }
 
 .workspace-table {
@@ -335,6 +355,13 @@ catalog-workspace {
   .workspace-columns {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  /* Stacked, a list takes its own height again, up to a working height it scrolls past. */
+  .workspace-fill-scroll {
+    contain: none;
+    min-block-size: 0;
+    max-block-size: calc(var(--tp-spacing) * 96);
+  }
 }
 
 @container workspace (width <= 40rem) {
@@ -368,5 +395,42 @@ catalog-workspace {
 }
 
 .workspace-settings-layout[data-compact] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* A setting: its name and explanation, with its control or status at the end of the row. */
+.workspace-settings-row {
+  display: flex;
+  gap: var(--tp-space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.workspace-settings-enrol {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--tp-space-6);
+  align-items: start;
+}
+
+.workspace-settings-qr {
+  inline-size: calc(var(--tp-spacing) * 32);
+}
+
+.workspace-settings-steps {
+  display: grid;
+  gap: var(--tp-space-1);
+  margin: 0;
+  padding-inline-start: var(--tp-space-5);
+}
+
+.workspace-settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  inline-size: 100%;
+}
+
+/* The compact dialog stacks the setup code above its steps. */
+.workspace-settings-layout[data-compact] .workspace-settings-enrol {
   grid-template-columns: minmax(0, 1fr);
 }

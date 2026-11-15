@@ -2,17 +2,11 @@
   white-space: nowrap;
 }
 
-.overview-grid {
+/* The sprint card is as wide as its calendar; the task list takes the rest of the row. */
+.overview-sprint-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--tp-space-6);
-  align-items: start;
-}
-
-.overview-calendar {
-  display: block;
-  inline-size: fit-content;
-  margin-inline: auto;
 }
 
 .overview-skeleton-row {
@@ -41,7 +35,7 @@
 }
 
 @container workspace-content (width <= 48rem) {
-  .overview-grid {
+  .overview-sprint-row {
     grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -1,0 +1,14 @@
+/* The canvas column; the flow keeps a working height. */
+.automations-canvas {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.automations-flow {
+  block-size: calc(var(--tp-space-16) * 8);
+}
+
+/* The small node size keeps a shorter canvas minimum. */
+.automations-compact {
+  block-size: calc(var(--tp-space-16) * 6);
+}

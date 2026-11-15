@@ -1,4 +1,5 @@
 .files-art {
+  container-type: inline-size;
   block-size: 100%;
   display: flex;
   flex-direction: column;
@@ -21,11 +22,164 @@
 }
 
 .files-art strong {
-  font-size: var(--tp-text-2xl);
-  max-inline-size: 14ch;
+  font-size: clamp(var(--tp-text-xl), 7cqi, calc(var(--tp-text-2xl) * 2));
+  max-inline-size: 12ch;
   line-height: var(--tp-leading-tight);
+  letter-spacing: var(--tp-tracking-tight);
 }
 
 .files-footer {
   inline-size: 100%;
+}
+
+/* Folders beside the folder's files; above them once the content is narrow. */
+.files-layout {
+  display: grid;
+  grid-template-columns: calc(var(--tp-spacing) * 64) minmax(0, 1fr);
+  gap: var(--tp-space-6);
+  align-items: start;
+}
+
+.files-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tp-space-6);
+  padding-block-start: var(--tp-space-4);
+}
+
+.files-storage {
+  display: grid;
+  gap: var(--tp-space-2);
+  inline-size: 100%;
+}
+
+.files-number {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.files-drop {
+  inline-size: 100%;
+}
+
+.files-embed {
+  max-inline-size: min(36rem, calc(100vw - var(--tp-space-8)));
+}
+
+.files-share-code {
+  align-self: center;
+}
+
+.files-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--tp-spacing) * 56)), 1fr));
+  gap: var(--tp-space-3);
+}
+
+.files-photo {
+  display: grid;
+  gap: var(--tp-space-2);
+  margin: 0;
+}
+
+.files-photo tp-image,
+.files-mockup tp-image {
+  border-radius: var(--tp-radius-lg);
+}
+
+/* Mockup preview beside its layers panel. */
+.files-mockup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) calc(var(--tp-spacing) * 64);
+  gap: var(--tp-space-4);
+  align-items: start;
+}
+
+/* The preview is a window onto the landing page, which scrolls inside it. */
+.files-mockup-frame {
+  display: grid;
+  overflow: hidden;
+  border: var(--tp-border-width) dashed var(--tp-border);
+  border-radius: var(--tp-radius-lg);
+}
+
+.files-mockup-scroll {
+  block-size: calc(var(--tp-spacing) * 100);
+}
+
+.files-mockup-page {
+  container-type: inline-size;
+  position: relative;
+  display: grid;
+  gap: var(--tp-space-16);
+  padding: var(--tp-space-6) var(--tp-space-6) var(--tp-space-16);
+}
+
+.files-mockup-background {
+  position: absolute;
+  inset: 0;
+  background: var(--tp-muted);
+}
+
+.files-mockup-logo,
+.files-mockup-hero,
+.files-mockup-benefits,
+.files-mockup-plan {
+  position: relative;
+}
+
+.files-mockup-logo {
+  font-size: var(--tp-text-xs);
+  font-weight: var(--tp-font-semibold);
+  letter-spacing: var(--tp-tracking-wide);
+}
+
+.files-mockup-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--tp-space-6);
+  align-items: center;
+}
+
+.files-mockup-hero strong {
+  font-size: clamp(var(--tp-text-xl), 5cqi, calc(var(--tp-text-2xl) * 1.6));
+  line-height: var(--tp-leading-tight);
+  letter-spacing: var(--tp-tracking-tight);
+}
+
+.files-mockup-benefits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--tp-spacing) * 40)), 1fr));
+  gap: var(--tp-space-6);
+}
+
+.files-mockup-benefit {
+  display: grid;
+  gap: var(--tp-space-1);
+}
+
+.files-mockup-plan {
+  justify-self: center;
+  inline-size: min(100%, calc(var(--tp-spacing) * 80));
+}
+
+/* A hidden layer keeps its place, as in the design file. */
+.files-mockup [data-layer-hidden] {
+  visibility: hidden;
+}
+
+@container workspace-content (width <= 64rem) {
+  .files-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container workspace-content (width <= 40rem) {
+  .files-mockup {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .files-mockup-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

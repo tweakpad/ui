@@ -29,11 +29,11 @@ describe('workspace keyboard commands', () => {
     for (const [value, command] of [
       ['s', 'brief-download'],
       ['p', 'brief-preview'],
-      ['b', 'brief-bold'],
-      ['i', 'brief-italic'],
     ])
       expect(workspaceCommand(key(value!, true), 'brief', '', true)).toBe(command);
-    expect(workspaceCommand(key('b', true), 'work', '', false)).toBeNull();
+    // Bold and italic belong to the brief's text editor.
+    expect(workspaceCommand(key('b', true), 'brief', '', true)).toBeNull();
+    expect(workspaceCommand(key('s', true), 'work', '', false)).toBeNull();
   });
   it('respects prior handlers, composition and alternate key chords', () => {
     for (const option of ['defaultPrevented', 'isComposing', 'altKey', 'shiftKey'])

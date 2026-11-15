@@ -1,6 +1,12 @@
-/* The transcript keeps a working height; the composer stays in the Card footer. */
+/* The transcript fills the card down to the composer in the Card footer, as tall as the column
+   beside it and never shorter than a working height. */
 .activity-scroller {
-  --tp-message-scroller-height: calc(var(--tp-space-16) * 6);
+  --tp-message-scroller-height: 100%;
+
+  display: block;
+  contain: size;
+  block-size: 100%;
+  min-block-size: calc(var(--tp-space-16) * 6);
 }
 
 .activity-history {

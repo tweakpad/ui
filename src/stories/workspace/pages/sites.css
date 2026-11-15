@@ -4,6 +4,11 @@
   gap: var(--tp-space-4);
 }
 
+.sites-plot {
+  display: block;
+  block-size: calc(var(--tp-space-16) * 4);
+}
+
 .sites-metric {
   font-size: var(--tp-text-2xl);
   font-weight: var(--tp-font-semibold);
@@ -13,8 +18,7 @@
 .sites-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-  gap: var(--tp-space-4);
-  align-items: start;
+  gap: var(--tp-space-6);
 }
 
 .sites-map {

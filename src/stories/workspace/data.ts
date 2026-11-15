@@ -12,6 +12,7 @@ export const destinations: readonly (readonly [Section, string, keyof typeof nav
   ['brief', 'Brief', 'book'],
   ['activity', 'Activity', 'bell'],
   ['sites', 'Pilot sites', 'map'],
+  ['automations', 'Automations', 'models'],
 ];
 /** Settings dialog sections: id, label, icon and the one-line purpose shown under the title. */
 export const settingsSections = [
@@ -23,7 +24,12 @@ export const settingsSections = [
   ],
   ['notifications', 'Notifications', navigationIcons.bell, 'Choose what reaches you, and where.'],
   ['members', 'Members', navigationIcons.account, 'People with access and their roles.'],
-  ['appearance', 'Appearance', navigationIcons.sparkle, 'Theme and density for this device.'],
+  [
+    'appearance',
+    'Appearance',
+    navigationIcons.sparkle,
+    'Theme, density, accent and motion for this workspace.',
+  ],
   ['security', 'Security', shieldAlertIcon, 'Two-step verification and active sessions.'],
   ['shortcuts', 'Shortcuts', navigationIcons.terminal, 'Keyboard shortcuts across the workspace.'],
   ['danger', 'Danger zone', navigationIcons.trash, 'Archive or delete this project.'],

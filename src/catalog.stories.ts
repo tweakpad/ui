@@ -37,12 +37,12 @@ const meta = {
       page: CatalogDocs,
       description: {
         component:
-          'Atlas is a project workspace composed from the complete Tweakpad catalog. Move between Overview, Work, Files, Brief, Activity and Pilot sites from the sidebar; open Settings from the sidebar footer, the workspace menu or ⌘K / Ctrl K. Content is realistic sample data: changes stay in this browser session, and nothing is sent anywhere.',
+          'Atlas is a project workspace composed from the complete Tweakpad catalog. Move between Overview, Work, Files, Brief, Activity, Pilot sites and Automations from the sidebar; open Settings from the sidebar footer, the workspace menu or ⌘K / Ctrl K. Content is realistic sample data: changes stay in this browser session, and nothing is sent anywhere.',
       },
       source: {
         language: 'typescript',
         code: [
-          "// Save the following sections as the named files in one folder.\n// index.ts\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/styles.css';\nimport './workspace.js';\ndocument.body.append(document.createElement('catalog-workspace'));",
+          "// Save the following sections as the named files in one folder.\n// index.ts\nimport '@tweakpad/ui/register';\nimport '@tweakpad/ui/register/widgets';\nimport '@tweakpad/ui/styles.css';\nimport './workspace.js';\ndocument.body.append(document.createElement('catalog-workspace'));",
           ...files.map(([path, source]) =>
             path.endsWith('.css') ? `/* ${path} */\n${source}` : `// ${path}\n${published(source)}`,
           ),

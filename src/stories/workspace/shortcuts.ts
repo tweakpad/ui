@@ -1,16 +1,12 @@
 import type { Overlay, Section } from './host.js';
 
 export type WorkspaceCommand =
-  | 'search'
-  | 'settings'
-  | 'new-task'
-  | 'complete-tasks'
-  | 'brief-preview'
-  | 'brief-bold'
-  | 'brief-italic'
-  | 'brief-download';
+  'search' | 'settings' | 'new-task' | 'complete-tasks' | 'brief-preview' | 'brief-download';
 
-/** Application commands only; native editing and the Navigation panel own their remaining keys. */
+/**
+ * Application commands only; native editing, the brief's text editor (bold, italic) and the
+ * Navigation panel own their remaining keys.
+ */
 export function workspaceCommand(
   event: Pick<
     KeyboardEvent,
@@ -29,8 +25,6 @@ export function workspaceCommand(
   if (section === 'brief' && mod && !event.shiftKey) {
     if (key === 's') return 'brief-download';
     if (key === 'p') return 'brief-preview';
-    if (key === 'b') return 'brief-bold';
-    if (key === 'i') return 'brief-italic';
   }
   if (editing) return null;
   if (!mod && !event.shiftKey && key === 'c') return 'new-task';

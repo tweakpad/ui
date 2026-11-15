@@ -32,8 +32,14 @@ export class TpCard extends TpElement {
         display: block;
       }
 
+      /* A card keeps its natural height; stretched by its layout (a grid row, a flex line or a set
+         height), it fills the box and the content section takes the extra height, so the footer
+         stays at the bottom. */
       .card {
-        display: grid;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        block-size: 100%;
         overflow: clip;
       }
 
@@ -68,6 +74,8 @@ export class TpCard extends TpElement {
 
       .card > .content {
         display: grid;
+        flex: 1 1 auto;
+        min-block-size: 0;
       }
 
       .card > [hidden] {

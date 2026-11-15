@@ -5,7 +5,8 @@ import { chevronDownIcon } from '../../../icons/chevron-down.js';
 import { downloadIcon } from '../../../icons/download.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import { initials, statuses, type Task } from '../data.js';
-import { date, icon, statusVariant, type WorkspaceHost } from '../host.js';
+import { date, icon, statusVariant, type PageView, type WorkspaceHost } from '../host.js';
+import { plusIcon } from '../../../icons/plus.js';
 import { renderBoard } from './board.js';
 import './work.css';
 
@@ -337,7 +338,6 @@ function renderTable(host: WorkspaceHost): TemplateResult {
           >
             <tp-icon slot="media" .icon=${navigationIcons.search}></tp-icon>
             <tp-button slot="actions" variant="outline" @click=${clear}>Clear filters</tp-button>
-            <tp-button slot="actions" @click=${() => host.newTask()}>New task</tp-button>
           </tp-empty-state>`
     }
 
@@ -367,35 +367,33 @@ function renderTable(host: WorkspaceHost): TemplateResult {
 const linkTitle = { button: { styleHook: { 'padding-inline': '0' } } };
 
 /** Work: one task set shown as a filterable table or a drag-and-drop status board. */
-export function renderWork(host: WorkspaceHost): TemplateResult {
+export function renderWork(host: WorkspaceHost): PageView {
   const view = host.view<'table' | 'board'>('work.view', 'table');
   const open = host.tasks.filter((task) => task.status !== 'Done').length;
-  return html`<div class="workspace-stack-lg">
-    <div class="workspace-row workspace-between">
-      <div class="workspace-stack">
-        <h2>Launch work</h2>
-        <p class="workspace-muted">${open} open tasks across the pilot launch.</p>
-      </div>
+  const body = html`<tp-tabs
+    class="work-views"
+    label="Work views"
+    .value=${view}
+    @tp-value-change=${(e: TpValueChangeEvent<'table' | 'board'>) => {
+      if (e.target !== e.currentTarget) return;
+      host.accept(e, (value) => host.setView('work.view', value));
+    }}
+  >
+    <button slot="tab" value="table">
+      Table <tp-badge variant="secondary">${host.tasks.length}</tp-badge>
+    </button>
+    <button slot="tab" value="board">Board <tp-badge variant="secondary">${open}</tp-badge></button>
+    <div slot="panel" value="table" class="work-panel">${renderTable(host)}</div>
+    <div slot="panel" value="board" class="work-panel">
+      ${view === 'board' ? renderBoard(host) : nothing}
     </div>
-    <tp-tabs
-      class="work-views"
-      label="Work views"
-      .value=${view}
-      @tp-value-change=${(e: TpValueChangeEvent<'table' | 'board'>) => {
-        if (e.target !== e.currentTarget) return;
-        host.accept(e, (value) => host.setView('work.view', value));
-      }}
-    >
-      <button slot="tab" value="table">
-        Table <tp-badge variant="secondary">${host.tasks.length}</tp-badge>
-      </button>
-      <button slot="tab" value="board">
-        Board <tp-badge variant="secondary">${open}</tp-badge>
-      </button>
-      <div slot="panel" value="table" class="work-panel">${renderTable(host)}</div>
-      <div slot="panel" value="board" class="work-panel">
-        ${view === 'board' ? renderBoard(host) : nothing}
-      </div>
-    </tp-tabs>
-  </div>`;
+  </tp-tabs>`;
+  return {
+    title: 'Work',
+    description: `${open} open tasks across the pilot launch.`,
+    actions: html`<tp-button size="sm" @click=${host.newTask}
+      ><tp-icon slot="icon-start" .icon=${plusIcon}></tp-icon>New task</tp-button
+    >`,
+    body,
+  };
 }

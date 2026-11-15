@@ -13,6 +13,7 @@ import {
 import type { SettingsSection, WorkspaceHost } from './host.js';
 import type { TpDialog } from '../../components/dialog/index.js';
 import type { TpValueChangeEvent } from '../../foundation/events.js';
+import { gradientTrackPaint, type GradientStop } from '../../widgets/gradient-picker/index.js';
 
 /** What the Settings dialog needs beyond the page contract; the shell implements it. */
 export interface SettingsHost extends WorkspaceHost {
@@ -236,7 +237,108 @@ function members(host: SettingsHost) {
   </div>`;
 }
 
+/** The workspace look the Appearance section edits, applied to the theme target. */
+interface Look {
+  density: string;
+  appearance: string;
+  reduceMotion: boolean;
+  accent: string;
+  easing: string;
+}
+const defaultLook: Look = {
+  density: 'comfortable',
+  appearance: 'default',
+  reduceMotion: false,
+  accent: '',
+  easing: '',
+};
+/**
+ * The roles the theme derives from other roles, read from the page's stylesheets: a role is
+ * computed where it is declared, so an accent set on the workspace re-tints its tints, rings and
+ * choices only when they are declared there too. Density roles are left to their seeds; flat
+ * roles are restated only outside a flat region, where the `appearance` rule must keep winning.
+ */
+function themeDeclarations() {
+  const derived = new Map<string, string>();
+  const authored = new Map<string, string>();
+  const flat = new Set<string>();
+  const density = new Set<string>();
+  const visit = (rules: CSSRuleList) => {
+    for (const rule of rules) {
+      if (rule instanceof CSSStyleRule) {
+        const names = [...rule.style].filter((name) => /^--_?tp-/u.test(name));
+        if (rule.selectorText === ':root')
+          for (const name of names) {
+            const value = rule.style.getPropertyValue(name).trim();
+            if (!authored.has(name)) authored.set(name, value);
+            if (/var\(--_?tp-/u.test(value) && !derived.has(name)) derived.set(name, value);
+          }
+        else if (/\[appearance=['"]?flat/u.test(rule.selectorText))
+          for (const name of names) flat.add(name);
+        else if (rule.selectorText.includes('[density'))
+          for (const name of names) density.add(name);
+      }
+      if ('cssRules' in rule) visit((rule as CSSGroupingRule).cssRules);
+    }
+  };
+  for (const sheet of document.styleSheets) {
+    try {
+      visit(sheet.cssRules);
+    } catch {
+      // A cross-origin sheet cannot be read; it declares no library roles.
+    }
+  }
+  // Only color roles follow an accent: a size or font restated here would stop following the
+  // density of a nested region. A role is a color when its value mixes or switches colors, or
+  // is an alias of another color role.
+  const color = new Map<string, boolean>();
+  const isColor = (name: string, seen = new Set<string>()): boolean => {
+    if (color.has(name)) return color.get(name)!;
+    const value = authored.get(name);
+    let result = false;
+    if (value !== undefined && !seen.has(name)) {
+      seen.add(name);
+      const alias = /^var\((--_?tp-[\w-]+)\)$/u.exec(value);
+      result =
+        /color-mix\(|light-dark\(|^#|^(?:rgb|hsl|oklch|oklab)\(/u.test(value) ||
+        (!!alias && isColor(alias[1]!, seen));
+    }
+    color.set(name, result);
+    return result;
+  };
+  return {
+    derived: [...derived].filter(([name]) => !density.has(name) && isColor(name)),
+    flat,
+  };
+}
+let declarations: ReturnType<typeof themeDeclarations> | undefined;
+function applyLook(target: HTMLElement, look: Look) {
+  const toggle = (name: string, value: string | null) =>
+    value === null ? target.removeAttribute(name) : target.setAttribute(name, value);
+  toggle('density', look.density === 'compact' ? 'compact' : null);
+  toggle('appearance', look.appearance === 'flat' ? 'flat' : null);
+  toggle('motion-policy', look.reduceMotion ? 'reduce' : null);
+  declarations ??= themeDeclarations();
+  for (const [name] of declarations.derived) target.style.removeProperty(name);
+  target.style.removeProperty('--tp-primary');
+  if (look.accent) {
+    target.style.setProperty('--tp-primary', look.accent);
+    for (const [name, value] of declarations.derived)
+      if (!(look.appearance === 'flat' && declarations.flat.has(name)))
+        target.style.setProperty(name, value);
+  }
+  if (look.easing) target.style.setProperty('--tp-easing-standard', look.easing);
+  else target.style.removeProperty('--tp-easing-standard');
+}
+
 function appearance(host: SettingsHost) {
+  const look = host.view<Look>('settings:look', defaultLook);
+  const update = (change: Partial<Look>) => {
+    const next = { ...look, ...change };
+    host.setView('settings:look', next);
+    applyLook(host.themeTarget, next);
+  };
+  const cover = host.view<string>('settings:cover', '');
   return html`<div class="workspace-stack-lg">
     <tp-field label="Theme" description="System follows your device setting.">
       <tp-theme-switcher
@@ -247,61 +349,165 @@ function appearance(host: SettingsHost) {
       ></tp-theme-switcher>
     </tp-field>
     <tp-field label="Density"
-      ><tp-radio-group label="Density" default-value="comfortable"
+      ><tp-radio-group
+        label="Density"
+        default-value=${look.density}
+        @tp-value-change=${(event: TpValueChangeEvent<string>) =>
+          update({ density: event.detail.value })}
         ><tp-radio-group-item value="comfortable">Comfortable</tp-radio-group-item
         ><tp-radio-group-item value="compact">Compact</tp-radio-group-item></tp-radio-group
       ></tp-field
     >
     <tp-field
+      label="Surfaces"
+      description="Flat separates panels and fields by fill instead of lines."
+      ><tp-radio-group
+        label="Surfaces"
+        default-value=${look.appearance}
+        @tp-value-change=${(event: TpValueChangeEvent<string>) =>
+          update({ appearance: event.detail.value })}
+        ><tp-radio-group-item value="default">Bordered</tp-radio-group-item
+        ><tp-radio-group-item value="flat">Flat</tp-radio-group-item></tp-radio-group
+      ></tp-field
+    >
+    <tp-field label="Accent color" description="Used for primary actions and selected states.">
+      <tp-color-picker
+        picker="popup"
+        name="accent"
+        default-value=${look.accent || '#6d5dfc'}
+        @tp-value-commit=${(event: CustomEvent<{ value: string }>) =>
+          update({ accent: event.detail.value })}
+      ></tp-color-picker>
+    </tp-field>
+    <tp-collapsible>
+      <tp-button slot="trigger" variant="ghost" size="sm">Choose from swatches</tp-button>
+      <tp-color-palette
+        label="Accent swatches"
+        default-layout="grid"
+        @tp-value-commit=${(event: CustomEvent<{ value: string }>) =>
+          update({ accent: event.detail.value })}
+      ></tp-color-palette>
+    </tp-collapsible>
+    <tp-field label="Cover" description="The gradient behind the project header.">
+      <div class="workspace-stack">
+        <span
+          class="settings-cover"
+          role="img"
+          aria-label="Cover preview"
+          style=${cover ? `background: ${cover}` : ''}
+        ></span>
+        <tp-gradient-picker
+          label="Cover"
+          name="cover"
+          default-selected="0"
+          @tp-value-commit=${(event: CustomEvent<{ value: readonly GradientStop[] }>) =>
+            host.setView('settings:cover', gradientTrackPaint(event.detail.value))}
+        >
+          <tp-gradient-stop position="0" color="#6d5dfc"></tp-gradient-stop>
+          <tp-gradient-stop position="1" color="#0ea5e9"></tp-gradient-stop>
+        </tp-gradient-picker>
+      </div>
+    </tp-field>
+    <tp-field
       orientation="horizontal"
       label="Reduce motion"
       description="Replace animated transitions with instant changes."
-      ><tp-switch></tp-switch
+      ><tp-switch
+        ?default-checked=${look.reduceMotion}
+        @tp-value-change=${(event: TpValueChangeEvent<boolean>) =>
+          update({ reduceMotion: event.detail.value })}
+      ></tp-switch
     ></tp-field>
+    <tp-field label="Transitions" description="The curve panels and menus move along.">
+      <tp-easing-editor
+        label="Transitions"
+        name="easing"
+        default-value="ease-out"
+        @tp-value-commit=${(event: CustomEvent<{ value: string }>) =>
+          update({ easing: event.detail.value })}
+      ></tp-easing-editor>
+    </tp-field>
+    <div class="workspace-row">
+      <tp-button
+        variant="outline"
+        size="sm"
+        @click=${() => {
+          host.setView('settings:look', defaultLook);
+          host.setView('settings:cover', '');
+          applyLook(host.themeTarget, defaultLook);
+          host.notify('Appearance reset');
+        }}
+        >Reset appearance</tp-button
+      >
+    </div>
   </div>`;
 }
 
+/** The authenticator enrolment link the setup QR code carries. */
+const enrolment = 'otpauth://totp/Atlas:alex%40studio.example?secret=JBSWY3DPEHPK3PXP&issuer=Atlas';
+
 function security(host: SettingsHost) {
   const code = host.view<string>('settings:code', '');
+  const error = host.view<string>('settings:codeError', '');
   const verified = host.view('settings:verified', false);
   const revoked = host.view<readonly string[]>('settings:revoked', []);
+  const verify = () => {
+    if (code.length !== 6) host.setView('settings:codeError', 'Enter all six digits.');
+    else if (code !== '246810')
+      host.setView('settings:codeError', 'That code does not match. Try the newest one.');
+    else {
+      host.setView('settings:codeError', '');
+      host.setView('settings:verified', true);
+      host.notify('Two-step verification enabled', { type: 'success' });
+    }
+  };
   return html`<div class="workspace-stack-lg">
     <div class="workspace-stack">
-      <div class="workspace-row workspace-between">
-        <h4>Two-step verification</h4>
+      <div class="workspace-settings-row">
+        <div class="workspace-stack-sm">
+          <h4>Two-step verification</h4>
+          <span class="workspace-muted"
+            >Ask for a code from your authenticator app when you sign in.</span
+          >
+        </div>
         ${
           verified
-            ? html`<tp-marker tone="success">Enabled</tp-marker>`
+            ? html`<tp-marker tone="success" label="Enabled"></tp-marker>`
             : html`<tp-badge variant="outline">Not set up</tp-badge>`
         }
       </div>
       ${
         verified
-          ? html`<p class="workspace-muted">
-              Codes from your authenticator app are required when you sign in.
-            </p>`
-          : html`<tp-field
-                label="Authenticator code"
-                description="Enter the six digits from your authenticator app. Try 246810."
-                ><tp-one-time-code-field
-                  length="6"
-                  .value=${code}
-                  @tp-value-change=${(e: TpValueChangeEvent<string>) =>
-                    host.accept(e, (value) => host.setView('settings:code', value))}
-                ></tp-one-time-code-field
-              ></tp-field>
-              <div class="workspace-row">
-                <tp-button
-                  .disabled=${code.length !== 6}
-                  @click=${() => {
-                    if (code === '246810') {
-                      host.setView('settings:verified', true);
-                      host.notify('Two-step verification enabled');
-                    } else host.notify('That code does not match');
-                  }}
-                  >Verify and enable</tp-button
-                >
-              </div>`
+          ? nothing
+          : html`<tp-card size="sm">
+              <div class="workspace-settings-enrol">
+                <tp-qr-code
+                  class="workspace-settings-qr"
+                  value=${enrolment}
+                  label="Authenticator setup code for Atlas"
+                ></tp-qr-code>
+                <div class="workspace-stack">
+                  <ol class="workspace-settings-steps workspace-muted">
+                    <li>Scan the code with your authenticator app.</li>
+                    <li>Enter the six digits it shows. In this demo, use 246810.</li>
+                  </ol>
+                  <tp-field label="Authenticator code" .error=${error}
+                    ><tp-one-time-code-field
+                      length="6"
+                      .value=${code}
+                      @tp-value-change=${(e: TpValueChangeEvent<string>) =>
+                        host.accept(e, (value) => {
+                          host.setView('settings:code', value);
+                          if (error) host.setView('settings:codeError', '');
+                        })}
+                    ></tp-one-time-code-field
+                  ></tp-field>
+                </div>
+              </div>
+              <div slot="footer" class="workspace-settings-footer">
+                <tp-button size="sm" @click=${verify}>Verify and enable</tp-button>
+              </div>
+            </tp-card>`
       }
     </div>
     <tp-separator></tp-separator>

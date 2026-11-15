@@ -24,6 +24,7 @@ import {
   type Overlay,
   type Section,
   type SettingsSection,
+  type PageView,
   type WorkspaceHost,
 } from './host.js';
 import { renderOverview } from './pages/overview.js';
@@ -32,6 +33,7 @@ import { renderFiles } from './pages/files.js';
 import { renderBrief } from './pages/brief.js';
 import { renderActivity } from './pages/activity.js';
 import { renderSites } from './pages/sites.js';
+import { renderAutomations } from './pages/automations.js';
 import { renderSettingsDialog } from './settings-dialog.js';
 import type { TpToast } from '../../components/toast/index.js';
 import type { TpDialog } from '../../components/dialog/index.js';
@@ -40,13 +42,14 @@ import type { TpValueChangeEvent } from '../../foundation/events.js';
 type WorkspaceOpenChange = CustomEvent<{ value: boolean }>;
 import './styles.css';
 
-const pages: Record<Section, (host: WorkspaceHost) => unknown> = {
+const pages: Record<Section, (host: WorkspaceHost) => PageView> = {
   overview: renderOverview,
   work: renderWork,
   files: renderFiles,
   brief: renderBrief,
   activity: renderActivity,
   sites: renderSites,
+  automations: renderAutomations,
 };
 
 /** The workspace shell: navigation, header, overlays and shared state; pages render below. */
@@ -129,8 +132,11 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
     this.settingsSection = section;
     this.overlay = 'settings';
   };
-  notify(title: string) {
-    this.querySelector<TpToast>('tp-toast')?.add({ title });
+  notify(
+    title: string,
+    options: { description?: string; type?: 'success' | 'info' | 'warning' | 'error' } = {},
+  ) {
+    this.querySelector<TpToast>('tp-toast')?.add({ title, ...options });
   }
   newTask = () => {
     this.editing = null;
@@ -164,7 +170,7 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
   }
 
   // Passing the press keeps its interaction type for the Dialog's initial focus policy.
-  #invite = (event: Event) => this.#inviteDialog.value?.setOpen(true, 'trigger-press', event);
+  invite = (event: Event) => this.#inviteDialog.value?.setOpen(true, 'trigger-press', event);
   #responsive = () => {
     const rem = Number.parseFloat(getComputedStyle(this.ownerDocument.documentElement).fontSize);
     this.mobile = this.getBoundingClientRect().width <= 40 * rem;
@@ -197,15 +203,7 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
         new Blob([text], { type: 'text/markdown' }),
         'Launch brief.md',
       );
-    } else {
-      const key =
-        command === 'brief-preview'
-          ? 'brief.preview'
-          : command === 'brief-bold'
-            ? 'brief.bold'
-            : 'brief.italic';
-      this.setView(key, !this.view(key, key === 'brief.preview'));
-    }
+    } else this.setView('brief.preview', !this.view('brief.preview', true));
   };
 
   #open = (name: Overlay) => (event: WorkspaceOpenChange) => {
@@ -227,6 +225,7 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
 
   protected override render() {
     const page = destinations.find(([id]) => id === this.section)!;
+    const view = pages[this.section](this);
     return html`
       <tp-navigation-panel
         class="catalog-workspace"
@@ -297,24 +296,14 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
             <div class="workspace-row workspace-between workspace-heading">
               <div class="workspace-stack-sm">
                 <div class="workspace-row">
-                  <h1>${this.projectName}</h1>
-                  <tp-badge variant="secondary">Sprint 08</tp-badge>
+                  <h1>${view.title}</h1>
+                  ${view.badge ?? nothing}
                 </div>
-                <p class="workspace-muted">
-                  A thoughtful launch, from first idea to the final detail.
-                </p>
+                ${view.description ? html`<p class="workspace-muted">${view.description}</p>` : nothing}
               </div>
-              <div class="workspace-row">
-                <tp-avatar-group
-                  >${this.members.slice(0, 4).map((name) => html`<tp-avatar .fallback=${initials(name)} .alt=${name}></tp-avatar>`)}</tp-avatar-group
-                >
-                <tp-button variant="outline" size="sm" @click=${this.#invite}>Invite</tp-button>
-                <tp-button size="sm" @click=${this.newTask}
-                  ><tp-icon slot="icon-start" .icon=${plusIcon}></tp-icon>New task</tp-button
-                >
-              </div>
+              ${view.actions ? html`<div class="workspace-row">${view.actions}</div>` : nothing}
             </div>
-            <div class="workspace-page">${pages[this.section](this)}</div>
+            <div class="workspace-page">${view.body}</div>
           </section>
         </tp-navigation-panel-inset>
       </tp-navigation-panel>
@@ -469,14 +458,17 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
           priority: String(values.priority),
           owner: String(values.owner),
           due: this.draftDue,
-          hours: Number(values.hours || 0),
+          hours: Number(values.hours || 0) * (values.unit === 'days' ? 8 : 1),
         };
         this.tasks = this.editing
           ? this.tasks.map((t) => (t.id === task.id ? task : t))
           : [task, ...this.tasks];
         this.overlay = '';
         this.go('work');
-        this.notify(this.editing ? 'Task updated' : 'Task created');
+        this.notify(this.editing ? 'Task updated' : 'Task created', {
+          type: 'success',
+          description: task.title,
+        });
       }}
     >
       <tp-field label="Task name"
@@ -486,6 +478,9 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
           placeholder="What needs to happen?"
           required
         ></tp-input
+      ></tp-field>
+      <tp-field label="Project" description="Tasks stay in the project they were created in."
+        ><tp-input name="project" default-value="Atlas launch" disabled></tp-input
       ></tp-field>
       <tp-field label="Status"
         ><tp-select
@@ -514,18 +509,28 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
           <option>High</option></tp-native-select
         ></tp-field
       >
-      <tp-field label="Estimate"
-        ><tp-input-group
-          ><tp-input
-            name="hours"
-            type="number"
-            min="0"
-            max="200"
-            .defaultValue=${String(this.editing?.hours ?? 4)}
-          ></tp-input
-          ><span slot="suffix">hours</span></tp-input-group
+      <tp-field label="Reviewer" description="Someone outside the task who signs it off."
+        ><tp-autocomplete name="reviewer" placeholder="Search people" style="inline-size: 100%"
+          >${this.members.map((member) => html`<option>${member}</option>`)}</tp-autocomplete
         ></tp-field
       >
+      <tp-field-group label="Estimate"
+        ><tp-input
+          label="Amount"
+          name="hours"
+          type="number"
+          min="0"
+          max="200"
+          .defaultValue=${String(this.editing?.hours ?? 4)}
+        ></tp-input
+        ><tp-native-select label="Unit" name="unit" default-value="hours"
+          ><option value="hours">Hours</option>
+          <option value="days">Days</option></tp-native-select
+        ></tp-field-group
+      >
+      <tp-field label="Label color" description="Marks the task on the board."
+        ><tp-color-input name="color" default-value="#6d5dfc"></tp-color-input
+      ></tp-field>
       <tp-field label="Due date"
         ><tp-popover
           label="Choose a due date"
@@ -696,7 +701,10 @@ export class CatalogWorkspace extends LitElement implements WorkspaceHost {
           @click=${() => {
             const removed = new Set(this.pendingDelete);
             this.tasks = this.tasks.filter((task) => !removed.has(task.id));
-            this.notify(`${removed.size} ${removed.size === 1 ? 'task' : 'tasks'} deleted`);
+            this.notify(`${removed.size} ${removed.size === 1 ? 'task' : 'tasks'} deleted`, {
+              type: 'info',
+              description: 'Deleted tasks stay in the project history for 30 days.',
+            });
             this.pendingDelete = [];
             this.overlay = '';
           }}
