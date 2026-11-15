@@ -1,5 +1,0 @@
----
-'@tweakpad/ui': minor
----
-
-Plot: a series fill can be a gradient (`fill: { baseline, gradient: true }`), fading the series color from the edge of the domain to nothing at its baseline; gradients are cached by mapping, and solid fills keep their exact paint path and cost. `crosshair` adds, while inspecting, a dashed line at the inspected x, dots on its samples, an x axis chip with the full date and time, and a hint that follows the line along the top or bottom edge (`crosshair: { hint: 'bottom' }`). Hovering now resolves once per animation frame and only moves these marks: it no longer repaints the graph. A series' `format` writes its values in the hint and `marker: 'latest'` marks its last sample with a dot; guides gain `labelAlign: 'end'` and `labelSide: 'above'`. Every option except the callbacks and `stream` also takes JSON in its attribute (`data`, `series`, `guides`, `x-axis`, `y-axis`, `grid`, `legend`, `auto-range`, `crosshair`), so bindings that write attributes drive the plot; malformed JSON is diagnosed and the last view kept, and stream pushes are unaffected.
