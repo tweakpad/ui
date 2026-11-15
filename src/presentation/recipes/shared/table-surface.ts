@@ -1,13 +1,14 @@
 import type { PresentationDeclarations } from '../../resolver.js';
-import { surfaceEdge } from './edges.js';
+import { rowEdge, surfaceEdge } from './edges.js';
 
 // The one rule of tabular data, shared by Table and Data view, so every table follows it without
 // per-component styling:
 // - Text: column headers take the muted foreground and cells the foreground; the sorted column
 //   shows its chevron in the foreground.
 // - Lines: every cell line is the surface edge, which the flat appearance clears, so flat tables
-//   lose their borders by themselves. `borders` chooses row lines (the default), a grid of row and
-//   column lines, or none, through two private line widths the cells read.
+//   lose their borders by themselves; row lines take it at half strength. `borders` chooses row
+//   lines (the default), a grid of row and column lines, or none, through two private line widths
+//   the cells read.
 // - Fills: alternating rows, a hovered row and a selected row each take their own fill, in that
 //   order of strength, so stripes never read as hover or selection.
 
@@ -37,7 +38,7 @@ export const tableCellBox: PresentationDeclarations = {
 
 /** The lines of a cell: below it for rows, at its inline end for columns. */
 export const tableCellLines: PresentationDeclarations = {
-  'border-block-end': surfaceEdge.border,
+  'border-block-end': rowEdge.border,
   'border-block-end-width': rowWidth,
   'border-inline-end': surfaceEdge.border,
   'border-inline-end-width': columnWidth,

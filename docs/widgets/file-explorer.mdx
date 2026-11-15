@@ -20,6 +20,7 @@ const entries = [
   { id: 'plate-1', name: 'Andromeda.tif', kind: 'file', parentId: 'plates', size: 48200000, type: 'image/tiff', modified: now - 6 * day },
   { id: 'plate-2', name: 'Orion nebula.tif', kind: 'file', parentId: 'plates', size: 61900000, type: 'image/tiff', modified: now - 3 * day },
   { id: 'plate-3', name: 'Ring nebula.tif', kind: 'file', parentId: 'plates', size: 39400000, type: 'image/tiff', modified: now - 9 * day },
+  { id: 'plate-ref', name: 'Reference plate.tif', kind: 'file', parentId: 'plates', size: 52700000, type: 'image/tiff', modified: now - 12 * day, disabled: true },
   { id: 'vega', name: 'vega-spectrum.csv', kind: 'file', parentId: 'spectra', size: 812000, type: 'text/csv', modified: now - 4 * day },
 ];
 document.querySelector('#file-explorer-hero').source = createMemorySource(entries);`}
@@ -100,7 +101,7 @@ A column that reads heavy metadata names its `fields`. The explorer asks the sou
 
 The explorer proposes changes and the source makes them: <Keys keys="F2" /> renames in place, dragging moves selected entries onto a folder in the view, the tree or the path, <Keys keys="mod+X" /> and <Keys keys="mod+V" /> move them from the keyboard, <Keys keys="Delete" /> deletes, and dropping files from the computer uploads them with their progress in the status bar. `createFolder()`, `deleteSelection()` and `upload(files)` start the same changes from your own buttons. Each change is a cancelable event before it reaches the source, where you can confirm a deletion; a failure shows in the status bar and as `tp-operation-error`.
 
-`operations` limits the changes the explorer offers, `readonly` turns them off, and an entry's `permissions` mark what each one allows. `root` keeps navigation inside one folder, so a picker for a single folder is a compact list without the sidebar and search.
+`operations` limits the changes the explorer offers, `readonly` turns them off, and an entry's `permissions` mark what each one allows. An entry marked `disabled` is never selected, changed or moved, but it still opens and shows its details. `root` keeps navigation inside one folder, so a picker for a single folder is a compact list without the sidebar and search.
 
 <Preview
   title="Picker"

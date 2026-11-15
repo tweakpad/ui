@@ -18,6 +18,9 @@ const kind = (color: string): EdgeKind => ({
 /** The outer edge of a component or panel: cards, panels, tables, code and callout surfaces. */
 export const surfaceEdge = kind('var(--tp-edge)');
 
+/** The line between rows of a table surface: the surface edge at half strength. */
+export const rowEdge = kind('color-mix(in oklab, var(--tp-edge) 50%, transparent)');
+
 /**
  * The fine edge of a floating surface (menus, popovers, lists, floating toolbars) and of a value
  * surface (the color picker's area, tracks and wheel); a floating surface also keeps its shadow.

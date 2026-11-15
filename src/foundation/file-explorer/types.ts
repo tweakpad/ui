@@ -30,6 +30,8 @@ export interface FileEntry {
   readonly type?: string;
   /** Shown only while the explorer shows hidden entries. */
   readonly hidden?: boolean;
+  /** Shown and inspectable, but never selected, changed, dragged or dropped onto. */
+  readonly disabled?: boolean;
   /** For a folder, how many entries it holds, when known without listing it. */
   readonly childCount?: number;
   /** For a folder, whether it holds folders, so a tree can offer to expand it before listing. */

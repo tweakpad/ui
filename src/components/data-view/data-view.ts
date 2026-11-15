@@ -48,6 +48,7 @@ import { nextSort, sortDataViewRows } from './sort.js';
 import { dataViewStyles } from './styles.js';
 import type {
   DataViewActivateDetail,
+  DataViewFocusDetail,
   DataViewBorders,
   DataViewCellContext,
   DataViewColumn,
@@ -142,6 +143,7 @@ interface FocusKey {
  * @fires tp-sort-change - A cancelable proposal of a new sort from a header press or key, or `sortBy`. `detail.value` is the sort or `null`.
  * @fires tp-value-change - A cancelable proposal of a new selected row id (or `null`); `detail.metadata.row` is the row.
  * @fires tp-row-activate - Enter on a row or a double click on it; `detail` holds the `row` and its `rowId`.
+ * @fires tp-row-focus - Focus moved to another row; `detail` holds the `row` and its `rowId`.
  * @fires tp-retry - The Retry Button of the default error state was pressed.
  * @cssprop --tp-data-view-row-height - The fixed height of every row.
  * @cssprop --tp-data-view-header-height - The height of the header row.
@@ -174,6 +176,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     rows: { attribute: false },
     columns: { attribute: false },
     getRowId: { attribute: false },
+    isRowSelectable: { attribute: false },
     sort: { converter: sortConverter, noAccessor: true },
     defaultSort: { converter: sortConverter, attribute: 'default-sort' },
     value: { noAccessor: true, converter: idListConverter },
@@ -210,6 +213,11 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
   /** A row's stable identity; `row.id` by default. */
   getRowId: (row: T, index: number) => string | number | undefined | null = (row) =>
     defaultRowId(row);
+  /**
+   * Whether a row can be selected; every row by default. A row that cannot still takes focus and
+   * activates, and its selection box shows disabled.
+   */
+  isRowSelectable: ((row: T) => boolean) | undefined;
   /** The sort an uncontrolled view starts with: `column` or `column:descending` as an attribute. */
   defaultSort: DataViewSort | null = null;
   /** The row ids an uncontrolled view starts with selected. */
@@ -418,7 +426,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
   /** Proposes selecting every row, under `multiple`. */
   selectAll(): boolean {
     if (this.selectionMode !== 'multiple') return false;
-    return this.#setSelection(this.#identities.ids, 'imperative-action');
+    return this.#setSelection(this.#selectableIds, 'imperative-action');
   }
 
   /** Proposes an empty selection. */
@@ -697,6 +705,20 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     return this.selectionMode === 'single' || this.selectionMode === 'multiple';
   }
 
+  /** Whether the row with this id can be selected, by `isRowSelectable`. */
+  #canSelect(id: string): boolean {
+    if (!this.isRowSelectable) return true;
+    const index = this.#identities.index.get(id);
+    return index !== undefined && this.isRowSelectable(this.#shown[index]!);
+  }
+
+  /** The ids of the rows that can be selected, in order. */
+  get #selectableIds(): readonly string[] {
+    return this.isRowSelectable
+      ? this.#identities.ids.filter((id) => this.#canSelect(id))
+      : this.#identities.ids;
+  }
+
   #selectionColumn: DataViewColumn<T> | undefined;
   /** The columns as laid out: the selection column first when it shows, then the application's. */
   get #columns(): readonly DataViewColumn<T>[] {
@@ -751,7 +773,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
 
   /** Whether all, none or only some rows are selected. */
   #selectionState(): boolean | 'mixed' {
-    const ids = this.#identities.ids;
+    const ids = this.#selectableIds;
     let count = 0;
     for (const id of ids) if (this.#selected.has(id)) count++;
     return count === 0 ? false : count === ids.length ? true : 'mixed';
@@ -873,6 +895,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     union = false,
   ): boolean {
     if (!this.#selectable || !this.#identities.index.has(id)) return false;
+    if (mode !== 'range' && !this.#canSelect(id)) return false;
     const multiple = this.selectionMode === 'multiple';
     if (!multiple || mode === 'replace') {
       this.#anchor = id;
@@ -883,7 +906,9 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     if (mode === 'range') {
       const index = this.#identities.index;
       const anchor = this.#anchor !== null && index.has(this.#anchor) ? this.#anchor : id;
-      const range = rangeIds(this.#identities.ids, index.get(anchor)!, index.get(id)!, () => true);
+      const range = rangeIds(this.#identities.ids, index.get(anchor)!, index.get(id)!, (rowId) =>
+        this.#canSelect(rowId),
+      );
       return this.#setSelection(union ? unionIds(this.value, range) : range, reason, source);
     }
     this.#anchor = id;
@@ -893,7 +918,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
   /** The select-all box: selects every row, or clears when every row is selected. */
   #toggleAll(reason: ChangeReason, source?: Event): void {
     if (this.selectionMode !== 'multiple') return;
-    this.#setSelection(this.#selectionState() === true ? [] : this.#identities.ids, reason, source);
+    this.#setSelection(this.#selectionState() === true ? [] : this.#selectableIds, reason, source);
   }
 
   #activate(rowId: string, source: Event): void {
@@ -978,10 +1003,17 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     if (!target) return;
     const same = this.#focus?.row === target.key.row && this.#focus?.column === target.key.column;
     if (same) return;
+    const rowChanged = this.#focus?.row !== target.key.row;
     this.#focus = target.key;
     const position = this.#positionOf(target.key);
     if (position && position.row >= 0) this.#lastFocusIndex = position.row;
     this.requestUpdate();
+    const rowId = target.key.row;
+    const index = rowId === null ? undefined : this.#identities.index.get(rowId);
+    if (rowChanged && rowId !== null && index !== undefined) {
+      const detail: DataViewFocusDetail<T> = { row: this.#shown[index]!, rowId };
+      this.emit('tp-row-focus', detail);
+    }
   };
 
   readonly #keydown = (event: KeyboardEvent): void => {
@@ -1110,6 +1142,19 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     else if (box || mod || this.selectionBehavior === 'toggle')
       this.#select(key.row, 'toggle', 'item-press', event);
     else this.#select(key.row, 'replace', 'item-press', event);
+  };
+
+  /**
+   * A second press (a double click) or a Shift press on a row selects or activates rows, so it
+   * never starts a text selection; the pressed cell or row still takes focus. Presses on content
+   * such as links or fields keep their own behavior.
+   */
+  readonly #mouseDown = (event: MouseEvent): void => {
+    if (event.button !== 0 || (event.detail < 2 && !event.shiftKey) || contentTarget(event)) return;
+    const target = this.#target(event);
+    if (!target || target.key.row === null) return;
+    event.preventDefault();
+    target.element.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
   };
 
   readonly #doubleClick = (event: MouseEvent): void => {
@@ -1374,7 +1419,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
             'data-align': 'center',
             ...this.#pinProperties(columnIndex, pinned),
           },
-          content: this.#renderBox(selected),
+          content: this.#renderBox(selected, { 'data-disabled': !this.#canSelect(id) }),
         });
       const context = this.#cellContext(
         row,
@@ -1406,7 +1451,8 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
       properties: {
         role: 'row',
         'aria-rowindex': index + 2,
-        'aria-selected': this.#selectable ? String(selected) : nothing,
+        'aria-selected': this.#selectable && this.#canSelect(id) ? String(selected) : nothing,
+        'data-unselectable': this.#selectable && !this.#canSelect(id),
         tabindex: rowMode ? (rowStop ? '0' : '-1') : nothing,
         'data-row': id,
         'data-stripe': striped,
@@ -1482,7 +1528,8 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
       properties: {
         role: 'gridcell',
         'aria-colindex': column + 1,
-        'aria-selected': this.#selectable ? String(selected) : nothing,
+        'aria-selected': this.#selectable && this.#canSelect(id) ? String(selected) : nothing,
+        'data-unselectable': this.#selectable && !this.#canSelect(id),
         tabindex: stop?.row === id ? '0' : '-1',
         'data-row': id,
         'data-selected': selected,
@@ -1491,7 +1538,9 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
       },
       content: html`${
         this.selectionCheckboxes && this.#selectable
-          ? html`<span class="tile-box" data-selection-box>${this.#renderBox(selected)}</span>`
+          ? html`<span class="tile-box" data-selection-box
+              >${this.#renderBox(selected, { 'data-disabled': !this.#canSelect(id) })}</span
+            >`
           : nothing
       }${runDataViewHook(layers, 'tile', context)}`,
       ...(reference ? { reference } : {}),
@@ -1674,6 +1723,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
             aria-busy=${this.loading ? 'true' : nothing}
             @focusin=${this.#focusIn}
             @keydown=${this.#keydown}
+            @mousedown=${this.#mouseDown}
             @click=${this.#click}
             @dblclick=${this.#doubleClick}
           >

@@ -1242,6 +1242,7 @@ type Tags = {
     | 'getRowId'
     | 'header'
     | 'invalid'
+    | 'isRowSelectable'
     | 'label'
     | 'layout'
     | 'loading'
@@ -1271,6 +1272,7 @@ type Tags = {
       'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
       'tp-retry': CustomEvent<NonNullable<unknown>>;
       'tp-row-activate': CustomEvent<componentsDataViewTypes.DataViewActivateDetail<unknown>>;
+      'tp-row-focus': CustomEvent<componentsDataViewTypes.DataViewFocusDetail<unknown>>;
       'tp-sort-change': foundationEvents.TpValueChangeEvent<componentsDataViewTypes.DataViewSort | null>;
       'tp-value-change': foundationEvents.TpValueChangeEvent<readonly string[]>;
     }

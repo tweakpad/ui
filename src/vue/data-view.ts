@@ -26,6 +26,7 @@ export const DataView = /*#__PURE__*/ createBinding(TpDataView, 'DataView', {
   | 'getRowId'
   | 'header'
   | 'invalid'
+  | 'isRowSelectable'
   | 'label'
   | 'layout'
   | 'loading'
@@ -57,6 +58,7 @@ export const DataView = /*#__PURE__*/ createBinding(TpDataView, 'DataView', {
     'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
     'tp-retry': CustomEvent<NonNullable<unknown>>;
     'tp-row-activate': CustomEvent<componentsDataViewTypes.DataViewActivateDetail<DataViewDefault>>;
+    'tp-row-focus': CustomEvent<componentsDataViewTypes.DataViewFocusDetail<DataViewDefault>>;
     'tp-sort-change': foundationEvents.TpValueChangeEvent<componentsDataViewTypes.DataViewSort | null>;
     'tp-value-change': foundationEvents.TpValueChangeEvent<readonly string[]>;
   },

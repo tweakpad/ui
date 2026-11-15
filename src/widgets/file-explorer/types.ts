@@ -85,6 +85,5 @@ export interface FileExplorerMessages {
   readonly newFolder: string;
   readonly dropHere: string;
   readonly uploading: (count: number) => string;
-  readonly locked: string;
   readonly errors: Readonly<Record<string, string>>;
 }

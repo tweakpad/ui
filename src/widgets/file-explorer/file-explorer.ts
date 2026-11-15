@@ -39,7 +39,6 @@ import {
   layoutListIcon,
   layoutRowsIcon,
 } from '../../icons/files.js';
-import { lockIcon } from '../../icons/lock.js';
 import { navigationIcons } from '../../icons/navigation.js';
 import type { IconDefinition } from '../../icons/types.js';
 import { fileExplorerPresentation } from '../../presentation/families/file-explorer.js';
@@ -49,6 +48,7 @@ import { TpDataView } from '../../components/data-view/data-view.js';
 import type {
   DataViewColumn,
   DataViewDragAndDrop,
+  DataViewFocusDetail,
   DataViewMiddleware,
   DataViewSort,
   DataViewTileContext,
@@ -107,6 +107,9 @@ const VIEW_ICONS: Readonly<Record<FileExplorerView, IconDefinition>> = {
 /** The columns fill the scroll area's height, which scrolls them sideways. */
 const COLUMNS_CONTENT = { 'scroll-area-content': { styleHook: { 'block-size': '100%' } } };
 /** The tree's id for the top folder, which has no id when it is the source's root. */
+/** Disabled entries show and open, but are never selected. */
+const selectable = (entry: FileEntry): boolean => !entry.disabled;
+
 const ROOT = '\u0000root';
 const NESTED_EVENT_TYPES = [
   'tp-value-change',
@@ -364,6 +367,7 @@ export class TpFileExplorer extends TpElement {
     eventFactory: (value, previous, reason, source, options) =>
       new TpValueChangeEvent(value, previous, reason, source, options, 'tp-folder-change'),
     onCommit: (value, previous) => {
+      this.#inspected = null;
       this.requestUpdate('folder', previous);
       this.#openListing(value);
     },
@@ -820,12 +824,14 @@ export class TpFileExplorer extends TpElement {
     return this.#visible(this.#listings.get(this.#key(this.folder))?.entries ?? []);
   }
 
+  /** Proposes a selection; disabled entries are never part of one. */
   #select(ids: readonly string[], reason: ChangeReason, source?: Event): boolean {
-    const entries = ids.flatMap((id) => {
+    const allowed = ids.filter((id) => !this.#known.get(id)?.disabled);
+    const entries = allowed.flatMap((id) => {
       const entry = this.#known.get(id);
       return entry ? [entry] : [];
     });
-    return this.#valueState.set([...ids], reason, source, { metadata: { entries } });
+    return this.#valueState.set(allowed, reason, source, { metadata: { entries } });
   }
 
   /** An uncontrolled selection drops entries that left the view. */
@@ -852,7 +858,7 @@ export class TpFileExplorer extends TpElement {
 
   /** Whether an entry allows an operation: the explorer offers it and the entry permits it. */
   #allows(operation: 'rename' | 'move' | 'delete', entry: FileEntry): boolean {
-    if (!this.supports(operation)) return false;
+    if (!this.supports(operation) || entry.disabled) return false;
     const permissions = entry.permissions;
     if (permissions?.write === false && operation !== 'move') return false;
     return permissions?.[operation] !== false;
@@ -1107,7 +1113,9 @@ export class TpFileExplorer extends TpElement {
   #folderTarget(id: string | null): boolean {
     if (id === null) return this.supports('move');
     const entry = this.#known.get(id);
-    return !!entry && entry.kind === 'folder' && entry.permissions?.write !== false;
+    return (
+      !!entry && entry.kind === 'folder' && !entry.disabled && entry.permissions?.write !== false
+    );
   }
 
   /** The hooks connecting the views' rows and the tree's folders to the manager, kept per manager. */
@@ -1406,6 +1414,7 @@ export class TpFileExplorer extends TpElement {
   readonly #viewValueChange = (event: TpValueChangeEvent<readonly string[]>): void => {
     if (!this.#own(event)) return;
     event.preventDefault();
+    this.#inspected = null;
     this.#select(event.detail.value, event.detail.reason, event);
   };
 
@@ -1516,14 +1525,6 @@ export class TpFileExplorer extends TpElement {
             this.#renaming?.id === entry.id
               ? this.#renderRenameInput(entry)
               : html`<span>${cell.renderText()}</span>`
-          }${
-            entry.permissions?.write === false || entry.permissions?.rename === false
-              ? html`<tp-icon
-                  class="entry-lock"
-                  .icon=${lockIcon}
-                  aria-label=${messages.locked}
-                ></tp-icon>`
-              : nothing
           }`,
     };
   }
@@ -1557,8 +1558,9 @@ export class TpFileExplorer extends TpElement {
       // What the explorer renders inside a view lives in that view's shadow root.
       css: `
         .search-match { background: var(--tp-primary-subtle); color: inherit; border-radius: var(--tp-radius-sm); }
-        .entry-icon, .entry-lock { flex: none; inline-size: var(--tp-icon-size-md); block-size: var(--tp-icon-size-md); }
-        .entry-lock { color: var(--tp-muted-foreground); }
+        /* A disabled entry reads as unavailable: its name, details and icon take the muted color. */
+        [data-unselectable], [data-unselectable] [role='gridcell'], [data-unselectable] .tile-subtitle { color: var(--tp-muted-foreground); }
+        .entry-icon { flex: none; inline-size: var(--tp-icon-size-md); block-size: var(--tp-icon-size-md); }
         .metadata-skeleton { inline-size: 60%; block-size: 0.75em; }
         .rename-input { flex: 1 1 auto; min-inline-size: 0; }
         .entry-chevron { flex: none; margin-inline-start: auto; inline-size: var(--tp-icon-size-sm); block-size: var(--tp-icon-size-sm); color: var(--tp-muted-foreground); }
@@ -1572,6 +1574,8 @@ export class TpFileExplorer extends TpElement {
         }
         .tile-icon { inline-size: ${gallery ? 'var(--tp-space-10)' : 'var(--tp-space-8)'}; block-size: ${gallery ? 'var(--tp-space-10)' : 'var(--tp-space-8)'}; }
         .tile-preview { inline-size: 100%; block-size: 100%; }
+        /* The selection box sits inside the media's corner, one step in from its edges. */
+        .tile-box { inset-block-start: calc(var(--tp-space-2) * 2); inset-inline-start: calc(var(--tp-space-2) * 2); }
         .tile-title, .tile-subtitle { text-align: ${gallery ? 'start' : 'center'}; }
       `,
       text: (cell, next) => {
@@ -1794,6 +1798,7 @@ export class TpFileExplorer extends TpElement {
       .rows=${this.#visible(listing?.entries ?? [])}
       .columns=${[column]}
       .getRowId=${(entry: FileEntry) => entry.id}
+      .isRowSelectable=${selectable}
       .value=${selected}
       .middleware=${[this.#explorerLayer(), ...this.middleware]}
       .messages=${{ label: messages.label, empty: messages.emptyFolder, emptyDescription: '', errorTitle: messages.loadError }}
@@ -1918,6 +1923,7 @@ export class TpFileExplorer extends TpElement {
       .rows=${rows}
       .columns=${columns}
       .getRowId=${(entry: FileEntry) => entry.id}
+      .isRowSelectable=${selectable}
       .sort=${this.sort}
       .value=${this.value}
       .middleware=${[this.#explorerLayer(), ...this.middleware]}
@@ -1934,16 +1940,29 @@ export class TpFileExplorer extends TpElement {
       @tp-value-change=${this.#viewValueChange}
       @tp-sort-change=${this.#viewSortChange}
       @tp-row-activate=${this.#rowActivate}
+      @tp-row-focus=${this.#rowFocus}
       @tp-retry=${this.#retry}
     ></tp-data-view>`;
   }
 
+  /** A disabled entry cannot be selected; while it has focus, the details pane describes it. */
+  #inspected: FileEntry | null = null;
+  readonly #rowFocus = (event: CustomEvent<DataViewFocusDetail<FileEntry>>): void => {
+    const inspected = event.detail.row.disabled ? event.detail.row : null;
+    if (inspected === this.#inspected) return;
+    this.#inspected = inspected;
+    this.requestUpdate();
+  };
+
   #renderDetails(): TemplateResult {
     const messages = this.#messages;
-    const selected = this.value.flatMap((id) => {
-      const entry = this.#known.get(id);
-      return entry ? [this.#withMetadata(entry)] : [];
-    });
+    const inspected = this.#inspected && this.#known.get(this.#inspected.id);
+    const selected = inspected
+      ? [this.#withMetadata(inspected)]
+      : this.value.flatMap((id) => {
+          const entry = this.#known.get(id);
+          return entry ? [this.#withMetadata(entry)] : [];
+        });
     const entry = selected.length === 1 ? selected[0]! : null;
     if (!entry)
       return html`<div class="details" part="file-explorer-details">

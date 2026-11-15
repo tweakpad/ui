@@ -24,6 +24,7 @@ export type DataViewProps<T = DataViewDefaults[0]> = ElementProps<
   | 'getRowId'
   | 'header'
   | 'invalid'
+  | 'isRowSelectable'
   | 'label'
   | 'layout'
   | 'loading'
@@ -55,6 +56,7 @@ export type DataViewProps<T = DataViewDefaults[0]> = ElementProps<
     onTpDiagnostic: CustomEvent<foundationServices.Diagnostic>;
     onTpRetry: CustomEvent<NonNullable<unknown>>;
     onTpRowActivate: CustomEvent<componentsDataViewTypes.DataViewActivateDetail<T>>;
+    onTpRowFocus: CustomEvent<componentsDataViewTypes.DataViewFocusDetail<T>>;
     onTpSortChange: foundationEvents.TpValueChangeEvent<componentsDataViewTypes.DataViewSort | null>;
     onTpValueChange: foundationEvents.TpValueChangeEvent<readonly string[]>;
   }
@@ -67,6 +69,7 @@ export const DataView = /*#__PURE__*/ createBinding<DataViewProps>(
     onTpDiagnostic: 'tp-diagnostic',
     onTpRetry: 'tp-retry',
     onTpRowActivate: 'tp-row-activate',
+    onTpRowFocus: 'tp-row-focus',
     onTpSortChange: 'tp-sort-change',
     onTpValueChange: 'tp-value-change',
   },

@@ -43,7 +43,6 @@ export const DEFAULT_FILE_EXPLORER_MESSAGES: FileExplorerMessages = {
   newFolder: 'New folder',
   dropHere: 'Drop to move here',
   uploading: (count) => `Uploading ${count} ${count === 1 ? 'file' : 'files'}`,
-  locked: 'Read only',
   errors: {
     conflict: 'An item with that name already exists here.',
     'invalid-name': 'That name cannot be used.',

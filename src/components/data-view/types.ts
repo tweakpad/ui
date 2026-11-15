@@ -238,6 +238,12 @@ export interface DataViewActivateDetail<T = unknown> {
   readonly sourceEvent: Event;
 }
 
+/** Detail of `tp-row-focus`. */
+export interface DataViewFocusDetail<T = unknown> {
+  readonly row: T;
+  readonly rowId: string;
+}
+
 /** Called with each `tp-value-change` proposal of a selected row id. */
 export type DataViewValueChangeCallback = (event: TpValueChangeEvent<readonly string[]>) => void;
 /** Called with each `tp-sort-change` proposal of a sort. */
