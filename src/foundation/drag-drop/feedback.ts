@@ -24,6 +24,19 @@ import { sortableMembership } from './sortable.js';
 import type { Draggable } from './entities.js';
 import type { DropAnimation, FeedbackMode, FeedbackOptions } from './types.js';
 
+/** The box of an element in the top layer, kept from before it entered (borders, padding, fill). */
+const BOX_PROPERTIES = [
+  ...['top', 'right', 'bottom', 'left'].flatMap((side) => [
+    `border-${side}-width`,
+    `border-${side}-style`,
+    `border-${side}-color`,
+    `padding-${side}`,
+  ]),
+  'background-color',
+  'overflow-x',
+  'overflow-y',
+] as const;
+
 /** The dimmed copy that holds a dragged item's place: where it lands, or where it was. */
 export const DRAG_GHOST_OPACITY = 'var(--tp-opacity-drag-ghost, 0.6)';
 /** The dragged item that follows the pointer while its ghost holds its place. */
@@ -149,6 +162,12 @@ export class DragFeedback {
       view = original.ownerDocument.defaultView;
     if (!initial || !view) throw new Error('Feedback source is no longer measurable.');
     const computed = view.getComputedStyle(original);
+    // The box the element that follows the pointer draws, read before it enters the top layer:
+    // there it keeps this box instead of the platform's default frame for popovers.
+    const drawn = view.getComputedStyle(element);
+    const box = new Map(
+      BOX_PROPERTIES.map((property) => [property, drawn.getPropertyValue(property)]),
+    );
     // Capture live computed values before markers or generated presentation writes.
     const transform = computed.transform,
       scale = computed.scale,
@@ -211,7 +230,11 @@ export class DragFeedback {
       placeholder.style.pointerEvents = 'none';
       if (mode === 'default') placeholder.style.visibility = 'hidden';
       else placeholder.style.opacity = DRAG_GHOST_OPACITY;
+      // The stand-in holds the whole place the item left from the first frame, also while its
+      // own content still renders: an empty frame would let the items after it close the gap and
+      // be measured there.
       placeholder.style.width = `${initial.width / Math.abs(originalAncestors.x * originalFrame.scaleX * (parsed?.scaleX ?? 1))}px`;
+      placeholder.style.height = `${initial.height / Math.abs(originalAncestors.y * originalFrame.scaleY * (parsed?.scaleY ?? 1))}px`;
       placeholder.style.boxSizing = 'border-box';
       original.after(placeholder);
       scope.add(() => {
@@ -331,6 +354,7 @@ export class DragFeedback {
       scope.add(() => follow.stop());
     }
     if (topLayer) {
+      for (const [property, value] of box) styles.set(property, value);
       attributes.set('popover', 'manual');
       try {
         element.showPopover();

@@ -1,0 +1,5 @@
+---
+'@tweakpad/ui': patch
+---
+
+Drag drop list and Tree view (and so Layers) reorder through one shared engine, so a drag lands, marks its landing line, displaces items and steps by keyboard the same way in both. Tree view's own drag projection is gone: its ghost no longer jumps, its landing line follows the pointer, and its drop-into mark appears only over a row's middle half, as in Drag drop list. A keyboard reorder in Tree view starts as before with Control+Enter (Command+Enter) and now moves through the same keyboard steps; when it ends, focus returns to the row. The ghost holding a dragged item's place keeps the item's full size from the first frame, so the first keyboard step no longer skips an item. Under a landing line a Tree view ghost keeps the row's own level, and changing `dragActivation` after the first render now takes effect.

@@ -19,6 +19,10 @@ export interface KeyboardCodes {
 }
 export interface KeyboardSensorOptions {
   offset?: number | Coordinates;
+  /** The elements whose keys start a drag; the source's handle, else its element, by default. */
+  activatorElements?:
+    | readonly (Element | null | undefined)[]
+    | ((source: Draggable) => readonly (Element | null | undefined)[]);
   keyboardCodes?: Partial<KeyboardCodes>;
   preventActivation?: (event: KeyboardEvent, source: Draggable) => boolean;
 }
@@ -105,8 +109,15 @@ export class KeyboardSensor implements Sensor {
         };
     const scope = new CleanupScope();
     this.#scope.add(() => scope.dispose());
-    const target = source.handle ?? source.element;
-    if (target)
+    const effectiveOptions = options ? { ...this.options, ...options } : this.options;
+    const targets =
+      effectiveOptions.activatorElements === undefined
+        ? [source.handle ?? source.element]
+        : typeof effectiveOptions.activatorElements === 'function'
+          ? effectiveOptions.activatorElements(source)
+          : effectiveOptions.activatorElements;
+    for (const target of new Set(targets)) {
+      if (!target) continue;
       scope.listen(target, 'keydown', (event) => {
         if (
           this.disabled ||
@@ -156,16 +167,23 @@ export class KeyboardSensor implements Sensor {
             },
             { once: true },
           );
-          active.listen(element.ownerDocument, 'keydown', (key) => this.#key(key, binding), {
+          // Focus returns to where the drag started: the handle, or the item itself.
+          const from = target === source.element && target !== source.handle ? 'element' : 'handle';
+          active.listen(element.ownerDocument, 'keydown', (key) => this.#key(key, binding, from), {
             capture: true,
           });
         } catch (error) {
           this.manager.fail(error);
         }
       });
+    }
     return () => scope.dispose();
   }
-  #key(event: KeyboardEvent, { codes, offset }: KeyboardBinding): void {
+  #key(
+    event: KeyboardEvent,
+    { codes, offset }: KeyboardBinding,
+    from: 'handle' | 'element' = 'handle',
+  ): void {
     if (event.defaultPrevented) return;
     if (isKeyboardKey(event, [...codes.cancel, ...codes.end])) {
       const tab = normalizeKey(event.key) === 'tab';
@@ -184,7 +202,7 @@ export class KeyboardSensor implements Sensor {
             )
               return;
             const source = this.manager.registry.draggables.get(id),
-              handle = source?.handle ?? source?.element;
+              handle = from === 'element' ? source?.element : (source?.handle ?? source?.element);
             if (handle?.isConnected && 'focus' in handle)
               (handle as HTMLElement).focus({ preventScroll: true });
           })

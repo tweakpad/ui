@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Reorder parity verification</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 32px;
+        font-family: system-ui;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+      }
+      main {
+        max-width: 960px;
+        margin: auto;
+      }
+      .columns {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 24px;
+        align-items: start;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      h2 {
+        font-size: 16px;
+      }
+      /* The same row geometry in both, so any difference left is the reorder's own. */
+      #list-host tp-drag-drop-list::part(list) {
+        gap: 0;
+      }
+      #list-host tp-drag-drop-list::part(item),
+      #tree-host tp-tree-view::part(item) {
+        block-size: 40px;
+        min-block-size: 0;
+        box-sizing: border-box;
+      }
+      pre {
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Reorder parity</h1>
+      <p>
+        The same items in a Drag drop list and a Tree view, moved by the same scripted drags. Both
+        are containers of one reorder engine, so every step must land the same way.
+      </p>
+      <section class="columns">
+        <div><h2>Drag drop list</h2><div id="list-host"></div></div>
+        <div><h2>Tree view</h2><div id="tree-host"></div></div>
+      </section>
+      <pre id="report" aria-live="polite"></pre>
+    </main>
+    <script type="module">
+      const built = new URL(location.href).searchParams.has('package');
+      const styles = document.createElement('link');
+      styles.rel = 'stylesheet';
+      styles.href = built ? '/dist/styles.css' : '/src/styles.css';
+      document.head.append(styles);
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+
+      const ITEMS = [
+        { id: 'inbox', label: 'Inbox' },
+        { id: 'drafts', label: 'Drafts' },
+        { id: 'notes', label: 'Notes' },
+        { id: 'archive', label: 'Archive' },
+        { id: 'shared', label: 'Shared' },
+        { id: 'trash', label: 'Trash' },
+      ];
+      const frame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+      const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      const settle = async () => {
+        await frame();
+        await frame();
+        await wait(30);
+      };
+
+      /** The deepest element at a point, as a real press would hit. */
+      function hit(x, y) {
+        let node = document.elementFromPoint(x, y);
+        while (node?.shadowRoot) {
+          const inner = node.shadowRoot.elementFromPoint(x, y);
+          if (!inner || inner === node) break;
+          node = inner;
+        }
+        return node;
+      }
+
+      /** What both components expose for a reorder, read from their own DOM. */
+      function adapters(list, tree) {
+        const listRoot = () => list.shadowRoot.querySelector("[part~='list']");
+        const treeRoot = () => tree.shadowRoot.querySelector('.list');
+        return {
+          list: {
+            element: list,
+            items: () => [...listRoot().querySelectorAll(":scope > [part~='item']")],
+            /** The drag feedback may carry the lifted item into its portal. */
+            lifted: () =>
+              list.shadowRoot.querySelector("[part~='item'][data-dragging]") ??
+              document.querySelector("body > * > [part~='item'][data-dragging]"),
+            activate: (value) => (list.activation = value),
+            placeholder: () => listRoot().querySelector(':scope > [data-preview]'),
+            line: () => listRoot().querySelector(":scope > [part~='drop-indicator']"),
+            handle: (item) => item.querySelector("[part~='handle']"),
+            order: () => list.value.map((item) => item.id),
+            /** Space on the focused handle picks up. */
+            start: (item) => {
+              const handle = item.querySelector("[part~='handle']");
+              handle.focus();
+              return { key: ' ', code: 'Space' };
+            },
+          },
+          tree: {
+            element: tree,
+            items: () => [...treeRoot().querySelectorAll(':scope > tp-tree-item')],
+            lifted: () => tree.shadowRoot.querySelector('tp-tree-item[data-dragging]'),
+            activate: (value) => (tree.dragActivation = value),
+            placeholder: () => treeRoot().querySelector(':scope > [data-preview]'),
+            line: () => treeRoot().querySelector(":scope > [part~='drop-indicator']"),
+            handle: (item) => item.querySelector('[data-handle]'),
+            order: () => (tree.items ?? []).map((item) => item.id),
+            /** Control+Enter on the focused row picks up. */
+            start: (item) => {
+              item.focus();
+              return { key: 'Enter', code: 'Enter', ctrlKey: true };
+            },
+          },
+        };
+      }
+
+      async function mount(indicator) {
+        const listHost = document.querySelector('#list-host');
+        const treeHost = document.querySelector('#tree-host');
+        listHost.replaceChildren();
+        treeHost.replaceChildren();
+        const list = document.createElement('tp-drag-drop-list');
+        list.label = 'Folders';
+        list.dropIndicator = indicator;
+        list.defaultValue = ITEMS.map((item) => ({ ...item }));
+        const tree = document.createElement('tp-tree-view');
+        tree.label = 'Folders';
+        tree.reorderable = true;
+        tree.dropIndicator = indicator;
+        tree.defaultItems = ITEMS.map((item) => ({ ...item }));
+        listHost.append(list);
+        treeHost.append(tree);
+        await list.updateComplete;
+        await tree.updateComplete;
+        await settle();
+        return adapters(list, tree);
+      }
+
+      const label = (element) => element?.textContent.trim().split(/\s+/).at(-1) ?? null;
+
+      /**
+       * One step of a drag, in slots, as both components must agree on it: the ghost's slot among
+       * the items at rest, the slot of the landing line, and the grip of the copy under the pointer
+       * as a share of the row.
+       */
+      function snapshot(view, pointerY) {
+        const lifted = view.lifted();
+        const resting = [...view.items(), view.placeholder()]
+          .filter((element) => element && !element.hasAttribute('data-dragging'))
+          .sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+        const placeholder = view.placeholder();
+        const ghost = placeholder ? resting.indexOf(placeholder) : null;
+        const line = view.line();
+        let lineSlot = null;
+        if (line && line.getBoundingClientRect().height + line.getBoundingClientRect().width > 0) {
+          const box = line.getBoundingClientRect();
+          const y = box.top + box.height / 2;
+          lineSlot = resting.filter((element) => {
+            const rect = element.getBoundingClientRect();
+            return rect.top + rect.height / 2 < y;
+          }).length;
+        }
+        let grip = null;
+        if (lifted && pointerY !== undefined) {
+          const rect = lifted.getBoundingClientRect();
+          grip = Math.round(((pointerY - rect.top) / rect.height) * 20) / 20;
+        }
+        return {
+          ghost,
+          line: lineSlot,
+          grip,
+          shown: resting.map((element) => (element === placeholder ? '·' : label(element))),
+        };
+      }
+
+      /** A pointer drag from an item's handle, moved by row pitches. */
+      async function pointerDrag(view, { from, at = 0.5, path, activation = 'handle' }) {
+        view.activate(activation);
+        await view.element.updateComplete;
+        await settle();
+        const items = view.items();
+        const pitch =
+          items[1].getBoundingClientRect().top - items[0].getBoundingClientRect().top;
+        const item = items[from];
+        const handle = view.handle(item).getBoundingClientRect();
+        const row = item.getBoundingClientRect();
+        // From the handle, or with whole-row activation from the row's middle.
+        const x = activation === 'item' ? row.left + row.width / 2 : handle.left + handle.width / 2;
+        const y = row.top + row.height * at;
+        const target = hit(x, y);
+        const init = {
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+          pointerId: 1,
+          pointerType: 'mouse',
+          isPrimary: true,
+          button: 0,
+          buttons: 1,
+        };
+        target.dispatchEvent(new PointerEvent('pointerdown', { ...init, clientX: x, clientY: y }));
+        const steps = [];
+        for (const offset of path) {
+          const py = y + offset * pitch;
+          target.dispatchEvent(new PointerEvent('pointermove', { ...init, clientX: x, clientY: py }));
+          await settle();
+          steps.push({ at: offset, ...snapshot(view, py) });
+        }
+        target.dispatchEvent(
+          new PointerEvent('pointerup', { ...init, buttons: 0, clientX: x, clientY: y + path.at(-1) * pitch }),
+        );
+        await wait(400);
+        await settle();
+        return { steps, order: view.order() };
+      }
+
+      /** A keyboard reorder: each component's pick-up chord, then the same arrow keys. */
+      async function keyboardDrag(view, { from, keys }) {
+        const item = view.items()[from];
+        const chord = view.start(item);
+        const deepActive = () => {
+          let active = document.activeElement;
+          while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+          return active;
+        };
+        const press = (init) =>
+          deepActive().dispatchEvent(
+            new KeyboardEvent('keydown', { bubbles: true, composed: true, cancelable: true, ...init }),
+          );
+        press(chord);
+        await settle();
+        const steps = [{ key: 'start', ...snapshot(view) }];
+        for (const key of keys) {
+          press({ key, code: key });
+          await settle();
+          steps.push({ key, ...snapshot(view) });
+        }
+        press({ key: 'Enter', code: 'Enter' });
+        await wait(400);
+        await settle();
+        return { steps, order: view.order() };
+      }
+
+      const range = (from, to, step) => {
+        const out = [];
+        for (let value = from; step > 0 ? value <= to + 1e-9 : value >= to - 1e-9; value += step)
+          out.push(Math.round(value * 100) / 100);
+        return out;
+      };
+
+      /** The scripted drags both components run. */
+      const SCRIPTS = [
+        { name: 'slow upward drag', kind: 'pointer', from: 4, path: range(0.25, -4.5, -0.25) },
+        { name: 'slow downward drag', kind: 'pointer', from: 1, path: range(0.25, 3.5, 0.25) },
+        { name: 'whole row, grab near the top edge, up', kind: 'pointer', activation: 'item', from: 3, at: 0.15, path: range(-0.2, -1.4, -0.2) },
+        { name: 'whole row, grab near the bottom edge, down', kind: 'pointer', activation: 'item', from: 2, at: 0.85, path: range(0.2, 1.4, 0.2) },
+        { name: 'whole row, slow upward drag', kind: 'pointer', activation: 'item', from: 5, path: range(0.25, -5.5, -0.25) },
+        { name: 'past the last item', kind: 'pointer', from: 3, path: range(0.5, 4, 0.5) },
+        { name: 'keyboard down twice', kind: 'keyboard', from: 1, keys: ['ArrowDown', 'ArrowDown'] },
+        { name: 'keyboard up', kind: 'keyboard', from: 3, keys: ['ArrowUp'] },
+      ];
+
+      function differences(a, b, path = '') {
+        if (JSON.stringify(a) === JSON.stringify(b)) return [];
+        if (Array.isArray(a) && Array.isArray(b)) {
+          const out = [];
+          for (let index = 0; index < Math.max(a.length, b.length); index++)
+            out.push(...differences(a[index], b[index], `${path}[${index}]`));
+          return out;
+        }
+        if (a && b && typeof a === 'object' && typeof b === 'object') {
+          const out = [];
+          for (const key of new Set([...Object.keys(a), ...Object.keys(b)]))
+            out.push(...differences(a[key], b[key], `${path}.${key}`));
+          return out;
+        }
+        return [`${path}: list ${JSON.stringify(a)} · tree ${JSON.stringify(b)}`];
+      }
+
+      /** Runs every script in both components under one drop indicator and compares them. */
+      async function run(indicator) {
+        const results = [];
+        for (const script of SCRIPTS) {
+          const outcome = {};
+          for (const name of ['list', 'tree']) {
+            const views = await mount(indicator);
+            outcome[name] =
+              script.kind === 'pointer'
+                ? await pointerDrag(views[name], script)
+                : await keyboardDrag(views[name], script);
+          }
+          results.push({
+            indicator,
+            script: script.name,
+            list: outcome.list,
+            tree: outcome.tree,
+            differences: differences(outcome.list, outcome.tree),
+          });
+        }
+        return results;
+      }
+
+      /** Throws with every step where the two components diverge. */
+      async function assertParity(indicators = ['displace', 'line']) {
+        const results = [];
+        for (const indicator of indicators) results.push(...(await run(indicator)));
+        const diverging = results.filter((result) => result.differences.length);
+        document.querySelector('#report').textContent = diverging.length
+          ? diverging
+              .map((result) => `${result.indicator} · ${result.script}\n  ${result.differences.join('\n  ')}`)
+              .join('\n')
+          : `${results.length} scripted drags land the same in both.`;
+        if (diverging.length)
+          throw new Error(
+            `Reorder parity: ${diverging.length} of ${results.length} drags diverge.\n` +
+              document.querySelector('#report').textContent,
+          );
+        return results.map((result) => ({ indicator: result.indicator, script: result.script, order: result.list.order }));
+      }
+
+      window.reorderParity = { run, assertParity, mount, pointerDrag, keyboardDrag, SCRIPTS };
+      document.documentElement.setAttribute('data-fixture-ready', '');
+    </script>
+  </body>
+</html>

@@ -11,7 +11,6 @@ import { dropInto, listDropLine } from './shared/drop-line.js';
 import { floatEdge } from './shared/edges.js';
 import { checkboxRules } from './shared/selection-control.js';
 import { packedExtent } from './shared/target.js';
-import { dragGhost } from './shared/drag-look.js';
 import { controlStepDeclarations, controlStepOf } from './shared/variant.js';
 
 /**
@@ -73,7 +72,8 @@ export const treeViewAppearance: PresentationDictionary = {
     { selector: '&[data-handle-start]', declarations: { 'margin-inline-start': '0' } },
   ],
   'tree-view-drop-indicator': [{ declarations: listDropLine('tree-view') }],
-  'tree-view-drag-ghost': [{ declarations: dragGhost }],
+  // The drag feedback dims the ghost row (the shared drag look); the part keeps a styling hook.
+  'tree-view-drag-ghost': [],
   'tree-view-row-size-sm': [
     {
       declarations: {

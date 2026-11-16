@@ -1,24 +1,90 @@
-import { ControllableState, orderedValuesEqual } from '../../foundation/controllable-state.js';
-import { landingSide } from '../../foundation/drag-drop/landing.js';
-import type { ChangeReason } from '../../foundation/types.js';
-import type { TpChangeEventOptions } from '../../foundation/events.js';
-import { createId } from '../../foundation/id.js';
-import type { DragDropManager } from '../../foundation/drag-drop/manager.js';
-import { LitDragDropRenderer } from '../../foundation/drag-drop/renderer.js';
-import { isSortable } from '../../foundation/drag-drop/sortable.js';
-import {
-  arrayMove,
-  reportDragDropDiagnostic,
-  type UniqueIdentifier,
-} from '../../foundation/drag-drop/sorting.js';
-import { validIdentifier } from '../../foundation/drag-drop/registry.js';
-import type {
-  DragEvent,
-  DragEventName,
-  OperationSnapshot,
-} from '../../foundation/drag-drop/types.js';
-import type { TpDragDropList } from './drag-drop-list.js';
-import type { DragDropDestination, MoveItemOutcome } from './types.js';
+import { ControllableState, orderedValuesEqual } from '../../controllable-state.js';
+import { pointerNearest } from '../collision.js';
+import { landingSide } from '../landing.js';
+import type { SortableInput } from '../sortable.js';
+import type { ChangeReason } from '../../types.js';
+import type { TpChangeEventOptions } from '../../events.js';
+import { createId } from '../../id.js';
+import type { DragDropManager } from '../manager.js';
+import { LitDragDropRenderer } from '../renderer.js';
+import { isSortable } from '../sortable.js';
+import { arrayMove, reportDragDropDiagnostic, type UniqueIdentifier } from '../sorting.js';
+import { validIdentifier } from '../registry.js';
+import type { DragEvent, DragEventName, OperationSnapshot } from '../types.js';
+
+import type { Droppable } from '../entities.js';
+
+// The one reorder engine. Every component that reorders items by dragging (Drag drop list, Tree
+// view and the widgets on them) registers containers with it, so the session, the projection of
+// the landing (target, side, displaced order or landing line), keyboard moves and the commit are
+// decided here, once, the same for all of them. A container supplies only its items, its look
+// (the stand-in, the line, the glides render through the shared helpers) and, for a tree, the
+// refinements of a landing (depth, into).
+
+/** Where `moveItem` puts an item: an index in this container, or in a connected one. */
+export interface ReorderDestination<T = unknown> {
+  container?: ReorderContainer<T>;
+  group?: UniqueIdentifier;
+  index: number;
+}
+/** The result of a move: accepted, changed nothing, or rejected. */
+export type ReorderOutcome = 'accepted' | 'no-op' | 'rejected';
+/** A pending commit's event and options, read by a host's value lane while it commits. */
+export interface ReorderCommit {
+  event: Event;
+  eventOptions: TpChangeEventOptions;
+}
+
+/** What a component that reorders gives the engine: its element, which renders the items. */
+export interface ReorderHost<T> extends HTMLElement {
+  readonly updateComplete: Promise<boolean>;
+  /** The container's group, unique among the containers of one manager. */
+  readonly reorderGroup: UniqueIdentifier;
+  /** An item's identity; the item itself or its `id` by default. */
+  readonly reorderItemId: ((item: T, index: number) => UniqueIdentifier) | undefined;
+  /** An item's label for announcements; its `label` or its identity by default. */
+  readonly reorderItemLabel: ((item: T, index: number) => string) | undefined;
+  readonly dropIndicator: 'displace' | 'line';
+  /** The axis the items follow. */
+  readonly reorderOrientation: 'vertical' | 'horizontal';
+  readonly disabled: boolean;
+  readonly readOnly: boolean;
+  /** The droppable of the container itself, which an empty container is dropped on. */
+  readonly containerTarget: Droppable | undefined;
+  /** The value a controlled owner wrote back during a commit. */
+  readonly controlledInput: readonly T[] | undefined;
+  pendingCommit: ReorderCommit | undefined;
+  requestUpdate(): void;
+  observeDragEvent(name: DragEventName, event: DragEvent): void;
+  createFeedbackPreview(id: UniqueIdentifier): HTMLElement;
+  renderAccessibilityPart(
+    part: 'instructions' | 'announcements',
+    element: HTMLElement,
+    text: string,
+  ): void;
+  /** The items the container shows while one of its own items is dragged; `committed` by default. */
+  reorderDragItems?(itemId: UniqueIdentifier, input: 'pointer' | 'keyboard'): readonly T[];
+  /** Whether a target item takes the dragged one as a child: its middle half lands into it. */
+  reorderHolds?(targetId: UniqueIdentifier, itemId: UniqueIdentifier): boolean;
+  /** Extra data of a landing (a tree's depth), decided again at each move of the drag. */
+  reorderRefine?(landing: ReorderLanding<T>): unknown;
+  /** Commits a landing itself instead of through the value lane; whether it was accepted. */
+  reorderCommit?(landing: ReorderLanding<T>, reason: ChangeReason, event: Event): boolean;
+}
+
+/** Where a drag would land in one container, as the engine projects it. */
+export interface ReorderLanding<T> {
+  readonly itemId: UniqueIdentifier;
+  /** The container's items in the order the drop would leave them. */
+  readonly order: readonly T[];
+  /** The item the drop lands into, when it is a child landing. */
+  readonly into: UniqueIdentifier | null;
+  /** How far the drag has moved from where it started. */
+  readonly offset: { readonly x: number; readonly y: number };
+  readonly input: 'pointer' | 'keyboard';
+  /** The container's refinement of this landing. */
+  readonly refinement: unknown;
+}
 
 export interface ItemRecord<T> {
   item: T;
@@ -59,8 +125,8 @@ export function itemParticipation(
   };
 }
 
-const networks = new WeakMap<DragDropManager, ListNetwork>();
-type AnyList = ListController<any>;
+const networks = new WeakMap<DragDropManager, ReorderEngine>();
+type AnyList = ReorderContainer<any>;
 interface Session {
   id: number;
   source: AnyList;
@@ -77,22 +143,64 @@ interface Session {
   anchor: { list: AnyList; slot: number } | null;
   /** Line mode, released: the landing order is rendering, so the items glide before it commits. */
   landing?: boolean;
+  /** The item the drop lands into (a child landing), in the anchor's or the source's container. */
+  into: { list: AnyList; id: UniqueIdentifier } | null;
+  /** The container's refinement of the current landing (a tree's depth). */
+  refinement: unknown;
   revision: number;
 }
 
-export class ListController<T> {
-  network: ListNetwork | undefined;
+/**
+ * The committed order a container reorders: a value lane, which the engine's transaction commits,
+ * or for a host that commits itself (`reorderCommit`) any source of the current order.
+ */
+export type ReorderState<T> = ControllableState<readonly T[]> | { readonly value: readonly T[] };
+
+/**
+ * The Sortable settings every reordering container starts its items from, so a list and a tree
+ * drag the same way: the drag feedback's ghost in the item's place (`clone`) unless the container
+ * asks for `move` or `none`, and under a landing line a target that follows the pointer.
+ */
+export function reorderItemDefaults(
+  host: Pick<ReorderHost<unknown>, 'dropIndicator'>,
+  options: {
+    feedback?: SortableInput['feedback'];
+    collisionDetector?: SortableInput['collisionDetector'];
+  } = {},
+): {
+  feedback: SortableInput['feedback'] | undefined;
+  collisionDetector: SortableInput['collisionDetector'] | undefined;
+} {
+  return {
+    feedback: (options.feedback ?? 'default') === 'default' ? 'clone' : options.feedback,
+    collisionDetector:
+      options.collisionDetector ?? (host.dropIndicator === 'line' ? pointerNearest : undefined),
+  };
+}
+
+export class ReorderContainer<T> {
+  network: ReorderEngine | undefined;
   version = 0;
   records: ItemRecord<T>[] = [];
   #lastValue: readonly T[] | undefined;
   #lastResolver: unknown;
   #duplicates: object[] = [];
   constructor(
-    readonly host: TpDragDropList<T>,
-    readonly state: ControllableState<readonly T[]>,
+    readonly host: ReorderHost<T>,
+    readonly state: ReorderState<T>,
   ) {}
+  /** The item this container's current landing goes into, else null. */
+  get into(): UniqueIdentifier | null {
+    const into = this.network?.session?.into;
+    return into?.list === this ? into.id : null;
+  }
+  /** The container's refinement of the current landing, while one of its items is dragged. */
+  get refinement(): unknown {
+    const session = this.network?.session;
+    return session?.source === this ? session.refinement : undefined;
+  }
   get group(): UniqueIdentifier {
-    return this.host.group;
+    return this.host.reorderGroup;
   }
   get committed(): readonly T[] {
     return this.state.value;
@@ -112,7 +220,7 @@ export class ListController<T> {
   connect(manager: DragDropManager): void {
     this.disconnect();
     let network = networks.get(manager);
-    if (!network) networks.set(manager, (network = new ListNetwork(manager)));
+    if (!network) networks.set(manager, (network = new ReorderEngine(manager)));
     network.add(this);
     this.network = network;
   }
@@ -124,11 +232,13 @@ export class ListController<T> {
     if (!Array.isArray(value)) throw new TypeError('Drag Drop List value must be an array.');
     const ids = new Set<UniqueIdentifier>();
     return value.map((item, index) => {
-      const id = this.host.getItemId ? this.host.getItemId(item, index) : defaultItemId(item);
+      const id = this.host.reorderItemId
+        ? this.host.reorderItemId(item, index)
+        : defaultItemId(item);
       if (!validIdentifier(id))
         throw new TypeError('getItemId must return a string or finite number.');
-      const label = this.host.getItemLabel
-        ? this.host.getItemLabel(item, index)
+      const label = this.host.reorderItemLabel
+        ? this.host.reorderItemLabel(item, index)
         : defaultItemLabel(item, id);
       if (typeof label !== 'string' || !label.trim())
         throw new TypeError('getItemLabel must return useful nonempty text.');
@@ -151,13 +261,13 @@ export class ListController<T> {
     });
   }
   sync(): void {
-    if (this.#lastValue !== this.committed || this.#lastResolver !== this.host.getItemId) {
+    if (this.#lastValue !== this.committed || this.#lastResolver !== this.host.reorderItemId) {
       if (!this.network?.committing) {
         this.version++;
         this.network?.invalidate(this);
       }
       this.#lastValue = this.committed;
-      this.#lastResolver = this.host.getItemId;
+      this.#lastResolver = this.host.reorderItemId;
     }
     try {
       this.records = this.resolve(this.preview);
@@ -170,7 +280,7 @@ export class ListController<T> {
       );
     }
   }
-  moveItem(id: UniqueIdentifier, destination: DragDropDestination<T>): MoveItemOutcome {
+  moveItem(id: UniqueIdentifier, destination: ReorderDestination<T>): ReorderOutcome {
     return this.network?.move(this, id, destination) ?? 'rejected';
   }
   cancel(): void {
@@ -181,7 +291,7 @@ export class ListController<T> {
   }
 }
 
-export class ListNetwork {
+export class ReorderEngine {
   readonly lists = new Map<UniqueIdentifier, AnyList>();
   readonly type = Symbol('Tweakpad connected lists');
   readonly renderer = new LitDragDropRenderer();
@@ -312,11 +422,21 @@ export class ListNetwork {
         preview: new Map(),
         pending: null,
         anchor: null,
+        into: null,
+        refinement: undefined,
         revision: 0,
       };
+      const itemId = event.operation.source!.id;
       for (const list of this.lists.values()) {
-        this.session.initial.set(list, list.committed);
-        this.session.preview.set(list, list.committed);
+        const items =
+          list === owner
+            ? (list.host.reorderDragItems?.(
+                itemId,
+                event.operation.input === 'keyboard' ? 'keyboard' : 'pointer',
+              ) ?? list.committed)
+            : list.committed;
+        this.session.initial.set(list, items);
+        this.session.preview.set(list, items);
         this.session.versions.set(list, list.version);
       }
     }
@@ -353,6 +473,15 @@ export class ListNetwork {
       }
       session.anchor = null;
       session.revision++;
+    }
+    // A container's refinement (a tree's depth) follows every move, pointer or keyboard, also
+    // while the target stays; the move event precedes the operation's own position.
+    if (name === 'dragmove' && this.session && this.session.source.host.reorderRefine) {
+      const session = this.session;
+      if (this.#refine(session, event.to)) {
+        session.revision++;
+        this.#changed();
+      }
     }
     if (name === 'settled') {
       this.session = undefined;
@@ -401,8 +530,15 @@ export class ListNetwork {
     const line =
       session.source.host.dropIndicator === 'line' &&
       this.manager.dragOperation.input === 'pointer';
+    // Over the dragged item's own place it lands there: no line, and no longer into another item.
     if (target.id === session.itemId && isSortable(target)) {
       if (line) this.#mark(session, null, null);
+      else if (session.into) {
+        session.into = null;
+        session.revision++;
+        this.#refine(session);
+        this.#changed();
+      }
       return;
     }
     const records = destination.resolve(session.preview.get(destination)!);
@@ -417,22 +553,36 @@ export class ListNetwork {
         ? this.manager.dragOperation.position.current
         : (this.manager.dragOperation.shape?.current.center ??
           this.manager.dragOperation.position.current);
-    const horizontal = destination.host.orientation === 'horizontal',
+    const horizontal = destination.host.reorderOrientation === 'horizontal',
       rtl =
         horizontal &&
         destination.host.ownerDocument.defaultView!.getComputedStyle(destination.host).direction ===
           'rtl';
     // The side of the target, by the shared landing rules.
     const bounds = shape?.boundingRectangle;
-    const after = bounds
+    // A target that takes the dragged item as a child lands it into itself over its middle half.
+    const holds =
+      !target.data.container &&
+      target.id !== session.itemId &&
+      !!destination.host.reorderHolds?.(target.id, session.itemId);
+    const side = bounds
       ? landingSide(
           horizontal
             ? { start: bounds.left, end: bounds.right }
             : { start: bounds.top, end: bounds.bottom },
           horizontal ? position.x : position.y,
-          { reversed: rtl },
-        ) === 'after'
-      : false;
+          { reversed: rtl, into: holds },
+        )
+      : 'before';
+    if (side === 'into') {
+      this.#landInto(session, destination, target.id);
+      return;
+    }
+    if (session.into) {
+      session.into = null;
+      session.revision++;
+    }
+    const after = side === 'after';
     if (line) {
       this.#projectLine(
         session,
@@ -469,7 +619,40 @@ export class ListNetwork {
       session.preview.set(destination, destinationArray);
     }
     session.revision++;
+    this.#refine(session);
     this.#changed();
+  }
+  /** A child landing: the order stays, and the target marks where the item goes. */
+  #landInto(session: Session, list: AnyList, id: UniqueIdentifier): void {
+    if (session.into?.list === list && session.into.id === id) return;
+    session.into = { list, id };
+    session.pending = null;
+    session.anchor = null;
+    session.revision++;
+    this.#refine(session);
+    this.#changed();
+  }
+  /** The source container's refinement of the landing, decided again; whether it changed. */
+  #refine(session: Session, to?: { x: number; y: number }): boolean {
+    const host = session.source.host;
+    if (!host.reorderRefine) return false;
+    const operation = this.manager.dragOperation;
+    const current = to ?? operation.position.current;
+    const order = (session.pending ?? session.preview).get(session.source) ?? [];
+    const refinement = host.reorderRefine({
+      itemId: session.itemId,
+      order,
+      into: session.into?.list === session.source ? session.into.id : null,
+      offset: {
+        x: current.x - operation.position.initial.x,
+        y: current.y - operation.position.initial.y,
+      },
+      input: operation.input === 'keyboard' ? 'keyboard' : 'pointer',
+      refinement: session.refinement,
+    });
+    const changed = JSON.stringify(refinement) !== JSON.stringify(session.refinement);
+    session.refinement = refinement;
+    return changed;
   }
   /**
    * Line mode: the shown order stays; the drop target and the pointer's side of it pick the
@@ -512,10 +695,15 @@ export class ListNetwork {
     this.#mark(session, pending, { list: destination, slot });
   }
   #mark(session: Session, pending: Session['pending'], anchor: Session['anchor']): void {
-    const same = session.anchor?.list === anchor?.list && session.anchor?.slot === anchor?.slot;
+    const same =
+      session.anchor?.list === anchor?.list &&
+      session.anchor?.slot === anchor?.slot &&
+      !session.into;
     session.pending = pending;
     session.anchor = anchor;
-    if (same) return;
+    session.into = null;
+    const refined = this.#refine(session);
+    if (same && !refined) return;
     session.revision++;
     this.#changed();
   }
@@ -527,6 +715,29 @@ export class ListNetwork {
     }
     if (!session || session.id !== snapshot.id) return true;
     if (!this.#valid(session)) return false;
+    // A container that commits itself takes the landing: its order, or the item it goes into.
+    const host = session.source.host;
+    if (host.reorderCommit) {
+      const order = (session.pending ?? session.preview).get(session.source) ?? [];
+      const into = session.into?.list === session.source ? session.into.id : null;
+      const accepted = host.reorderCommit(
+        {
+          itemId: session.itemId,
+          order,
+          into,
+          offset: { x: 0, y: 0 },
+          input: snapshot.input === 'keyboard' ? 'keyboard' : 'pointer',
+          refinement: session.refinement,
+        },
+        snapshot.input === 'keyboard' ? 'keyboard' : 'drag',
+        snapshot.activatorEvent ?? new Event('drag'),
+      );
+      if (accepted) {
+        this.session = undefined;
+        this.#changed();
+      }
+      return accepted;
+    }
     // Line mode drops where the line marks; the shown order never moved.
     const values = session.pending ?? session.preview;
     const location = this.#location(session, values),
@@ -555,11 +766,16 @@ export class ListNetwork {
     reason: ChangeReason,
     event: Event,
     operationId: number | string,
-  ): MoveItemOutcome {
+  ): ReorderOutcome {
     const changed = [...values].filter(
       ([list, value]) => !orderedValuesEqual(list.committed, value),
-    );
+    ) as [
+      ReorderContainer<unknown> & { state: ControllableState<readonly unknown[]> },
+      readonly unknown[],
+    ][];
     if (!changed.length) return 'no-op';
+    // A container that commits itself never joins a value transaction.
+    if (changed.some(([list]) => !(list.state instanceof ControllableState))) return 'rejected';
     const expected = new Map(
       changed.map(([list, value]) => [list, list.resolve(value).map((record) => record.id)]),
     );
@@ -617,10 +833,10 @@ export class ListNetwork {
     }
   }
   move<T>(
-    source: ListController<T>,
+    source: ReorderContainer<T>,
     id: UniqueIdentifier,
-    destination: DragDropDestination<T>,
-  ): MoveItemOutcome {
+    destination: ReorderDestination<T>,
+  ): ReorderOutcome {
     if (
       this.manager.dragOperation.status !== 'idle' ||
       source.host.disabled ||
@@ -628,7 +844,7 @@ export class ListNetwork {
     )
       return 'rejected';
     const target =
-      destination.list?.controller ??
+      destination.container ??
       (destination.group === undefined ? source : this.lists.get(destination.group));
     if (!target || target.network !== this || target.host.disabled || target.host.readOnly)
       return 'rejected';

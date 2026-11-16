@@ -25,7 +25,6 @@ import {
   applyMove,
   dragDepth,
   intoMove,
-  placeRow,
   projectDepth,
   resolveMove,
   validMove,
@@ -418,13 +417,6 @@ describe('projection', () => {
     expect(validMove(model, { ...move, toParentId: 'lib', toIndex: 0 })).toBe(false);
     expect(validMove(model, { ...move, itemId: 'src', toParentId: 'app' })).toBe(false);
     expect(validMove(model, { ...move, toParentId: null, toIndex: 2 })).toBe(false);
-  });
-
-  it('places a row before or after another', () => {
-    expect(placeRow(['a', 'b', 'c', 'd'], 'a', 'c', 'after')).toEqual(['b', 'c', 'a', 'd']);
-    expect(placeRow(['a', 'b', 'c', 'd'], 'd', 'b', 'before')).toEqual(['a', 'd', 'b', 'c']);
-    expect(placeRow(['a', 'b'], 'a', 'a', 'after')).toEqual(['a', 'b']);
-    expect(placeRow(['a', 'b'], 'a', 'x', 'after')).toEqual(['a', 'b']);
   });
 
   it('moves into a parent as its last child, expanded or collapsed', () => {

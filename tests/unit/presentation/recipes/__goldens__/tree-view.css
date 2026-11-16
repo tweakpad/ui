@@ -52,6 +52,5 @@
 /* tree-view-drop-indicator */
 &{--_tp-drop-line:var(--tp-tree-view-drop-indicator-size, calc(2 * var(--tp-border-width)));background:var(--tp-tree-view-drop-indicator-color, var(--tp-control-border));border-radius:var(--_tp-drop-line)}
 /* tree-view-drag-ghost */
-&{opacity:var(--tp-opacity-drag-ghost)}
 
 /* tp-tree-view structure */

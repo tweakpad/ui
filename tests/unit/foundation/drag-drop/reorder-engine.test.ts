@@ -6,10 +6,10 @@ import {
 import { DragDropManager } from '../../../../src/foundation/drag-drop/manager.js';
 import { Draggable, Droppable } from '../../../../src/foundation/drag-drop/entities.js';
 import {
-  ListController,
+  ReorderContainer,
   itemParticipation,
-} from '../../../../src/components/drag-drop-list/list-controller.js';
-import type { TpDragDropList } from '../../../../src/components/drag-drop-list/drag-drop-list.js';
+} from '../../../../src/foundation/drag-drop/reorder/engine.js';
+import type { ReorderHost } from '../../../../src/foundation/drag-drop/reorder/engine.js';
 
 function list(
   manager: DragDropManager,
@@ -18,12 +18,13 @@ function list(
   controlled = false,
 ) {
   const host = Object.assign(new EventTarget(), {
-    group,
+    reorderGroup: group,
+    reorderOrientation: 'vertical',
     disabled: false,
     readOnly: false,
     dropIndicator: 'displace',
-    getItemId: undefined,
-    getItemLabel: undefined,
+    reorderItemId: undefined,
+    reorderItemLabel: undefined,
     updateComplete: Promise.resolve(true),
     addController() {},
     removeController() {},
@@ -44,8 +45,8 @@ function list(
     onChange: (event) => host.onValueChange?.(event),
     onCommit: (value, previous, reason) => commits.push({ value, previous, reason }),
   });
-  const controller = new ListController(
-    host as unknown as TpDragDropList<{ id: string; label?: string }>,
+  const controller = new ReorderContainer(
+    host as unknown as ReorderHost<{ id: string; label?: string }>,
     state,
   );
   Object.assign(host, { controller });
@@ -74,7 +75,11 @@ function list(
       manager,
     ).register();
   return {
-    host: host as unknown as TpDragDropList<{ id: string; label?: string }>,
+    host: host as unknown as Omit<ReorderHost<{ id: string; label?: string }>, 'readOnly'> & {
+      value: readonly { id: string; label?: string }[];
+      readOnly: boolean;
+      onValueChange: ((event: Event) => void) | undefined;
+    },
     controller,
     state,
     commits,
@@ -92,7 +97,7 @@ describe('connected canonical list transactions', () => {
     const seen: unknown[] = [];
     a.host.addEventListener('tp-value-change', () => seen.push([a.host.value, b.host.value]));
     b.host.addEventListener('tp-value-change', () => seen.push([a.host.value, b.host.value]));
-    expect(a.controller.moveItem('a', { list: b.host, index: 0 })).toBe('accepted');
+    expect(a.controller.moveItem('a', { container: b.controller, index: 0 })).toBe('accepted');
     expect(seen).toEqual([
       [initial, []],
       [initial, []],
@@ -157,13 +162,13 @@ describe('connected canonical list transactions', () => {
     a.host.onValueChange = () => {
       throw new Error('Application veto by direct callback failure');
     };
-    expect(a.controller.moveItem('a', { list: b.host, index: 0 })).toBe('rejected');
+    expect(a.controller.moveItem('a', { container: b.controller, index: 0 })).toBe('rejected');
     expect(a.host.value).toEqual([{ id: 'a' }]);
     expect(b.host.value).toEqual([]);
     for (const index of [-1, 0.5, NaN, Infinity, 2])
-      expect(a.controller.moveItem('a', { list: b.host, index })).toBe('rejected');
+      expect(a.controller.moveItem('a', { container: b.controller, index })).toBe('rejected');
     b.host.readOnly = true;
-    expect(a.controller.moveItem('a', { list: b.host, index: 0 })).toBe('rejected');
+    expect(a.controller.moveItem('a', { container: b.controller, index: 0 })).toBe('rejected');
     m.destroy();
   });
   it('keeps no-op references and moves within a list', () => {

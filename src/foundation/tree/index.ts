@@ -39,7 +39,6 @@ export {
   applyMove,
   dragDepth,
   intoMove,
-  placeRow,
   projectDepth,
   resolveMove,
   validMove,

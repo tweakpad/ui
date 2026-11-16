@@ -122,20 +122,6 @@ export function resolveMove(
   };
 }
 
-/** The order with `sourceId` moved directly before or after `targetId`. */
-export function placeRow(
-  rows: readonly string[],
-  sourceId: string,
-  targetId: string,
-  side: 'before' | 'after',
-): string[] {
-  const order = rows.filter((id) => id !== sourceId);
-  const index = order.indexOf(targetId);
-  if (index < 0 || sourceId === targetId) return [...rows];
-  order.splice(side === 'before' ? index : index + 1, 0, sourceId);
-  return order;
-}
-
 /** The move that puts an item after the last child of a parent, expanded or not. */
 export function intoMove(
   model: TreeModel<unknown>,

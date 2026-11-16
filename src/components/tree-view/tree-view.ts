@@ -1,10 +1,16 @@
 import { Scrollable } from '../../foundation/scrollable.js';
 import { NativeScrollEdges } from '../shared/scroll-edges.js';
-import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { css, html, nothing, render, type PropertyValues, type TemplateResult } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { Droppable } from '../../foundation/drag-drop/entities.js';
-import type { DragEvent as DropEvent } from '../../foundation/drag-drop/types.js';
+import type { DragEvent as DropEvent, DragEventName } from '../../foundation/drag-drop/types.js';
+import type { UniqueIdentifier } from '../../foundation/drag-drop/sorting.js';
+import type {
+  ReorderCommit,
+  ReorderHost,
+  ReorderLanding,
+} from '../../foundation/drag-drop/reorder/engine.js';
 import { TpElement } from '../../foundation/element.js';
 import { TpFormElement } from '../../foundation/form-element.js';
 import { ControllableState, orderedValuesEqual } from '../../foundation/controllable-state.js';
@@ -220,10 +226,8 @@ export class TpTreeView<T = TreeViewItem>
         pointer-events: none;
       }
 
+      /* The ghost row the drag feedback places in a dragged row's place, in the flow. */
       .drag-ghost {
-        position: absolute;
-        inset-inline: 0;
-        inset-block-start: 0;
         pointer-events: none;
       }
 
@@ -412,7 +416,7 @@ export class TpTreeView<T = TreeViewItem>
     enabled: () => this.#records && this.virtualized,
   });
   readonly #reorder: TreeReorder = new TreeReorder({
-    host: this,
+    host: this as unknown as ReorderHost<string>,
     enabled: () => this.reorderable && this.#records,
     blocked: () => this.effectiveDisabled || this.readOnly,
     model: () => this.#model,
@@ -420,7 +424,6 @@ export class TpTreeView<T = TreeViewItem>
     element: (id) => this.#element(id),
     list: () => this.renderRoot?.querySelector<HTMLElement>('.list') ?? null,
     activation: () => (this.dragActivation === 'item' ? 'item' : 'handle'),
-    indicator: () => (this.dropIndicator === 'line' ? 'line' : 'displace'),
     nestable: () => this.canDrop !== null,
     nests: (parentId, itemId) => {
       const move = intoMove(this.#model, itemId, parentId);
@@ -435,8 +438,52 @@ export class TpTreeView<T = TreeViewItem>
     announce: (message) => this.#announce(message),
     accepts: (move) => this.#acceptsMove(move),
     commit: (move, reason, event) => this.#commitMove(move, reason, event),
-    focus: (id) => this.focusItem(id),
   });
+
+  // ── The tree as a container of the shared reorder engine ───────────────────
+
+  /** @internal The tree's group on its reorder engine. */
+  readonly reorderGroup = createId('tree-reorder');
+  /** @internal Rows are their own identity. */
+  readonly reorderItemId = undefined;
+  /** @internal A row's label for the engine. */
+  readonly reorderItemLabel = (item: string): string => this.#model.get(item)?.label ?? item;
+  /** @internal The rows follow the block axis. */
+  get reorderOrientation(): 'vertical' {
+    return 'vertical';
+  }
+  /** @internal A tree has no drop target of its own: rows are. */
+  readonly containerTarget = undefined;
+  /** @internal The tree commits its moves itself. */
+  readonly controlledInput = undefined;
+  /** @internal */
+  pendingCommit: ReorderCommit | undefined;
+  /** @internal The drag's announcements, in the tree's words. */
+  observeDragEvent(name: DragEventName, event: DropEvent): void {
+    this.#reorder.observe(name, event);
+  }
+  /** @internal The ghost row the drag feedback places in the dragged row's place. */
+  createFeedbackPreview(id: UniqueIdentifier): HTMLElement {
+    return this.#createGhost(String(id)) ?? this.ownerDocument.createElement('div');
+  }
+  /** @internal The tree announces through its own live region. */
+  renderAccessibilityPart(): void {}
+  /** @internal */
+  reorderDragItems(itemId: UniqueIdentifier, input: 'pointer' | 'keyboard'): readonly string[] {
+    return this.#reorder.dragItems(itemId, input);
+  }
+  /** @internal */
+  reorderHolds(targetId: UniqueIdentifier, itemId: UniqueIdentifier): boolean {
+    return this.#reorder.holds(targetId, itemId);
+  }
+  /** @internal */
+  reorderRefine(landing: ReorderLanding<string>): unknown {
+    return this.#reorder.refine(landing);
+  }
+  /** @internal */
+  reorderCommit(landing: ReorderLanding<string>, reason: ChangeReason, event: Event): boolean {
+    return this.#reorder.commit(landing, reason, event);
+  }
   #keysFromReorder = false;
   #formKey: unknown[] | null = null;
 
@@ -808,7 +855,10 @@ export class TpTreeView<T = TreeViewItem>
     }
     this.#syncForm();
     this.#reorder.sync();
-    this.#reorder.animate();
+    this.#renderGhost();
+    this.#reorder.animate(
+      this.renderRoot.querySelector<HTMLElement>(".list > [part~='drop-indicator']"),
+    );
   }
 
   protected override associationTarget(): HTMLElement | null {
@@ -843,7 +893,7 @@ export class TpTreeView<T = TreeViewItem>
         ${
           this.#records
             ? html`<div class="list" role="none">
-                ${this.#renderRecords()}${this.#renderGhost()}${this.#renderLine()}
+                ${this.#renderRecords()}${this.#renderLine()}
               </div>`
             : html`<slot @slotchange=${this.#scheduleRebuild}></slot>`
         }
@@ -860,28 +910,40 @@ export class TpTreeView<T = TreeViewItem>
     </div>`;
   }
 
-  /** The insertion line of a line-marked drag. */
+  /** The landing line of a line-marked drag; the shared reorder drawing places it. */
   #renderLine(): unknown {
-    const line = this.#reorder.line;
-    return line
-      ? html`<div
-          part="drop-indicator"
-          aria-hidden="true"
-          style=${`inset-block-start:${line.top}px;inset-inline-start:${line.inset}px`}
-        ></div>`
+    return this.#reorder.lineShown
+      ? html`<div part="drop-indicator" aria-hidden="true"></div>`
       : nothing;
   }
 
   /**
-   * While a pointer drags a row, a dimmed, inert copy of it holds the row's place in the list: the
-   * gap the rows make, or with a landing line the place it left. The reorder places it.
+   * The ghost row the shared drag feedback shows in a dragged row's place: an inert copy of the
+   * row, rendered again with each update so it follows the projected depth.
    */
-  #renderGhost(): unknown {
-    const id = this.#reorder.ghostId;
-    if (id === null || !this.#model.get(id)) return nothing;
-    return html`<div class="drag-ghost" part="drag-ghost" aria-hidden="true" inert>
-      ${this.#renderRow(id, false, true)}
-    </div>`;
+  #ghost: { id: string; host: HTMLElement; placed: boolean } | null = null;
+  #createGhost(id: string): HTMLElement | undefined {
+    if (!this.#model.get(id)) return undefined;
+    const host = this.ownerDocument.createElement('div');
+    host.className = 'drag-ghost';
+    host.setAttribute('part', 'drag-ghost');
+    this.#ghost = { id, host, placed: false };
+    render(this.#renderRow(id, false, true), host, { host: this });
+    return host;
+  }
+
+  /** Renders the ghost row again while the drag feedback shows it; drops it once it is removed. */
+  #renderGhost(): void {
+    const ghost = this.#ghost;
+    if (!ghost) return;
+    if (ghost.host.isConnected) ghost.placed = true;
+    else if (ghost.placed || !this.#model.get(ghost.id)) {
+      render(nothing, ghost.host, { host: this });
+      this.#ghost = null;
+      return;
+    }
+    if (this.#model.get(ghost.id))
+      render(this.#renderRow(ghost.id, false, true), ghost.host, { host: this });
   }
 
   /** A start handle's extent from the row's edge, which every depth keeps before its indentation. */
@@ -1531,8 +1593,6 @@ export class TpTreeView<T = TreeViewItem>
     });
     if (!action) {
       if (isTypeaheadKey(event)) this.#typeaheadKey(event, id);
-      else if (this.#reorder.enabled && this.#reorder.keyboardStart(event, id))
-        event.preventDefault();
       return;
     }
     event.preventDefault();

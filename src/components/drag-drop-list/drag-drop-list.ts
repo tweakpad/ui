@@ -12,8 +12,11 @@ import {
   mergeConfiguration,
   validateConfiguration,
 } from '../../foundation/drag-drop/configuration.js';
-import { pointerNearest } from '../../foundation/drag-drop/collision.js';
-import { landingLine } from '../../foundation/drag-drop/landing.js';
+import {
+  ReorderGlides,
+  placeReorderLine,
+  type ReorderView,
+} from '../../foundation/drag-drop/reorder/render.js';
 import { DragDropManager } from '../../foundation/drag-drop/manager.js';
 import { Droppable, type Draggable } from '../../foundation/drag-drop/entities.js';
 import { Sortable, type SortableInput } from '../../foundation/drag-drop/sortable.js';
@@ -24,14 +27,6 @@ import {
   type UniqueIdentifier,
 } from '../../foundation/drag-drop/sorting.js';
 import { validIdentifier } from '../../foundation/drag-drop/registry.js';
-import {
-  measureElement,
-  cancelGeometryTransitions,
-  parseTransform,
-} from '../../foundation/drag-drop/dom-geometry.js';
-import { dragMotion, dragMotionContext } from '../../foundation/drag-drop/motion.js';
-import type { Rectangle } from '../../foundation/drag-drop/geometry.js';
-import type { MotionHandle } from '../../foundation/motion.js';
 import type {
   ManagerOptions,
   DraggableInput,
@@ -41,7 +36,12 @@ import type {
   SortTransition,
 } from '../../foundation/drag-drop/types.js';
 import { gripVerticalIcon } from '../../icons/grip-vertical.js';
-import { ListController, itemParticipation, type ItemRecord } from './list-controller.js';
+import {
+  ReorderContainer,
+  itemParticipation,
+  reorderItemDefaults,
+  type ItemRecord,
+} from '../../foundation/drag-drop/reorder/engine.js';
 import { dragDropListStyles } from './styles.js';
 import type {
   DragDropDestination,
@@ -249,7 +249,23 @@ export class TpDragDropList<T = unknown> extends TpElement {
     diagnostic: (message) => reportDragDropDiagnostic('value', message),
   });
   /** @internal The list's binding to its drag manager, shared with connected lists. */
-  readonly controller = new ListController(this, this.#state);
+  readonly controller = new ReorderContainer(this, this.#state);
+  /** @internal The list's group, as the reorder engine reads it. */
+  get reorderGroup(): UniqueIdentifier {
+    return this.group;
+  }
+  /** @internal The item identity the reorder engine reads. */
+  get reorderItemId(): ((item: T, index: number) => UniqueIdentifier) | undefined {
+    return this.getItemId;
+  }
+  /** @internal The axis the reorder engine reads. */
+  get reorderOrientation(): 'vertical' | 'horizontal' {
+    return this.orientation === 'horizontal' ? 'horizontal' : 'vertical';
+  }
+  /** @internal The item label the reorder engine reads. */
+  get reorderItemLabel(): ((item: T, index: number) => string) | undefined {
+    return this.getItemLabel;
+  }
   #ownedManager: DragDropManager | undefined;
   #connectedManager: DragDropManager | undefined;
   #connectedGroup: UniqueIdentifier | undefined;
@@ -262,11 +278,8 @@ export class TpDragDropList<T = unknown> extends TpElement {
   /** @internal The drop target that accepts items over the empty space of the list. */
   containerTarget: Droppable | undefined;
   #containerId = createId('drag-list-target');
-  #oldRects = new Map<
-    UniqueIdentifier,
-    { rect: Rectangle; index: number | undefined; group: UniqueIdentifier | undefined }
-  >();
-  #motions = new Map<UniqueIdentifier, MotionHandle>();
+  /** The glides of the items that make room, drawn as every reordering container draws them. */
+  readonly #glides = new ReorderGlides();
   #overlay: HTMLElement | undefined;
   #overlayRelease: (() => void) | undefined;
   #itemSensors = new Map<
@@ -327,7 +340,11 @@ export class TpDragDropList<T = unknown> extends TpElement {
   }
   /** Moves an item to an index in this list or a connected one, through the same proposal as a drop; returns `accepted`, `no-op` or `rejected`. */
   moveItem(id: UniqueIdentifier, destination: DragDropDestination<T>): MoveItemOutcome {
-    return this.controller.moveItem(id, destination);
+    return this.controller.moveItem(id, {
+      ...(destination.list ? { container: destination.list.controller } : {}),
+      ...(destination.group !== undefined ? { group: destination.group } : {}),
+      index: destination.index,
+    });
   }
   /** Cancels a drag involving this list and restores the committed order. */
   cancelDrag(): void {
@@ -347,8 +364,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
     this.#ownedManager = undefined;
     this.#connectedManager = undefined;
     this.#clearOverlay();
-    for (const motion of this.#motions.values()) motion.cancel();
-    this.#motions.clear();
+    this.#glides.cancel();
     super.disconnectedCallback();
   }
   #connect(): void {
@@ -393,11 +409,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
         this.#connectedManager?.fail(error);
       }
     }
-    for (const [id, element] of this.#items) {
-      const rect = measureElement(element),
-        sortable = this.#sortables.get(id);
-      if (rect) this.#oldRects.set(id, { rect, index: sortable?.index, group: sortable?.group });
-    }
+    this.#glides.capture(this.#view, this.#items.keys());
   }
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
@@ -412,54 +424,21 @@ export class TpDragDropList<T = unknown> extends TpElement {
     this.#animateSort();
     this.#placeLine();
   }
-  /**
-   * Places the line at the boundary the drop would land at: halfway across the gap between the
-   * two items around it, along the items' cross extent. The dragged item, lifted out of the
-   * flow, is stood in for by its placeholder.
-   */
-  #placeLine(): void {
-    const slot = this.controller.anchor,
-      list = this.#list,
-      line = this.renderRoot.querySelector<HTMLElement>("[part~='drop-indicator']");
-    if (slot === null || !list || !line) return;
-    const placeholder = list.querySelector<HTMLElement>(":scope > [part~='placeholder']");
-    const box = (index: number): DOMRect | null => {
-      const record = this.controller.records[index];
-      let element = record && this.#items.get(record.id);
-      if (element?.matches(':popover-open') || this.#sortables.get(record?.id ?? '')?.isDragSource)
-        element = placeholder ?? undefined;
-      return element?.isConnected ? element.getBoundingClientRect() : null;
+  /** What the shared reorder drawing reads of this list. */
+  get #view(): ReorderView {
+    return {
+      container: this.controller as ReorderContainer<unknown>,
+      frame: this.#list ?? this,
+      element: (id) => this.#items.get(id),
+      sortable: (id) => this.#sortables.get(id),
+      placeholder: this.#list?.querySelector<HTMLElement>(":scope > [part~='placeholder']"),
+      orientation: this.orientation,
     };
-    let previous: DOMRect | null = null,
-      next: DOMRect | null = null;
-    for (let index = slot - 1; index >= 0 && !previous; index--) previous = box(index);
-    for (let index = slot; index < this.controller.records.length && !next; index++)
-      next = box(index);
-    const near = previous ?? next;
-    if (!near) return;
-    const style = getComputedStyle(list),
-      frame = list.getBoundingClientRect();
-    if (this.orientation === 'horizontal') {
-      const rtl = style.direction === 'rtl',
-        gap = parseFloat(style.columnGap) || 0;
-      // Along the row's order: right to left, the axis runs against the coordinates.
-      const along = (rect: DOMRect | null) =>
-        rect &&
-        (rtl ? { start: rect.right, end: rect.left } : { start: rect.left, end: rect.right });
-      const x = landingLine(along(previous), along(next), gap, rtl ? -1 : 1)!;
-      line.style.left = `${x - frame.left}px`;
-      line.style.top = `${near.top - frame.top}px`;
-      line.style.height = `${near.height}px`;
-      line.style.width = '';
-    } else {
-      const gap = parseFloat(style.rowGap) || 0;
-      const along = (rect: DOMRect | null) => rect && { start: rect.top, end: rect.bottom };
-      const y = landingLine(along(previous), along(next), gap)!;
-      line.style.top = `${y - frame.top}px`;
-      line.style.left = `${near.left - frame.left}px`;
-      line.style.width = `${near.width}px`;
-      line.style.height = '';
-    }
+  }
+  /** Places the landing line at the engine's anchor, as every reordering container does. */
+  #placeLine(): void {
+    const line = this.renderRoot.querySelector<HTMLElement>("[part~='drop-indicator']");
+    if (line && this.#list) placeReorderLine(this.#view, line);
   }
   #participation(record: ItemRecord<T>, options?: Partial<SortableInput>) {
     return itemParticipation((options ?? this.#itemOptions.get(record.id))?.disabled, {
@@ -524,12 +503,15 @@ export class TpDragDropList<T = unknown> extends TpElement {
       'announcements',
     ] as const)
       configuration[key] = this[key];
-    // The dragged row's place shows the shared drag ghost rather than an empty gap: where it would
-    // land as the rows make room, or, with a landing line, the place it left.
-    if ((this.feedback ?? 'default') === 'default') configuration.feedback = 'clone';
-    // A landing line follows the pointer: the row under it, or the nearest one across a gap.
-    if (this.collisionDetector === undefined && this.dropIndicator === 'line')
-      configuration.collisionDetector = pointerNearest;
+    // The settings every reordering container starts from (the drag ghost, a line that follows
+    // the pointer), from the reorder engine.
+    Object.assign(
+      configuration,
+      reorderItemDefaults(this, {
+        feedback: this.feedback,
+        collisionDetector: this.collisionDetector,
+      }),
+    );
     // Retain source feedback outside keyed list ranges during a cross-root remount.
     configuration.rootElement =
       this.rootElement ?? this.#connectedManager?.options.rootElement ?? this.ownerDocument.body;
@@ -708,52 +690,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
     });
   }
   #animateSort(): void {
-    for (const [id, element] of this.#items) {
-      const sortable = this.#sortables.get(id),
-        transition = sortable?.transition,
-        previous = this.#oldRects.get(id),
-        old = previous?.rect;
-      cancelGeometryTransitions(element);
-      const next = measureElement(element);
-      if (
-        !old ||
-        !next ||
-        !transition ||
-        sortable?.isDragSource ||
-        (!this.controller.network?.session && !transition.idle)
-      )
-        continue;
-      const x = old.left - next.left,
-        y = old.top - next.top;
-      if (!x && !y) continue;
-      this.#motions.get(id)?.cancel();
-      const base = parseTransform({
-        translate: element.ownerDocument.defaultView!.getComputedStyle(element).translate,
-      });
-      const bx = base?.x ?? 0,
-        by = base?.y ?? 0;
-      this.#motions.set(
-        id,
-        dragMotion(
-          element,
-          element,
-          'sort-displacement',
-          [{ translate: `${bx + x}px ${by + y}px` }, { translate: `${bx}px ${by}px` }],
-          transition,
-          dragMotionContext(
-            id,
-            {
-              sourceGroup: previous?.group,
-              targetGroup: sortable?.group,
-              fromIndex: previous?.index,
-              toIndex: sortable?.index,
-            },
-            { x, y },
-          ),
-        ),
-      );
-    }
-    this.#oldRects.clear();
+    this.#glides.play(this.#view, this.#items.keys());
   }
   #ref(id: UniqueIdentifier, handle: boolean): (element: HTMLElement | null) => void {
     const refs = handle ? this.#handleRefs : this.#itemRefs,
