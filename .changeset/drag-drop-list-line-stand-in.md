@@ -1,5 +1,5 @@
 ---
-'@tweakpad/ui': minor
+'@tweakpad/ui': patch
 ---
 
 One drag look for every component that drags: a dimmed ghost holds a dragged item's place (where it would land as items make room, or the place it left under a landing line, or the source itself while a custom overlay follows the pointer) and the copy under the pointer is slightly translucent. The drag feedback applies it from two new theme tokens, `--tp-opacity-drag-ghost` and `--tp-opacity-drag-copy`. Drag drop list's `default` feedback now shows the ghost (as `clone` does), including with `renderOverlay` and in a connected list the item is dragged into (`data-drag-ghost`); Tree view (and Layers) show a ghost row through the new `drag-ghost` part, and its render context's `ghost` flag tells `renderItem` it is drawing that copy; Data view rows and the File explorer's dragged rows follow the same look.
