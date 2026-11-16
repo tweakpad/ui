@@ -1,5 +1,15 @@
 # @tweakpad/ui
 
+## 0.5.1
+
+### Patch Changes
+
+- 05444bf: One drag look for every component that drags: a dimmed ghost holds a dragged item's place (where it would land as items make room, or the place it left under a landing line, or the source itself while a custom overlay follows the pointer) and the copy under the pointer is slightly translucent. The drag feedback applies it from two new theme tokens, `--tp-opacity-drag-ghost` and `--tp-opacity-drag-copy`. Drag drop list's `default` feedback now shows the ghost (as `clone` does), including with `renderOverlay` and in a connected list the item is dragged into (`data-drag-ghost`); Tree view (and Layers) show a ghost row through the new `drag-ghost` part, and its render context's `ghost` flag tells `renderItem` it is drawing that copy; Data view rows and the File explorer's dragged rows follow the same look.
+
+  Dragging no longer selects text: a press on a draggable item blocks text selection from the press on, not only once the drag starts, and in the shadow root where the selection would start; fields keep their own selection. A drop held for a decision (`event.suspend()` in `dragend`) shows only the ghost where the item would land until it is resumed or aborted. With `drop-indicator="line"`, Drag drop list places the landing line from the pointer, not from the dragged row's shape: the row under the pointer, or the nearest one across a gap (the new `pointerNearest` collision detector), and the side of it the pointer is on. Drag drop list and Tree view (and so Layers) decide where a dragged item lands by one set of rules: the item under the pointer or the nearest across a gap, the side of it the pointer is on (or inside a row that takes children), and the line halfway across the gap.
+
+- 05444bf: Layers: an empty stack shows a "No layers" Empty state in a dashed frame (`messages.empty`) when the `empty` slot is unfilled, and the app's own `empty` content gets the same frame. Documentation previews run their script only for the mount still on the page, so a preview mounted twice no longer wires its controls twice (a demo's Remove removed a layer and then its group).
+
 ## 0.5.0
 
 ### Minor Changes
