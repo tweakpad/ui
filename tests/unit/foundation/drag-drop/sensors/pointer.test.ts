@@ -2,6 +2,8 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { DragDropManager } from '../../../../../src/foundation/drag-drop/manager.js';
 import { Draggable } from '../../../../../src/foundation/drag-drop/entities.js';
 import { PointerSensor } from '../../../../../src/foundation/drag-drop/sensors/pointer.js';
+import type { PointerSensorOptions } from '../../../../../src/foundation/drag-drop/sensors/pointer.js';
+import { DistanceConstraint } from '../../../../../src/foundation/drag-drop/sensors/activation.js';
 
 /** An inline style declaration that records its properties. */
 function inlineStyle() {
@@ -20,7 +22,7 @@ function inlineStyle() {
 }
 
 /** A window, document, root element and drag handle, enough for a pointer gesture. */
-function realm() {
+function realm(options?: PointerSensorOptions) {
   const view = Object.assign(new EventTarget(), {
     frameElement: null,
     parent: null,
@@ -102,9 +104,9 @@ function realm() {
   });
   const source = new Draggable({ id: 'row', element: handle, handle, register: false }, manager);
   source.register();
-  const sensor = new PointerSensor(manager);
+  const sensor = new PointerSensor(manager, options);
   const release = sensor.bind(source);
-  const press = (pointerType: string) =>
+  const press = (pointerType: string, path?: readonly EventTarget[]) =>
     handle.dispatchEvent(
       Object.assign(new Event('pointerdown', { cancelable: true }), {
         isPrimary: true,
@@ -113,15 +115,18 @@ function realm() {
         pointerType,
         clientX: 10,
         clientY: 10,
+        ...(path ? { composedPath: () => [handle, ...path] } : {}),
       }),
     );
   const up = () =>
     document.dispatchEvent(
       Object.assign(new Event('pointerup', { cancelable: true }), { pointerId: 1 }),
     );
-  const selectStart = () => {
+  /** A selection starting at `on` (the document by default), from `target`; whether it was stopped. */
+  const selectStart = (on: EventTarget = document, target?: unknown) => {
     const event = new Event('selectstart', { cancelable: true });
-    document.dispatchEvent(event);
+    if (target) Object.assign(event, { composedPath: () => [target, on] });
+    on.dispatchEvent(event);
     return event.defaultPrevented;
   };
   const dispose = () => {
@@ -130,7 +135,7 @@ function realm() {
     manager.destroy();
   };
   const cursor = () => children[0]?.style.values.get('cursor');
-  return { root, children, cursor, manager, press, up, selectStart, dispose };
+  return { root, children, cursor, manager, document, press, up, selectStart, dispose };
 }
 
 afterEach(() => {
@@ -184,5 +189,25 @@ it('a drag that ends before the next frame writes nothing', () => {
   vi.advanceTimersByTime(40);
   expect(root.style.values.size).toBe(0);
   expect(children).toHaveLength(0);
+  dispose();
+});
+
+it('a press waiting to become a drag already blocks text selection, in every shadow root on its path, but not in fields', () => {
+  const shadow = Object.assign(new EventTarget(), { nodeType: 11, host: {} });
+  const { manager, press, up, selectStart, dispose } = realm({
+    activationConstraints: [new DistanceConstraint({ value: 6 })],
+  });
+  press('mouse', [shadow]);
+  // Not a drag yet: the browser would start a selection on the first moves.
+  expect(manager.dragOperation.status).toBe('idle');
+  expect(selectStart()).toBe(true);
+  // `selectstart` is not composed: one that starts inside a shadow root never reaches the document.
+  expect(selectStart(shadow)).toBe(true);
+  // A press in a field selects its text.
+  const field = { nodeType: 1, matches: (selector: string) => selector.startsWith('input') };
+  expect(selectStart(shadow, field)).toBe(false);
+  up();
+  // Once the press is over, selection is free again.
+  expect(selectStart()).toBe(false);
   dispose();
 });

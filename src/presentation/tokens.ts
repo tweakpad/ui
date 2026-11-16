@@ -148,7 +148,7 @@ export const TOKEN_FAMILIES = {
     'radius-full',
   ],
   shadow: ['shadow-none', 'shadow-sm', 'shadow-md', 'shadow-lg'],
-  opacity: ['opacity-disabled', 'opacity-backdrop'],
+  opacity: ['opacity-disabled', 'opacity-backdrop', 'opacity-drag-ghost', 'opacity-drag-copy'],
   /** Motion timing; `motion-scale` and `motion-play-state` are policy channels, not roles. */
   motion: [
     'duration-fast',

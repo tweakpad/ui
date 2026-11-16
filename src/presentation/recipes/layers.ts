@@ -37,10 +37,14 @@ export const layersAppearance: PresentationDictionary = {
       },
     },
   ],
+  // The empty stack is a placeholder framed by a dashed line, as File upload's dropzone is, holding
+  // an Empty state (the default "No layers" or the app's own).
   'layers-empty': [
     {
       declarations: {
-        padding: 'var(--tp-space-4) var(--tp-space-2)',
+        'margin-block': 'var(--tp-space-2)',
+        border: `var(--tp-border-width) dashed ${divider.color}`,
+        'border-radius': 'var(--tp-radius-lg)',
         color: 'var(--tp-muted-foreground)',
         'text-align': 'center',
       },

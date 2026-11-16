@@ -7,6 +7,7 @@ import {
   directionBiased,
   pointerDistance,
   pointerIntersection,
+  pointerNearest,
   shapeIntersection,
   sameCollisionSequence,
   sortCollisions,
@@ -89,5 +90,21 @@ describe('collision source formulas and typed ordering, V-34–V-37', () => {
       collision(1, 2, 0, -1),
     ])
       expect(validCollision(bad, 1)).toBe(false);
+  });
+});
+
+describe('pointerNearest', () => {
+  it('follows the pointer, not the dragged shape: the droppable under it, else the nearest center', () => {
+    const i = input();
+    // The dragged shape overlaps this droppable, but the pointer is outside it.
+    i.dragOperation.shape = { current: new Rectangle(5, 0, 10, 10) };
+    i.dragOperation.position.current = { x: 30, y: 5 };
+    expect(shapeIntersection(i)).not.toBeNull();
+    expect(pointerIntersection(i)).toBeNull();
+    expect(pointerNearest(i)).toEqual(pointerDistance(i));
+    expect(pointerNearest(i)?.priority).toBe(CollisionPriority.Normal);
+    // Under the pointer, the droppable takes the pointer's high priority.
+    i.dragOperation.position.current = { x: 10, y: 5 };
+    expect(pointerNearest(i)).toEqual(pointerIntersection(i));
   });
 });

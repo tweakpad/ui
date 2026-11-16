@@ -206,8 +206,13 @@ export function mountPreview(
   };
   host.addEventListener('click', follow, true);
   let url: string | undefined;
+  let disposed = false;
   const ran = preview.script
     ? (async () => {
+        // A rendering can mount a preview and replace it at once with a second mount; the script
+        // finds its elements by id, so only the mount still on the page after a frame runs it.
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        if (disposed || !host.isConnected) return;
         const runnable = rewritePreviewImports(preview.script!.trim());
         url = URL.createObjectURL(new Blob([runnable], { type: 'text/javascript' }));
         await import(/* @vite-ignore */ url);
@@ -216,6 +221,7 @@ export function mountPreview(
   return {
     ran,
     dispose() {
+      disposed = true;
       host.removeEventListener('submit', submit);
       host.removeEventListener('click', follow, true);
       host.replaceChildren();

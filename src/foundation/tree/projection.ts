@@ -122,20 +122,6 @@ export function resolveMove(
   };
 }
 
-/** Where a dragged row lands relative to the row under the pointer. */
-export type TreeDropZone = 'before' | 'into' | 'after';
-
-/**
- * The zone of a row under a block coordinate: a row that can take the dragged row as a child
- * splits into before, into and after over its top quarter, middle half and bottom quarter; any
- * other row into before and after over its halves.
- */
-export function dropZone(top: number, height: number, y: number, holds: boolean): TreeDropZone {
-  const at = height > 0 ? (y - top) / height : 0.5;
-  if (!holds) return at < 0.5 ? 'before' : 'after';
-  return at < 0.25 ? 'before' : at >= 0.75 ? 'after' : 'into';
-}
-
 /** The order with `sourceId` moved directly before or after `targetId`. */
 export function placeRow(
   rows: readonly string[],

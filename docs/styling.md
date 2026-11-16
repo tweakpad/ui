@@ -27,7 +27,7 @@ Spacing is the exception: the `space-*` roles, control heights and icon sizes de
 - Typography: `font-*`, `text-*`, `leading-*`, and `tracking-*`. Each `text-*` size is its rem size times `type-scale`, the type seed of the [density](#density) mode, with `type-scale-compact` for the compact mode.
 - Extents: `control-height-xs|sm|md|lg`, `icon-size-xs|sm|md|lg`, and `target-size-min`.
 - Lines and shape: `border-width`, `border-width-strong`, `border-style`, `ring-width`, `ring-offset`, and `radius-*`.
-- Elevation and opacity: `shadow-*`, `opacity-disabled`, and `opacity-backdrop`.
+- Elevation and opacity: `shadow-*`, `opacity-disabled`, `opacity-backdrop`, `opacity-drag-ghost`, and `opacity-drag-copy`.
 - Motion: `duration-fast`, `duration-normal` and `duration-slow`, plus `easing-standard`, `easing-enter` and `easing-exit`. See [Motion](motion.md).
 
 Every CSS custom property uses the `--tp-` prefix. For example, the `primary` role is exposed as `--tp-primary`.

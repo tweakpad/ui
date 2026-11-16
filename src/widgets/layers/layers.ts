@@ -25,6 +25,7 @@ import type {
   TreeViewSize,
 } from '../../components/tree-view/types.js';
 import { TpButton } from '../../components/button/button.js';
+import { TpEmptyState } from '../../components/empty-state/empty-state.js';
 import { TpInput } from '../../components/input/input.js';
 import { TpIcon } from '../../components/icon/icon.js';
 import {
@@ -105,7 +106,7 @@ export type LayersChangeDetail<D = unknown> = TpValueChangeEvent<readonly Layer<
  * @slot header-end - Controls at the end of the bar above the list, such as a lock toggle.
  * @slot footer - Controls at the start of the bar below the list, such as an add menu.
  * @slot footer-end - Controls at the end of the bar below the list, such as a remove button.
- * @slot empty - Shown in the list's place while the stack has no layers.
+ * @slot empty - Shown in the list's place while the stack has no layers; a "No layers" Empty state by default.
  * @fires tp-layers-change - Cancelable proposal of the new records; `detail.metadata.change` says
  * what changed (`move`, `rename`, `state`, `add`, `duplicate`, `remove`, `group` or `ungroup`).
  * @fires tp-value-change - Cancelable proposal of the selected ids, in stack order.
@@ -121,6 +122,7 @@ export class TpLayers extends TpElement {
       TpTreeView,
       TpTreeItem,
       TpButton,
+      TpEmptyState,
       TpInput,
       TpIcon,
       TpLayer,
@@ -772,7 +774,8 @@ export class TpLayers extends TpElement {
   // ── Rows ───────────────────────────────────────────────────────────────────
 
   #part(name: string, id: string, member = ''): (element: Element | undefined) => void {
-    const key = `${name}\u0000${member}\u0000${id}`;
+    // A drag copy of a row registers its parts under their own keys, so the row's stay registered.
+    const key = `${name}\u0000${member}\u0000${id}${this.#ghostRow ? '\u0000ghost' : ''}`;
     this.#partKeys.set(key, id);
     const reference = this.presentationController.partReference(key, name);
     return (element) => reference((element as HTMLElement | undefined) ?? null);
@@ -790,7 +793,19 @@ export class TpLayers extends TpElement {
     this.#tree?.requestUpdate();
   }
 
+  /** The row being rendered is the tree's dimmed drag copy, whose parts register apart. */
+  #ghostRow = false;
+
   #renderRow = (layer: Layer, context: TreeViewRenderContext): TemplateResult => {
+    this.#ghostRow = !!context.ghost;
+    try {
+      return this.#rowContent(layer, context);
+    } finally {
+      this.#ghostRow = false;
+    }
+  };
+
+  #rowContent(layer: Layer, context: TreeViewRenderContext): TemplateResult {
     const id = layer.id;
     const dimmed = this.#dimmedIds.has(id);
     const renaming = this.#renaming === id;
@@ -837,7 +852,7 @@ export class TpLayers extends TpElement {
             >${layer.label}</span
           >`
     }${this.#renderStates(layer, state)}`;
-  };
+  }
 
   #hasIcons(): boolean {
     const stack = this.#stack;
@@ -1112,7 +1127,9 @@ export class TpLayers extends TpElement {
         >${this.renderPart('layers-empty', state, {
           tag: 'div',
           properties: { part: 'layers-empty', class: 'empty', hidden: !empty },
-          content: html`<slot name="empty" @slotchange=${this.#onSlotChange}></slot>`,
+          content: html`<slot name="empty" @slotchange=${this.#onSlotChange}
+            ><tp-empty-state .title=${this.#messages.empty}></tp-empty-state
+          ></slot>`,
         })}${bar('footer')}`,
     });
   }

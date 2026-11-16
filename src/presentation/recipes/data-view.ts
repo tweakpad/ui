@@ -56,7 +56,7 @@ const pinned = (surface: string) => [
 
 /**
  * A dragged row or tile lifts onto the page surface with a shadow, in place of the top layer's
- * default frame; the copy it leaves in the list stays dimmed until the drop.
+ * default frame; the drag feedback dims the copy it leaves in the list (the shared drag ghost).
  */
 const dragFeedback = [
   {
@@ -69,7 +69,6 @@ const dragFeedback = [
       overflow: 'hidden',
     },
   },
-  { selector: '&[data-preview]', declarations: { opacity: '0.4' } },
 ];
 
 const size = (row: string, header: string, text: string) => [

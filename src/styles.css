@@ -233,6 +233,10 @@
   --tp-opacity-disabled: 0.55;
   --tp-opacity-backdrop: 0.48;
 
+  /* A dragged item: the dimmed copy that holds its place, and the copy under the pointer. */
+  --tp-opacity-drag-ghost: 0.6;
+  --tp-opacity-drag-copy: 0.9;
+
   /* Motion roles (CL §5.3): durations strictly increase; standard serves state changes and
      on-screen movement, enter serves arrivals, reveals and settlement, exit serves departures. */
   --tp-duration-fast: 200ms;

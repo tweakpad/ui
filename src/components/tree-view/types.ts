@@ -83,6 +83,12 @@ export interface TreeItemState {
 export interface TreeViewRenderContext extends TreeItemState {
   /** Records mode: the consumer record. */
   readonly item: unknown;
+  /**
+   * The row is the dimmed copy that marks a dragged item's place while the item follows the
+   * pointer: render it without effects tied to the item (element references, ids), since the
+   * item's own row is on the page at the same time.
+   */
+  readonly ghost?: boolean;
 }
 
 /** A Tree view's `renderItem`, which renders the content of a record's row. */

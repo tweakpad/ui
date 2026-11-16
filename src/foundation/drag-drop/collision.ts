@@ -214,6 +214,13 @@ export const pointerDistance: CollisionDetector = (input) => {
   };
 };
 
+/**
+ * The droppable under the pointer, else the one whose center is nearest it: the target follows
+ * the pointer alone, whatever part of the dragged shape it holds.
+ */
+export const pointerNearest: CollisionDetector = (input) =>
+  pointerIntersection(input) ?? pointerDistance(input);
+
 export const directionBiased: CollisionDetector = ({ dragOperation, droppable }) => {
   if (!droppable.shape) {
     return null;

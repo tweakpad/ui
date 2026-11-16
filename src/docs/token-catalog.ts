@@ -395,6 +395,9 @@ export const DESCRIPTIONS = {
   'shadow-lg': 'Highest lift for menus and large overlays.',
   'opacity-disabled': 'Disabled controls and content.',
   'opacity-backdrop': 'Strength of the modal backdrop behind dialogs and drawers.',
+  'opacity-drag-ghost':
+    'The dimmed copy that holds a dragged item’s place: where it lands, or where it was.',
+  'opacity-drag-copy': 'The dragged item that follows the pointer while its ghost holds its place.',
   'duration-fast': 'Feedback: color, fill, track and thumb changes, and dialog fades.',
   'duration-normal': 'Anchored surfaces, panels, layout changes and viewport moves.',
   'duration-slow': 'Reveals and hover zoom.',

@@ -12,6 +12,8 @@ import {
   mergeConfiguration,
   validateConfiguration,
 } from '../../foundation/drag-drop/configuration.js';
+import { pointerNearest } from '../../foundation/drag-drop/collision.js';
+import { landingLine } from '../../foundation/drag-drop/landing.js';
 import { DragDropManager } from '../../foundation/drag-drop/manager.js';
 import { Droppable, type Draggable } from '../../foundation/drag-drop/entities.js';
 import { Sortable, type SortableInput } from '../../foundation/drag-drop/sortable.js';
@@ -195,7 +197,11 @@ export class TpDragDropList<T = unknown> extends TpElement {
   collisionPriority: DroppableInput['collisionPriority'];
   /** Which point of the dragged row follows the pointer. */
   alignment: DraggableInput['alignment'];
-  /** How the dragged row is shown: moved with a hidden placeholder, cloned, moved without a placeholder, or not at all. */
+  /**
+   * How the dragged row is shown: moved with a hidden placeholder, cloned, moved without a
+   * placeholder, or not at all. `default` clones it: a dimmed copy holds its place while it
+   * follows the pointer.
+   */
   feedback: ManagerOptions['feedback'];
   /** Renders a custom overlay that follows the pointer while an item is dragged. */
   renderOverlay: ((item: T, context: DragDropItemContext<T>) => unknown) | undefined;
@@ -271,7 +277,6 @@ export class TpDragDropList<T = unknown> extends TpElement {
   #itemData = new Map<UniqueIdentifier, Record<string, unknown>>();
   #content = new Map<UniqueIdentifier, unknown>();
   #overlaySource: Draggable | undefined;
-  #translucent: HTMLElement | undefined;
   #boundRecords = new Map<UniqueIdentifier, ItemRecord<T>>();
   /** The items in their committed order; set it before the list connects to control it, then publish each accepted proposal back. The list never mutates the array. */
   get value(): readonly T[] {
@@ -437,27 +442,19 @@ export class TpDragDropList<T = unknown> extends TpElement {
     if (this.orientation === 'horizontal') {
       const rtl = style.direction === 'rtl',
         gap = parseFloat(style.columnGap) || 0;
-      const end = (rect: DOMRect) => (rtl ? rect.left : rect.right),
-        start = (rect: DOMRect) => (rtl ? rect.right : rect.left),
-        half = (rtl ? -gap : gap) / 2;
-      const x =
-        previous && next
-          ? (end(previous) + start(next)) / 2
-          : previous
-            ? end(previous) + half
-            : start(next!) - half;
+      // Along the row's order: right to left, the axis runs against the coordinates.
+      const along = (rect: DOMRect | null) =>
+        rect &&
+        (rtl ? { start: rect.right, end: rect.left } : { start: rect.left, end: rect.right });
+      const x = landingLine(along(previous), along(next), gap, rtl ? -1 : 1)!;
       line.style.left = `${x - frame.left}px`;
       line.style.top = `${near.top - frame.top}px`;
       line.style.height = `${near.height}px`;
       line.style.width = '';
     } else {
       const gap = parseFloat(style.rowGap) || 0;
-      const y =
-        previous && next
-          ? (previous.bottom + next.top) / 2
-          : previous
-            ? previous.bottom + gap / 2
-            : next!.top - gap / 2;
+      const along = (rect: DOMRect | null) => rect && { start: rect.top, end: rect.bottom };
+      const y = landingLine(along(previous), along(next), gap)!;
       line.style.top = `${y - frame.top}px`;
       line.style.left = `${near.left - frame.left}px`;
       line.style.width = `${near.width}px`;
@@ -471,6 +468,19 @@ export class TpDragDropList<T = unknown> extends TpElement {
       duplicate: record.duplicate,
     });
   }
+  /**
+   * The item being dragged while its place shows a ghost: the row this list renders for it (in its
+   * own list the lifted row, which the drag feedback styles; in a list it was dragged into, the
+   * ghost itself). Feedback `move` and `none` show no ghost.
+   */
+  #ghostId(): UniqueIdentifier | null {
+    const operation = this.#connectedManager?.dragOperation;
+    const source = operation?.source;
+    if (!operation || operation.status === 'idle' || !source) return null;
+    const feedback = this.feedback ?? 'default';
+    return feedback === 'move' || feedback === 'none' ? null : source.id;
+  }
+
   #context(record: ItemRecord<T>, preview = false): DragDropItemContext<T> {
     const entity = this.#sortables.get(record.id),
       participation = this.#participation(record),
@@ -514,6 +524,12 @@ export class TpDragDropList<T = unknown> extends TpElement {
       'announcements',
     ] as const)
       configuration[key] = this[key];
+    // The dragged row's place shows the shared drag ghost rather than an empty gap: where it would
+    // land as the rows make room, or, with a landing line, the place it left.
+    if ((this.feedback ?? 'default') === 'default') configuration.feedback = 'clone';
+    // A landing line follows the pointer: the row under it, or the nearest one across a gap.
+    if (this.collisionDetector === undefined && this.dropIndicator === 'line')
+      configuration.collisionDetector = pointerNearest;
     // Retain source feedback outside keyed list ranges during a cross-root remount.
     configuration.rootElement =
       this.rootElement ?? this.#connectedManager?.options.rootElement ?? this.ownerDocument.body;
@@ -803,6 +819,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
       variant: this.variant,
       size: this.size,
     };
+    const ghost = this.#ghostId();
     const content = this.controller.records.length
       ? repeat(
           this.controller.records,
@@ -816,6 +833,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
                 class: 'item',
                 part: 'item',
                 'data-dragging': context.dragging,
+                'data-drag-ghost': ghost !== null && record.id === ghost,
                 'data-dropping': context.dropping,
                 'data-drop-target': context.dropTarget,
                 'data-drop-disabled': context.dropDisabled,
@@ -886,22 +904,7 @@ export class TpDragDropList<T = unknown> extends TpElement {
     }
     if (!this.emit(eventNames[name], event, { cancelable: event.cancelable }))
       event.preventDefault();
-    // A line marks the landing place and no stand-in shows, so the dragged item itself is the
-    // translucent one and the line shows through it. It is drawn outside this list's styles while
-    // it follows the pointer, so its own style carries the translucency.
-    if (
-      name === 'dragstart' &&
-      event.operation.source?.data.list === this.controller &&
-      this.dropIndicator === 'line' &&
-      event.operation.input === 'pointer'
-    ) {
-      const element = this.#items.get(event.operation.source.id);
-      element?.style.setProperty('opacity', '0.65');
-      this.#translucent = element;
-    }
     if (name === 'settled') {
-      this.#translucent?.style.removeProperty('opacity');
-      this.#translucent = undefined;
       this.#clearOverlay();
       const id = event.operation.source?.id;
       if (

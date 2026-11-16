@@ -30,6 +30,16 @@ export interface PointerSensorOptions {
   preventActivation?: (event: PointerEvent, source: Draggable) => boolean;
 }
 const claimed = new WeakSet<Event>();
+/** Whether an event starts in a field, whose text a press selects. */
+function editableTarget(event: Event): boolean {
+  for (const node of event.composedPath()) {
+    const element = node as Partial<Element>;
+    if (element.nodeType !== 1 || typeof element.matches !== 'function') continue;
+    if (element.matches('input, textarea, [contenteditable]:not([contenteditable="false"])'))
+      return true;
+  }
+  return false;
+}
 const touchLeases = new WeakMap<Window, { count: number; release: () => void }>();
 function touchLease(view: Window): () => void {
   let lease = touchLeases.get(view);
@@ -397,14 +407,26 @@ export class PointerSensor implements Sensor {
       },
       { capture: true },
     );
-    scope.listen(
-      element.ownerDocument,
-      'selectstart',
-      (select) => {
-        if (gesture.active) select.preventDefault();
-      },
-      { capture: true },
-    );
+    // A press on a draggable item never starts a text selection, from the press on: the browser
+    // starts one on the first moves, before the drag activates, and then only extends it. Fields
+    // keep theirs, where a press selects text rather than moving the item. `selectstart` is not
+    // composed: it stays in the shadow root where the selection starts, so every root on the
+    // press's path listens.
+    const roots = new Set<Document | ShadowRoot>([element.ownerDocument]);
+    for (const node of event.composedPath()) {
+      // A shadow root: a document fragment with a host.
+      const root = node as Partial<ShadowRoot>;
+      if (root.nodeType === 11 && root.host) roots.add(root as ShadowRoot);
+    }
+    for (const root of roots)
+      scope.listen(
+        root,
+        'selectstart',
+        (select) => {
+          if (gesture.active || !editableTarget(select)) select.preventDefault();
+        },
+        { capture: true },
+      );
     scope.listen(view, 'blur', () => end(true));
     if (custom.length) {
       try {

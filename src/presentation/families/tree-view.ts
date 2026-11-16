@@ -40,6 +40,11 @@ const definition: ComponentDefinition = {
       name: 'tree-view-drop-indicator',
       description: 'The line between rows that marks where a dragged item lands.',
     },
+    {
+      name: 'tree-view-drag-ghost',
+      description:
+        'The dimmed copy that holds a dragged item’s place while it follows the pointer.',
+    },
   ],
 };
 
@@ -52,6 +57,7 @@ export const treeViewPresentation = definePresentation({
       "[part~='segment']": 'tree-view-group',
       "[part~='empty']": 'tree-view-empty',
       "[part~='drop-indicator']": 'tree-view-drop-indicator',
+      "[part~='drag-ghost']": 'tree-view-drag-ghost',
     },
     'tp-tree-item': {
       ':host': 'tree-view-item',

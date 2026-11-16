@@ -120,6 +120,7 @@ const markupAccessors = (loaded: ReadonlySet<string>): TreeAccessors<TpTreeItem>
  * @csspart segment - Records mode: the transient region of rows entering or leaving.
  * @csspart empty - The empty region.
  * @csspart drop-indicator - Records mode: the line between rows that marks where a dragged item lands.
+ * @csspart drag-ghost - Records mode: the dimmed copy that holds a dragged item's place while it follows the pointer.
  * @cssprop --tp-tree-view-drop-indicator-color - The color of the line that marks where a dragged item lands.
  * @cssprop --tp-tree-view-drop-indicator-size - The thickness of that line.
  * @fires tp-value-change - Selection proposal (cancelable).
@@ -216,6 +217,13 @@ export class TpTreeView<T = TreeViewItem>
       }
 
       .space {
+        pointer-events: none;
+      }
+
+      .drag-ghost {
+        position: absolute;
+        inset-inline: 0;
+        inset-block-start: 0;
         pointer-events: none;
       }
 
@@ -769,7 +777,7 @@ export class TpTreeView<T = TreeViewItem>
       this.#mounted.clear();
       for (const element of this.renderRoot.querySelectorAll<TpTreeItem>('.list tp-tree-item')) {
         const id = element.state?.id;
-        if (id === undefined || element.closest('[data-exit]')) continue;
+        if (id === undefined || element.closest('[data-exit], .drag-ghost')) continue;
         this.#mounted.set(id, element);
         this.#virtual.observe(id, element);
         if (!this.#measuredRow && element.offsetHeight) this.#measuredRow = element.offsetHeight;
@@ -835,7 +843,7 @@ export class TpTreeView<T = TreeViewItem>
         ${
           this.#records
             ? html`<div class="list" role="none">
-                ${this.#renderRecords()}${this.#renderLine()}
+                ${this.#renderRecords()}${this.#renderGhost()}${this.#renderLine()}
               </div>`
             : html`<slot @slotchange=${this.#scheduleRebuild}></slot>`
         }
@@ -862,6 +870,18 @@ export class TpTreeView<T = TreeViewItem>
           style=${`inset-block-start:${line.top}px;inset-inline-start:${line.inset}px`}
         ></div>`
       : nothing;
+  }
+
+  /**
+   * While a pointer drags a row, a dimmed, inert copy of it holds the row's place in the list: the
+   * gap the rows make, or with a landing line the place it left. The reorder places it.
+   */
+  #renderGhost(): unknown {
+    const id = this.#reorder.ghostId;
+    if (id === null || !this.#model.get(id)) return nothing;
+    return html`<div class="drag-ghost" part="drag-ghost" aria-hidden="true" inert>
+      ${this.#renderRow(id, false, true)}
+    </div>`;
   }
 
   /** A start handle's extent from the row's edge, which every depth keeps before its indentation. */
@@ -1045,13 +1065,16 @@ export class TpTreeView<T = TreeViewItem>
     this.#hoverExpand = null;
   }
 
-  #renderRow(id: string, leaving = false): TemplateResult {
+  #renderRow(id: string, leaving = false, ghost = false): TemplateResult {
     const node = this.#model.get(id);
     if (!node) return html``;
-    const state = this.#state(id, true);
+    const base = this.#state(id, true);
+    const state: TreeItemState = ghost
+      ? { ...base, dragging: false, dropInto: false, tabStop: false, focusable: false }
+      : base;
     const record = node.item as T;
     const content = this.renderItem
-      ? this.renderItem(record, { ...state, item: record })
+      ? this.renderItem(record, { ...state, item: record, ...(ghost ? { ghost } : {}) })
       : node.label;
     const handle = this.#reorder.enabled
       ? html`<tp-button
@@ -1066,6 +1089,10 @@ export class TpTreeView<T = TreeViewItem>
         ></tp-button>`
       : nothing;
     const reorder = this.#reorder.enabled;
+    if (ghost)
+      return html`<tp-tree-item part="item" exportparts=${ITEM_PARTS} .state=${state} .value=${id}
+        >${content}${handle}</tp-tree-item
+      >`;
     return html`<tp-tree-item
       ${ref(this.#dropReference(id))}
       part="item"

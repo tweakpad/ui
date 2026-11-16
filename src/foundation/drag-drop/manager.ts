@@ -689,6 +689,8 @@ export class DragDropManager {
       if (terminal.canceled) terminal.handle?.abort();
       if (terminal.decision) {
         this.publish();
+        // A pending decision shows only the ghost where the item would land.
+        if (!terminal.canceled) this.feedback.hold();
         await terminal.decision;
       }
       if (!this.#current(terminal.id)) return;

@@ -1,4 +1,5 @@
 import { ControllableState, orderedValuesEqual } from '../../foundation/controllable-state.js';
+import { landingSide } from '../../foundation/drag-drop/landing.js';
 import type { ChangeReason } from '../../foundation/types.js';
 import type { TpChangeEventOptions } from '../../foundation/events.js';
 import { createId } from '../../foundation/id.js';
@@ -409,19 +410,28 @@ export class ListNetwork {
       ? records.length
       : records.findIndex((record) => record.id === target.id && !record.duplicate);
     if (index < 0) return;
+    // A landing line marks where the pointer is, whatever part of the row it holds; a displacing
+    // drag swaps rows when the dragged row's middle passes theirs.
     const shape = target.shape,
-      position =
-        this.manager.dragOperation.shape?.current.center ??
-        this.manager.dragOperation.position.current;
+      position = line
+        ? this.manager.dragOperation.position.current
+        : (this.manager.dragOperation.shape?.current.center ??
+          this.manager.dragOperation.position.current);
     const horizontal = destination.host.orientation === 'horizontal',
       rtl =
         horizontal &&
         destination.host.ownerDocument.defaultView!.getComputedStyle(destination.host).direction ===
           'rtl';
-    const after = shape
-      ? horizontal
-        ? position.x >= shape.center.x !== rtl
-        : position.y >= shape.center.y
+    // The side of the target, by the shared landing rules.
+    const bounds = shape?.boundingRectangle;
+    const after = bounds
+      ? landingSide(
+          horizontal
+            ? { start: bounds.left, end: bounds.right }
+            : { start: bounds.top, end: bounds.bottom },
+          horizontal ? position.x : position.y,
+          { reversed: rtl },
+        ) === 'after'
       : false;
     if (line) {
       this.#projectLine(

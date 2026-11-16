@@ -102,12 +102,11 @@ for (const type of ['tp-value-commit', 'tp-layers-change']) layers.addEventListe
 showLock();
 
 let count = 0;
-for (const item of layers.querySelectorAll('[data-add]'))
-  item.addEventListener('click', () => {
-    count += 1;
-    const group = item.dataset.add === 'group';
-    layers.addLayer({ id: \`hero-added-\${count}\`, label: group ? \`Group \${count}\` : \`Layer \${count}\`, ...(group ? { children: [] } : {}) });
-  });
+layers.querySelector('tp-menu').addEventListener('tp-action', (event) => {
+  count += 1;
+  const group = event.detail.item.dataset.add === 'group';
+  layers.addLayer({ id: \`hero-added-\${count}\`, label: group ? \`Group \${count}\` : \`Layer \${count}\`, ...(group ? { children: [] } : {}) });
+});
 layers.querySelector('[data-action="remove"]').addEventListener('click', () => layers.removeLayers());`}
 />
 
@@ -280,18 +279,16 @@ const panel = document.querySelector('#layers-bars-panel');
 const icons = { plus: plusIcon, copy: copyIcon, trash: trashIcon, settings: settingsIcon };
 for (const element of layers.querySelectorAll('[data-icon]')) element.icon = icons[element.dataset.icon];
 
-// The panel follows the active layer: each light keeps its own intensity.
+// The panel follows the active layer, and hides while none is: each light keeps its own intensity.
 const levels = new Map([['bars-key', 80], ['bars-fill', 40]]);
 let open = true;
 const draw = () => {
   const id = layers.active;
-  const label = id ? \`\${layers.getLayer(id).layer.label} intensity\` : 'Intensity';
   render(
-    open
+    open && id
       ? html\`<tp-slider
-          label=\${label}
-          .value=\${id ? (levels.get(id) ?? 50) : 0}
-          ?disabled=\${!id}
+          label=\${\`\${layers.getLayer(id).layer.label} intensity\`}
+          .value=\${levels.get(id) ?? 50}
           @tp-value-change=\${(event) => {
             levels.set(id, event.detail.value);
             draw();
@@ -309,12 +306,12 @@ layers.querySelector('tp-toggle').addEventListener('tp-value-change', (event) =>
 draw();
 
 let count = 0;
-for (const adder of layers.querySelectorAll('[data-kind]'))
-  adder.addEventListener('click', () => {
-    count += 1;
-    const kind = adder.dataset.kind === 'spot' ? 'Spot light' : 'Point light';
-    layers.addLayer({ id: \`bars-\${adder.dataset.kind}-\${count}\`, label: \`\${kind} \${count}\` });
-  });
+const addLight = (kind) => {
+  count += 1;
+  layers.addLayer({ id: \`bars-\${kind}-\${count}\`, label: \`\${kind === 'spot' ? 'Spot light' : 'Point light'} \${count}\` });
+};
+layers.querySelector('tp-menu').addEventListener('tp-action', (event) => addLight(event.detail.item.dataset.kind));
+layers.querySelector('tp-empty-state [data-kind]').addEventListener('click', () => addLight('point'));
 layers.querySelector('[data-action="clear"]').addEventListener('click', () => layers.removeLayers(layers.layers.map((layer) => layer.id)));
 layers.querySelector('[data-action="duplicate"]').addEventListener('click', () => layers.duplicateLayers());
 layers.querySelector('[data-action="remove"]').addEventListener('click', () => layers.removeLayers());`}

@@ -24,6 +24,11 @@ import { sortableMembership } from './sortable.js';
 import type { Draggable } from './entities.js';
 import type { DropAnimation, FeedbackMode, FeedbackOptions } from './types.js';
 
+/** The dimmed copy that holds a dragged item's place: where it lands, or where it was. */
+export const DRAG_GHOST_OPACITY = 'var(--tp-opacity-drag-ghost, 0.6)';
+/** The dragged item that follows the pointer while its ghost holds its place. */
+export const DRAG_COPY_OPACITY = 'var(--tp-opacity-drag-copy, 0.9)';
+
 /** Half the span, in pixels, that the paused follow animations cover. */
 export const FOLLOW_RANGE = 1e6;
 
@@ -184,9 +189,16 @@ export class DragFeedback {
     // original node. Input is owned by the sensor and focus returns after settle.
     attributes.set('inert', '');
     attributes.set('aria-hidden', 'true');
+    // The drag look every consumer shares: while a ghost holds the item's place (a shown stand-in,
+    // or the source itself under an overlay), the copy under the pointer is slightly translucent
+    // and the ghost dimmed. The theme sets both; the fallbacks keep the look without its sheet.
+    if (overlay || mode === 'clone') styles.set('opacity', DRAG_COPY_OPACITY);
     if (overlay) {
       scope.add(markFeedbackRoot(element));
       attributes.set('data-preview', '');
+      const source = new OwnedStyles(original);
+      source.set('opacity', DRAG_GHOST_OPACITY);
+      scope.add(() => source.dispose());
     } else if (mode !== 'move') {
       const preview = this.createPreview?.(source);
       const clone = preview ? null : cloneFeedback(original);
@@ -198,6 +210,7 @@ export class DragFeedback {
       placeholder.setAttribute('data-preview', '');
       placeholder.style.pointerEvents = 'none';
       if (mode === 'default') placeholder.style.visibility = 'hidden';
+      else placeholder.style.opacity = DRAG_GHOST_OPACITY;
       placeholder.style.width = `${initial.width / Math.abs(originalAncestors.x * originalFrame.scaleX * (parsed?.scaleX ?? 1))}px`;
       placeholder.style.boxSizing = 'border-box';
       original.after(placeholder);
@@ -492,6 +505,17 @@ export class DragFeedback {
     if (!follow?.active) return;
     this.#styles?.set('translate', `${this.#translate.x}px ${this.#translate.y}px`);
     follow.stop();
+  }
+
+  /**
+   * While a drop waits for its decision, only the ghost marks where the item lands: the dragged
+   * copy leaves the pointer's last place. The settle or the rollback that follows ends the hold.
+   */
+  hold(): void {
+    if (!this.#element || !this.#styles) return;
+    // Only when a ghost shows: an overlay over the dimmed source, or a shown stand-in.
+    if (this.#element !== this.#original || this.mode === 'clone')
+      this.#styles.set('visibility', 'hidden');
   }
 
   async settle(): Promise<void> {

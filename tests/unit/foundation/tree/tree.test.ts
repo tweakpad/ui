@@ -24,7 +24,6 @@ import { TreeLoader } from '../../../../src/foundation/tree/lazy.js';
 import {
   applyMove,
   dragDepth,
-  dropZone,
   intoMove,
   placeRow,
   projectDepth,
@@ -419,15 +418,6 @@ describe('projection', () => {
     expect(validMove(model, { ...move, toParentId: 'lib', toIndex: 0 })).toBe(false);
     expect(validMove(model, { ...move, itemId: 'src', toParentId: 'app' })).toBe(false);
     expect(validMove(model, { ...move, toParentId: null, toIndex: 2 })).toBe(false);
-  });
-
-  it('splits a row into drop zones: quarters around an into half, or halves', () => {
-    expect(dropZone(100, 40, 105, true)).toBe('before');
-    expect(dropZone(100, 40, 110, true)).toBe('into');
-    expect(dropZone(100, 40, 129, true)).toBe('into');
-    expect(dropZone(100, 40, 130, true)).toBe('after');
-    expect(dropZone(100, 40, 119, false)).toBe('before');
-    expect(dropZone(100, 40, 120, false)).toBe('after');
   });
 
   it('places a row before or after another', () => {

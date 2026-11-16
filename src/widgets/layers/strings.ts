@@ -8,6 +8,7 @@ export const DEFAULT_LAYERS_MESSAGES: ResolvedLayersMessages = Object.freeze({
   renameField: (label: string) => `Rename ${label}`,
   stateControl: (state: string, value: string) => `${state}: ${value}`,
   groupLabel: 'Group',
+  empty: 'No layers',
   copySuffix: 'copy',
   movedLayers: (count: number) => `Moved ${count} layers`,
 });

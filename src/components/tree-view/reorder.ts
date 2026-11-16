@@ -1,3 +1,10 @@
+import { DRAG_COPY_OPACITY } from '../../foundation/drag-drop/feedback.js';
+import {
+  landingLine,
+  landingSide,
+  landingTarget,
+  type LandingBox,
+} from '../../foundation/drag-drop/landing.js';
 import { DragDropManager } from '../../foundation/drag-drop/manager.js';
 import { Sortable } from '../../foundation/drag-drop/sortable.js';
 import { PointerSensor } from '../../foundation/drag-drop/sensors/index.js';
@@ -9,7 +16,6 @@ import { dragMotion, dragMotionContext } from '../../foundation/drag-drop/motion
 import { resolveMotionTiming, type MotionHandle } from '../../foundation/motion.js';
 import {
   dragDepth,
-  dropZone,
   intoMove,
   placeRow,
   projectDepth,
@@ -140,6 +146,12 @@ export class TreeReorder {
   get rows(): readonly string[] | null {
     const session = this.#session;
     return session ? (session.still ?? session.rows) : null;
+  }
+
+  /** The item whose place a dimmed copy holds while a pointer drags it, else null. */
+  get ghostId(): string | null {
+    const session = this.#session;
+    return session?.input === 'pointer' ? session.sourceId : null;
   }
 
   /** The insertion line while a line marks the landing place, else null. */
@@ -294,9 +306,9 @@ export class TreeReorder {
   };
 
   /**
-   * Follow the pointer: the row under it and the zone within that row decide where the source
-   * lands. Rows are hit-tested at their resting boxes, so rows still gliding aside do not flip
-   * the decision back.
+   * Follow the pointer: the row under it (or the nearest across a gap) and the side of it the
+   * pointer is on decide where the source lands, by the shared landing rules. Rows are hit-tested
+   * at their resting boxes, so rows still gliding aside do not flip the decision back.
    */
   #track(): void {
     const session = this.#session!;
@@ -305,18 +317,18 @@ export class TreeReorder {
     if (!point || !list) return;
     const listTop = list.getBoundingClientRect().top;
     const shown = session.still ?? session.rows;
-    let target: string | null = null;
-    let box: { top: number; height: number } | null = null;
+    const entries: { id: string; box: LandingBox }[] = [];
     for (const id of shown) {
       const rest = this.#box(id, listTop);
-      if (!rest) continue;
-      const top = listTop + rest.top;
-      if (point.y >= top && point.y < top + rest.height) {
-        target = id;
-        box = { top, height: rest.height };
-        break;
-      }
+      if (rest)
+        entries.push({
+          id,
+          box: { start: listTop + rest.top, end: listTop + rest.top + rest.height },
+        });
     }
+    const landing = landingTarget(entries, point.y);
+    const target = landing?.id ?? null;
+    const box = landing?.box ?? null;
     const before = { rows: session.rows.join(), into: session.into, depth: session.depth };
     if (
       target !== null &&
@@ -332,7 +344,7 @@ export class TreeReorder {
       }
       this.#project(session.baseDepth + session.offset, false);
     } else if (target !== null && box) {
-      const zone = dropZone(box.top, box.height, point.y, this.#holds(target));
+      const zone = landingSide(box, point.y, { into: this.#holds(target) });
       if (zone === 'into') {
         // Rows keep their place; the parent marks the landing.
         session.into = target;
@@ -392,6 +404,12 @@ export class TreeReorder {
     element.style.position = 'relative';
     element.style.zIndex = '1';
     element.style.translate = `0 ${session.follow}px`;
+    // The shared drag look: the copy under the pointer is slightly translucent while the ghost
+    // holds its place.
+    element.style.opacity = DRAG_COPY_OPACITY;
+    // The dimmed copy holds the row's place: the gap the rows made, or the place it left.
+    const ghost = list.querySelector<HTMLElement>('.drag-ghost');
+    if (ghost) ghost.style.translate = `0 ${rest.top}px`;
   }
 
   /** Puts the lifted row back in the flow of the list. */
@@ -402,6 +420,7 @@ export class TreeReorder {
     if (!all) return;
     element.style.position = '';
     element.style.zIndex = '';
+    element.style.opacity = '';
     this.#lifted = null;
   }
 
@@ -447,14 +466,16 @@ export class TreeReorder {
       const index = session.rows.indexOf(session.sourceId);
       const above = session.rows[index - 1];
       const below = session.rows[index + 1];
-      let top: number | null = null;
-      if (above !== undefined) {
-        // After the row above (and its source subtree, if that is what follows it).
-        const box = this.#box(above, listTop);
-        const after = session.still[session.still.indexOf(above) + 1];
-        const next = after === undefined ? null : this.#box(after, listTop);
-        if (box) top = next ? (box.top + box.height + next.top) / 2 : box.top + box.height;
-      } else if (below !== undefined) top = this.#box(below, listTop)?.top ?? null;
+      const extent = (id: string | undefined): LandingBox | null => {
+        const box = id === undefined ? null : this.#box(id, listTop);
+        return box ? { start: box.top, end: box.top + box.height } : null;
+      };
+      // After the row above (and its source subtree, if that is what follows it), by the shared
+      // landing line.
+      const top =
+        above !== undefined
+          ? landingLine(extent(above), extent(session.still[session.still.indexOf(above) + 1]))
+          : landingLine(null, extent(below));
       if (top !== null)
         this.#line = { top, inset: this.#context.lead() + session.depth * this.#indentation() };
     }

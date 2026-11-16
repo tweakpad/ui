@@ -105,6 +105,8 @@ export interface LayersMessages {
   stateControl?: (state: string, value: string) => string;
   /** Label of a new group. */
   groupLabel?: string;
+  /** Title of the placeholder shown while the stack has no layers and the `empty` slot is unfilled. */
+  empty?: string;
   /** Suffix of a duplicated layer's label. */
   copySuffix?: string;
   /** Announced after the user moves several layers. */

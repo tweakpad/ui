@@ -11,6 +11,7 @@ import { dropInto, listDropLine } from './shared/drop-line.js';
 import { floatEdge } from './shared/edges.js';
 import { checkboxRules } from './shared/selection-control.js';
 import { packedExtent } from './shared/target.js';
+import { dragGhost } from './shared/drag-look.js';
 import { controlStepDeclarations, controlStepOf } from './shared/variant.js';
 
 /**
@@ -60,8 +61,7 @@ export const treeViewAppearance: PresentationDictionary = {
     },
     { selector: '&[data-disabled]', declarations: { opacity: '0.5', cursor: 'not-allowed' } },
     // The dragged item is lifted from pick-up until it settles in its new place: a floating
-    // surface over the rows it passes, with its content translucent, so the rows beneath never
-    // show through it.
+    // surface over the rows it passes, while a dimmed copy holds its place in the list.
     {
       selector: '&[data-dragging]',
       declarations: {
@@ -69,11 +69,11 @@ export const treeViewAppearance: PresentationDictionary = {
         'box-shadow': `var(--tp-shadow-md), ${floatEdge.ring}`,
       },
     },
-    { selector: '&[data-dragging] > *', declarations: { opacity: '0.65' } },
     { selector: '&[data-drop-into]', declarations: dropInto },
     { selector: '&[data-handle-start]', declarations: { 'margin-inline-start': '0' } },
   ],
   'tree-view-drop-indicator': [{ declarations: listDropLine('tree-view') }],
+  'tree-view-drag-ghost': [{ declarations: dragGhost }],
   'tree-view-row-size-sm': [
     {
       declarations: {
