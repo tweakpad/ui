@@ -1,4 +1,3 @@
-import { markEdge } from './edges.js';
 import { selectionLine } from './selection.js';
 
 /**
@@ -16,12 +15,14 @@ export const dropInto = {
 };
 
 /**
- * The landing line of a list drag, between two items: dim but visible, in the control-edge role.
+ * The landing line of a list drag, between two items: dim but visible, the bordered control edge's
+ * mix of foreground and background. It is a mark, not an edge, so it reads the page colors, which
+ * no appearance changes, rather than an edge role, which a flat region (the root included) clears.
  * `--tp-<component>-drop-indicator-color` and `-size` restyle it; the private `--_tp-drop-line`
  * carries the thickness to the component's own geometry.
  */
 export const listDropLine = (component: string) => ({
   '--_tp-drop-line': `var(--tp-${component}-drop-indicator-size, calc(2 * var(--tp-border-width)))`,
-  background: `var(--tp-${component}-drop-indicator-color, ${markEdge.color})`,
+  background: `var(--tp-${component}-drop-indicator-color, color-mix(in oklab, var(--tp-foreground) 45%, var(--tp-background)))`,
   'border-radius': 'var(--_tp-drop-line)',
 });

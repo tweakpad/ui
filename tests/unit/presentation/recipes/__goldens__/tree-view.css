@@ -50,7 +50,7 @@
 /* tree-view-empty */
 &{padding:var(--tp-space-2);color:var(--tp-muted-foreground)}
 /* tree-view-drop-indicator */
-&{--_tp-drop-line:var(--tp-tree-view-drop-indicator-size, calc(2 * var(--tp-border-width)));background:var(--tp-tree-view-drop-indicator-color, var(--tp-control-border));border-radius:var(--_tp-drop-line)}
+&{--_tp-drop-line:var(--tp-tree-view-drop-indicator-size, calc(2 * var(--tp-border-width)));background:var(--tp-tree-view-drop-indicator-color, color-mix(in oklab, var(--tp-foreground) 45%, var(--tp-background)));border-radius:var(--_tp-drop-line)}
 /* tree-view-drag-ghost */
 
 /* tp-tree-view structure */
