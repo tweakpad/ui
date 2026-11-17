@@ -28,6 +28,12 @@
       h2 {
         font-size: 16px;
       }
+      /* Previews embedded as on a docs page: a transformed wrapper is the containing block of
+         fixed descendants, so a dragged item that leaves the top layer jumps. */
+      #list-host,
+      #tree-host {
+        transform: matrix(1, 0, 0, 1, 0, 0);
+      }
       /* The same row geometry in both, so any difference left is the reorder's own. */
       #list-host tp-drag-drop-list::part(list) {
         gap: 0;
@@ -226,12 +232,27 @@
           await settle();
           steps.push({ at: offset, ...snapshot(view, py) });
         }
+        const dropped = view.lifted();
+        const released = dropped?.getBoundingClientRect().top;
         target.dispatchEvent(
           new PointerEvent('pointerup', { ...init, buttons: 0, clientX: x, clientY: y + path.at(-1) * pitch }),
         );
-        await wait(400);
+        // The drop settles from where it was released to its place, never through anywhere else.
+        const tops = [];
+        const start = performance.now();
+        while (dropped && performance.now() - start < 400) {
+          await frame();
+          tops.push(dropped.getBoundingClientRect().top);
+        }
         await settle();
-        return { steps, order: view.order() };
+        let settles = true;
+        if (dropped && released !== undefined) {
+          const to = dropped.getBoundingClientRect().top;
+          settles = tops.every(
+            (top) => top >= Math.min(released, to) - 2 && top <= Math.max(released, to) + 2,
+          );
+        }
+        return { steps, order: view.order(), settles };
       }
 
       /** A keyboard reorder: each component's pick-up chord, then the same arrow keys. */
@@ -324,7 +345,16 @@
       async function assertParity(indicators = ['displace', 'line']) {
         const results = [];
         for (const indicator of indicators) results.push(...(await run(indicator)));
-        const diverging = results.filter((result) => result.differences.length);
+        const diverging = results.filter(
+          (result) =>
+            result.differences.length ||
+            result.list.settles === false ||
+            result.tree.settles === false,
+        );
+        for (const result of diverging)
+          for (const name of ['list', 'tree'])
+            if (result[name].settles === false)
+              result.differences.push(`${name}: the drop jumps outside its path as it settles`);
         document.querySelector('#report').textContent = diverging.length
           ? diverging
               .map((result) => `${result.indicator} · ${result.script}\n  ${result.differences.join('\n  ')}`)

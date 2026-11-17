@@ -361,6 +361,21 @@ export class DragFeedback {
         scope.add(() => {
           if (element.matches(':popover-open')) element.hidePopover();
         });
+        // The element stays in the top layer until the feedback ends. A render that moves it in
+        // the DOM (a list reordering its items) closes the popover, and out of the top layer its
+        // fixed position follows the nearest transformed ancestor instead of the viewport. The
+        // observer raises it again before the next frame paints.
+        const root = element.getRootNode();
+        if (
+          view.MutationObserver &&
+          (root instanceof view.Document || root instanceof view.ShadowRoot)
+        ) {
+          const raise = new view.MutationObserver(() => {
+            if (element.isConnected && !element.matches(':popover-open')) element.showPopover();
+          });
+          raise.observe(root, { childList: true, subtree: true });
+          scope.add(() => raise.disconnect());
+        }
       } catch (error) {
         throw new Error('Feedback could not enter the top layer.', { cause: error });
       }
