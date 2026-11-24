@@ -3,6 +3,7 @@ import type {
   FlowDocument,
   FlowEdge,
   FlowEdgeKind,
+  FlowGroupTerminals,
   FlowIssue,
   FlowLayoutSettings,
   FlowMarker,
@@ -101,6 +102,12 @@ function cloneNode<N extends FlowNode>(node: N, keepSelection: boolean): N {
   else if (!node.selected) delete copy.selected;
   if (node.size) copy.size = { ...node.size };
   if (node.ports) copy.ports = node.ports.map((port) => ({ ...port }));
+  if (node.terminals) {
+    const terminals: FlowGroupTerminals = {};
+    if (node.terminals.inputs) terminals.inputs = { ...node.terminals.inputs };
+    if (node.terminals.outputs) terminals.outputs = { ...node.terminals.outputs };
+    copy.terminals = terminals;
+  }
   if (Array.isArray(node.extent))
     copy.extent = [
       [node.extent[0][0], node.extent[0][1]],
@@ -333,6 +340,39 @@ function parseNode(raw: unknown, index: number, issues: FlowIssue[]): FlowNode |
       path: `nodes[${index}].size`,
     });
     delete node.size;
+  }
+  if (raw.collapsed !== undefined && typeof raw.collapsed !== 'boolean') {
+    issues.push({
+      code: 'invalid-node',
+      severity: 'warning',
+      message: `Node "${raw.id}" has an invalid collapsed flag; dropped.`,
+      nodeId: raw.id,
+      path: `nodes[${index}].collapsed`,
+    });
+    delete node.collapsed;
+  }
+  if (raw.terminals !== undefined) {
+    const terminals = isRecord(raw.terminals) ? raw.terminals : undefined;
+    const valid =
+      terminals !== undefined &&
+      (terminals.inputs === undefined || isPoint(terminals.inputs)) &&
+      (terminals.outputs === undefined || isPoint(terminals.outputs));
+    if (!valid) {
+      issues.push({
+        code: 'invalid-node',
+        severity: 'warning',
+        message: `Node "${raw.id}" has invalid terminal positions; dropped.`,
+        nodeId: raw.id,
+        path: `nodes[${index}].terminals`,
+      });
+      delete node.terminals;
+    } else {
+      const copy: FlowGroupTerminals = {};
+      if (isPoint(terminals.inputs)) copy.inputs = { x: terminals.inputs.x, y: terminals.inputs.y };
+      if (isPoint(terminals.outputs))
+        copy.outputs = { x: terminals.outputs.x, y: terminals.outputs.y };
+      node.terminals = copy;
+    }
   }
   return node;
 }

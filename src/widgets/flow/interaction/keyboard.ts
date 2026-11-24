@@ -1,4 +1,20 @@
-import type { FlowModel } from '../../../foundation/flow/model/model.js';
+import type { FlowGraphView } from '../../../foundation/flow/groups/view.js';
+import {
+  COLLAPSE_KEYS,
+  COPY_KEYS,
+  CUT_KEYS,
+  DELETE_KEYS,
+  DUPLICATE_KEYS,
+  ENTER_GROUP_KEYS,
+  EXIT_GROUP_KEYS,
+  GROUP_KEYS,
+  PASTE_KEYS,
+  SELECT_ALL_KEYS,
+  UNGROUP_KEYS,
+  ZOOM_FIT_KEYS,
+  ZOOM_OUT_KEYS,
+  ZOOM_RESET_KEYS,
+} from '../shortcuts.js';
 
 export type FlowArrowKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
 
@@ -8,7 +24,7 @@ export type FlowArrowKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
  * Returns undefined when nothing lies in that direction.
  */
 export function nextNodeInDirection(
-  model: FlowModel,
+  model: FlowGraphView,
   fromId: string,
   key: FlowArrowKey,
 ): string | undefined {
@@ -74,18 +90,27 @@ export const FLOW_SHORTCUTS: readonly FlowShortcutRow[] = [
     keys: 'Escape',
     description: 'Cancel the gesture, leave the node or clear the selection',
   },
-  { action: 'delete', keys: 'Delete, Backspace', description: 'Delete the selection' },
+  { action: 'enter-group', keys: ENTER_GROUP_KEYS, description: 'Open the focused group' },
+  {
+    action: 'exit-group',
+    keys: EXIT_GROUP_KEYS,
+    description: 'Return to the view the current group sits in',
+  },
+  { action: 'group', keys: GROUP_KEYS, description: 'Group the selection' },
+  { action: 'ungroup', keys: UNGROUP_KEYS, description: 'Ungroup the selected group' },
+  { action: 'collapse', keys: COLLAPSE_KEYS, description: 'Collapse or expand the focused group' },
+  { action: 'delete', keys: DELETE_KEYS.join(', '), description: 'Delete the selection' },
   { action: 'undo', keys: 'Mod+Z', description: 'Undo' },
   { action: 'redo', keys: 'Mod+Shift+Z', description: 'Redo' },
-  { action: 'copy', keys: 'Mod+C', description: 'Copy the selection' },
-  { action: 'cut', keys: 'Mod+X', description: 'Cut the selection' },
-  { action: 'paste', keys: 'Mod+V', description: 'Paste' },
-  { action: 'duplicate', keys: 'Mod+D', description: 'Duplicate the selection' },
-  { action: 'select-all', keys: 'Mod+A', description: 'Select everything' },
+  { action: 'copy', keys: COPY_KEYS, description: 'Copy the selection' },
+  { action: 'cut', keys: CUT_KEYS, description: 'Cut the selection' },
+  { action: 'paste', keys: PASTE_KEYS, description: 'Paste' },
+  { action: 'duplicate', keys: DUPLICATE_KEYS, description: 'Duplicate the selection' },
+  { action: 'select-all', keys: SELECT_ALL_KEYS, description: 'Select everything' },
   { action: 'zoom-in', keys: '+, =', description: 'Zoom in' },
-  { action: 'zoom-out', keys: '-', description: 'Zoom out' },
-  { action: 'fit', keys: '0', description: 'Fit the graph' },
-  { action: 'zoom-reset', keys: '1', description: 'Zoom to 100%' },
+  { action: 'zoom-out', keys: ZOOM_OUT_KEYS, description: 'Zoom out' },
+  { action: 'fit', keys: ZOOM_FIT_KEYS, description: 'Fit the graph' },
+  { action: 'zoom-reset', keys: ZOOM_RESET_KEYS, description: 'Zoom to 100%' },
   { action: 'tool-select', keys: 'V', description: 'Select tool' },
   { action: 'tool-pan', keys: 'H', description: 'Pan tool' },
   { action: 'edges', keys: 'E', description: 'Cycle the focused node’s edges' },

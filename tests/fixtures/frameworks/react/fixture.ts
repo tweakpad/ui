@@ -699,9 +699,13 @@ Object.assign(window, {
       if (!row) throw new Error(`No props row ${entry}`);
       return prop(row);
     },
-    async lane(entry: string): Promise<Result> {
-      const row = laneRows.find((candidate) => candidate.entry === entry);
-      if (!row) throw new Error(`No lane row ${entry}`);
+    /** Runs the entry's first lane row, or its row for `laneName` (Flow has two lanes). */
+    async lane(entry: string, laneName?: string): Promise<Result> {
+      const row = laneRows.find(
+        (candidate) =>
+          candidate.entry === entry && (laneName === undefined || candidate.lane === laneName),
+      );
+      if (!row) throw new Error(`No lane row ${entry} ${laneName ?? ''}`);
       return lane(row);
     },
     async runAll(): Promise<Result[]> {

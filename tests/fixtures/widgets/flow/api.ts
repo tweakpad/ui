@@ -4,6 +4,7 @@ import type {
   FlowDocument,
   FlowEdgeKind,
   FlowPoint,
+  FlowPortInstance,
   FlowRect,
 } from '../../../../src/foundation/flow/types.js';
 import { DEFAULT_NODE_SIZE_BY_SHAPE } from '../../../../src/foundation/flow/defaults.js';
@@ -3147,5 +3148,1277 @@ export async function assertPerformance(count = 1000, seconds = 2): Promise<Repo
       check('hosts bounded', domHosts <= target.visibleNodeIds.length + 64 + 60, domHosts),
     ],
     { p50, p95, idle, frames: frames.length, longTasks: longTasks.length },
+  );
+}
+
+// ---- groups: frames, collapsed cards, sub-views, commands, hit testing, budget ---------------
+
+/** The group surface of `tp-flow` these helpers drive: the path lane and the group commands. */
+interface GroupCommands {
+  path: readonly string[];
+  readOnly: boolean;
+  validate: boolean;
+  enterGroup(id: string): unknown;
+  exitGroup(): unknown;
+  groupSelection(options?: {
+    ids?: readonly string[];
+    type?: string;
+    label?: string;
+  }): string | undefined;
+  ungroup(id?: string): unknown;
+  toggleCollapsed(id: string, collapsed?: boolean): unknown;
+  moveToGroup(ids: readonly string[], groupId: string | null): unknown;
+  addGroupPort(groupId: string, port: FlowPortInstance): unknown;
+  updateGroupPort(groupId: string, portId: string, patch: Partial<FlowPortInstance>): unknown;
+  removeGroupPort(groupId: string, portId: string): unknown;
+}
+type GroupFlow = TpFlow & GroupCommands;
+
+interface GroupFixture {
+  samples: { groupsDocument: FlowDocument; groupsSchema: unknown };
+  events: readonly { type: string; target: string }[];
+  generateGrouped(count: number, groupSize?: number): Promise<void>;
+}
+
+/** The scope transition (viewport tween and layer fade) takes `--tp-duration-normal`. */
+const SCOPE_MOTION = 500;
+const groupFixture = () => (window as unknown as { flowAPI: GroupFixture }).flowAPI;
+const groupFlow = (id: string) => flow(id) as GroupFlow;
+const shadowPart = (element: Element | undefined, part: string): HTMLElement | null =>
+  element?.shadowRoot?.querySelector<HTMLElement>(`[part~="${part}"]`) ?? null;
+const shadowParts = (element: Element | undefined, part: string): HTMLElement[] => [
+  ...(element?.shadowRoot?.querySelectorAll<HTMLElement>(`[part~="${part}"]`) ?? []),
+];
+const isFrame = (item: TpFlowNode) =>
+  item.dataset['shape'] === 'group' && !item.hasAttribute('data-collapsed');
+const rendered = (target: TpFlow) =>
+  hosts(target)
+    .map((item) => item.nodeId)
+    .sort();
+const crossingEdges = (target: TpFlow) =>
+  target.model
+    .validate()
+    .filter((issue) => issue.code === 'boundary-crossing')
+    .map((issue) => issue.edgeId ?? '');
+
+/** Exits to the root, reloads the grouped sample, clears the selection and fits it. */
+async function resetGroups(id: string): Promise<GroupFlow> {
+  const target = groupFlow(id);
+  target.scrollIntoView({ block: 'center' });
+  target.readOnly = false;
+  for (let guard = 0; target.path.length > 0 && guard < 8; guard += 1) target.exitGroup();
+  target.load(structuredClone(groupFixture().samples.groupsDocument));
+  target.clearSelection();
+  await settle(target);
+  await target.fitViewTo({ duration: 0 });
+  await settle(target);
+  await wait(200);
+  return target;
+}
+
+/** Whether `node` sits inside `ancestor` in the composed tree (through shadow roots). */
+function composedWithin(node: Node | null, ancestor: Element): boolean {
+  let current: Node | null = node;
+  while (current) {
+    if (current === ancestor) return true;
+    current = current instanceof ShadowRoot ? current.host : current.parentNode;
+  }
+  return false;
+}
+
+/** The empty pane under a point: the pane itself or the background drawn on it. */
+function paneLike(element: Element | null): boolean {
+  if (!element) return false;
+  const owner = (element.getRootNode() as ShadowRoot).host;
+  return (
+    element.matches('.pane') ||
+    element.localName === 'tp-flow-background' ||
+    owner?.localName === 'tp-flow-background'
+  );
+}
+
+function describeElement(element: Element | null): string {
+  if (!element) return 'none';
+  const part = element.getAttribute('part');
+  const classes = [...element.classList].join('.');
+  return `${element.localName}${part ? `[${part}]` : ''}${classes ? `.${classes}` : ''}`;
+}
+
+/**
+ * Screen points inside an expanded frame below its header strip and clear of its border strips
+ * and of every rendered node that is not itself an expanded frame, each with the element a real
+ * pointer reaches there; `nested` marks points inside another expanded frame.
+ */
+function framePoints(
+  target: TpFlow,
+  groupId: string,
+  step = 12,
+): { point: FlowPoint; top: Element | null; nested: boolean }[] {
+  const frameHost = host(target, groupId);
+  if (!frameHost) return [];
+  const rect = frameHost.getBoundingClientRect();
+  const header = shadowPart(frameHost, 'flow-node-group-header')?.getBoundingClientRect();
+  const inset = 14;
+  const start = Math.max(rect.top + inset, (header?.bottom ?? rect.top) + 8);
+  const others = hosts(target).filter((item) => item !== frameHost);
+  const blockers = others
+    .filter((item) => !isFrame(item))
+    .map((item) => item.getBoundingClientRect());
+  const frames = others.filter(isFrame).map((item) => item.getBoundingClientRect());
+  const within = (box: DOMRect, x: number, y: number, margin: number) =>
+    x > box.left - margin &&
+    x < box.right + margin &&
+    y > box.top - margin &&
+    y < box.bottom + margin;
+  const points: { point: FlowPoint; top: Element | null; nested: boolean }[] = [];
+  for (let y = start; y < rect.bottom - inset; y += step)
+    for (let x = rect.left + inset; x < rect.right - inset; x += step) {
+      if (blockers.some((box) => within(box, x, y, 12))) continue;
+      points.push({
+        point: { x, y },
+        top: topAt({ x, y }),
+        nested: frames.some((box) => within(box, x, y, 12)),
+      });
+    }
+  return points;
+}
+
+/** `tp-path-change` events on one flow, with whether a listener before this one cancelled it. */
+function pathEvents(target: EventTarget) {
+  const events: {
+    value: readonly string[];
+    surface: unknown;
+    groupId: unknown;
+    prevented: boolean;
+  }[] = [];
+  const listener = (event: Event) => {
+    if (event.target !== target) return;
+    const detail = (
+      event as CustomEvent<{ value?: readonly string[]; metadata?: Record<string, unknown> }>
+    ).detail;
+    events.push({
+      value: [...(detail?.value ?? [])],
+      surface: detail?.metadata?.['surface'],
+      groupId: detail?.metadata?.['groupId'],
+      prevented: event.defaultPrevented,
+    });
+  };
+  target.addEventListener('tp-path-change', listener);
+  return { events, stop: () => target.removeEventListener('tp-path-change', listener) };
+}
+
+/**
+ * A double click at a point. A real one after a captured press targets the canvas, which
+ * hit-tests the point, so it is dispatched there.
+ */
+async function doublePressAt(target: TpFlow, point: FlowPoint): Promise<void> {
+  target.shadowRoot!.querySelector<HTMLElement>('.canvas')!.dispatchEvent(
+    new MouseEvent('dblclick', {
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+      clientX: point.x,
+      clientY: point.y,
+      detail: 2,
+    }),
+  );
+  await settle(target);
+  await wait(SCOPE_MOTION);
+}
+
+async function keyOn(target: TpFlow, element: Element, init: KeyboardEventInit): Promise<void> {
+  element.dispatchEvent(
+    new KeyboardEvent('keydown', { bubbles: true, composed: true, cancelable: true, ...init }),
+  );
+  await settle(target);
+  await wait(SCOPE_MOTION);
+}
+
+/** A document as a string with nodes and edges ordered by id and object keys sorted. */
+function canonical(document: FlowDocument): string {
+  const byId = (a: { id: string }, b: { id: string }) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  const sorted = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(sorted);
+    if (!value || typeof value !== 'object') return value;
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, item]) => item !== undefined)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([key, item]) => [key, sorted(item)]),
+    );
+  };
+  return JSON.stringify(
+    sorted({
+      ...document,
+      nodes: [...document.nodes].sort(byId),
+      edges: [...document.edges].sort(byId),
+    }),
+  );
+}
+
+/**
+ * Runs one group command and reads what it did: its result, the commits, the `group` change
+ * metadata, the document before and after and the edges still crossing a border.
+ */
+async function groupStep<T, R = undefined>(
+  target: GroupFlow,
+  run: () => T,
+  read?: () => R,
+): Promise<{
+  result: T;
+  commits: number;
+  group: { action?: string; groupId?: string } | undefined;
+  before: string;
+  document: string;
+  changed: boolean;
+  crossing: string[];
+  state: R | undefined;
+}> {
+  const before = canonical(target.toJSON());
+  const captured = capture(target, ['tp-value-change', 'tp-value-commit']);
+  const result = run();
+  await settle(target);
+  await wait(150);
+  captured.stop();
+  const document = canonical(target.toJSON());
+  return {
+    result,
+    commits: captured.events.filter((event) => event.type === 'tp-value-commit').length,
+    group: captured.events
+      .filter((event) => event.type === 'tp-value-change')
+      .map((event) => event.metadata?.['group'])
+      .find(Boolean) as { action?: string; groupId?: string } | undefined,
+    before,
+    document,
+    changed: document !== before,
+    crossing: crossingEdges(target),
+    state: read?.(),
+  };
+}
+
+/** Undoes `steps` entries and settles. */
+async function undoSteps(target: GroupFlow, steps: number): Promise<void> {
+  for (let index = 0; index < steps; index += 1) target.undo();
+  await settle(target);
+}
+
+/**
+ * Groups at rest on `#groups` (and its RTL twin): the expanded frame paints its header (label,
+ * member count, collapse Button) and four border strips, a nested frame its own; the collapsed
+ * group is an enclosed card with one row per port and no member hosts; the host states and the
+ * accessible names carry the state and the member count; the legacy edge that crosses a border is
+ * the `boundary-crossing` document issue, shown on the edge and in `problems` under `validate`.
+ */
+export async function assertGroups(id = 'groups'): Promise<Report> {
+  const target = await resetGroups(id);
+  const frameHost = host(target, 'cleanup');
+  const nested = host(target, 'noise');
+  const card = host(target, 'words');
+  const frame = {
+    shape: frameHost?.dataset['shape'],
+    collapsed: frameHost?.hasAttribute('data-collapsed'),
+    group: Boolean(shadowPart(frameHost, 'flow-node-group')),
+    header: Boolean(shadowPart(frameHost, 'flow-node-group-header')),
+    title: shadowPart(frameHost, 'flow-node-title')?.textContent?.trim(),
+    count: shadowPart(frameHost, 'flow-node-group-count')?.textContent?.trim(),
+    toggle: frameHost?.shadowRoot?.querySelector<HTMLElement>('.group-toggle')?.ariaLabel,
+    edges: shadowParts(frameHost, 'flow-node-group-edge').map((edge) => edge.dataset['edge']),
+    nestedHeader: Boolean(shadowPart(nested, 'flow-node-group-header')),
+    nestedCount: shadowPart(nested, 'flow-node-group-count')?.textContent?.trim(),
+  };
+  const collapsed = {
+    host: card?.hasAttribute('data-collapsed'),
+    card: Boolean(card?.shadowRoot?.querySelector('tp-card[data-collapsed]')),
+    header: Boolean(shadowPart(card, 'flow-node-group-header')),
+    count: shadowPart(card, 'flow-node-group-count')?.textContent?.trim(),
+    rows: shadowParts(card, 'flow-node-row').length,
+    ports: [...(card?.shadowRoot?.querySelectorAll<TpFlowPort>('tp-flow-port') ?? [])].map(
+      (item) => item.portId,
+    ),
+    member: Boolean(host(target, 'stt')),
+    visible: target.visibleNodeIds.includes('stt'),
+  };
+  const states = {
+    collapsed: hosts(target)
+      .filter((item) => item.hasAttribute('data-collapsed'))
+      .map((item) => item.nodeId),
+    terminals: hosts(target).filter((item) => item.hasAttribute('data-terminal')).length,
+    dropTargets: hosts(target).filter((item) => item.hasAttribute('data-drop-target')).length,
+  };
+  const names = {
+    frame: frameHost?.getAttribute('aria-label') ?? '',
+    card: card?.getAttribute('aria-label') ?? '',
+    roles: [frameHost, card].map((item) => item?.getAttribute('aria-roledescription')),
+  };
+  // The legacy edge crossing a border: an engine issue, shown once `validate` is on.
+  const engine = crossingEdges(target);
+  const issues = capture(target, ['tp-issues-change']);
+  const validating = target.validate;
+  target.validate = true;
+  await settle(target);
+  await wait(100);
+  const shown = {
+    problems: target.problems
+      .filter((issue) => issue.code === 'boundary-crossing')
+      .map((issue) => `${issue.severity}:${issue.edgeId}`),
+    edge:
+      target
+        .shadowRoot!.querySelector('[part~="flow-edge"][data-edge="e-legacy-cross"]')
+        ?.getAttribute('data-issue') ?? null,
+    events: issues.events.length,
+  };
+  target.validate = validating;
+  await settle(target);
+  issues.stop();
+  // The RTL twin.
+  const rtl = groupFlow('groups-rtl');
+  const mirrored = {
+    direction: getComputedStyle(rtl).direction,
+    header: Boolean(shadowPart(host(rtl, 'cleanup'), 'flow-node-group-header')),
+    collapsed: Boolean(host(rtl, 'words')?.hasAttribute('data-collapsed')),
+    member: Boolean(host(rtl, 'stt')),
+  };
+  return report(
+    [
+      check(
+        'the expanded frame renders its header (title, member count, collapse Button) and four border strips',
+        frame.shape === 'group' &&
+          !frame.collapsed &&
+          frame.group &&
+          frame.header &&
+          frame.title === 'Audio cleanup' &&
+          frame.count === '2' &&
+          Boolean(frame.toggle) &&
+          frame.edges.length === 4,
+        frame,
+      ),
+      check(
+        'a nested expanded group renders its own frame and count',
+        frame.nestedHeader && frame.nestedCount === '2',
+        frame,
+      ),
+      check(
+        'the collapsed group is a card with one row per port and no member hosts',
+        Boolean(collapsed.host) &&
+          collapsed.card &&
+          collapsed.header &&
+          collapsed.count === '1' &&
+          collapsed.rows === 3 &&
+          collapsed.ports.length === 3 &&
+          !collapsed.member &&
+          !collapsed.visible,
+        collapsed,
+      ),
+      check(
+        'host states: data-collapsed on the collapsed group only, no terminal or drop target at the root',
+        states.collapsed.join() === 'words' && states.terminals === 0 && states.dropTargets === 0,
+        states,
+      ),
+      check(
+        'accessible names carry the expanded or collapsed state and the member count',
+        names.frame.includes('expanded') &&
+          names.frame.includes('members: 2') &&
+          names.card.includes('collapsed') &&
+          names.card.includes('members: 1') &&
+          names.roles.every((role) => role === 'node'),
+        names,
+      ),
+      check(
+        'the legacy crossing edge is the only boundary-crossing document issue',
+        engine.join() === 'e-legacy-cross',
+        engine,
+      ),
+      check(
+        'under validate the issue reaches problems, the edge and tp-issues-change',
+        shown.problems.join() === 'error:e-legacy-cross' &&
+          shown.edge === 'error' &&
+          shown.events >= 1,
+        shown,
+      ),
+      check(
+        'the RTL twin renders the frame and the collapsed card',
+        mirrored.direction === 'rtl' && mirrored.header && mirrored.collapsed && !mirrored.member,
+        mirrored,
+      ),
+    ],
+    { rendered: rendered(target) },
+  );
+}
+
+/**
+ * Sub-view navigation on `#groups`: `enterGroup` (one `tp-path-change` from `api`; only the
+ * group's members and its two terminals render; the header shows the path Breadcrumb), a nested
+ * group, crumbs back to a parent and to the root, `exitGroup` (the group keeps its screen place,
+ * selected and focused), Escape (dispatched on the canvas: first the selection, then one level),
+ * Alt+ArrowDown / Alt+ArrowUp, a double click on the header, the interior and a collapsed card
+ * (dispatched at the canvas, where the captured press retargets the real one), a controlled
+ * `path` on a dynamic instance (a cancelled change keeps the scope, an owner write moves it) and
+ * truncation after a document change removes a group on the path.
+ */
+export async function assertGroupNavigation(id = 'groups'): Promise<Report> {
+  const target = await resetGroups(id);
+  const fixture = groupFixture();
+  const root = target.shadowRoot!;
+  const canvas = root.querySelector<HTMLElement>('.canvas')!;
+  const crumbs = () => [
+    ...(root
+      .querySelector('[part~="flow-breadcrumb"]')
+      ?.querySelectorAll<HTMLElement>('[data-group]') ?? []),
+  ];
+  const headerHidden = () => root.querySelector<HTMLElement>('.header')?.hidden ?? true;
+  const screenOf = (nodeId: string) => {
+    const box = host(target, nodeId)?.getBoundingClientRect();
+    return box ? { x: Math.round(box.left), y: Math.round(box.top) } : null;
+  };
+  const recorded = pathEvents(target);
+  const globalBefore = fixture.events.filter(
+    (event) => event.type === 'tp-path-change' && event.target === id,
+  ).length;
+  const rootScreen = screenOf('cleanup');
+
+  // enterGroup from code.
+  target.enterGroup('cleanup');
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const entered = {
+    path: [...target.path],
+    event: recorded.events[0],
+    global:
+      fixture.events.filter((event) => event.type === 'tp-path-change' && event.target === id)
+        .length - globalBefore,
+    rendered: rendered(target),
+    terminals: hosts(target)
+      .filter((item) => item.hasAttribute('data-terminal'))
+      .map((item) => item.dataset['terminal'])
+      .sort(),
+    terminalParts: hosts(target)
+      .filter((item) => item.hasAttribute('data-terminal'))
+      .map(
+        (item) =>
+          Boolean(shadowPart(item, 'flow-node-terminal')) &&
+          Boolean(shadowPart(item, 'flow-node-terminal-add')),
+      ),
+    crumbs: crumbs().map((crumb) => crumb.dataset['group']),
+    links: crumbs().filter((crumb) => crumb.localName === 'a').length,
+    header: !headerHidden(),
+    selection: target.selection.nodes.length,
+  };
+
+  // A nested group.
+  target.enterGroup('noise');
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const nested = {
+    path: [...target.path],
+    rendered: rendered(target),
+    crumbs: crumbs().map((crumb) => crumb.dataset['group']),
+  };
+
+  // Crumbs: the parent, then the root.
+  const crumbStart = recorded.events.length;
+  crumbs()
+    .find((crumb) => crumb.dataset['group'] === 'cleanup')
+    ?.click();
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const toParent = [...target.path];
+  crumbs()
+    .find((crumb) => crumb.dataset['group'] === '')
+    ?.click();
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const toRoot = {
+    path: [...target.path],
+    headerHidden: headerHidden(),
+    surfaces: recorded.events.slice(crumbStart).map((event) => event.surface),
+  };
+
+  // exitGroup: the root view comes back, the group selected and focused.
+  target.enterGroup('cleanup');
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  target.exitGroup();
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const exited = {
+    path: [...target.path],
+    screen: screenOf('cleanup'),
+    rootScreen,
+    focused: target.focusedNodeId,
+    selection: [...target.selection.nodes],
+  };
+
+  // Escape: first the selection, then one level.
+  target.enterGroup('cleanup');
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  target.select({ nodes: ['level'], edges: [] });
+  await settle(target);
+  await keyOn(target, canvas, { key: 'Escape', code: 'Escape' });
+  const firstEscape = { path: [...target.path], selection: target.selection.nodes.length };
+  const escapeStart = recorded.events.length;
+  await keyOn(target, canvas, { key: 'Escape', code: 'Escape' });
+  const secondEscape = {
+    path: [...target.path],
+    surface: recorded.events[escapeStart]?.surface,
+  };
+
+  // Alt+ArrowDown on the focused group, Alt+ArrowUp on the canvas.
+  await target.focusNode('cleanup');
+  await settle(target);
+  const altStart = recorded.events.length;
+  await keyOn(target, host(target, 'cleanup') ?? canvas, {
+    key: 'ArrowDown',
+    code: 'ArrowDown',
+    altKey: true,
+  });
+  const altDown = [...target.path];
+  await keyOn(target, canvas, { key: 'ArrowUp', code: 'ArrowUp', altKey: true });
+  const alt = {
+    down: altDown,
+    up: [...target.path],
+    surfaces: recorded.events.slice(altStart).map((event) => event.surface),
+  };
+
+  // Double click: the frame header, the frame interior, the collapsed card.
+  const doubleStart = recorded.events.length;
+  const header = shadowPart(host(target, 'cleanup'), 'flow-node-group-header');
+  if (header) await doublePressAt(target, center(header));
+  const byHeader = [...target.path];
+  target.exitGroup();
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const interior = framePoints(target, 'cleanup').find(
+    (sample) => !sample.nested && paneLike(sample.top),
+  )?.point;
+  if (interior) await doublePressAt(target, interior);
+  const byInterior = [...target.path];
+  target.exitGroup();
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const cardTitle = shadowPart(host(target, 'words'), 'flow-node-title');
+  if (cardTitle) await doublePressAt(target, center(cardTitle));
+  const byCard = [...target.path];
+  target.exitGroup();
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const doubled = {
+    byHeader,
+    byInterior,
+    interior,
+    byCard,
+    surfaces: recorded.events
+      .slice(doubleStart)
+      .filter((event) => event.value.length > 0)
+      .map((event) => event.surface),
+  };
+
+  // A controlled path on a dynamic instance: its value is fixed when it connects.
+  const controlled = document.createElement('tp-flow') as unknown as GroupFlow;
+  controlled.setAttribute('label', 'Controlled path');
+  controlled.style.cssText = 'display:block;inline-size:720px;block-size:480px';
+  (controlled as unknown as { schema: unknown }).schema = fixture.samples.groupsSchema;
+  (controlled as unknown as { icons: unknown }).icons = (
+    target as unknown as { icons: unknown }
+  ).icons;
+  controlled.path = [];
+  let accept = false;
+  controlled.addEventListener('tp-path-change', (event) => {
+    if (!accept) {
+      event.preventDefault();
+      return;
+    }
+    controlled.path = (event as CustomEvent<{ value: readonly string[] }>).detail.value;
+  });
+  const owned = pathEvents(controlled);
+  document.getElementById('dynamic')!.append(controlled as unknown as Node);
+  controlled.load(structuredClone(fixture.samples.groupsDocument));
+  await settle(controlled);
+  await wait(200);
+  controlled.enterGroup('cleanup');
+  await settle(controlled);
+  await wait(SCOPE_MOTION);
+  const vetoed = {
+    path: [...controlled.path],
+    prevented: owned.events.at(-1)?.prevented,
+    rootNode: Boolean(host(controlled, 'rec')),
+  };
+  accept = true;
+  controlled.enterGroup('cleanup');
+  await settle(controlled);
+  await wait(SCOPE_MOTION);
+  const accepted = [...controlled.path];
+  controlled.path = ['cleanup', 'noise'];
+  await settle(controlled);
+  await wait(SCOPE_MOTION);
+  const written = {
+    path: [...controlled.path],
+    gate: Boolean(host(controlled, 'gate')),
+    level: Boolean(host(controlled, 'level')),
+  };
+  owned.stop();
+  controlled.remove();
+
+  // Truncation: a document change removes a group on the path.
+  target.enterGroup('cleanup');
+  await settle(target);
+  target.enterGroup('noise');
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const deletedNoise = target.deleteElements({ nodes: ['noise'] }, 'imperative-action');
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const cutNoise = [...target.path];
+  target.undo();
+  await settle(target);
+  const afterUndo = [...target.path];
+  target.enterGroup('noise');
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const deletedCleanup = target.deleteElements({ nodes: ['cleanup'] }, 'imperative-action');
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const cutCleanup = [...target.path];
+  const truncated = { deletedNoise, cutNoise, afterUndo, deletedCleanup, cutCleanup };
+  recorded.stop();
+  await resetGroups(id);
+
+  const same = (a: readonly unknown[], b: readonly unknown[]) =>
+    a.length === b.length && a.every((item, index) => item === b[index]);
+  return report(
+    [
+      check(
+        'enterGroup enters the group with one tp-path-change from the api, recorded by the fixture',
+        same(entered.path, ['cleanup']) &&
+          same(entered.event?.value ?? [], ['cleanup']) &&
+          entered.event?.surface === 'api' &&
+          entered.event?.groupId === 'cleanup' &&
+          entered.global >= 1,
+        entered,
+      ),
+      check(
+        "inside, only the group's members and its Inputs and Outputs terminals render",
+        same(entered.rendered, [
+          'cleanup#inputs',
+          'cleanup#outputs',
+          'denoise',
+          'gate',
+          'level',
+          'noise',
+        ]) &&
+          same(entered.terminals, ['inputs', 'outputs']) &&
+          entered.terminalParts.every(Boolean),
+        entered,
+      ),
+      check(
+        'the header shows the path Breadcrumb and entering cleared the selection',
+        same(entered.crumbs, ['', 'cleanup']) &&
+          entered.links === 1 &&
+          entered.header &&
+          entered.selection === 0,
+        entered,
+      ),
+      check(
+        'entering a nested group extends the path',
+        same(nested.path, ['cleanup', 'noise']) &&
+          same(nested.rendered, ['denoise', 'gate', 'noise#inputs', 'noise#outputs']) &&
+          same(nested.crumbs, ['', 'cleanup', 'noise']),
+        nested,
+      ),
+      check(
+        'crumbs navigate to their group and to the root, then the header hides',
+        same(toParent, ['cleanup']) &&
+          same(toRoot.path, []) &&
+          toRoot.headerHidden &&
+          toRoot.surfaces.every((surface) => surface === 'breadcrumb'),
+        { toParent, toRoot },
+      ),
+      check(
+        'exitGroup restores the root view and selects and focuses the group',
+        same(exited.path, []) &&
+          exited.focused === 'cleanup' &&
+          same(exited.selection, ['cleanup']) &&
+          Boolean(exited.screen && exited.rootScreen) &&
+          Math.abs(exited.screen!.x - exited.rootScreen!.x) <= 2 &&
+          Math.abs(exited.screen!.y - exited.rootScreen!.y) <= 2,
+        exited,
+      ),
+      check(
+        'Escape clears the selection first, then exits one level (dispatched keydown)',
+        same(firstEscape.path, ['cleanup']) &&
+          firstEscape.selection === 0 &&
+          same(secondEscape.path, []) &&
+          secondEscape.surface === 'keyboard',
+        { firstEscape, secondEscape },
+      ),
+      check(
+        'Alt+ArrowDown enters the focused group and Alt+ArrowUp exits (dispatched keydown)',
+        same(alt.down, ['cleanup']) &&
+          same(alt.up, []) &&
+          alt.surfaces.length === 2 &&
+          alt.surfaces.every((surface) => surface === 'keyboard'),
+        alt,
+      ),
+      check(
+        'a double click enters from the frame header, the frame interior and the collapsed card',
+        same(doubled.byHeader, ['cleanup']) &&
+          same(doubled.byInterior, ['cleanup']) &&
+          same(doubled.byCard, ['words']) &&
+          doubled.surfaces.length === 3 &&
+          doubled.surfaces.every((surface) => surface === 'node'),
+        doubled,
+      ),
+      check(
+        'a controlled path: a cancelled change keeps the scope, the owner write moves it',
+        same(vetoed.path, []) &&
+          vetoed.prevented === true &&
+          vetoed.rootNode &&
+          same(accepted, ['cleanup']) &&
+          same(written.path, ['cleanup', 'noise']) &&
+          written.gate &&
+          !written.level,
+        { vetoed, accepted, written },
+      ),
+      check(
+        'the path truncates to the nearest surviving group after a document change',
+        deletedNoise &&
+          same(cutNoise, ['cleanup']) &&
+          same(afterUndo, ['cleanup']) &&
+          deletedCleanup &&
+          same(cutCleanup, []),
+        truncated,
+      ),
+    ],
+    {
+      events: recorded.events,
+      note: 'Escape and Alt+Arrow are dispatched keydown events; confirm the real keys with MCP press_key on the focused canvas.',
+    },
+  );
+}
+
+/**
+ * Group commands on `#groups`, each one history entry with `group` change metadata: Group
+ * selection inside Noise reduction (ports created, the edges across the new border rewired, the
+ * member segment keeping its id), undo to the exact document and redo, Ungroup and back,
+ * collapse and expand (method and the C key), port add, rename and remove (removal deletes the
+ * edges on both sides), Move out of group to the root; no step leaves a crossing edge besides the
+ * legacy one; read-only and view mode refuse every command while navigation still works.
+ */
+export async function assertGroupEditing(id = 'groups'): Promise<Report> {
+  const target = await resetGroups(id);
+  const start = canonical(target.toJSON());
+  const nodeOf = (nodeId: string) => target.model.getNode(nodeId);
+  const edgeOf = (edgeId: string) => target.model.getEdge(edgeId);
+  const portsOf = (nodeId: string) =>
+    (nodeOf(nodeId)?.ports ?? []).map((item) => `${item.direction}:${item.id}:${item.label}`);
+  const crossing: Record<string, string[]> = {};
+
+  // Group selection inside Noise reduction.
+  target.select({ nodes: ['gate', 'denoise'], edges: [] });
+  await settle(target);
+  const grouped = await groupStep(target, () => target.groupSelection());
+  crossing['group'] = grouped.crossing;
+  const groupId = grouped.result;
+  const created = groupId ? nodeOf(groupId) : undefined;
+  const wrap = {
+    groupId,
+    parent: created?.parentId,
+    members: ['gate', 'denoise'].map((nodeId) => nodeOf(nodeId)?.parentId),
+    ports: (created?.ports ?? []).map((item) => `${item.direction}:${item.id}`),
+    kept: [edgeOf('e-noise-gate')?.source, edgeOf('e-noise-gate')?.target],
+    outer: target.edges.some((edge) => edge.source === 'noise' && edge.target === groupId),
+    inner: edgeOf('e-gate-denoise')
+      ? [edgeOf('e-gate-denoise')!.source, edgeOf('e-gate-denoise')!.target]
+      : null,
+    commits: grouped.commits,
+    metadata: grouped.group,
+  };
+  target.undo();
+  await settle(target);
+  const undone = canonical(target.toJSON());
+  target.redo();
+  await settle(target);
+  const redone = canonical(target.toJSON());
+
+  // Ungroup merges the ports back; two undos return to the start.
+  const ungrouped = await groupStep(
+    target,
+    () => target.ungroup(groupId),
+    () => ({
+      exists: groupId ? Boolean(nodeOf(groupId)) : null,
+      members: ['gate', 'denoise'].map((nodeId) => nodeOf(nodeId)?.parentId),
+      inner: target.edges.some(
+        (edge) => edge.source === 'noise' && edge.sourcePort === 'in' && edge.target === 'gate',
+      ),
+      outer: target.edges.some(
+        (edge) => edge.source === 'denoise' && edge.target === 'noise' && edge.targetPort === 'out',
+      ),
+    }),
+  );
+  crossing['ungroup'] = ungrouped.crossing;
+  target.undo();
+  await settle(target);
+  const backToGrouped = canonical(target.toJSON()) === redone;
+  target.undo();
+  await settle(target);
+  const backToStart = canonical(target.toJSON()) === start;
+
+  // Collapse and expand: the method both ways, then C on the focused group.
+  const collapseState = () => ({
+    words: nodeOf('words')?.collapsed ?? false,
+    host: Boolean(host(target, 'words')?.hasAttribute('data-collapsed')),
+    member: Boolean(host(target, 'stt')),
+  });
+  const expanded = await groupStep(target, () => target.toggleCollapsed('words'), collapseState);
+  crossing['expand'] = expanded.crossing;
+  const collapsedAgain = await groupStep(
+    target,
+    () => target.toggleCollapsed('words', true),
+    collapseState,
+  );
+  crossing['collapse'] = collapsedAgain.crossing;
+  await target.focusNode('cleanup');
+  await settle(target);
+  const keyed = await groupStep(
+    target,
+    () =>
+      host(target, 'cleanup')?.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'c',
+          code: 'KeyC',
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+        }),
+      ),
+    () => nodeOf('cleanup')?.collapsed ?? false,
+  );
+  await undoSteps(target, [expanded, collapsedAgain, keyed].filter((step) => step.changed).length);
+  const collapseRestored = canonical(target.toJSON()) === start;
+
+  // Group ports: add, rename, remove (removal deletes the edges on both sides).
+  const rawEdges = target.edges
+    .filter(
+      (edge) =>
+        (edge.target === 'cleanup' && edge.targetPort === 'raw') ||
+        (edge.source === 'cleanup' && edge.sourcePort === 'raw'),
+    )
+    .map((edge) => edge.id);
+  const added = await groupStep(
+    target,
+    () =>
+      target.addGroupPort('cleanup', {
+        id: 'sidechain',
+        label: 'Sidechain',
+        direction: 'input',
+        dataType: 'audio',
+      }),
+    () => portsOf('cleanup'),
+  );
+  const renamed = await groupStep(
+    target,
+    () => target.updateGroupPort('cleanup', 'sidechain', { label: 'Key input' }),
+    () => portsOf('cleanup'),
+  );
+  const removed = await groupStep(
+    target,
+    () => target.removeGroupPort('cleanup', 'raw'),
+    () => ({
+      ports: portsOf('cleanup'),
+      remaining: rawEdges.filter((edgeId) => Boolean(edgeOf(edgeId))),
+    }),
+  );
+  crossing['ports'] = removed.crossing;
+  await undoSteps(target, [added, renamed, removed].filter((step) => step.changed).length);
+  const portsRestored = canonical(target.toJSON()) === start;
+
+  // Move out of group to the root: the absolute position stays, the edges run through ports.
+  const absoluteBefore = target.model.absolutePosition('level');
+  const moved = await groupStep(
+    target,
+    () => target.moveToGroup(['level'], null),
+    () => ({
+      parent: nodeOf('level')?.parentId ?? null,
+      absolute: target.model.absolutePosition('level'),
+      kept: [edgeOf('e-noise-level')?.source, edgeOf('e-noise-level')?.target],
+    }),
+  );
+  crossing['move'] = moved.crossing;
+  await undoSteps(target, moved.changed ? 1 : 0);
+  const moveRestored = canonical(target.toJSON()) === start;
+
+  // Read-only refuses every command; navigation still works.
+  target.readOnly = true;
+  await settle(target);
+  const frozen = canonical(target.toJSON());
+  target.select({ nodes: ['gate', 'denoise'], edges: [] });
+  await settle(target);
+  const refusedGroup = target.groupSelection();
+  target.ungroup('noise');
+  target.toggleCollapsed('words');
+  target.moveToGroup(['level'], null);
+  target.addGroupPort('cleanup', { id: 'refused', label: 'Refused', direction: 'input' });
+  target.updateGroupPort('cleanup', 'raw', { label: 'Refused' });
+  target.removeGroupPort('cleanup', 'raw');
+  await settle(target);
+  const readOnlyUnchanged = canonical(target.toJSON()) === frozen;
+  target.clearSelection();
+  target.enterGroup('cleanup');
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  const readOnlyPath = [...target.path];
+  target.exitGroup();
+  await settle(target);
+  await wait(SCOPE_MOTION);
+  target.readOnly = false;
+  target.clearSelection();
+  await settle(target);
+  // View mode (`#view`) refuses grouping too.
+  const view = groupFlow('view');
+  const viewBefore = canonical(view.toJSON());
+  view.select({ nodes: view.nodes.slice(0, 2).map((node) => node.id), edges: [] });
+  await settle(view);
+  const viewGroup = view.groupSelection();
+  await settle(view);
+  const viewUnchanged = canonical(view.toJSON()) === viewBefore;
+  view.clearSelection();
+  await resetGroups(id);
+
+  const legacyOnly = Object.values(crossing).every((list) =>
+    list.every((edgeId) => edgeId === 'e-legacy-cross'),
+  );
+  return report(
+    [
+      check(
+        'groupSelection wraps the selected siblings in a new group inside their parent',
+        typeof groupId === 'string' &&
+          wrap.parent === 'noise' &&
+          wrap.members.every((parent) => parent === groupId) &&
+          wrap.ports.some((item) => item.startsWith('input:')) &&
+          wrap.ports.some((item) => item.startsWith('output:')),
+        wrap,
+      ),
+      check(
+        'edges across the new border run through its ports; the member segment keeps its id',
+        wrap.kept[0] === groupId &&
+          wrap.kept[1] === 'gate' &&
+          wrap.outer &&
+          wrap.inner?.[0] === 'gate',
+        wrap,
+      ),
+      check(
+        'grouping is one history entry with group metadata',
+        grouped.commits === 1 &&
+          grouped.group?.action === 'group' &&
+          grouped.group?.groupId === groupId,
+        { commits: grouped.commits, metadata: grouped.group },
+      ),
+      check(
+        'undo restores the exact document and redo reapplies the grouping',
+        undone === start && redone === grouped.document,
+        { undone: undone === start, redone: redone === grouped.document },
+      ),
+      check(
+        'ungroup merges the ports back into plain edges in one entry; undo returns to the start',
+        ungrouped.commits === 1 &&
+          ungrouped.group?.action === 'ungroup' &&
+          ungrouped.state?.exists === false &&
+          Boolean(ungrouped.state?.members.every((parent) => parent === 'noise')) &&
+          Boolean(ungrouped.state?.inner) &&
+          Boolean(ungrouped.state?.outer) &&
+          backToGrouped &&
+          backToStart,
+        { state: ungrouped.state, metadata: ungrouped.group, backToGrouped, backToStart },
+      ),
+      check(
+        'toggleCollapsed expands and collapses in one entry each, and C toggles the focused group',
+        expanded.commits === 1 &&
+          expanded.group?.action === 'expand' &&
+          expanded.state?.words === false &&
+          expanded.state?.host === false &&
+          expanded.state?.member === true &&
+          collapsedAgain.commits === 1 &&
+          collapsedAgain.group?.action === 'collapse' &&
+          collapsedAgain.state?.words === true &&
+          collapsedAgain.state?.host === true &&
+          keyed.state === true &&
+          collapseRestored,
+        {
+          expanded: [expanded.state, expanded.group],
+          collapsed: [collapsedAgain.state, collapsedAgain.group],
+          key: keyed.state,
+          collapseRestored,
+        },
+      ),
+      check(
+        'group ports: add, rename and remove in one entry each; removal deletes both sides',
+        [added, renamed, removed].every(
+          (step) => step.commits === 1 && step.group?.action === 'port',
+        ) &&
+          Boolean(added.state?.includes('input:sidechain:Sidechain')) &&
+          Boolean(renamed.state?.includes('input:sidechain:Key input')) &&
+          rawEdges.length === 2 &&
+          !removed.state?.ports.some((item) => item.startsWith('input:raw:')) &&
+          removed.state?.remaining.length === 0 &&
+          portsRestored,
+        {
+          added: added.state,
+          renamed: renamed.state,
+          removed: removed.state,
+          rawEdges,
+          portsRestored,
+        },
+      ),
+      check(
+        'moveToGroup(ids, null) keeps the absolute position and rewires through ports',
+        moved.commits === 1 &&
+          moved.group?.action === 'reparent' &&
+          moved.state?.parent === null &&
+          Boolean(absoluteBefore && moved.state?.absolute) &&
+          Math.abs(absoluteBefore!.x - moved.state!.absolute!.x) < 0.5 &&
+          Math.abs(absoluteBefore!.y - moved.state!.absolute!.y) < 0.5 &&
+          moved.state?.kept[1] === 'level' &&
+          moveRestored,
+        { state: moved.state, absoluteBefore, metadata: moved.group, moveRestored },
+      ),
+      check('no step leaves a boundary-crossing edge besides the legacy one', legacyOnly, crossing),
+      check(
+        'read-only refuses every group command and still navigates',
+        refusedGroup === undefined && readOnlyUnchanged && readOnlyPath.join() === 'cleanup',
+        { refusedGroup, readOnlyUnchanged, readOnlyPath },
+      ),
+      check('view mode refuses grouping', viewGroup === undefined && viewUnchanged, {
+        viewGroup,
+        viewUnchanged,
+      }),
+    ],
+    { groupId },
+  );
+}
+
+/**
+ * Hit testing through expanded frames on `#groups`: a real pointer inside the frame, away from
+ * the members, the header and the border strips, reaches the pane or an edge, never the group
+ * host; the header strip and a border strip reach the group; the middle of an inner edge's path
+ * reaches that edge.
+ */
+export async function assertGroupHitTesting(id = 'groups'): Promise<Report> {
+  const target = await resetGroups(id);
+  const frameHost = host(target, 'cleanup')!;
+  const samples = framePoints(target, 'cleanup');
+  const tally: Record<string, number> = {};
+  for (const sample of samples) {
+    const name = describeElement(sample.top);
+    tally[name] = (tally[name] ?? 0) + 1;
+  }
+  const interior = {
+    points: samples.length,
+    group: samples.filter((sample) => composedWithin(sample.top, frameHost)).length,
+    pane: samples.filter((sample) => paneLike(sample.top)).length,
+    tally,
+  };
+  const header = shadowPart(frameHost, 'flow-node-group-header');
+  const headerTop = header ? topAt(center(header)) : null;
+  const strip = shadowParts(frameHost, 'flow-node-group-edge').find(
+    (edge) => edge.dataset['edge'] === 'bottom',
+  );
+  const stripTop = strip ? topAt(center(strip)) : null;
+  const press = {
+    header: describeElement(headerTop),
+    headerInGroup: composedWithin(headerTop, frameHost),
+    strip: describeElement(stripTop),
+    stripInGroup: composedWithin(stripTop, frameHost),
+  };
+  const inner = [
+    'e-gate-denoise',
+    'e-noise-gate',
+    'e-denoise-noise',
+    'e-noise-level',
+    'e-cleanup-noise',
+    'e-level-cleanup',
+  ].map((edgeId) => {
+    const path = target.shadowRoot!.querySelector<SVGPathElement>(
+      `[part~="flow-edge-hit"][data-edge="${edgeId}"]`,
+    );
+    const matrix = path?.getScreenCTM();
+    if (!path || !matrix) return { edgeId, rendered: false, covered: false, hit: null };
+    // A quarter along the path: the midpoint holds the edge's own insert Button.
+    const middle = path.getPointAtLength(path.getTotalLength() / 4);
+    const screen = new DOMPoint(middle.x, middle.y).matrixTransform(matrix);
+    const point = { x: screen.x, y: screen.y };
+    const covered = hosts(target).some((item) => {
+      if (isFrame(item)) return false;
+      const box = item.getBoundingClientRect();
+      return (
+        point.x >= box.left && point.x <= box.right && point.y >= box.top && point.y <= box.bottom
+      );
+    });
+    const top = topAt(point);
+    return {
+      edgeId,
+      rendered: true,
+      covered,
+      hit: top?.closest('[data-edge]')?.getAttribute('data-edge') ?? describeElement(top),
+    };
+  });
+  const clear = inner.filter((item) => item.rendered && !item.covered);
+  return report(
+    [
+      check(
+        'inside an expanded frame, away from members, header and strips, a press reaches the pane or an edge',
+        interior.points > 0 && interior.group === 0 && interior.pane > 0,
+        interior,
+      ),
+      check(
+        'the header strip and a border strip take presses for the group',
+        press.headerInGroup && press.stripInGroup,
+        press,
+      ),
+      check(
+        'a point along an inner edge path reaches that edge',
+        clear.length > 0 && clear.every((item) => item.hit === item.edgeId),
+        inner,
+      ),
+    ],
+    { inner },
+  );
+}
+
+/** The display's own frame interval: the median of 30 idle animation frames. */
+async function idleFrameInterval(): Promise<number> {
+  const intervals: number[] = [];
+  await new Promise<void>((resolve) => {
+    let previous = performance.now();
+    const tick = () => {
+      const now = performance.now();
+      intervals.push(now - previous);
+      previous = now;
+      if (intervals.length < 31) requestAnimationFrame(tick);
+      else resolve();
+    };
+    requestAnimationFrame(tick);
+  });
+  intervals.shift();
+  return [...intervals].sort((a, b) => a - b)[Math.floor(intervals.length / 2)] ?? 16.7;
+}
+
+/** A scripted rAF pan from the current viewport, with its frame times and long tasks. */
+async function panFrames(target: TpFlow, seconds: number) {
+  const frames: number[] = [];
+  const longTasks: number[] = [];
+  const observer = new PerformanceObserver((list) =>
+    longTasks.push(...list.getEntries().map((entry) => entry.duration)),
+  );
+  observer.observe({ type: 'longtask' });
+  const origin = { ...target.viewport };
+  let offset = 0;
+  let last = performance.now();
+  await new Promise<void>((resolve) => {
+    const start = performance.now();
+    const step = () => {
+      const now = performance.now();
+      frames.push(now - last);
+      last = now;
+      offset -= 24;
+      void target.setViewport(
+        { x: origin.x + offset, y: origin.y + offset * 0.3, zoom: origin.zoom },
+        { duration: 0 },
+      );
+      if (now - start < seconds * 1000) requestAnimationFrame(step);
+      else resolve();
+    };
+    requestAnimationFrame(step);
+  });
+  observer.disconnect();
+  frames.shift();
+  const sorted = [...frames].sort((a, b) => a - b);
+  return {
+    p50: sorted[Math.floor(sorted.length * 0.5)] ?? 0,
+    p95: sorted[Math.floor(sorted.length * 0.95)] ?? 0,
+    frames: frames.length,
+    longTasks: longTasks.filter((duration) => duration > 50),
+    hosts: hosts(target).length,
+    visible: target.visibleNodeIds.length,
+  };
+}
+
+/**
+ * The grouped frame budget on `#large`: `generateGrouped(count)` (groups of 20), then a scripted
+ * pan at the root, inside one stage after `enterGroup` and back at the root after `exitGroup`,
+ * each with the method and budget of `assertPerformance` (p95 within a quarter frame of the
+ * display's idle interval, no long task); the large document is unloaded afterwards.
+ */
+export async function assertGroupPerformance(count = 1000, seconds = 2): Promise<Report> {
+  const target = groupFlow('large');
+  await groupFixture().generateGrouped(count);
+  await settle(target);
+  await target.setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 0 });
+  await wait(500);
+  const idle = await idleFrameInterval();
+  const atRoot = await panFrames(target, seconds);
+  const stage = `g${Math.floor(Math.ceil(count / 20) / 2)}`;
+  target.enterGroup(stage);
+  await settle(target);
+  await wait(SCOPE_MOTION + 300);
+  // Entering fits the stage: its 20 members and its two terminals are the materialized hosts.
+  const entered = hosts(target).length;
+  const scoped =
+    entered >= 22 &&
+    hosts(target).every(
+      (item) => item.nodeId.startsWith(`${stage}-`) || item.nodeId.startsWith(`${stage}#`),
+    );
+  const inside = await panFrames(target, seconds);
+  const scopedAfterPan = hosts(target).every(
+    (item) => item.nodeId.startsWith(`${stage}-`) || item.nodeId.startsWith(`${stage}#`),
+  );
+  target.exitGroup();
+  await settle(target);
+  await wait(SCOPE_MOTION + 300);
+  const back = await panFrames(target, seconds);
+  target.load({ version: 1, nodes: [], edges: [] });
+  await settle(target);
+  const unloaded = target.nodes.length;
+  const budget = idle * 1.25;
+  return report(
+    [
+      check('root pan: p95 within one display frame', atRoot.p95 <= budget, {
+        p95: atRoot.p95,
+        idle,
+      }),
+      check('pan inside a group: p95 within one display frame', inside.p95 <= budget, {
+        p95: inside.p95,
+        idle,
+      }),
+      check('root pan after exitGroup: p95 within one display frame', back.p95 <= budget, {
+        p95: back.p95,
+        idle,
+      }),
+      check(
+        'no long task during the pans',
+        [atRoot, inside, back].every((run) => run.longTasks.length === 0),
+        [atRoot.longTasks, inside.longTasks, back.longTasks],
+      ),
+      check('inside a group only its members and terminals render', scoped && scopedAfterPan, {
+        scoped,
+        scopedAfterPan,
+        entered,
+        hosts: inside.hosts,
+      }),
+      check(
+        'hosts bounded by the visible set plus overscan',
+        [atRoot, back].every((run) => run.hosts <= run.visible + 64 + 60),
+        { root: [atRoot.hosts, atRoot.visible], back: [back.hosts, back.visible] },
+      ),
+      check('the large document is unloaded', unloaded === 0, unloaded),
+    ],
+    {
+      idle,
+      budget,
+      stage,
+      atRoot,
+      inside,
+      back,
+      within16: [atRoot, inside, back].every((run) => run.p95 <= 16.7),
+    },
   );
 }

@@ -177,6 +177,14 @@ export const flowStyles = css`
     transform-origin: 0 0;
   }
 
+  /* An expanded group's frame lets presses through to the edges, members and pane beneath it;
+     its header, border strips, ports and resizer take them (Widgets 6.3 Anatomy). Collapsed
+     groups and terminals are cards and take presses like any node. */
+  ::slotted(tp-flow-node[data-shape='group']:not([data-collapsed])),
+  tp-flow-node[data-shape='group']:not([data-collapsed]) {
+    pointer-events: none;
+  }
+
   .labels tp-flow-edge-label {
     position: absolute;
     left: 0;
@@ -342,6 +350,14 @@ export const flowNodeStyles = css`
     position: relative;
     display: block;
     min-inline-size: 0;
+  }
+
+  /* An expanded frame fills the box the layer sizes from the group's declared size, so its
+     bottom and end border strips sit on the frame's edges; at low detail every node fills the box
+     the layer sizes from its last measurement, so the shell meets the ports on its edges. */
+  .host[data-shape='group']:not([data-collapsed]),
+  .host[data-lod='low'] {
+    block-size: 100%;
   }
 
   .ports {
@@ -603,9 +619,80 @@ export const flowNodeStyles = css`
     padding: var(--tp-space-2);
   }
 
-  .group-label {
-    font-size: var(--tp-text-xs);
-    font-weight: var(--tp-font-medium);
+  /* The header strip in the frame's top padding: the label, the member count and the collapse
+     Button in one row. Pointer events inherit, so the parts that take presses opt back in. */
+  .group-header {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+
+    /* The layout's group header padding (GROUP_HEADER_PADDING). */
+    block-size: 40px;
+    min-inline-size: 0;
+    pointer-events: auto;
+  }
+
+  .group-header .title {
+    flex: 0 1 auto;
+    min-inline-size: 0;
+  }
+
+  .group-count {
+    flex: none;
+  }
+
+  .group-header .group-toggle {
+    margin-inline-start: auto;
+  }
+
+  /* The collapsed card's expand chevron points to the inline end. */
+  .group-toggle[data-collapsed]:dir(rtl) {
+    scale: -1 1;
+  }
+
+  /* Border strips: press targets centered on each frame edge. */
+  .group-edge {
+    --_tp-flow-group-edge: var(--tp-space-2);
+
+    position: absolute;
+    pointer-events: auto;
+  }
+
+  .group-edge[data-edge='top'],
+  .group-edge[data-edge='bottom'] {
+    left: 0;
+    right: 0;
+    block-size: var(--_tp-flow-group-edge);
+  }
+
+  .group-edge[data-edge='top'] {
+    top: calc(var(--_tp-flow-group-edge) / -2);
+  }
+
+  .group-edge[data-edge='bottom'] {
+    bottom: calc(var(--_tp-flow-group-edge) / -2);
+  }
+
+  .group-edge[data-edge='left'],
+  .group-edge[data-edge='right'] {
+    top: 0;
+    bottom: 0;
+    inline-size: var(--_tp-flow-group-edge);
+  }
+
+  .group-edge[data-edge='left'] {
+    left: calc(var(--_tp-flow-group-edge) / -2);
+  }
+
+  .group-edge[data-edge='right'] {
+    right: calc(var(--_tp-flow-group-edge) / -2);
+  }
+
+  tp-flow-node-resizer {
+    pointer-events: auto;
   }
 `;
 

@@ -9,11 +9,8 @@ import type {
   FlowSelection,
 } from '../../../foundation/flow/types.js';
 import type { FlowPortDirection } from '../../../foundation/flow/edges/endpoints.js';
-import type {
-  FlowApplyResult,
-  FlowModel,
-  FlowTransaction,
-} from '../../../foundation/flow/model/model.js';
+import type { FlowApplyResult, FlowTransaction } from '../../../foundation/flow/model/model.js';
+import type { FlowGraphView } from '../../../foundation/flow/groups/view.js';
 import type { ConnectionLineState } from '../../../foundation/flow/renderer.js';
 import type { ChangeReason } from '../../../foundation/types.js';
 import type { TpFlowNode, FlowPortState } from '../node/node.js';
@@ -32,7 +29,8 @@ export interface FlowConnectionVerdict {
  * reach into private state and stay testable against a fake host.
  */
 export interface FlowInteractionHost {
-  readonly model: FlowModel;
+  /** The read surface of the current scope: the model at the root, a group's inside otherwise. */
+  readonly model: FlowGraphView;
   readonly canvas: HTMLElement | null;
   /** Design mode, not read-only, not disabled. */
   readonly editable: boolean;
@@ -120,6 +118,18 @@ export interface FlowInteractionHost {
     point: FlowPoint,
     source: { nodeId: string; portId: string | undefined; direction: FlowPortDirection },
   ): void;
+  /**
+   * Changes a drag frame applies before its moves: group frames the previous frame grew return to
+   * where the drag found them, so growth always starts from the frames at the press.
+   */
+  beforeDragFrame?(ids: readonly string[]): readonly FlowChange[];
+  /** After a drag frame's moves: live growth of the moved members' group and the drop mark. */
+  afterDragFrame?(ids: readonly string[], transaction: FlowTransaction, event: PointerEvent): void;
+  /**
+   * Before the drag's transaction commits: nodes dropped over another group, or out of theirs,
+   * move there in the drag's own history entry.
+   */
+  beforeDrop?(ids: readonly string[], transaction: FlowTransaction, event: PointerEvent): void;
   /** A node drag settled: auto-layout modes pin the moved nodes and re-flow. */
   settleDrop(ids: readonly string[], sourceEvent: Event): void;
   /** Runs the listener after each viewport commit (auto-pan moves the canvas under the pointer). */

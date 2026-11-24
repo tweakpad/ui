@@ -20,9 +20,11 @@ another driver). The record lives in `plans/widgets/flow/implementation-checklis
    Vite reloads the page on source edits: browser calls first, file edits last, and a fresh
    snapshot after every reload (uids change).
 4. `window.flowAPI` exposes `api` (the widgets module), `samples` (schemas, documents,
-   `sampleRun`, `sampleTrace`, `generateDocument`), `flows` (the instances by id), `events`
-   (lane events recorded on the flows), `leaked` (constituent events that reached the document),
-   `clear()`, `settle()`, `generate(count, kind?)` (fills `#large`), `create(attributes)` (a
+   `sampleRun`, `sampleTrace`, `generateDocument`, `groupsSchema`, `groupsDocument`,
+   `generateGroupedDocument`), `flows` (the instances by id), `events`
+   (lane events recorded on the flows, `tp-path-change` included), `leaked` (constituent events
+   that reached the document), `clear()`, `settle()`, `generate(count, kind?)` (fills `#large`),
+   `generateGrouped(count, groupSize?)` (fills `#large` with groups), `create(attributes)` (a
    dynamic instance under `#dynamic`) and the assertion helpers of `api.ts`: `assertValueLane`,
    `assertControlledOwners`, `assertLateAndNeverOwners`, `assertNestedEventBoundary`,
    `assertDeclarativeAdoption`,
@@ -40,7 +42,16 @@ another driver). The record lives in `plans/widgets/flow/implementation-checklis
    summary chips, announcements, scoped runs, the run graph after an edit), `assertProblems`
    (validation and supplied issues on nodes, ports and edges), `assertHeader` (the opt-in header,
    the layout below it, a menu Dialog over it), `assertDeleteConfirmation`, `assertModes`, `assertForms`,
-   `assertCleanup`, `assertPerformance`. Each helper returns `{ checks, records, passed }`. Run
+   `assertCleanup`, `assertPerformance`, `assertGroups` (frame, nested frame and collapsed card
+   parts, host states, names with state and member count, the `boundary-crossing` issue, the RTL
+   twin), `assertGroupNavigation` (`enterGroup`, nested path, Breadcrumb crumbs, `exitGroup`,
+   dispatched Escape and Alt+Arrow keys, double click on header, interior and collapsed card, a
+   controlled `path`, truncation; confirm Escape and Alt+ArrowUp with `press_key` too),
+   `assertGroupEditing` (group selection, undo and redo, ungroup, collapse and the C key, group
+   ports, move out of group, read-only and view refusals), `assertGroupHitTesting` (frame
+   interior, header and border strips, inner edges under a real pointer) and
+   `assertGroupPerformance` (root, in-group and back pans on `generateGrouped(1000)`, then
+   unloads `#large`). Each helper returns `{ checks, records, passed }`. Run
    them in file order on a fresh load: several helpers mutate the instance they target and later
    helpers read the state the earlier ones leave behind.
 5. `take_screenshot` for visual evidence under `tmp/component-verification/flow/<run>/`;
@@ -55,7 +66,10 @@ Instances: `#monitor` (workflow schema, card nodes, `sampleRun` bound), `#lighti
 with Select, Slider, Color picker, Checkbox and NumberField controls, port labels, palette),
 `#declarative` (authored `tp-flow-node` / `tp-flow-edge` children and a `top-end` corner
 Button), `#pipeline` (vertical compact nodes, orthogonal edges, palette,
-`inspector-commit="explicit"`), `#rtl`, `#large` (empty until `generate()`; minimap),
+`inspector-commit="explicit"`), `#rtl`, `#groups` (`groupsDocument`: Audio cleanup with the
+nested Noise reduction, the collapsed Show notes with a pass-through, the legacy crossing edge
+`e-legacy-cross`; minimap, palette) and its RTL twin `#groups-rtl`, `#large` (empty until
+`generate()` or `generateGrouped()`; minimap),
 `#controlled` (owner write-back; set `window.rejectControlled = true` to veto proposals),
 `#late-owner` (writes every accepted proposal back 40 ms later; `lateWrites` lists them),
 `#never-owner` (accepts proposals and never writes them back),

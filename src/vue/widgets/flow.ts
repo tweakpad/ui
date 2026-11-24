@@ -14,8 +14,8 @@ import type * as widgetsFlowTypes from '../../widgets/flow/types.js';
 
 /** `<tp-flow>` as a Vue component. */
 export const Flow = /*#__PURE__*/ createBinding(TpFlow, 'Flow', {
-  callbacks: ['onValueChange', 'onValueCommitted'],
-  lanes: { value: 'onValueChange' },
+  callbacks: ['onPathChange', 'onValueChange', 'onValueCommitted'],
+  lanes: { path: 'onPathChange', value: 'onValueChange' },
   model: 'value',
 }) as ElementBinding<
   TpFlow,
@@ -34,6 +34,7 @@ export const Flow = /*#__PURE__*/ createBinding(TpFlow, 'Flow', {
   | 'defaultInspectorOpen'
   | 'defaultMode'
   | 'defaultPaletteOpen'
+  | 'defaultPath'
   | 'defaultSelection'
   | 'defaultTool'
   | 'defaultValue'
@@ -69,6 +70,7 @@ export const Flow = /*#__PURE__*/ createBinding(TpFlow, 'Flow', {
   | 'name'
   | 'nodeTemplates'
   | 'nodeToolbar'
+  | 'onPathChange'
   | 'onValueChange'
   | 'onValueCommitted'
   | 'orientation'
@@ -77,6 +79,7 @@ export const Flow = /*#__PURE__*/ createBinding(TpFlow, 'Flow', {
   | 'paletteTrigger'
   | 'partContracts'
   | 'partPresentation'
+  | 'path'
   | 'propertyControls'
   | 'readOnly'
   | 'renderer'
@@ -101,12 +104,7 @@ export const Flow = /*#__PURE__*/ createBinding(TpFlow, 'Flow', {
   | 'wheel'
   | 'zoomPresets',
   {
-    'tp-connect': CustomEvent<{
-      connection: foundationFlowTypes.FlowConnection;
-      edge: foundationFlowTypes.FlowEdge<Record<string, unknown>>;
-      reason: foundationTypes.ChangeReason;
-      sourceEvent: Event | undefined;
-    }>;
+    'tp-connect': CustomEvent<widgetsFlowTypes.FlowConnectDetail>;
     'tp-delete': CustomEvent<{
       nodes: foundationFlowTypes.FlowNode<Record<string, unknown>>[];
       edges: foundationFlowTypes.FlowEdge<Record<string, unknown>>[];
@@ -124,6 +122,7 @@ export const Flow = /*#__PURE__*/ createBinding(TpFlow, 'Flow', {
     'tp-mode-change': foundationEvents.TpValueChangeEvent<'view' | 'design'>;
     'tp-open-change': foundationEvents.TpValueChangeEvent<boolean>;
     'tp-open-change-complete': CustomEvent<{ open: boolean; surface: string }>;
+    'tp-path-change': foundationEvents.TpValueChangeEvent<readonly string[]>;
     'tp-run-change': CustomEvent<{
       index?: number;
       length?: number;
@@ -150,6 +149,6 @@ export const Flow = /*#__PURE__*/ createBinding(TpFlow, 'Flow', {
     >;
     'tp-viewport-change': foundationEvents.TpValueChangeEvent<foundationFlowTypes.FlowViewport>;
   },
-  'value',
+  'path' | 'value',
   'value'
 >;

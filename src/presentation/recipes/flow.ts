@@ -166,6 +166,11 @@ export const flowAppearance: PresentationDictionary = {
       selector: '&[data-shape="group"]',
       declarations: { 'inline-size': 'auto', cursor: 'default' },
     },
+    // A collapsed group and a terminal are cards of the panel's width, dragged like any node.
+    {
+      selector: '&[data-shape="group"][data-collapsed], &[data-terminal]',
+      declarations: { 'inline-size': 'calc(var(--_tp-flow-node-width) * 1.2)', cursor: 'grab' },
+    },
     { selector: '&:hover', declarations: { 'box-shadow': 'var(--tp-shadow-sm)' } },
     {
       selector: '&[data-dragging]',
@@ -173,6 +178,11 @@ export const flowAppearance: PresentationDictionary = {
     },
     {
       selector: '&[data-selected]',
+      declarations: { 'box-shadow': '0 0 0 var(--tp-ring-width) var(--tp-ring)' },
+    },
+    // The group the dragged nodes would move into on drop wears the selection ring.
+    {
+      selector: '&[data-drop-target]',
       declarations: { 'box-shadow': '0 0 0 var(--tp-ring-width) var(--tp-ring)' },
     },
     // A node with problems but no run status: a dashed outline in the problem's tone.
@@ -217,7 +227,7 @@ export const flowAppearance: PresentationDictionary = {
   // Composed Card registered as the node card; kept on the Card recipe, tinted by tone for panels.
   'flow-node-card': [
     {
-      selector: '&[data-shape="panel"]',
+      selector: '&[data-shape="panel"], &[data-collapsed]',
       declarations: {
         '--_tp-flow-node-header-fill':
           'color-mix(in oklab, var(--_tp-flow-tone, var(--tp-muted)) 25%, var(--tp-card))',
@@ -309,6 +319,23 @@ export const flowAppearance: PresentationDictionary = {
       },
     },
   ],
+  // The frame's header strip and border strips move the group, as its card does while collapsed.
+  'flow-node-group-header': [
+    {
+      selector: '&:not([slot])',
+      declarations: { 'font-size': 'var(--tp-text-xs)', cursor: 'grab' },
+    },
+    { selector: '[part~="flow-node"][data-dragging] &', declarations: { cursor: 'grabbing' } },
+  ],
+  // The member count takes the Badge recipe.
+  'flow-node-group-count': [],
+  'flow-node-group-edge': [
+    { declarations: { cursor: 'grab' } },
+    { selector: '[part~="flow-node"][data-dragging] &', declarations: { cursor: 'grabbing' } },
+  ],
+  // Terminals take the Card recipe and their rows the List item recipe, like the panel shape.
+  'flow-node-terminal': [],
+  'flow-node-terminal-add': [],
   'flow-node-toolbar': floatingToolbarAppearance,
   'flow-node-resizer': [],
   // Four zero-extent lines: each paints the dashed border of its own edge only.
@@ -692,6 +719,8 @@ export const flowAppearance: PresentationDictionary = {
   'flow-panel-bottom-start': panelMotion,
   'flow-panel-bottom-center': panelMotion,
   'flow-panel-bottom-end': panelMotion,
+  // The path takes the Breadcrumb recipe.
+  'flow-breadcrumb': [],
   'flow-instructions': [],
 };
 
@@ -701,6 +730,12 @@ export const flowStructure: PresentationDictionary = {
   'flow-node-header': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-node-row': [{ declarations: { gap: 'var(--tp-space-2)' } }],
   'flow-node-footer': [{ declarations: { gap: 'var(--tp-space-2)' } }],
+  // The frame's header strip is inset like the panel headers; the collapsed Card pads its own.
+  'flow-node-group-header': [
+    { declarations: { gap: 'var(--tp-space-2)' } },
+    { selector: '&:not([slot])', declarations: { 'padding-inline': 'var(--_tp-flow-space)' } },
+  ],
+  'flow-breadcrumb': [{ declarations: { 'min-inline-size': '0' } }],
   'flow-node-toolbar': floatingToolbarStructure,
   // The theme gap between sets, as nested Button groups and toolbars use.
   'flow-controls': [{ declarations: { gap: 'var(--tp-space-2)' } }],

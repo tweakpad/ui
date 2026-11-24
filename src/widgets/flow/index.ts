@@ -68,5 +68,8 @@ export { defaultPropertyControls } from './node/property-controls.js';
 export { DEFAULT_STRINGS as flowStrings, resolveStrings as resolveFlowStrings } from './strings.js';
 export * from './types.js';
 export type { FlowClipboardPayload } from './interaction/clipboard.js';
+export type { FlowGroupPortInput, FlowGroupSelectionOptions } from './groups/group-commands.js';
+export { GROUP_TOGGLE, TERMINAL_ADD_PORT } from './groups/events.js';
+export type { FlowGroupToggleDetail, FlowTerminalAddPortDetail } from './groups/events.js';
 // Engine re-exports (the same surface as `@tweakpad/ui/flow`).
 export * from '../../foundation/flow/index.js';

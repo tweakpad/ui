@@ -5,6 +5,14 @@ import {
   validateConnection,
   validateDocument,
 } from '../../../../../src/foundation/flow/model/validation.js';
+import {
+  edge,
+  group,
+  model as groupModel,
+  nested,
+  schema as groupSchema,
+  step,
+} from '../groups/fixture.js';
 
 const schema: FlowSchema = {
   nodes: [
@@ -320,5 +328,146 @@ describe('validateDocument', () => {
     expect(
       validateDocument({ ...document, nodes: [document.nodes[0]!], edges: [] }, withValidator, m),
     ).toEqual([]);
+  });
+});
+
+describe('group-aware validation', () => {
+  function withLeaves(): FlowDocument {
+    const document = nested();
+    document.nodes.push(
+      step('c', 40, 260, { parentId: 'G' }),
+      step('c2', 100, 180, { parentId: 'H' }),
+      step('z', 0, 400),
+    );
+    return document;
+  }
+
+  it('reads effective directions at group ends', () => {
+    const m = groupModel(withLeaves());
+    const inner = m.validateConnection({
+      source: 'G',
+      sourcePort: 'gin',
+      target: 'c',
+      targetPort: 'in',
+    });
+    expect(inner).toMatchObject({ valid: true, reasons: [], reoriented: false });
+    // A drag started on the child's input turns around like any input-first drag.
+    const dragged = m.validateConnection({
+      source: 'c',
+      sourcePort: 'in',
+      target: 'G',
+      targetPort: 'gin',
+    });
+    expect(dragged.valid).toBe(true);
+    expect(dragged.reoriented).toBe(true);
+    expect(dragged.connection).toEqual({
+      source: 'G',
+      sourcePort: 'gin',
+      target: 'c',
+      targetPort: 'in',
+    });
+    // A group output collects one inner edge; from outside it feeds many.
+    expect(
+      m.validateConnection({ source: 'c2', sourcePort: 'out', target: 'H', targetPort: 'hout' })
+        .reasons,
+    ).toEqual(['input-occupied']);
+    expect(
+      m.validateConnection(
+        { source: 'c2', sourcePort: 'out', target: 'H', targetPort: 'hout' },
+        { ignoreEdge: 'b-h' },
+      ).valid,
+    ).toBe(true);
+    // A group input takes one outer edge.
+    expect(
+      m.validateConnection({ source: 'z', sourcePort: 'out', target: 'G', targetPort: 'gin' })
+        .reasons,
+    ).toEqual(['input-occupied']);
+    // Used from inside, a group output cannot feed a child.
+    expect(
+      m.validateConnection({ source: 'G', sourcePort: 'gout', target: 'c', targetPort: 'in' })
+        .reasons,
+    ).toContain('same-direction');
+  });
+
+  it('accepts a pass-through as no self loop and turns a reversed one around', () => {
+    const m = groupModel({
+      version: 1,
+      nodes: [
+        group('P', 0, 0, 300, 200, {
+          ports: [
+            { id: 'pin', direction: 'input' },
+            { id: 'pout', direction: 'output' },
+          ],
+        }),
+        step('s', 400, 0),
+      ],
+      edges: [],
+    });
+    expect(
+      m.validateConnection({ source: 'P', sourcePort: 'pin', target: 'P', targetPort: 'pout' }),
+    ).toMatchObject({ valid: true, reasons: [] });
+    expect(
+      m.validateConnection({ source: 'P', sourcePort: 'pout', target: 'P', targetPort: 'pin' })
+        .connection,
+    ).toEqual({ source: 'P', sourcePort: 'pin', target: 'P', targetPort: 'pout' });
+    expect(
+      m.validateConnection({ source: 's', sourcePort: 'out', target: 's', targetPort: 'in' })
+        .reasons,
+    ).toEqual(['self-connection']);
+  });
+
+  it('rejects border crossings unless they are exposed, then checks the leaf pair', () => {
+    const m = groupModel(withLeaves(), { cycles: 'forbid' });
+    const crossing = { source: 'x', sourcePort: 'out', target: 'c', targetPort: 'in' };
+    expect(m.validateConnection(crossing).reasons).toEqual(['boundary-crossing']);
+    expect(m.validateConnection(crossing, { boundary: 'expose' }).valid).toBe(true);
+    // x already reaches a through G's port.
+    expect(
+      m.validateConnection(
+        { source: 'x', sourcePort: 'out', target: 'a', targetPort: 'in' },
+        { boundary: 'expose' },
+      ).reasons,
+    ).toEqual(['duplicate', 'input-occupied']);
+    // b → x closes x → a → b through the ports.
+    expect(
+      m.validateConnection(
+        { source: 'b', sourcePort: 'out', target: 'x', targetPort: 'in' },
+        { boundary: 'expose' },
+      ).reasons,
+    ).toEqual(['cycle']);
+    expect(
+      m.validateConnection({ source: 'y', sourcePort: 'out', target: 'x', targetPort: 'in' })
+        .reasons,
+    ).toEqual(['cycle']);
+    // A group and its members never form a cycle.
+    expect(
+      m.validateConnection({ source: 'G', sourcePort: 'gin', target: 'c', targetPort: 'in' }).valid,
+    ).toBe(true);
+    expect(
+      m.validateConnection(
+        { source: 'c', sourcePort: 'out', target: 'z', targetPort: 'in' },
+        {
+          boundary: 'expose',
+        },
+      ).valid,
+    ).toBe(true);
+  });
+
+  it('reports crossing edges as document issues', () => {
+    const clean = groupModel(nested(), { cycles: 'forbid' });
+    expect(clean.validate()).toEqual([]);
+    const document = withLeaves();
+    document.edges.push(edge('bad', 'x', 'out', 'c', 'in'));
+    expect(groupModel(document).validate()).toEqual([
+      {
+        code: 'boundary-crossing',
+        severity: 'error',
+        message: 'Edge "bad" crosses a group border; connect through a group port.',
+        edgeId: 'bad',
+      },
+    ]);
+    expect(validateDocument(document, groupSchema).map((item) => item.code)).toEqual([
+      'boundary-crossing',
+    ]);
   });
 });

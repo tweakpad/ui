@@ -1,4 +1,4 @@
-import { rectCenter, sideOf } from '../geometry.js';
+import { oppositeSide, rectCenter, sideOf } from '../geometry.js';
 import type {
   FlowEdgeKind,
   FlowEndpoint,
@@ -118,6 +118,11 @@ export interface ResolveEndpointParams {
   other?: FlowPoint | undefined;
   /** Accept a port of either direction when the natural one has none (loose connections). */
   loose?: boolean | undefined;
+  /**
+   * The end uses a group port from inside its group: the edge attaches to the inner edge of the
+   * port box and leaves toward the group's interior (the port's side flipped).
+   */
+  inward?: boolean | undefined;
 }
 
 /** Picks the port an edge end refers to: by id, else the first visible port of `direction`. */
@@ -138,6 +143,29 @@ export function pickPort(
 export function resolveEndpoint(params: ResolveEndpointParams): FlowEndpoint {
   const { nodeId, rect, direction, layout, kind, other } = params;
   const port = pickPort(params.ports, params.portId, direction, params.loose ?? true);
+  if (params.inward) {
+    // The port sits on the frame's own side; the facing fallback would pick the inside.
+    if (!port) {
+      // The port is used in the inverted role: its own direction is the opposite of the end's.
+      const outer = defaultSide(direction === 'input' ? 'output' : 'input', layout);
+      const side = oppositeSide(outer);
+      return { point: sideAnchor(rect, outer), side, nodeId, portId: undefined, rect };
+    }
+    const outer =
+      port.side ?? (port.measured ? port.geometry.side : defaultSide(port.direction, layout));
+    const geometry =
+      outer === port.geometry.side
+        ? port.geometry
+        : defaultPortGeometry(rect, outer, port.index, port.count, port.geometry.width);
+    const box = {
+      x: rect.x + geometry.x,
+      y: rect.y + geometry.y,
+      width: geometry.width,
+      height: geometry.height,
+    };
+    const side = oppositeSide(outer);
+    return { point: sideAnchor(box, side), side, nodeId, portId: port.id, rect };
+  }
   const facing = kind !== 'orthogonal' && other ? fallbackSide(rect, other) : undefined;
   if (!port) {
     const side = facing ?? defaultSide(direction, layout);

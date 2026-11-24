@@ -81,6 +81,14 @@ class FakeSource implements FlowRoutingSource {
     return { point, side, nodeId, portId, rect };
   }
 
+  endpoints(edge: FlowEdge): { source: FlowEndpoint; target: FlowEndpoint } | undefined {
+    if (!this.getNode(edge.source) || !this.getNode(edge.target)) return undefined;
+    return {
+      source: this.endpoint(edge.source, edge.sourcePort, 'output'),
+      target: this.endpoint(edge.target, edge.targetPort, 'input'),
+    };
+  }
+
   children(id: string): readonly string[] {
     return this.nodes.filter((node) => node.parentId === id).map((node) => node.id);
   }
@@ -266,6 +274,35 @@ describe('createRoutingPlanner', () => {
     expect(planner.routes.has('ab')).toBe(false);
     planner.run();
     expect(planner.routes.size).toBe(0);
+    planner.dispose();
+  });
+
+  it('routes around a collapsed group but through an expanded one', () => {
+    const source = new FakeSource();
+    source.nodes.push(
+      {
+        id: 'g',
+        type: 'group',
+        position: { x: 0, y: 0 },
+        size: { width: 300, height: 200 },
+        data: {},
+      },
+      { id: 'c', type: 'group', position: { x: 400, y: 0 }, data: {}, collapsed: true },
+    );
+    const planner = createRoutingPlanner(source);
+    expect(planner.obstacles.has('g')).toBe(false);
+    expect(planner.obstacles.rectOf('c')).toEqual({ x: 388, y: -12, width: 344, height: 264 });
+    planner.dispose();
+  });
+
+  it('reads both ends of an edge from the source and skips edges without them', () => {
+    const source = new FakeSource();
+    source.nodes.push(node('a', 0, 0), node('b', 400, 0));
+    source.edges.push(edge('ab', 'a', 'b'), edge('gone', 'a', 'missing'));
+    const planner = createRoutingPlanner(source);
+    planner.run();
+    expect([...planner.routes.keys()]).toEqual(['ab']);
+    expect(planner.routes.get('ab')!.points[0]).toEqual({ x: 120, y: 30 });
     planner.dispose();
   });
 

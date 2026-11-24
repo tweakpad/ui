@@ -1,11 +1,12 @@
 import { observeResize } from '../../../foundation/observation.js';
-import type { FlowModel } from '../../../foundation/flow/model/model.js';
+import type { FlowGraphView } from '../../../foundation/flow/groups/view.js';
 import type { FlowNode, FlowPortGeometry, FlowSize } from '../../../foundation/flow/types.js';
 import type { TpFlowNode } from '../node/node.js';
 import type { FlowLod } from '../types.js';
 
 export interface NodeLayerOptions {
-  model: () => FlowModel;
+  /** The read surface of the current scope (terminals included inside a group). */
+  model: () => FlowGraphView;
   container: () => HTMLElement | null;
   /** The manual slot that shows authored light-DOM hosts. */
   slot: () => HTMLSlotElement | null;
@@ -181,7 +182,10 @@ export class NodeLayer {
     const absolute = model.absolutePosition(node.id) ?? node.position;
     const transform = `translate(${absolute.x}px, ${absolute.y}px)`;
     if (host.style.transform !== transform) host.style.transform = transform;
-    const size = node.size ?? (this.lodOf(node.id) === 'low' ? model.nodeRect(node.id) : undefined);
+    // A collapsed group keeps its frame size for when it expands; its card sizes itself.
+    const size =
+      model.declaredSize(node) ??
+      (this.lodOf(node.id) === 'low' ? model.nodeRect(node.id) : undefined);
     if (size) {
       host.style.inlineSize = `${size.width}px`;
       host.style.blockSize = `${size.height}px`;

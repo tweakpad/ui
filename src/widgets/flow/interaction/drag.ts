@@ -92,7 +92,10 @@ export class NodeDragSession {
         start: { ...item.position },
         size: rect ? { width: rect.width, height: rect.height } : { width: 0, height: 0 },
         parent: item.parentId ? model.nodeRect(item.parentId) : undefined,
-        extent: item.extent === 'parent',
+        // A group grows around its members instead of holding them in (Widgets §6.3 key-1).
+        extent:
+          item.extent === 'parent' &&
+          !(item.parentId !== undefined && model.isGroup(item.parentId)),
       });
     }
     // The pressed node leads: snapping and the metadata name it.
@@ -131,16 +134,18 @@ export class NodeDragSession {
       ]);
       delta = { x: target.x - lead.start.x, y: target.y - lead.start.y };
     }
-    const changes: FlowChange[] = this.#entries.map((entry) => {
+    const changes: FlowChange[] = [...(host.beforeDragFrame?.(this.ids) ?? [])];
+    for (const entry of this.#entries) {
       let x = entry.start.x + delta.x;
       let y = entry.start.y + delta.y;
       if (entry.extent && entry.parent) {
         x = Math.min(Math.max(0, x), Math.max(0, entry.parent.width - entry.size.width));
         y = Math.min(Math.max(0, y), Math.max(0, entry.parent.height - entry.size.height));
       }
-      return { type: 'node-position', id: entry.id, position: { x, y }, dragging };
-    });
+      changes.push({ type: 'node-position', id: entry.id, position: { x, y }, dragging });
+    }
     host.proposeIn(transaction, changes, 'drag', { surface: 'node', nodeId: this.#primary }, event);
+    host.afterDragFrame?.(this.ids, transaction, event);
   }
 
   end(event: PointerEvent, dragged: boolean): void {
@@ -150,7 +155,10 @@ export class NodeDragSession {
     host.autoPan(null);
     const transaction = this.#transaction;
     if (!transaction) return;
-    if (dragged) this.#apply(event, false);
+    if (dragged) {
+      this.#apply(event, false);
+      host.beforeDrop?.(this.ids, transaction, event);
+    }
     this.#transaction = undefined;
     transaction.commit();
     host.setDragging(this.ids, false);

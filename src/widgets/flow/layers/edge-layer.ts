@@ -1,4 +1,4 @@
-import type { FlowModel } from '../../../foundation/flow/model/model.js';
+import type { FlowGraphView } from '../../../foundation/flow/groups/view.js';
 import type {
   ConnectionLineState,
   FlowRenderHost,
@@ -28,7 +28,8 @@ import type { FlowEdgeTemplate, FlowStrings } from '../types.js';
 import { fillTemplate } from '../../../foundation/template.js';
 
 export interface EdgeLayerOptions {
-  model: () => FlowModel;
+  /** The read surface of the current scope: ends on the scope group attach to its terminals. */
+  model: () => FlowGraphView;
   flowId: string;
   rendererHost: () => FlowRenderHost | null;
   renderer: () => FlowRenderer;

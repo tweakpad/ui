@@ -16,12 +16,16 @@ import type {
   FlowEdge,
   FlowNode,
   FlowNodeDefinition,
+  FlowPortDefinition,
   FlowPropertyDefinition,
 } from '../../../foundation/flow/types.js';
 import type { FlowNodeRunState, FlowNodeRunStatus } from '../../../foundation/flow/run/types.js';
 import { inspectorProperties } from '../../../foundation/flow/defaults.js';
 import type { IconDefinition } from '../../../icons/types.js';
 import { xIcon } from '../../../icons/x.js';
+import { plusIcon } from '../../../icons/plus.js';
+import { trashIcon } from '../../../icons/trash.js';
+import { fillTemplate } from '../../../foundation/template.js';
 import { gitBranchIcon } from '../../../icons/git-branch.js';
 import { flowPresentation } from '../../../presentation/families/flow.js';
 import { TpBadge } from '../../../components/badge/badge.js';
@@ -30,6 +34,8 @@ import { TpButton } from '../../../components/button/button.js';
 import { TpField } from '../../../components/field/field.js';
 import { TpForm } from '../../../components/form/form.js';
 import { TpIcon } from '../../../components/icon/icon.js';
+import { TpLabel } from '../../../components/label/label.js';
+import { TpStack } from '../../../components/stack/stack.js';
 import { TpInput } from '../../../components/input/input.js';
 import { TpInputGroup } from '../../../components/input-group/input-group.js';
 import { TpList } from '../../../components/list/list.js';
@@ -55,6 +61,16 @@ export const INSPECTOR_COMMIT = 'flow-inspector-commit';
 export const INSPECTOR_FOCUS_EDGE = 'flow-inspector-focus-edge';
 export const INSPECTOR_CLOSE = 'flow-inspector-close';
 export const INSPECTOR_PRESENCE = 'flow-inspector-presence';
+/** The group section: a settled rename of the group. */
+export const INSPECTOR_GROUP_LABEL = 'flow-inspector-group-label';
+/** The group section: its collapsed Switch flipped. */
+export const INSPECTOR_GROUP_COLLAPSED = 'flow-inspector-group-collapsed';
+/** The group section: Add input or Add output pressed. */
+export const INSPECTOR_PORT_ADD = 'flow-inspector-port-add';
+/** The group section: a settled rename of one of the group's ports. */
+export const INSPECTOR_PORT_UPDATE = 'flow-inspector-port-update';
+/** The group section: a port's remove Button pressed. */
+export const INSPECTOR_PORT_REMOVE = 'flow-inspector-port-remove';
 
 /** The inspector tab showing: the node's settings, its wiring or its run. */
 export type FlowInspectorTab = 'settings' | 'wiring' | 'run';
@@ -96,6 +112,42 @@ export interface FlowInspectorCloseDetail {
 export interface FlowInspectorPresenceDetail {
   /** The enter (true) or exit (false) motion that finished. */
   open: boolean;
+}
+export interface FlowInspectorGroupLabelDetail {
+  nodeId: string;
+  label: string;
+  sourceEvent: Event;
+}
+export interface FlowInspectorGroupCollapsedDetail {
+  nodeId: string;
+  collapsed: boolean;
+  reason: ChangeReason;
+  sourceEvent: Event;
+}
+export interface FlowInspectorPortAddDetail {
+  nodeId: string;
+  direction: 'input' | 'output';
+  sourceEvent: Event;
+}
+export interface FlowInspectorPortUpdateDetail {
+  nodeId: string;
+  portId: string;
+  patch: Partial<Omit<FlowPortDefinition, 'id'>>;
+  sourceEvent: Event;
+}
+export interface FlowInspectorPortRemoveDetail {
+  nodeId: string;
+  portId: string;
+  sourceEvent: Event;
+}
+
+/** One port of a group as its section lists it: the definition's ports under the node's own. */
+interface GroupPortRow {
+  id: string;
+  label: string;
+  direction: 'input' | 'output';
+  /** Declared by the group's definition, so the instance cannot remove it. */
+  declared: boolean;
 }
 
 /** Lane events of the composed controls that stop at the inspector and become edits. */
@@ -239,7 +291,9 @@ const inspectorStyles = css`
  * end, entering and leaving with presence motion like a Sheet, with Tabs for Settings (one Field per visible property the schema places in
  * the inspector, edited by the library control its definition names), Wiring (the node's
  * connections as List items) and
- * Run (status badge, attempts, duration, message, error). Edits are reported through
+ * Run (status badge, attempts, duration, message, error). For a group, Settings starts with a group
+ * section: its label, its collapsed Switch and its ports, each renamable and removable, with Add
+ * input and Add output; those edits are reported at once through their own events. Edits are reported through
  * `flow-inspector-change`; in `explicit` mode they stay local until Save (one change per edited
  * key, then `flow-inspector-commit`) and Cancel reverts silently.
  */
@@ -253,6 +307,8 @@ export class TpFlowInspector extends Scrollable(TpElement) {
       TpField,
       TpButton,
       TpIcon,
+      TpLabel,
+      TpStack,
       TpList,
       TpListItem,
       TpBadge,
@@ -297,6 +353,8 @@ export class TpFlowInspector extends Scrollable(TpElement) {
   open = false;
   tab: FlowInspectorTab = 'settings';
 
+  /** Typed group and port names until their field settles (`label`, `port:<id>`). */
+  #groupDraft = new Map<string, string>();
   /** Edits not yet reflected by `node` (explicit mode: until Save or Cancel). */
   #draft = new Map<string, unknown>();
   #draftNodeId: string | undefined;
@@ -386,7 +444,10 @@ export class TpFlowInspector extends Scrollable(TpElement) {
       const id = this.node?.id;
       // A new node drops the draft; in live mode the root's node is the only source.
       if (id !== this.#draftNodeId || this.commit === 'live') this.#draft.clear();
-      if (id !== this.#draftNodeId) this.#pendingLive.clear();
+      if (id !== this.#draftNodeId) {
+        this.#pendingLive.clear();
+        this.#groupDraft.clear();
+      }
       this.#draftNodeId = id;
     }
     if (changed.has('commit') && this.commit === 'live') this.#draft.clear();
@@ -414,6 +475,11 @@ export class TpFlowInspector extends Scrollable(TpElement) {
       if (value === 'settings' || value === 'wiring' || value === 'run') this.tab = value;
       return;
     }
+    const group = target.closest?.('[data-flow-group]') as HTMLElement | null;
+    if (group) {
+      this.#groupEdit(event, group);
+      return;
+    }
     const bound = target.closest?.('[data-flow-property]') as HTMLElement | null;
     if (!bound || !this.node) return;
     const key = bound.dataset['flowProperty'];
@@ -435,6 +501,211 @@ export class TpFlowInspector extends Scrollable(TpElement) {
     } else if (event.type === 'tp-value-commit') {
       this.#settle(key, event);
     }
+  }
+
+  // ---- group section -----------------------------------------------------------------------------
+
+  /** Whether the inspected node is a group, from its definition's shape. */
+  get #isGroup(): boolean {
+    return this.definition?.shape === 'group';
+  }
+
+  /** The group's ports: the definition's, overridden and extended by the node's own by id. */
+  #groupPorts(): GroupPortRow[] {
+    const rows = new Map<string, GroupPortRow>();
+    for (const port of this.definition?.ports ?? [])
+      rows.set(port.id, {
+        id: port.id,
+        label: port.label ?? port.id,
+        direction: port.direction,
+        declared: true,
+      });
+    for (const port of this.node?.ports ?? []) {
+      const base = rows.get(port.id);
+      rows.set(port.id, {
+        id: port.id,
+        label: port.label ?? base?.label ?? port.id,
+        direction: port.direction ?? base?.direction ?? 'input',
+        declared: base?.declared ?? false,
+      });
+    }
+    return [...rows.values()];
+  }
+
+  /**
+   * A group section control's lane event: the typed names stay a local draft until their field
+   * settles (its `change`), and the collapsed Switch reports at once.
+   */
+  #groupEdit(event: Event, control: HTMLElement): void {
+    const node = this.node;
+    if (!node || event.type !== 'tp-value-change') return;
+    const detail = (event as TpValueChangeEvent<unknown>).detail;
+    if (!detail || typeof detail !== 'object' || !('value' in detail)) return;
+    const role = control.dataset['flowGroup'];
+    if (role === 'collapsed') {
+      this.emit<FlowInspectorGroupCollapsedDetail>(
+        INSPECTOR_GROUP_COLLAPSED,
+        {
+          nodeId: node.id,
+          collapsed: Boolean(detail.value),
+          reason: detail.reason,
+          sourceEvent: event,
+        },
+        { composed: false },
+      );
+      return;
+    }
+    const key = role === 'label' ? 'label' : `port:${control.dataset['portId'] ?? ''}`;
+    const value = String(detail.value ?? '');
+    this.#groupDraft.set(key, value);
+    // The inspector owns the text: it keeps the typed value until the field settles.
+    acceptControlValue(control, value);
+  }
+
+  /** A group or port name field settled (blur or Enter): one rename for the history. */
+  #groupNameChange = (event: Event): void => {
+    const control = event.currentTarget as HTMLElement;
+    const node = this.node;
+    if (!node) return;
+    const portId = control.dataset['portId'];
+    const key = portId === undefined ? 'label' : `port:${portId}`;
+    const value = this.#groupDraft.get(key);
+    this.#groupDraft.delete(key);
+    if (value === undefined) return;
+    if (portId === undefined)
+      this.emit<FlowInspectorGroupLabelDetail>(
+        INSPECTOR_GROUP_LABEL,
+        { nodeId: node.id, label: value, sourceEvent: event },
+        { composed: false },
+      );
+    else
+      this.emit<FlowInspectorPortUpdateDetail>(
+        INSPECTOR_PORT_UPDATE,
+        { nodeId: node.id, portId, patch: { label: value }, sourceEvent: event },
+        { composed: false },
+      );
+    // Without an accepted update the field returns to the document's name on this render.
+    this.requestUpdate();
+  };
+
+  #portAdd = (event: Event): void => {
+    const node = this.node;
+    const direction = (event.currentTarget as HTMLElement).dataset['direction'];
+    if (!node || (direction !== 'input' && direction !== 'output')) return;
+    this.emit<FlowInspectorPortAddDetail>(
+      INSPECTOR_PORT_ADD,
+      { nodeId: node.id, direction, sourceEvent: event },
+      { composed: false },
+    );
+  };
+
+  #portRemove = (event: Event): void => {
+    const node = this.node;
+    const portId = (event.currentTarget as HTMLElement).dataset['portId'];
+    if (!node || portId === undefined) return;
+    this.emit<FlowInspectorPortRemoveDetail>(
+      INSPECTOR_PORT_REMOVE,
+      { nodeId: node.id, portId, sourceEvent: event },
+      { composed: false },
+    );
+  };
+
+  #renderGroupSection(): TemplateResult {
+    const strings = this.#strings;
+    const node = this.node!;
+    const label = this.#groupDraft.get('label') ?? node.label ?? this.definition?.label ?? '';
+    const editable = !this.disabled && !this.readOnly;
+    const ports = this.#groupPorts();
+    return html`<tp-field class="field" label=${strings.group} ?disabled=${this.disabled}
+        ><tp-input
+          class="control"
+          data-flow-group="label"
+          id=${`${this.#id}-group-label`}
+          size="sm"
+          .value=${label}
+          ?disabled=${this.disabled}
+          ?readonly=${this.readOnly}
+          @change=${this.#groupNameChange}
+        ></tp-input
+      ></tp-field>
+      <tp-field class="field" label=${strings.collapseGroup} ?disabled=${this.disabled}
+        ><tp-switch
+          class="control"
+          data-flow-group="collapsed"
+          id=${`${this.#id}-group-collapsed`}
+          size="sm"
+          .checked=${Boolean(node.collapsed)}
+          ?disabled=${this.disabled}
+          ?readonly=${this.readOnly}
+        ></tp-switch
+      ></tp-field>
+      <tp-stack class="group-ports" gap="2">
+        <tp-label class="heading">${strings.ports}</tp-label>
+        ${
+          ports.length
+            ? html`<tp-list class="ports" aria-label=${strings.ports}
+                >${ports.map((port) => this.#renderGroupPort(port, editable))}</tp-list
+              >`
+            : nothing
+        }
+        <tp-stack direction="row" gap="2" wrap="wrap">
+          <tp-button
+            class="port-add"
+            variant="outline"
+            size="sm"
+            data-direction="input"
+            .icon=${plusIcon}
+            .disabled=${!editable}
+            @click=${this.#portAdd}
+            >${strings.addInput}</tp-button
+          >
+          <tp-button
+            class="port-add"
+            variant="outline"
+            size="sm"
+            data-direction="output"
+            .icon=${plusIcon}
+            .disabled=${!editable}
+            @click=${this.#portAdd}
+            >${strings.addOutput}</tp-button
+          >
+        </tp-stack>
+      </tp-stack>`;
+  }
+
+  #renderGroupPort(port: GroupPortRow, editable: boolean): TemplateResult {
+    const strings = this.#strings;
+    const label = this.#groupDraft.get(`port:${port.id}`) ?? port.label;
+    return html`<tp-list-item
+      class="port"
+      size="sm"
+      data-port-id=${port.id}
+      description=${port.direction === 'input' ? strings.input : strings.output}
+    >
+      <tp-input
+        slot="title"
+        class="control"
+        data-flow-group="port"
+        data-port-id=${port.id}
+        size="sm"
+        aria-label=${`${strings.portName}: ${port.label}`}
+        .value=${label}
+        ?disabled=${this.disabled}
+        ?readonly=${this.readOnly}
+        @change=${this.#groupNameChange}
+      ></tp-input>
+      <tp-button
+        slot="actions"
+        class="port-remove"
+        variant="ghost"
+        size="icon-sm"
+        data-port-id=${port.id}
+        .icon=${trashIcon}
+        .ariaLabel=${fillTemplate(strings.removePort, { name: port.label })}
+        .disabled=${!editable || port.declared}
+        @click=${this.#portRemove}
+      ></tp-button>
+    </tp-list-item>`;
   }
 
   #edit(key: string, value: unknown, reason: ChangeReason, sourceEvent: Event): void {
@@ -629,6 +900,7 @@ export class TpFlowInspector extends Scrollable(TpElement) {
     const node = this.node;
     const definition = this.definition;
     if (!node || !definition) return html`<p class="empty">${strings.noSelection}</p>`;
+    const group = this.#isGroup ? this.#renderGroupSection() : nothing;
     const data = this.#data();
     const fields: TemplateResult[] = [];
     // Only the properties the schema places here: the node body renders the rest.
@@ -648,7 +920,7 @@ export class TpFlowInspector extends Scrollable(TpElement) {
       );
     }
     return html`<tp-form class="form" @submit=${(event: Event) => event.preventDefault()}>
-      <div class="fields">${fields}</div>
+      <div class="fields">${group}${fields}</div>
     </tp-form>`;
   }
 

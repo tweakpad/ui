@@ -10,6 +10,8 @@ import {
   topologicalOrder,
   wouldCreateCycle,
 } from '../../../../../src/foundation/flow/model/queries.js';
+import { flattenFlowGroups } from '../../../../../src/foundation/flow/groups/flatten.js';
+import { nested, schema } from '../groups/fixture.js';
 
 const dag: FlowDocument = {
   version: 1,
@@ -92,5 +94,16 @@ describe('flow graph queries', () => {
         targetElevated: false,
       }),
     ).toBe(1000);
+  });
+});
+
+describe('queries over groups', () => {
+  it('see false cycles node by node, none on the flattened graph', () => {
+    const document = nested();
+    expect(hasCycle(document)).toBe(true);
+    const flat = flattenFlowGroups(document, { schema }).document;
+    expect(hasCycle(flat)).toBe(false);
+    expect(topologicalOrder(flat)).toEqual(['x', 'a', 'b', 'y']);
+    expect(wouldCreateCycle(flat, 'y', 'x')).toBe(true);
   });
 });

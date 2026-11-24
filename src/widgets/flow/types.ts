@@ -2,12 +2,14 @@ import type { TemplateResult } from 'lit';
 import type { ChangeReason } from '../../foundation/types.js';
 import type {
   FlowChange,
+  FlowConnection,
   FlowEdge,
   FlowEdgeKind,
   FlowIssue,
   FlowNode,
   FlowNodeDefinition,
   FlowPoint,
+  FlowPortInstance,
   FlowPropertyControl,
   FlowPropertyDefinition,
   FlowResolvedPort,
@@ -105,6 +107,36 @@ export interface FlowChangeMetadata extends Record<string, unknown> {
   reconnect?: { edgeId: string; end: 'source' | 'target' };
   insert?: { type: string; at: FlowPoint };
   animated?: boolean;
+  /** A group command: what it did and the group it acted on. */
+  group?: {
+    action: 'group' | 'ungroup' | 'collapse' | 'expand' | 'expose' | 'reparent' | 'port';
+    groupId: string;
+  };
+}
+
+/**
+ * Metadata of a `tp-path-change` proposal: where the move into or out of a group came from and the
+ * group it entered or left.
+ */
+export interface FlowPathChangeMetadata extends Record<string, unknown> {
+  surface: 'node' | 'breadcrumb' | 'keyboard' | 'menu' | 'api';
+  groupId?: string;
+}
+
+/**
+ * `tp-connect`: a cancelable connection about to be added. A listener may change `edge`. When the
+ * connection crosses group borders, `exposed` lists the group ports and the edges the widget adds
+ * to carry it through them.
+ */
+export interface FlowConnectDetail {
+  connection: FlowConnection;
+  edge: FlowEdge;
+  reason: ChangeReason;
+  sourceEvent: Event | undefined;
+  exposed?: {
+    ports: { nodeId: string; port: FlowPortInstance }[];
+    edges: FlowEdge[];
+  };
 }
 
 /**
@@ -179,7 +211,13 @@ export type FlowNodeToolbarTemplate = (context: FlowToolbarContext) => TemplateR
  * selection.
  */
 export type FlowContextSubject =
-  | { kind: 'node'; nodeId: string; selection: FlowSelection }
+  | {
+      kind: 'node';
+      nodeId: string;
+      selection: FlowSelection;
+      /** The node is a group, so its menu offers the group commands. */
+      group?: boolean;
+    }
   | { kind: 'edge'; edgeId: string; selection: FlowSelection }
   | { kind: 'pane'; point: FlowPoint; selection: FlowSelection };
 /** Renders the context menu items for a node, an edge or the pane. */
@@ -377,4 +415,64 @@ export interface FlowStrings {
   problems: string;
   ariaWarnings: string;
   ariaError: string;
+}
+
+/** Strings of groups, their boundary terminals and the path; merged into `FlowStrings`. */
+export interface FlowStrings {
+  /** Name of a group, as the default label of a new one. */
+  group: string;
+  /** Name of the terminal that lists a group's inputs inside it. */
+  groupInputs: string;
+  /** Name of the terminal that lists a group's outputs inside it. */
+  groupOutputs: string;
+  /** Role description of a group's Inputs and Outputs terminals. */
+  terminal: string;
+  /** Command that opens the sub-view of a group. */
+  enterGroup: string;
+  /** Command that returns to the view the current group sits in. */
+  exitGroup: string;
+  /** Command that wraps the selected nodes in a new group. */
+  groupSelection: string;
+  /** Command that dissolves a group and keeps its members. */
+  ungroup: string;
+  /** Command and Button name that collapses a group to one node. */
+  collapseGroup: string;
+  /** Command and Button name that shows a collapsed group's members again. */
+  expandGroup: string;
+  /** Command that moves a member to the view its group sits in. */
+  moveOutOfGroup: string;
+  /** Command that adds an input to a group. */
+  addInput: string;
+  /** Command that adds an output to a group. */
+  addOutput: string;
+  /** Name of the Button that removes a group port, `{name}` = the port. */
+  removePort: string;
+  /** Name of the field that renames a group port. */
+  portName: string;
+  /** Heading of a group's port list in the inspector. */
+  ports: string;
+  /** Member count of a group, `{count}` = the number of direct members. */
+  groupMembers: string;
+  /** Name of the path Breadcrumb, `{flow}` = the graph's name (landmarks must be unique). */
+  groupPath: string;
+  /** Command that returns a moved terminal to its automatic place. */
+  resetPosition: string;
+  /** State in the name of a group that shows its members. */
+  ariaGroupExpanded: string;
+  /** State in the name of a group shown as one node. */
+  ariaGroupCollapsed: string;
+  /** Announced on entering a group, `{label}` = the group. */
+  announceEntered: string;
+  /** Announced on leaving a group, `{label}` = the group. */
+  announceExited: string;
+  /** Announced after grouping, `{label}` = the new group, `{count}` = its members. */
+  announceGrouped: string;
+  /** Announced after ungrouping, `{label}` = the dissolved group. */
+  announceUngrouped: string;
+  /** Announced after collapsing, `{label}` = the group. */
+  announceCollapsed: string;
+  /** Announced after expanding, `{label}` = the group. */
+  announceExpanded: string;
+  /** Announced after moving nodes in or out, `{count}` = the nodes, `{label}` = their new parent. */
+  announceMovedToGroup: string;
 }

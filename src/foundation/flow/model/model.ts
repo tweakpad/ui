@@ -8,6 +8,14 @@ import {
   type FlowPortDirection,
 } from '../edges/endpoints.js';
 import { expandRect, rectContainsPoint, unionRects } from '../geometry.js';
+import { flattenFlowGroups, flowGroupIds } from '../groups/flatten.js';
+import {
+  FLOW_GROUP_DEFINITION,
+  FLOW_GROUP_TYPE,
+  flowEdgeRelation,
+  inwardEnds,
+  isFlowGroup,
+} from '../groups/relations.js';
 import { SpatialIndex } from '../spatial-index.js';
 import type {
   ChangeReason,
@@ -18,6 +26,7 @@ import type {
   FlowEdge,
   FlowEdgeKind,
   FlowEdgeKindOptions,
+  FlowEdgeRelation,
   FlowEndpoint,
   FlowIssue,
   FlowLayoutMode,
@@ -74,7 +83,7 @@ import {
   nodeZ,
   reachable,
   topologicalOrder,
-  wouldCreateCycle,
+  type FlowGraphLike,
 } from './queries.js';
 import {
   migrateFlowDocument,
@@ -420,6 +429,7 @@ export class FlowModel<
     }
     const oldRects = this.#collectRects(reduced.changes, previousIndices);
     this.#adopt(reduced.document);
+    this.#dropToggledMeasures(reduced.changes, previousIndices);
     const affected = this.#affected(reduced.changes, previousIndices, this.#indices);
     for (const id of measured) affected.nodes.add(id);
     this.#syncSpatial(affected.nodes);
@@ -510,6 +520,23 @@ export class FlowModel<
     this.#indices = buildIndices(doc);
     this.#stamp += 1;
     pruneRuntime(this.#runtime, this.#indices.nodes);
+  }
+
+  /** A node toggling `collapsed` changes presentation: its measurement no longer describes it. */
+  #dropToggledMeasures(changes: readonly FlowChange[], before: FlowIndices): void {
+    let dropped = false;
+    for (const change of changes) {
+      if (change.type !== 'node-update' && change.type !== 'node-replace') continue;
+      const previous = before.nodes.get(change.id);
+      const next = this.#indices.nodes.get(change.id);
+      if (!previous || !next || Boolean(previous.collapsed) === Boolean(next.collapsed)) continue;
+      if (this.#runtime.measured.delete(change.id)) dropped = true;
+      if (this.#runtime.ports.delete(change.id)) dropped = true;
+    }
+    if (dropped) {
+      this.#runtime.version += 1;
+      this.#stamp += 1;
+    }
   }
 
   #affected(
@@ -823,6 +850,7 @@ export class FlowModel<
       const adopted: FlowDocument<N, E> =
         nextNodes === doc.nodes ? doc : { ...doc, nodes: nextNodes };
       this.#adopt(adopted);
+      this.#dropToggledMeasures(changes, previousIndices);
       this.#rebuildSpatial();
       const affected = this.#affected(changes, previousIndices, this.#indices);
       const event: FlowChangeEvent = {
@@ -1046,19 +1074,48 @@ export class FlowModel<
     return this.#indices.edges.get(id) as E | undefined;
   }
 
+  /** The schema definition of a node; a `group` node the schema does not declare is a group. */
   definitionOf(node: FlowNode | string): FlowNodeDefinition | undefined {
     const item = typeof node === 'string' ? this.#indices.nodes.get(node) : node;
-    return item ? this.#definitions.get(item.type) : undefined;
+    return item ? this.#definition(item.type) : undefined;
   }
 
-  /** Effective size: measured → persisted → definition → shape default. */
+  #definition(type: string): FlowNodeDefinition | undefined {
+    return (
+      this.#definitions.get(type) ?? (type === FLOW_GROUP_TYPE ? FLOW_GROUP_DEFINITION : undefined)
+    );
+  }
+
+  /** Whether a node is a group (its definition has the `group` shape). */
+  isGroup(node: FlowNode | string): boolean {
+    return isFlowGroup(this, node);
+  }
+
+  /** Whether any node of the document has a parent. */
+  get nested(): boolean {
+    return this.#indices.children.size > 0;
+  }
+
+  /**
+   * The size a node's host is given: its persisted size, except for a collapsed group, whose
+   * persisted size is the frame it expands back to.
+   */
+  declaredSize(node: FlowNode): FlowSize | undefined {
+    if (node.collapsed && node.size && isFlowGroup(this, node)) return undefined;
+    return node.size;
+  }
+
+  /** Effective size: declared → measured → definition → shape default. */
   nodeSize(node: FlowNode): FlowSize {
     // A declared size is the box the host is given (resized nodes); measurements describe
     // auto-sized hosts.
-    if (node.size) return node.size;
+    const declared = this.declaredSize(node);
+    if (declared) return declared;
     const measured = this.#runtime.measured.get(node.id);
     if (measured) return measured;
-    const definition = this.#definitions.get(node.type);
+    const definition = this.#definition(node.type);
+    // A collapsed group is a card until measured, not its frame.
+    if (node.collapsed && definition?.shape === 'group') return DEFAULT_NODE_SIZE_BY_SHAPE.panel;
     return definition?.size ?? DEFAULT_NODE_SIZE_BY_SHAPE[definition?.shape ?? 'card'];
   }
 
@@ -1113,7 +1170,7 @@ export class FlowModel<
     if (!node) return EMPTY_PORTS;
     const cached = this.#portCache.get(id);
     if (cached && cached.node === node && cached.stamp === this.#stamp) return cached.ports;
-    const definition = this.#definitions.get(node.type);
+    const definition = this.#definition(node.type);
     const base = definition?.ports ?? [];
     const merged: FlowPortDefinition[] = base.map((port) => {
       const instance = node.ports?.find((item) => item.id === port.id);
@@ -1172,12 +1229,28 @@ export class FlowModel<
     return edgeKindOptions(kind, this.#schema?.edgeKinds?.[kind], edge.options);
   }
 
-  /** Where an edge end attaches: measured or default port geometry on the resolved side. */
-  endpoint(edge: FlowEdge | string, end: 'source' | 'target'): FlowEndpoint | undefined {
+  /** How an edge relates to the group tree (sibling, inner, pass-through or crossing). */
+  edgeRelation(edge: FlowConnection): FlowEdgeRelation {
+    return flowEdgeRelation(this, edge);
+  }
+
+  /**
+   * Where an edge end attaches: measured or default port geometry on the resolved side; a group
+   * port used from inside its group anchors on the inner edge of the port, facing inward. `kind`
+   * resolves the ends for another path kind than the edge's own (a router drawing every edge
+   * orthogonally).
+   */
+  endpoint(
+    edge: FlowEdge | string,
+    end: 'source' | 'target',
+    kind?: FlowEdgeKind,
+  ): FlowEndpoint | undefined {
     const item = typeof edge === 'string' ? this.#indices.edges.get(edge) : edge;
     if (!item) return undefined;
-    const kind = this.edgeKind(item);
+    const pathKind = kind ?? this.edgeKind(item);
     const layout = this.#doc.layout?.direction;
+    const inward =
+      this.#indices.children.size > 0 ? inwardEnds(this.edgeRelation(item)) : undefined;
     const resolve = (
       which: 'source' | 'target',
       other: FlowPoint | undefined,
@@ -1193,18 +1266,23 @@ export class FlowModel<
         portId: which === 'source' ? item.sourcePort : item.targetPort,
         direction,
         layout,
-        kind,
+        kind: pathKind,
         other,
         loose: true,
+        inward: inward?.[which] ?? false,
       });
     };
     const otherEnd = resolve(end === 'source' ? 'target' : 'source', undefined);
     return resolve(end, otherEnd?.point);
   }
 
-  endpoints(edge: FlowEdge | string): { source: FlowEndpoint; target: FlowEndpoint } | undefined {
-    const source = this.endpoint(edge, 'source');
-    const target = this.endpoint(edge, 'target');
+  /** Both ends of an edge (see `endpoint`), or `undefined` when either is missing. */
+  endpoints(
+    edge: FlowEdge | string,
+    kind?: FlowEdgeKind,
+  ): { source: FlowEndpoint; target: FlowEndpoint } | undefined {
+    const source = this.endpoint(edge, 'source', kind);
+    const target = this.endpoint(edge, 'target', kind);
     return source && target ? { source, target } : undefined;
   }
 
@@ -1266,27 +1344,80 @@ export class FlowModel<
     return result;
   }
 
+  /** The graph the order and cycle queries read: the document with its groups flattened. */
+  #graph(): FlowGraphLike {
+    return this.#indices.children.size > 0
+      ? flattenFlowGroups(this.#doc, { schema: this.#schema }).document
+      : this.#doc;
+  }
+
+  /** Leaf ids standing for `ids`: a group stands for its leaf descendants. */
+  #leaves(ids: readonly string[]): string[] {
+    if (this.#indices.children.size === 0) return [...ids];
+    const groups = flowGroupIds(this.#doc, { schema: this.#schema });
+    const result: string[] = [];
+    for (const id of ids) {
+      if (!groups.has(id)) result.push(id);
+      else
+        for (const child of descendantsOf(this.#indices, id))
+          if (!groups.has(child)) result.push(child);
+    }
+    return result;
+  }
+
+  /** Kahn order of the leaves (groups flattened away), document order breaking ties. */
   topologicalOrder(): string[] {
-    return topologicalOrder(this.#doc);
+    return topologicalOrder(this.#graph());
   }
 
+  /** Whether the graph, with its groups flattened, has a cycle. */
   hasCycle(): boolean {
-    return hasCycle(this.#doc);
+    return hasCycle(this.#graph());
   }
 
+  /**
+   * Whether an edge `source → target` would close a cycle in the flattened graph (a group stands
+   * for its leaf members); `ignoreEdge` leaves out every flat edge that edge takes part in.
+   */
   wouldCreateCycle(source: string, target: string, ignoreEdge?: string): boolean {
-    return wouldCreateCycle(buildAdjacency(this.#doc, ignoreEdge), source, target);
+    if (source === target) return true;
+    let graph: FlowGraphLike = this.#doc;
+    let ignore = ignoreEdge;
+    if (this.#indices.children.size > 0) {
+      const flat = flattenFlowGroups(this.#doc, { schema: this.#schema });
+      graph = flat.document;
+      if (ignoreEdge !== undefined && flat.document !== this.#doc) {
+        ignore = undefined;
+        graph = {
+          nodes: flat.document.nodes,
+          edges: flat.document.edges.filter(
+            (edge) => !flat.chains.get(edge.id)?.includes(ignoreEdge),
+          ),
+        };
+      }
+    }
+    const sources = this.#leaves([source]);
+    const targets = this.#leaves([target]);
+    if (sources.some((id) => targets.includes(id))) return true;
+    const downstream = reachable(buildAdjacency(graph, ignore), targets, 'downstream');
+    return sources.some((id) => downstream.has(id));
   }
 
+  /** Nodes reachable from `from` in the flattened graph; a group id starts from its leaves. */
   reachable(
     from: string | readonly string[],
     direction: 'downstream' | 'upstream' | 'both' = 'downstream',
   ): Set<string> {
-    return reachable(this.#doc, from, direction);
+    return reachable(
+      this.#graph(),
+      this.#leaves(typeof from === 'string' ? [from] : from),
+      direction,
+    );
   }
 
+  /** Weakly connected components of the flattened graph (groups left out). */
   connectedComponents(): string[][] {
-    return connectedComponents(this.#doc);
+    return connectedComponents(this.#graph());
   }
 
   /** Bounds of the given nodes (default: every visible node). */

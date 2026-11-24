@@ -1,4 +1,5 @@
 import type { FlowPoint, FlowRect, FlowSelection } from '../../../foundation/flow/types.js';
+import { rectContains } from '../../../foundation/flow/geometry.js';
 import type { PointerDragCancelReason } from '../../../foundation/pointer-drag.js';
 import type { FlowInteractionHost } from './host.js';
 
@@ -55,7 +56,13 @@ export class MarqueeSession {
     host.setMarquee(rectBetween(this.#originPane, pane));
     host.autoPan(pane);
     const rect = rectBetween(this.#origin, now);
-    const hit = host.model.nodesInRect(rect, host.selectionMode === 'partial');
+    const model = host.model;
+    // A band drawn inside an expanded group selects its members, not the frame around them.
+    const hit = model.nodesInRect(rect, host.selectionMode === 'partial').filter((id) => {
+      if (!model.isGroup(id) || model.getNode(id)?.collapsed) return true;
+      const frame = model.nodeRect(id);
+      return !frame || !rectContains(frame, rect);
+    });
     const nodes = this.#additive ? [...new Set([...this.#initial.nodes, ...hit])] : hit;
     const set = new Set(nodes);
     const edges = host.model.edges

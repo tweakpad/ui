@@ -21,7 +21,7 @@ import type { SegmentIndex } from './segments.js';
  * routers and their tests run with any polyline renderer.
  */
 export interface FlowRouteContext {
-  /** Padded node rects; groups are never obstacles. */
+  /** Padded node rects; expanded groups are never obstacles, collapsed ones are. */
   obstacles: ObstacleIndex;
   /** Segments of already routed edges, for crossing and overlap costs. */
   segments: SegmentIndex | undefined;
@@ -98,7 +98,8 @@ export interface FlowRoutingSource {
   definitionOf(node: FlowNode | string): FlowNodeDefinition | undefined;
   /** Absolute rect: measured ?? size ?? definition size ?? shape default. */
   nodeRect(id: string): FlowRect;
-  endpoint(nodeId: string, portId: string | undefined, direction: 'input' | 'output'): FlowEndpoint;
+  /** Both resolved ends of an edge (`undefined` when an end is missing). */
+  endpoints(edge: FlowEdge): { source: FlowEndpoint; target: FlowEndpoint } | undefined;
   subscribe(listener: (event: FlowRoutingInvalidation) => void): () => void;
   children?(id: string): readonly string[];
 }

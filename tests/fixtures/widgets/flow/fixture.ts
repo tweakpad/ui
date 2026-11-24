@@ -80,6 +80,7 @@ const LANES = [
   'tp-layout-complete',
   'tp-run-change',
   'tp-diagnostic',
+  'tp-path-change',
 ];
 for (const type of LANES)
   document.addEventListener(type, (event) => {
@@ -104,6 +105,8 @@ const flows = {
   pipeline: document.getElementById('pipeline') as Flow,
   execution: document.getElementById('execution') as Flow,
   rtl: document.getElementById('rtl') as Flow,
+  groups: document.getElementById('groups') as Flow,
+  groupsRtl: document.getElementById('groups-rtl') as Flow,
   controlled: document.getElementById('controlled') as Flow,
   lateOwner: document.getElementById('late-owner') as Flow,
   neverOwner: document.getElementById('never-owner') as Flow,
@@ -124,6 +127,10 @@ flows.execution.schema = samples.photoSchema;
 flows.execution.load(samples.photoDocument);
 flows.rtl.schema = samples.pipelineSchema;
 flows.rtl.load(samples.pipelineDocument);
+for (const key of ['groups', 'groupsRtl'] as const) {
+  flows[key].schema = samples.groupsSchema;
+  flows[key].load(structuredClone(samples.groupsDocument));
+}
 flows.monitor.load(samples.workflowDocument);
 flows.monitor.run = samples.sampleRun;
 flows.lighting.load(samples.lightingDocument);
@@ -185,7 +192,13 @@ function settle(): Promise<void> {
   },
   settle,
   generate(count: number, kind?: FlowEdgeKind) {
+    flows.large.schema = samples.workflowSchema;
     flows.large.load(samples.generateDocument(count, 25, kind));
+    return settle();
+  },
+  generateGrouped(count: number, groupSize = 20) {
+    flows.large.schema = samples.groupsSchema;
+    flows.large.load(samples.generateGroupedDocument(count, groupSize));
     return settle();
   },
   create(attributes: Record<string, string> = {}) {

@@ -105,11 +105,19 @@ export interface FlowRunGraphEdge {
   targetPort?: string | undefined;
 }
 
+/**
+ * The graph a run covers: leaf node ids, leaf-to-leaf edges (group-port chains resolved) and their
+ * adjacency by edge id.
+ */
 export interface FlowRunGraph {
   nodes: string[];
   edges: FlowRunGraphEdge[];
   outgoing: Map<string, string[]>;
   incoming: Map<string, string[]>;
+  /** Per group id, its leaf members in document order (groups never run themselves). */
+  groups?: ReadonlyMap<string, readonly string[]>;
+  /** Per run edge id, the document edge ids it resolves, from source to target. */
+  chains?: ReadonlyMap<string, readonly string[]>;
 }
 
 /** A recorded list of run events, replayed to show a past run. */

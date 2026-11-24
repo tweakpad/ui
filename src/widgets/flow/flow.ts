@@ -43,6 +43,43 @@ import type {
 } from '../../foundation/flow/router/types.js';
 import { resolveEndpoint } from '../../foundation/flow/edges/endpoints.js';
 import { FlowModel, type FlowTransaction } from '../../foundation/flow/model/model.js';
+import { FlowScopeView } from '../../foundation/flow/groups/view.js';
+import {
+  flowEdgeRelation,
+  flowTerminalId,
+  parseFlowTerminalId,
+} from '../../foundation/flow/groups/relations.js';
+import {
+  exposeConnectionChanges,
+  groupResizeChanges,
+  groupResizeSnapshot,
+  type FlowGroupResizeSnapshot,
+  type FlowIdFactory,
+} from '../../foundation/flow/groups/commands.js';
+import { aggregateRunStatus } from '../../foundation/flow/run/state.js';
+import { FlowScopeController, parseFlowPath } from './groups/scope-controller.js';
+import {
+  addGroupPortCommand,
+  defaultGroupPortLabel,
+  groupSelectionCommand,
+  moveToGroupCommand,
+  removeGroupPortCommand,
+  toggleCollapsedCommand,
+  ungroupCommand,
+  updateGroupPortCommand,
+  type FlowGroupCommandHost,
+  type FlowGroupPortInput,
+  type FlowGroupSelectionOptions,
+} from './groups/group-commands.js';
+import { moveOutTarget, renderGroupMenuItems } from './groups/menu.js';
+import { flowBreadcrumb, renderFlowBreadcrumb } from './groups/breadcrumb.js';
+import {
+  GROUP_TOGGLE,
+  TERMINAL_ADD_PORT,
+  type FlowGroupToggleDetail,
+  type FlowTerminalAddPortDetail,
+} from './groups/events.js';
+import { GroupDragTracker } from './interaction/drop.js';
 import { KeyBindingOwner } from '../../foundation/key-bindings.js';
 import { copyData } from '../../foundation/clipboard.js';
 import { layoutFlow } from '../../foundation/flow/layout/layered-layout.js';
@@ -106,14 +143,22 @@ import {
 import { scanIcon } from '../../icons/map.js';
 import { workflowIcon } from '../../icons/workflow.js';
 import { playIcon } from '../../icons/media.js';
+import { folderOpenIcon } from '../../icons/folder-open.js';
+import { chevronDownIcon } from '../../icons/chevron-down.js';
+import { chevronRightIcon } from '../../icons/chevron-right.js';
 import {
+  COLLAPSE_KEYS,
   COPY_KEYS,
   CUT_KEYS,
   DELETE_KEYS,
   DUPLICATE_KEYS,
+  ENTER_GROUP_KEYS,
+  EXIT_GROUP_KEYS,
+  GROUP_KEYS,
   PASTE_KEYS,
   RUN_KEYS,
   SELECT_ALL_KEYS,
+  UNGROUP_KEYS,
   ZOOM_FIT_KEYS,
   ZOOM_IN_KEYS,
   ZOOM_OUT_KEYS,
@@ -157,6 +202,16 @@ import {
   INSPECTOR_FOCUS_EDGE,
   INSPECTOR_CLOSE,
   INSPECTOR_PRESENCE,
+  INSPECTOR_GROUP_LABEL,
+  INSPECTOR_GROUP_COLLAPSED,
+  INSPECTOR_PORT_ADD,
+  INSPECTOR_PORT_UPDATE,
+  INSPECTOR_PORT_REMOVE,
+  type FlowInspectorGroupLabelDetail,
+  type FlowInspectorGroupCollapsedDetail,
+  type FlowInspectorPortAddDetail,
+  type FlowInspectorPortUpdateDetail,
+  type FlowInspectorPortRemoveDetail,
   type FlowInspectorChangeDetail,
   type FlowInspectorCommitDetail,
   type FlowInspectorFocusEdgeDetail,
@@ -207,6 +262,7 @@ import type {
   FlowRect,
   FlowSchema,
   FlowSelection,
+  FlowPortInstance,
   FlowSize,
   FlowViewport,
 } from '../../foundation/flow/types.js';
@@ -254,6 +310,7 @@ import {
   type FlowAutoLayout,
   type FlowBackground,
   type FlowChangeMetadata,
+  type FlowConnectDetail,
   type FlowContextMenuTemplate,
   type FlowContextSubject,
   type FlowPanelPosition,
@@ -309,6 +366,8 @@ const MATERIALIZE_PER_FRAME = 12;
 const CREATE_PER_FRAME_MAX = 8;
 /** Quiet time after the last viewport change before deferred detail work resumes. */
 const VIEW_SETTLE_MS = 120;
+/** How long the first fit of an entered group waits for its terminals' measurement (ms). */
+const SCOPE_FIT_WINDOW = 250;
 /** Selection changes announced to assistive technology (keyboard, marquee and Escape). */
 const ANNOUNCED_SELECTION_REASONS: ReadonlySet<ChangeReason> = new Set([
   'keyboard',
@@ -465,6 +524,9 @@ const documentConverter = {
  * @fires tp-run-change - The run state changed; `{ run, summary }` and the stepper's position.
  * @fires tp-issues-change - The problems shown on nodes, ports and edges changed; `{ issues }`.
  * @fires tp-shortcut-change - The canvas's keyboard shortcuts changed, for hints that show them.
+ * @fires tp-path-change - Cancelable proposal of the path into nested groups (`[]` for the root);
+ * `detail.metadata.surface` names where it came from and `metadata.groupId` the group entered or
+ * left.
  */
 export class TpFlow extends TpFormElement<FlowDocument> {
   static tagName = 'tp-flow';
@@ -493,6 +555,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       TpFlowNodeResizer,
       TpFlowNodeToolbar,
       TpFlowEdgeEditor,
+      ...flowBreadcrumb.elements,
     ];
   }
   static override properties = {
@@ -520,6 +583,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     mode: { type: String, noAccessor: true },
     defaultMode: { type: String, attribute: 'default-mode' },
     inspectorOpen: { type: Boolean, noAccessor: true, attribute: 'inspector-open' },
+    path: {
+      converter: { fromAttribute: parseFlowPath, toAttribute: () => null },
+      noAccessor: true,
+    },
+    defaultPath: {
+      converter: { fromAttribute: parseFlowPath, toAttribute: () => null },
+      attribute: 'default-path',
+    },
     defaultInspectorOpen: { type: Boolean, attribute: 'default-inspector-open' },
     schema: { attribute: false },
     nodeTemplates: { attribute: false },
@@ -583,6 +654,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     locked: { type: Boolean, reflect: true },
     onValueChange: { attribute: false },
     onValueCommitted: { attribute: false },
+    onPathChange: { attribute: false },
   };
   static override styles = [TpFormElement.styles, flowStyles];
 
@@ -608,6 +680,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #providedInspectorOpen: boolean | undefined;
   /** Opens the inspector on first render, for an uncontrolled inspector. */
   defaultInspectorOpen: boolean | undefined;
+  #providedPath: readonly string[] | undefined;
+  /**
+   * The group an uncontrolled view opens inside, as the path of group ids from the root; a JSON
+   * array in the attribute.
+   */
+  defaultPath: readonly string[] | undefined;
 
   // ---- configuration ---------------------------------------------------------------------------
 
@@ -766,12 +844,39 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   /** Called with each settled document, once per gesture, connection, key or field commit. */
   onValueCommitted:
     ((value: FlowDocument, previous: FlowDocument, reason: ChangeReason) => void) | undefined;
+  /**
+   * Called synchronously with each `tp-path-change` proposal, before listeners; a controlled owner
+   * writes `path` back here to accept it.
+   */
+  onPathChange: ((event: TpValueChangeEvent<readonly string[]>) => void) | undefined;
 
   // ---- internals -------------------------------------------------------------------------------
 
   /** A unique id of this flow, prefixed on the ids its rendering creates. */
   readonly flowId = createId('tp-flow');
   readonly #model: FlowModel;
+  /** The read surface of the current scope: every read goes through it, writes go to the model. */
+  readonly #view: FlowScopeView;
+  readonly #scopes: FlowScopeController;
+  /** The pending first fit of an entered scope, run by the frame loop. */
+  #scopeFit: { reason: ChangeReason; until: number } | undefined;
+  /** Group membership tracking of the node drag in progress. */
+  #groupDrag: GroupDragTracker | undefined;
+  /** The group marked as the drop target of the drag in progress. */
+  #dropTarget: string | undefined;
+  /** The canvas top before a render that shows or hides the header (viewport compensation). */
+  #canvasTopBefore: number | undefined;
+  /** At the resize start of a group: its members, frame and terminals. */
+  #groupResize: FlowGroupResizeSnapshot | undefined;
+  /** The routing planner reads another graph (scope or collapse change): rebuilt next frame. */
+  #routerStale = false;
+  /** Run states of edge segments, from the run's leaf-to-leaf edges (nested documents). */
+  #runSegments: { run: FlowRun; states: Map<string, FlowEdgeRunState> } | undefined;
+  /** Leaf members of each group, for the status a collapsed group shows. */
+  #runGroups:
+    { document: FlowDocument; groups: ReadonlyMap<string, readonly string[]> } | undefined;
+  /** The aggregate states collapsed groups show, kept while their status is unchanged. */
+  readonly #groupStatus = new Map<string, FlowNodeRunState>();
   readonly #lane: DocumentLane;
   readonly #viewportState: ControllableState<FlowViewport>;
   readonly #selectionState: ControllableState<FlowSelection>;
@@ -877,6 +982,36 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   constructor() {
     super();
     this.#model = new FlowModel({ history: {} });
+    this.#view = new FlowScopeView(this.#model);
+    this.#scopes = new FlowScopeController({
+      host: this,
+      model: this.#model,
+      view: this.#view,
+      strings: () => this.#resolvedStrings,
+      nodeLabel: (id) => this.#nodeLabel(id),
+      announce: (message) => this.#announcer.announce(message),
+      readControlledPath: () => this.#providedPath,
+      readDefaultPath: () => this.defaultPath,
+      onPathChange: (event) => this.onPathChange?.(event),
+      diagnose: (message) => this.diagnose('flow-path', message),
+      scopeChanged: () => this.#scopeChanged(),
+      select: (ids, reason) =>
+        this.#selectionState.set({ nodes: [...ids], edges: [] }, reason, undefined, {
+          metadata: { surface: 'api' },
+        }),
+      viewport: () => this.viewport,
+      moveTo: (viewport, reason) =>
+        void this.#viewportOwner.animateTo(this.#clamp(viewport), reason),
+      fitScope: (reason) => {
+        // The first fit waits for the terminals' measurement (their size places them), at most
+        // SCOPE_FIT_WINDOW; the frame loop runs it once.
+        this.#scopeFit = { reason, until: performance.now() + SCOPE_FIT_WINDOW };
+        this.#schedule();
+      },
+      focusNode: (id) => void this.focusNode(id, { reveal: false }),
+      focusCanvas: () => this.#canvas?.focus({ preventScroll: true }),
+      rtl: () => getComputedStyle(this).direction === 'rtl',
+    });
     this.#lane = new DocumentLane({
       host: this,
       model: this.#model,
@@ -992,13 +1127,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       onFrame: () => this.#frameNow(),
       onGestureStart: () => {
         this.#userPanned = true;
+        this.#scopeFit = undefined;
         this.#pane?.toggleAttribute('data-panning', true);
       },
       onGestureEnd: () => this.#pane?.toggleAttribute('data-panning', false),
       reducedMotion: () => this.#reducedMotion(),
     });
     this.#nodeLayer = new NodeLayer({
-      model: () => this.#model,
+      model: () => this.#view,
       container: () => this.#nodesContainer,
       slot: () => this.#nodeSlot,
       authored: () => this.#adoption.nodes,
@@ -1010,7 +1146,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       onHostAdded: (host) => this.#hostAdded(host),
     });
     this.#edgeLayer = new EdgeLayer({
-      model: () => this.#model,
+      model: () => this.#view,
       flowId: this.flowId,
       rendererHost: () => this.#rendererHost(),
       renderer: () => this.#renderer,
@@ -1100,6 +1236,16 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     target.addEventListener(EDGE_SEGMENT, this.#edgeSegment as EventListener);
     target.addEventListener(EDGE_RECONNECT, this.#edgeReconnect as EventListener);
     target.addEventListener(EDGE_RECONNECT_KEY, this.#edgeReconnectKey as EventListener);
+    target.addEventListener(GROUP_TOGGLE, this.#groupToggle as EventListener);
+    target.addEventListener(TERMINAL_ADD_PORT, this.#terminalAddPort as EventListener);
+    target.addEventListener(INSPECTOR_GROUP_LABEL, this.#inspectorGroupLabel as EventListener);
+    target.addEventListener(
+      INSPECTOR_GROUP_COLLAPSED,
+      this.#inspectorGroupCollapsed as EventListener,
+    );
+    target.addEventListener(INSPECTOR_PORT_ADD, this.#inspectorPortAdd as EventListener);
+    target.addEventListener(INSPECTOR_PORT_UPDATE, this.#inspectorPortUpdate as EventListener);
+    target.addEventListener(INSPECTOR_PORT_REMOVE, this.#inspectorPortRemove as EventListener);
   }
   #internalRoot: EventTarget | undefined;
 
@@ -1212,6 +1358,22 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       if (this.hasUpdated) this.#inspectorState.sync();
     } else if (next !== undefined) this.#inspectorState.set(next, 'programmatic');
     this.requestUpdate('inspectorOpen', previous);
+  }
+
+  /**
+   * The group whose inside the canvas shows, as the path of group ids from the root (`[]` is the
+   * root); a JSON array as an attribute. Assigning it makes the path controlled.
+   */
+  get path(): readonly string[] {
+    return this.#scopes.path;
+  }
+
+  set path(next: readonly string[] | string | undefined) {
+    const previous = this.path;
+    const path = typeof next === 'string' ? parseFlowPath(next) : next;
+    this.#providedPath = path;
+    if (this.hasUpdated) this.#scopes.state.sync();
+    this.requestUpdate('path', previous);
   }
 
   // ---- read-only API ---------------------------------------------------------------------------
@@ -1673,14 +1835,23 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     };
   }
 
-  /** Connects two ports after validation and a cancelable `tp-connect`. */
+  /**
+   * Connects two ports after validation and a cancelable `tp-connect`. Ends at different group
+   * levels connect through group ports, exposed along the way (`detail.exposed`), in one change.
+   */
   connect(
     connection: FlowConnection,
     edge: Partial<FlowEdge> = {},
     reason: ChangeReason = 'connect',
     sourceEvent?: Event,
   ): string | undefined {
-    const validation = this.#model.validateConnection(connection, this.#validationOptions());
+    const model = this.#model;
+    // Terminal ends stand for the group they belong to.
+    connection = this.#view.resolve(connection);
+    const validation = model.validateConnection(connection, {
+      ...this.#validationOptions(),
+      boundary: 'expose',
+    });
     if (!validation.valid) return undefined;
     const proposed: FlowEdge = {
       id: edge.id ?? createId('tp-flow-edge'),
@@ -1690,20 +1861,41 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     };
     if (connection.sourcePort !== undefined) proposed.sourcePort = connection.sourcePort;
     if (connection.targetPort !== undefined) proposed.targetPort = connection.targetPort;
-    if (
-      !this.emit(
-        'tp-connect',
-        { connection, edge: proposed, reason, sourceEvent },
-        { cancelable: true },
-      )
-    )
-      return undefined;
-    const result = this.propose(
-      [{ type: 'edge-add', edge: proposed }],
+    const crossing = model.nested && flowEdgeRelation(model, connection) === 'crossing';
+    const exposed = crossing
+      ? exposeConnectionChanges(
+          model,
+          { connection, edge: { ...edge, id: proposed.id } },
+          this.#idFactory,
+        )
+      : undefined;
+    const detail: FlowConnectDetail = {
+      connection,
+      edge: exposed?.edges[0] ?? proposed,
       reason,
-      { surface: 'api', edgeId: proposed.id },
       sourceEvent,
-    );
+      exposed: { ports: exposed?.ports ?? [], edges: exposed?.edges ?? [] },
+    };
+    if (!this.emit<FlowConnectDetail>('tp-connect', detail, { cancelable: true })) return undefined;
+    const added = detail.edge;
+    const result = exposed
+      ? this.#lane.propose(exposed.changes, {
+          reason,
+          clamp: false,
+          cascade: false,
+          ...(sourceEvent ? { sourceEvent } : {}),
+          metadata: {
+            surface: 'api',
+            edgeId: added.id,
+            group: { action: 'expose', groupId: exposed.ports[0]?.nodeId ?? '' },
+          },
+        })
+      : this.propose(
+          [{ type: 'edge-add', edge: added }],
+          reason,
+          { surface: 'api', edgeId: added.id },
+          sourceEvent,
+        );
     if (!result.applied) return undefined;
     this.commit(reason, sourceEvent);
     this.#announcer.announce(
@@ -1712,7 +1904,180 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         target: this.#nodeLabel(connection.target),
       }),
     );
-    return proposed.id;
+    return added.id;
+  }
+
+  // ---- groups ------------------------------------------------------------------------------------
+
+  /**
+   * Opens the sub-view of a group, proposing its path on the path lane (`tp-path-change`); returns
+   * whether it was accepted.
+   */
+  enterGroup(id: string, reason: ChangeReason = 'imperative-action', sourceEvent?: Event): boolean {
+    return this.#scopes.enter(id, reason, sourceEvent, 'api');
+  }
+
+  /**
+   * Returns to the view the current group sits in (`tp-path-change`); returns whether it was
+   * accepted.
+   */
+  exitGroup(reason: ChangeReason = 'imperative-action', sourceEvent?: Event): boolean {
+    return this.#scopes.exit(reason, sourceEvent, 'api');
+  }
+
+  /**
+   * Wraps nodes (the selection by default), which must share one parent, in a new group sized to
+   * them; edges that would cross its border go through new group ports. One history entry;
+   * returns the new group's id, or `undefined` when refused.
+   */
+  groupSelection(
+    options: FlowGroupSelectionOptions = {},
+    reason: ChangeReason = 'imperative-action',
+    sourceEvent?: Event,
+  ): string | undefined {
+    const ids = options.ids ?? this.selection.nodes;
+    const id = groupSelectionCommand(this.#groupHost(), ids, options, reason, sourceEvent);
+    if (id) {
+      this.#selectionState.set({ nodes: [id], edges: [] }, reason, sourceEvent);
+      this.#setFocusedNode(id);
+    }
+    return id;
+  }
+
+  /**
+   * Dissolves a group (the single selected one by default): its members move to its parent and
+   * its port chains become direct edges again. One history entry; returns whether it did.
+   */
+  ungroup(id?: string, reason: ChangeReason = 'imperative-action', sourceEvent?: Event): boolean {
+    const target = id ?? this.#focusedGroup();
+    if (target === undefined) return false;
+    const members = [...this.#model.children(target)];
+    if (!ungroupCommand(this.#groupHost(), target, reason, sourceEvent)) return false;
+    this.#selectionState.set(this.#normalizeSelection({ nodes: members, edges: [] }), reason);
+    return true;
+  }
+
+  /**
+   * Collapses a group to one node or expands it again (`collapsed` absent toggles). One history
+   * entry; returns whether it changed.
+   */
+  toggleCollapsed(
+    id: string,
+    collapsed?: boolean,
+    reason: ChangeReason = 'imperative-action',
+    sourceEvent?: Event,
+  ): boolean {
+    return toggleCollapsedCommand(this.#groupHost(), id, collapsed, reason, sourceEvent);
+  }
+
+  /**
+   * Moves nodes into a group, or to the root with `null`, keeping them in place and rewiring the
+   * edges that would cross a border through group ports. One history entry; returns whether it
+   * did.
+   */
+  moveToGroup(
+    ids: readonly string[],
+    groupId: string | null,
+    reason: ChangeReason = 'imperative-action',
+    sourceEvent?: Event,
+  ): boolean {
+    return moveToGroupCommand(this.#groupHost(), ids, groupId, reason, sourceEvent);
+  }
+
+  /**
+   * Adds a port to a group's interface; its id is derived from `port.id`, its label or its
+   * direction and made unique in the group. Returns the port id, or `undefined` when refused.
+   */
+  addGroupPort(
+    groupId: string,
+    port: FlowGroupPortInput,
+    reason: ChangeReason = 'imperative-action',
+    sourceEvent?: Event,
+  ): string | undefined {
+    return addGroupPortCommand(this.#groupHost(), groupId, port, reason, sourceEvent);
+  }
+
+  /** Changes a group port's label or other fields; returns whether it was accepted. */
+  updateGroupPort(
+    groupId: string,
+    portId: string,
+    patch: Partial<Omit<FlowPortInstance, 'id' | 'direction'>>,
+    reason: ChangeReason = 'imperative-action',
+    sourceEvent?: Event,
+  ): boolean {
+    return updateGroupPortCommand(this.#groupHost(), groupId, portId, patch, reason, sourceEvent);
+  }
+
+  /**
+   * Removes a port the group itself declares, with the edges on both of its sides; returns
+   * whether it did.
+   */
+  removeGroupPort(
+    groupId: string,
+    portId: string,
+    reason: ChangeReason = 'imperative-action',
+    sourceEvent?: Event,
+  ): boolean {
+    return removeGroupPortCommand(this.#groupHost(), groupId, portId, reason, sourceEvent);
+  }
+
+  /** Ids the widget creates for nodes and edges. */
+  readonly #idFactory: FlowIdFactory = (kind) => createId(`tp-flow-${kind}`);
+
+  #groupHost(): FlowGroupCommandHost {
+    const editable = (): boolean => this.editable;
+    const strings = (): FlowStrings => this.#resolvedStrings;
+    return {
+      model: this.#model,
+      get editable() {
+        return editable();
+      },
+      get strings() {
+        return strings();
+      },
+      idFactory: this.#idFactory,
+      apply: (changes, options) => {
+        const result = this.#lane.propose(changes, {
+          reason: options.reason,
+          label: options.label,
+          clamp: false,
+          cascade: false,
+          metadata: options.metadata,
+          ...(options.sourceEvent ? { sourceEvent: options.sourceEvent } : {}),
+        });
+        if (!result.applied) return false;
+        this.commit(options.reason, options.sourceEvent, options.metadata);
+        return true;
+      },
+      announce: (message) => this.#announcer.announce(message),
+      nodeLabel: (id) => this.#nodeLabel(id),
+      rootLabel: () => this.#name,
+    };
+  }
+
+  /** The group a keyboard command acts on: the focused node, else the single selected one. */
+  #focusedGroup(): string | undefined {
+    const focused = this.#focusedNode;
+    if (focused !== undefined && this.#model.isGroup(focused)) return focused;
+    const single = this.#singleSelectedNode();
+    return single && this.#model.isGroup(single) ? single.id : undefined;
+  }
+
+  /** The group the view shows the inside of; `undefined` at the root (never reads it there). */
+  get #scopeId(): string | undefined {
+    return this.#view.path.length ? this.#view.scope : undefined;
+  }
+
+  /**
+   * The effective scope changed (a path change, a truncation): routing follows the scoped graph,
+   * the layers re-bind and the header shows or hides its path.
+   */
+  #scopeChanged(): void {
+    this.#routerStale = true;
+    this.#nodeLayer.rebind();
+    this.#edgeLayer.invalidate();
+    this.#schedule();
+    this.requestUpdate();
   }
 
   /** Undoes the last history step through the value lane; returns whether it applied. */
@@ -1754,8 +2119,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   selectAll(reason: ChangeReason = 'imperative-action', sourceEvent?: Event): boolean {
     return this.select(
       {
-        nodes: this.#model.nodes.filter((node) => node.selectable !== false).map((node) => node.id),
-        edges: this.#model.edges.filter((edge) => edge.selectable !== false).map((edge) => edge.id),
+        nodes: this.#view.nodes.filter((node) => node.selectable !== false).map((node) => node.id),
+        edges: this.#view.edges.filter((edge) => edge.selectable !== false).map((edge) => edge.id),
       },
       reason,
       sourceEvent,
@@ -1822,7 +2187,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       maxZoom?: number;
     } = {},
   ): Promise<boolean> {
-    const bounds = this.#model.bounds(options.nodes);
+    const bounds = this.#view.bounds(options.nodes);
     if (!bounds.width && !bounds.height) return false;
     const target = this.#fitTarget(
       bounds,
@@ -1910,10 +2275,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   /** Focuses a node, first bringing it into view unless `reveal` is false. */
   async focusNode(id: string, options: { reveal?: boolean } = {}): Promise<void> {
-    if (!this.#model.getNode(id)) return;
+    if (!this.#view.getNode(id)) return;
     this.#setFocusedNode(id);
     if (options.reveal !== false) {
-      const rect = this.#model.nodeRect(id);
+      const rect = this.#view.nodeRect(id);
       const visible = visibleRect(this.viewport, this.#size);
       if (rect && !rectsIntersect(rect, visible))
         await this.setCenter({ x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
@@ -1960,7 +2325,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#scheduler = new Scheduler(view ?? undefined);
     this.#scope = new CleanupScope();
     this.#lane.install();
-    this.#unsubscribeModel = this.#model.subscribe((event) => this.#modelChanged(event));
+    // The view forwards the model's events, widened by the terminals they move.
+    this.#unsubscribeModel = this.#view.subscribe((event) => this.#modelChanged(event));
     this.#adoption.connect();
   }
 
@@ -2021,6 +2387,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#modeState.initialize();
     this.#inspectorState.initialize();
     this.#paletteState.initialize();
+    this.#scopes.sync();
+    // The header shows or hides with this render: keep the canvas content where it is on screen.
+    if (this.hasUpdated && this.#hasHeader() !== this.#headerShown)
+      this.#canvasTopBefore = this.#canvas?.getBoundingClientRect().top;
     if (changed.has('strings')) this.#resolvedStrings = resolveStrings(this.strings);
     if (changed.has('schema')) this.#model.schema = this.schema;
     if (changed.has('middleware')) this.#syncMiddleware();
@@ -2086,6 +2456,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#revealArmed = true;
     this.#syncPaletteMenu();
     this.#syncComposition();
+    // Both write lanes (the viewport, the selection): they run once this update completes, still
+    // before the frame paints, so they never request an update from inside this one.
+    void this.updateComplete.then(() => {
+      this.#compensateHeader();
+      this.#scopes.settle();
+    });
     if (
       changed.has('run') ||
       changed.has('tool') ||
@@ -2108,6 +2484,22 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     }
     // A minimap turned on later paints its scene on the next frame, not at the next pan.
     if (changed.has('edgeTemplates') || changed.has('minimap')) this.#schedule();
+  }
+
+  /**
+   * The header row appeared or disappeared above the canvas: the viewport moves by the same
+   * distance in the same frame, so the content stays where it was on screen.
+   */
+  #compensateHeader(): void {
+    const before = this.#canvasTopBefore;
+    this.#canvasTopBefore = undefined;
+    const canvas = this.#canvas;
+    if (before === undefined || !canvas) return;
+    const delta = canvas.getBoundingClientRect().top - before;
+    if (!delta) return;
+    const viewport = this.viewport;
+    if (this.#proposeViewport({ ...viewport, y: viewport.y - delta }, 'programmatic', null, false))
+      this.#viewportOwner.apply(this.viewport);
   }
 
   override formStateRestoreCallback(state: string | File | FormData | null): void {
@@ -2181,7 +2573,21 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       if (this.#nodeLayer.visibleIds.size) {
         const affected = new Set(event.affectedNodes);
         for (const edge of this.#edgeEndpointsOf(event)) affected.add(edge);
+        if (this.#model.nested || this.#view.path.length) this.#groupsAffected(event, affected);
         this.#nodeLayer.rebind(affected);
+      }
+      if (this.#model.nested || this.#view.path.length) {
+        this.#runSegments = undefined;
+        this.#scopes.documentChanged();
+        // Collapsing changes what routes around what: the planner starts over on the new graph.
+        if (
+          event.changes.some(
+            (change) =>
+              (change.type === 'node-update' && 'collapsed' in change.patch) ||
+              change.type === 'node-replace',
+          )
+        )
+          this.#routerStale = true;
       }
       if (event.changes.some((change) => change.type === 'layout-settings'))
         this.#remeasureVisiblePorts();
@@ -2208,6 +2614,26 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         }),
       );
     }
+  }
+
+  /**
+   * Hosts a change re-binds beyond its own nodes in a nested document: the groups whose members
+   * changed (member count) and the terminals of the current group (its ports).
+   */
+  #groupsAffected(event: FlowChangeEvent, affected: Set<string>): void {
+    const model = this.#model;
+    let previous: Map<string, FlowNode> | undefined;
+    for (const id of [...affected]) {
+      let parent = model.getNode(id)?.parentId;
+      if (parent === undefined && !model.getNode(id)) {
+        previous ??= new Map(event.previousDocument.nodes.map((node) => [node.id, node]));
+        parent = previous.get(id)?.parentId;
+      }
+      if (parent !== undefined) affected.add(parent);
+    }
+    const scope = this.#scopeId;
+    if (scope !== undefined && affected.has(scope))
+      for (const id of this.#view.terminalIds) affected.add(id);
   }
 
   /** Nodes whose port connectivity changed because an incident edge was added, removed or re-targeted. */
@@ -2350,10 +2776,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       const minY = Math.min(...payload.nodes.map((node) => node.position.y));
       offset = { x: options.at.x - minX, y: options.at.y - minY };
     }
+    // Into the group under the paste point, else the group the view shows.
+    const parentId = (options.at ? this.#view.groupAt(options.at) : undefined) ?? this.#scopeId;
+    const origin = parentId !== undefined ? this.#model.absolutePosition(parentId) : undefined;
     const { changes, nodeIds, edgeIds } = pasteChanges(payload, {
-      idFactory: (kind) => createId(`tp-flow-${kind}`),
+      idFactory: this.#idFactory,
       offset,
       taken: (id) => Boolean(this.#model.getNode(id) || this.#model.getEdge(id)),
+      ...(parentId !== undefined && origin ? { parent: { id: parentId, origin } } : {}),
     });
     if (!changes.length) return [];
     const result = this.propose(changes, reason, { surface: 'keyboard' }, options.sourceEvent);
@@ -2433,9 +2863,10 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       : this.#focusedNode
         ? [this.#focusedNode]
         : [];
-    const changes: FlowChange[] = [];
+    let changes: FlowChange[] = [];
     for (const id of ids) {
-      const node = this.#model.getNode(id);
+      // A focused terminal nudges too; its move lands in the group's `terminals`.
+      const node = this.#view.getNode(id);
       if (!node || node.draggable === false) continue;
       changes.push({
         type: 'node-position',
@@ -2443,6 +2874,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         position: { x: node.position.x + delta.x, y: node.position.y + delta.y },
       });
     }
+    changes = this.#view.rewrite(changes);
     if (!changes.length) return false;
     const result = this.#lane.propose(changes, {
       reason,
@@ -2452,7 +2884,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     });
     if (!result.applied) return false;
     this.commit(reason, sourceEvent);
-    const moved = this.#model.getNode(ids[0]!)?.position;
+    const moved = this.#view.getNode(ids[0]!)?.position;
     this.#announcer.announce(
       fillTemplate(this.#resolvedStrings.announceMoved, {
         label: this.#nodeLabel(ids[0]!),
@@ -2470,10 +2902,52 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     connection: FlowConnection,
     sourceEvent?: Event,
   ): boolean {
-    const edge = this.#model.getEdge(edgeId);
+    const model = this.#model;
+    const edge = model.getEdge(edgeId);
     if (!edge || !this.editable) return false;
-    if (!this.#model.validateConnection(connection, this.#validationOptions(edgeId)).valid)
+    connection = this.#view.resolve(connection);
+    if (
+      !model.validateConnection(connection, {
+        ...this.#validationOptions(edgeId),
+        boundary: 'expose',
+      }).valid
+    )
       return false;
+    if (model.nested && flowEdgeRelation(model, connection) === 'crossing') {
+      // Re-targeted across a border: the edge is replaced by a chain through group ports, its
+      // first segment keeping the edge's id and fields.
+      const { id, source, target, sourcePort, targetPort, waypoints, ...fields } = edge;
+      void source;
+      void target;
+      void sourcePort;
+      void targetPort;
+      void waypoints;
+      const without = new FlowModel({
+        document: { ...model.document, edges: model.edges.filter((item) => item !== edge) },
+        ...(model.schema ? { schema: model.schema } : {}),
+        history: false,
+      });
+      const exposed = exposeConnectionChanges(
+        without,
+        { connection, edge: { ...fields, id } },
+        this.#idFactory,
+      );
+      const result = this.#lane.propose([{ type: 'edge-remove', id }, ...exposed.changes], {
+        reason: 'connect',
+        clamp: false,
+        cascade: false,
+        ...(sourceEvent ? { sourceEvent } : {}),
+        metadata: {
+          surface: 'edge',
+          edgeId,
+          reconnect: { edgeId, end },
+          group: { action: 'expose', groupId: exposed.ports[0]?.nodeId ?? '' },
+        },
+      });
+      if (!result.applied) return false;
+      this.commit('connect', sourceEvent, { reconnect: { edgeId, end } });
+      return true;
+    }
     const patch: Partial<FlowEdge> =
       end === 'source' ? { source: connection.source } : { target: connection.target };
     if (end === 'source' && connection.sourcePort !== undefined)
@@ -2638,7 +3112,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
             },
           ]
         : [];
-    const layoutChanges = [...directionChange, ...result.changes];
+    // A terminal laid out inside a group keeps its place in the group's `terminals`.
+    const layoutChanges = [...directionChange, ...this.#view.rewrite(result.changes)];
     if (layoutChanges.length)
       changed =
         this.#lane.withProposal(proposal, () =>
@@ -2702,15 +3177,34 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.paste(payload, { reason: 'input-paste', sourceEvent: event });
   };
 
+  /**
+   * The graph a layout reads: the current scope's nodes and terminals, with the edge ends on the
+   * scope group drawn to its terminals; members of the scope group come out relative to it.
+   */
   #layoutSource(): FlowLayoutSource {
-    const model = this.#model;
+    const model = this.#view;
     const empty: FlowRect = { x: 0, y: 0, width: 0, height: 0 };
+    const scope = this.#scopeId;
+    const edges = (): readonly FlowEdge[] => {
+      if (scope === undefined) return model.edges;
+      const inputs = flowTerminalId(scope, 'inputs');
+      const outputs = flowTerminalId(scope, 'outputs');
+      return model.edges.map((edge) =>
+        edge.source === scope || edge.target === scope
+          ? {
+              ...edge,
+              source: edge.source === scope ? inputs : edge.source,
+              target: edge.target === scope ? outputs : edge.target,
+            }
+          : edge,
+      );
+    };
     return {
       get nodes() {
         return model.nodes;
       },
       get edges() {
-        return model.edges;
+        return edges();
       },
       nodeRect: (id) => model.nodeRect(id) ?? empty,
       absolutePosition: (id) => model.absolutePosition(id) ?? { x: 0, y: 0 },
@@ -2723,7 +3217,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   // ---- interaction host, keyboard --------------------------------------------------------------
 
   #endpointOf(nodeId: string, portId: string | undefined, direction: FlowPortDirection) {
-    const model = this.#model;
+    const model = this.#view;
     return resolveEndpoint({
       nodeId,
       rect: model.nodeRect(nodeId) ?? { x: 0, y: 0, width: 0, height: 0 },
@@ -2737,7 +3231,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   }
 
   #interactionHost(): FlowInteractionHost {
-    const model = (): FlowModel => this.#model;
+    const model = (): FlowScopeView => this.#view;
     const canvas = (): HTMLElement | null => this.#canvas;
     const editable = (): boolean => this.editable;
     const disabled = (): boolean => this.effectiveDisabled;
@@ -2796,12 +3290,13 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       },
       screenToFlow: (point) => this.screenToFlow(point),
       paneOffset: (event) => this.#viewportOwner.paneOffset(event),
+      // Terminal moves become the scope group's `terminals`.
       propose: (changes, reason, metadata, sourceEvent) =>
-        this.propose(changes, reason, metadata ?? {}, sourceEvent),
+        this.propose(this.#view.rewrite(changes), reason, metadata ?? {}, sourceEvent),
       proposeIn: (transaction, changes, reason, metadata, sourceEvent) =>
         this.#lane.withProposal(
           { ...(sourceEvent ? { sourceEvent } : {}), metadata: metadata ?? {} },
-          () => transaction.apply(changes, { reason }),
+          () => transaction.apply(this.#view.rewrite(changes), { reason }),
         ),
       rollback: (transaction, reason, sourceEvent) => {
         this.#lane.withProposal(
@@ -2825,6 +3320,23 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           if (host) host.dragging = dragging;
         }
         this.#root?.toggleAttribute('data-dragging', dragging);
+        if (!dragging) {
+          this.#groupDrag?.clear();
+          this.#groupDrag = undefined;
+        }
+      },
+      beforeDragFrame: (ids) => this.#dragTracker(ids).before(),
+      afterDragFrame: (_ids, transaction, event) => this.#groupDrag?.after(transaction, event),
+      beforeDrop: (_ids, transaction, event) => {
+        const moved = this.#groupDrag?.drop(transaction, event);
+        if (!moved?.moved.length) return;
+        const target = this.#groupDrag?.target;
+        this.#announcer.announce(
+          fillTemplate(this.#resolvedStrings.announceMovedToGroup, {
+            count: moved.moved.length,
+            label: target === undefined ? this.#name : this.#nodeLabel(target),
+          }),
+        );
       },
       setPortState: (nodeId, portId, state) => this.setPortState(nodeId, portId, state),
       clearPortStates: () => this.clearPortStates(),
@@ -2840,15 +3352,17 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       announce: (message) => this.#announcer.announce(message),
       nodeLabel: (id) => this.#nodeLabel(id),
       portLabel: (nodeId, portId) =>
-        this.#model.ports(nodeId).find((port) => port.id === portId)?.label || portId || '',
+        this.#view.ports(nodeId).find((port) => port.id === portId)?.label || portId || '',
       connect: (connection, edge, reason, sourceEvent) =>
         this.connect(connection, edge, reason, sourceEvent),
       reconnect: (edgeId, end, connection, sourceEvent) =>
         this.reconnect(edgeId, end, connection, sourceEvent),
+      // Terminal ends are the group's; ends at different levels are checked as their leaf pair.
       validateConnection: (connection, ignoreEdge) =>
-        this.#model.validateConnection(connection, {
+        this.#model.validateConnection(this.#view.resolve(connection), {
           fast: true,
           ...this.#validationOptions(ignoreEdge),
+          boundary: 'expose',
         }),
       portEndpoint: (nodeId, portId, direction) => this.#endpointOf(nodeId, portId, direction),
       edgeKind: () => this.schema?.rules?.defaultEdgeKind ?? 'smoothstep',
@@ -2865,6 +3379,40 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       },
       schedule: () => this.#schedule(),
     };
+  }
+
+  /** The group membership tracking of the node drag in progress (created on its first frame). */
+  #dragTracker(ids: readonly string[]): GroupDragTracker {
+    if (this.#groupDrag) return this.#groupDrag;
+    const view = this.#view;
+    const scope = (): string | undefined => this.#scopeId;
+    const tracker = new GroupDragTracker(
+      {
+        model: this.#model,
+        view,
+        get scope() {
+          return scope();
+        },
+        idFactory: this.#idFactory,
+        proposeIn: (transaction, changes, metadata, sourceEvent) =>
+          this.#lane.withProposal({ sourceEvent, metadata }, () =>
+            transaction.apply(changes, { reason: 'drag', clamp: false, cascade: false }),
+          ),
+        markTarget: (id) => this.#markDropTarget(id),
+        toFlow: (event) => this.screenToFlow({ x: event.clientX, y: event.clientY }),
+      },
+      ids,
+    );
+    this.#groupDrag = tracker;
+    return tracker;
+  }
+
+  /** Marks the group the dragged nodes would move into (`data-drop-target`). */
+  #markDropTarget(id: string | undefined): void {
+    const previous = this.#dropTarget;
+    if (previous === id) return;
+    this.#dropTarget = id;
+    this.#nodeLayer.rebind([previous, id].filter((item): item is string => item !== undefined));
   }
 
   #portInPath(event: Event): TpFlowPort | undefined {
@@ -3018,6 +3566,38 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       handler: (event) => this.setTool('pan', 'hotkey', event),
     });
     keys.register({ keys: 'E', action: 'edges', handler: () => this.#cycleFocusedEdges() });
+    keys.register({
+      keys: ENTER_GROUP_KEYS,
+      action: 'enter-group',
+      handler: (event) => {
+        const id = this.#focusedGroup();
+        return id !== undefined && this.#scopes.enter(id, 'hotkey', event, 'keyboard');
+      },
+    });
+    keys.register({
+      keys: EXIT_GROUP_KEYS,
+      action: 'exit-group',
+      handler: (event) => this.#scopes.exit('hotkey', event, 'keyboard'),
+    });
+    keys.register({
+      keys: GROUP_KEYS,
+      action: 'group',
+      handler: (event) => this.groupSelection({}, 'hotkey', event) !== undefined,
+    });
+    keys.register({
+      keys: UNGROUP_KEYS,
+      action: 'ungroup',
+      handler: (event) => this.ungroup(undefined, 'hotkey', event),
+    });
+    keys.register({
+      keys: COLLAPSE_KEYS,
+      action: 'collapse',
+      handler: (event) => {
+        if (interactiveTargetInPath(event, this.#canvas ?? this)) return false;
+        const id = this.#focusedGroup();
+        return id !== undefined && this.toggleCollapsed(id, undefined, 'hotkey', event);
+      },
+    });
   }
 
   #arrowKey(event: KeyboardEvent, key: FlowArrowKey): boolean {
@@ -3029,14 +3609,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (interactiveTargetInPath(event, this.#canvas ?? this)) return false;
     const from = this.#focusedNode ?? this.selection.nodes[0];
     if (!from) return this.#focusEdgeNode(0);
-    const next = nextNodeInDirection(this.#model, from, key);
+    const next = nextNodeInDirection(this.#view, from, key);
     if (!next) return true;
     void this.focusNode(next, { reveal: true });
     return true;
   }
 
   #focusEdgeNode(index: 0 | -1): boolean {
-    const nodes = this.#model.nodes.filter((node) => !node.hidden);
+    const nodes = this.#view.nodes.filter((node) => !node.hidden);
     const node = index === 0 ? nodes[0] : nodes[nodes.length - 1];
     if (!node) return false;
     void this.focusNode(node.id, { reveal: true });
@@ -3102,12 +3682,13 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   }
 
   #nearestRemaining(id: string, removed: ReadonlySet<string>): string | undefined {
-    const origin = this.#model.nodeRect(id);
+    const view = this.#view;
+    const origin = view.nodeRect(id);
     if (!origin) return undefined;
     let best: { id: string; distance: number } | undefined;
-    for (const node of this.#model.nodes) {
+    for (const node of view.nodes) {
       if (removed.has(node.id) || node.hidden) continue;
-      const rect = this.#model.nodeRect(node.id);
+      const rect = view.nodeRect(node.id);
       if (!rect) continue;
       const distance = Math.hypot(rect.x - origin.x, rect.y - origin.y);
       if (!best || distance < best.distance) best = { id: node.id, distance };
@@ -3351,9 +3932,30 @@ export class TpFlow extends TpFormElement<FlowDocument> {
           @click=${this.#toolbarRun}
         ></tp-button>`
       : nothing;
-    if (!this.editable) return run;
+    // A group opens from its toolbar too, and collapses or expands there.
+    const group = this.#model.isGroup(node)
+      ? html`<tp-button
+            variant="ghost"
+            size="icon-xs"
+            .icon=${folderOpenIcon}
+            .ariaLabel=${strings.enterGroup}
+            @click=${this.#toolbarEnter}
+          ></tp-button>
+          ${
+            this.editable
+              ? html`<tp-button
+                  variant="ghost"
+                  size="icon-xs"
+                  .icon=${node.collapsed ? chevronRightIcon : chevronDownIcon}
+                  .ariaLabel=${node.collapsed ? strings.expandGroup : strings.collapseGroup}
+                  @click=${this.#toolbarCollapse}
+                ></tp-button>`
+              : nothing
+          }`
+      : nothing;
+    if (!this.editable) return html`${run}${group}`;
     return html`
-      ${run}
+      ${run}${group}
       ${
         this.#inspectable(node)
           ? html`<tp-button
@@ -3404,6 +4006,16 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (node) this.#requestRun('run', 'node', node.id, 'trigger-press', event);
   };
 
+  #toolbarEnter = (event: Event): void => {
+    const node = this.#singleSelectedNode();
+    if (node) this.#scopes.enter(node.id, 'item-press', event, 'node');
+  };
+
+  #toolbarCollapse = (event: Event): void => {
+    const node = this.#singleSelectedNode();
+    if (node) this.toggleCollapsed(node.id, undefined, 'trigger-press', event);
+  };
+
   #toolbarDuplicate = (event: Event): void => {
     this.duplicate('trigger-press', event);
   };
@@ -3419,14 +4031,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   }
 
   /**
-   * Whether a node offers the inspector: its definition places at least one property there
-   * (the schema decides; a node that shows all of its settings has no panel to open).
+   * Whether a node offers the inspector: it is a group (its section edits the label, the collapsed
+   * state and the ports) or its definition places at least one property there (the schema
+   * decides; a node that shows all of its settings has no panel to open).
    */
   #inspectable(node: FlowNode | undefined): boolean {
     return (
       this.inspector !== 'none' &&
       node !== undefined &&
-      inspectorProperties(this.#model.definitionOf(node)).length > 0
+      (this.#model.isGroup(node) || inspectorProperties(this.#model.definitionOf(node)).length > 0)
     );
   }
 
@@ -3587,7 +4200,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   /** Per-frame state of the minimap, node toolbar and edge editor (no layout reads). */
   #syncOverlays(viewport: FlowViewport): void {
-    const model = this.#model;
+    const model = this.#view;
     // The zoom field follows the view without re-rendering the root.
     if (viewport.zoom !== this.#publishedZoom) {
       this.#publishedZoom = viewport.zoom;
@@ -3904,7 +4517,13 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const data: Record<string, unknown> = {};
     for (const property of definition.properties ?? [])
       if (property.default !== undefined) data[property.key] = property.default;
-    const [id] = this.addNodes([{ type, position, data }], reason);
+    // Into the expanded group under the point, else the group the view shows.
+    const parentId = this.#view.groupAt(at) ?? this.#scopeId;
+    if (parentId !== undefined) position = this.#model.toRelativePosition(position, parentId);
+    const [id] = this.addNodes(
+      [{ type, position, data, ...(parentId !== undefined ? { parentId } : {}) }],
+      reason,
+    );
     if (!id) return undefined;
     if (source) {
       const ports = definition.ports.filter(
@@ -3990,6 +4609,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         max: definition?.maxSize,
         transaction: model.transaction({ label: 'resize', reason: 'drag' }),
       };
+      // A group never shrinks past its members; a start or top resize keeps them in place.
+      this.#groupResize = model.isGroup(node) ? groupResizeSnapshot(model, node.id) : undefined;
       return;
     }
     const session = this.#resize;
@@ -4016,9 +4637,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         width = Math.round(width / this.snapGrid) * this.snapGrid;
         height = Math.round(height / this.snapGrid) * this.snapGrid;
       }
-      const changes: FlowChange[] = [
-        { type: 'node-size', id: session.id, size: { width, height } },
-      ];
+      let changes: FlowChange[] = [{ type: 'node-size', id: session.id, size: { width, height } }];
       if (left || top)
         changes.push({
           type: 'node-position',
@@ -4028,16 +4647,32 @@ export class TpFlow extends TpFormElement<FlowDocument> {
             y: top ? start.y + (start.height - height) : start.y,
           },
         });
+      const group = this.#groupResize;
+      if (group) {
+        const rect = {
+          x: left ? group.rect.x + (start.width - width) : group.rect.x,
+          y: top ? group.rect.y + (start.height - height) : group.rect.y,
+          width,
+          height,
+        };
+        changes =
+          groupResizeChanges(model, { id: session.id, rect, snapshot: group })?.changes ?? [];
+      }
       this.#lane.withProposal(
         {
           ...(detail.sourceEvent ? { sourceEvent: detail.sourceEvent } : {}),
           metadata: { surface: 'node', nodeId: session.id },
         },
-        () => session.transaction.apply(changes, { reason }),
+        () =>
+          session.transaction.apply(
+            changes,
+            group ? { reason, clamp: false, cascade: false } : { reason },
+          ),
       );
     }
     if (detail.phase === 'end') {
       this.#resize = undefined;
+      this.#groupResize = undefined;
       if (detail.dx === 0 && detail.dy === 0) session.transaction.rollback(reason);
       else {
         session.transaction.commit();
@@ -4048,6 +4683,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       }
     } else if (detail.phase === 'cancel') {
       this.#resize = undefined;
+      this.#groupResize = undefined;
       this.#lane.withProposal({ metadata: { surface: 'node', nodeId: session.id } }, () =>
         session.transaction.rollback('escape-key'),
       );
@@ -4179,10 +4815,20 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #reconnectStart(edgeId: string, end: 'source' | 'target'): ConnectionStart | undefined {
     const edge = this.#model.getEdge(edgeId);
     if (!edge) return undefined;
+    // Inside a group, the kept end on the group itself is its terminal's port.
+    const scope = this.#scopeId;
     const fixed: ConnectionStartInfo =
       end === 'target'
-        ? { nodeId: edge.source, portId: edge.sourcePort, direction: 'output' }
-        : { nodeId: edge.target, portId: edge.targetPort, direction: 'input' };
+        ? {
+            nodeId: edge.source === scope ? flowTerminalId(scope, 'inputs') : edge.source,
+            portId: edge.sourcePort,
+            direction: 'output',
+          }
+        : {
+            nodeId: edge.target === scope ? flowTerminalId(scope, 'outputs') : edge.target,
+            portId: edge.targetPort,
+            direction: 'input',
+          };
     return { ...fixed, reconnect: { edgeId, end } };
   }
 
@@ -4293,36 +4939,35 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     }
   }
 
-  /** The model surface the planner reads; endpoints resolve like the edge layer's. */
+  /**
+   * The graph surface the planner reads, scoped like the canvas (members of collapsed groups and
+   * other scopes are not obstacles); endpoints resolve like the edge layer's, an end on the scope
+   * group at its terminal. The planner is rebuilt when the scope or a collapsed state changes.
+   */
   #routingSource(): FlowRoutingSource {
     const model = this.#model;
+    const view = this.#view;
+    const scope = this.#scopeId;
     const empty: FlowRect = { x: 0, y: 0, width: 0, height: 0 };
     return {
       get nodes() {
-        return model.nodes;
+        return view.nodes;
       },
       get edges() {
-        return model.edges;
+        return view.edges;
       },
       get schema() {
         return model.schema;
       },
-      getEdge: (id) => model.getEdge(id),
-      getNode: (id) => model.getNode(id),
-      definitionOf: (node) => model.definitionOf(node),
-      nodeRect: (id) => model.nodeRect(id) ?? empty,
-      endpoint: (nodeId, portId, direction) =>
-        resolveEndpoint({
-          nodeId,
-          rect: model.nodeRect(nodeId) ?? empty,
-          ports: model.ports(nodeId),
-          portId,
-          direction,
-          layout: model.layoutDirection,
-          kind: 'orthogonal',
-          loose: true,
-        }),
-      subscribe: (listener) => model.subscribe(listener),
+      getEdge: (id) => view.getEdge(id),
+      getNode: (id) => view.getNode(id),
+      definitionOf: (node) => view.definitionOf(node),
+      nodeRect: (id) => view.nodeRect(id) ?? empty,
+      endpoints: (edge) =>
+        scope !== undefined && (edge.source === scope || edge.target === scope)
+          ? view.endpoints(edge)
+          : model.endpoints(edge, 'orthogonal'),
+      subscribe: (listener) => view.subscribe(listener),
       children: (id) => model.children(id),
     };
   }
@@ -4397,7 +5042,11 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   #frameNow(): void {
     if (!this.hasUpdated) return;
-    const model = this.#model;
+    if (this.#routerStale) {
+      this.#routerStale = false;
+      this.#syncRouter();
+    }
+    const model = this.#view;
     const viewport = this.viewport;
     const wanted = new Set<string>();
     // Moving means the viewport changed within the settle window, not just since the last call:
@@ -4445,9 +5094,16 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (this.virtualize && this.#size.width > 0) {
       const visible = visibleRect(viewport, this.#size);
       const expanded = expandRect(visible, Math.max(visible.width, visible.height) * OVERSCAN);
+      // Inside a group, an end on the group itself is drawn at its terminal.
+      const scope = this.#scopeId;
+      const inputs = scope === undefined ? undefined : flowTerminalId(scope, 'inputs');
+      const outputs = scope === undefined ? undefined : flowTerminalId(scope, 'outputs');
       for (const edge of model.edges) {
         if (edge.hidden) continue;
-        if (visibleNodes.has(edge.source) || visibleNodes.has(edge.target)) {
+        if (
+          visibleNodes.has(edge.source === scope ? inputs! : edge.source) ||
+          visibleNodes.has(edge.target === scope ? outputs! : edge.target)
+        ) {
           edgeIds.add(edge.id);
           continue;
         }
@@ -4461,6 +5117,23 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       const progress = this.#planner.run(ROUTE_BUDGET_MS);
       if (!progress.done) this.#schedule();
     }
+    // A terminal placed automatically moves when it is measured (its size sets its offset from
+    // the members); re-placing its host only writes when the position changed.
+    const terminals = this.#view.terminalIds;
+    if (terminals.length) {
+      this.#nodeLayer.reposition(terminals);
+      const fit = this.#scopeFit;
+      if (fit) {
+        if (terminals.every((id) => this.#nodeLayer.isMeasured(id)) || now > fit.until) {
+          this.#scopeFit = undefined;
+          void this.fitViewTo({ reason: fit.reason });
+        } else this.#schedule();
+      }
+    } else if (this.#scopeFit) {
+      const fit = this.#scopeFit;
+      this.#scopeFit = undefined;
+      void this.fitViewTo({ reason: fit.reason });
+    }
     this.#edgeLayer.update(edgeIds);
     this.#edgeLayer.setViewport(viewport);
     this.#backgroundElement?.setViewport(viewport);
@@ -4469,7 +5142,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     if (root) {
       const lod = this.lod;
       if (root.getAttribute('data-lod') !== lod) root.setAttribute('data-lod', lod);
-      const empty = model.nodes.length === 0;
+      const empty = this.#model.nodes.length === 0;
       if (root.hasAttribute('data-empty') !== empty) root.toggleAttribute('data-empty', empty);
     }
   }
@@ -4496,7 +5169,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       y: (this.#size.height / 2 - viewport.y) / viewport.zoom,
     };
     const distance = (id: string): number => {
-      const rect = this.#model.nodeRect(id);
+      const rect = this.#view.nodeRect(id);
       if (!rect) return Infinity;
       const dx = rect.x + rect.width / 2 - center.x;
       const dy = rect.y + rect.height / 2 - center.y;
@@ -4508,8 +5181,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   }
 
   #edgeBounds(edge: FlowEdge): FlowRect | undefined {
-    const source = this.#model.nodeRect(edge.source);
-    const target = this.#model.nodeRect(edge.target);
+    const view = this.#view;
+    const scope = this.#scopeId;
+    const source = view.nodeRect(
+      edge.source === scope ? flowTerminalId(scope, 'inputs') : edge.source,
+    );
+    const target = view.nodeRect(
+      edge.target === scope ? flowTerminalId(scope, 'outputs') : edge.target,
+    );
     if (!source || !target) return undefined;
     const x = Math.min(source.x, target.x);
     const y = Math.min(source.y, target.y);
@@ -4522,7 +5201,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   }
 
   #measured(id: string, size: FlowSize, ports: FlowPortGeometry[]): void {
-    this.#model.measure(id, size, ports);
+    // Terminals keep their measurement in the view, document nodes in the model.
+    this.#view.measure(id, size, ports);
     if (this.fitView && !this.#fitted && !this.#userPanned && !this.#viewportState.controlled)
       this.#tryInitialFit();
   }
@@ -4530,7 +5210,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #tryInitialFit(): void {
     if (!this.fitView || this.#fitted || this.#userPanned || this.#viewportState.controlled) return;
     if (!this.#size.width || !this.#size.height) return;
-    const model = this.#model;
+    const model = this.#view;
     const visible = this.#nodeLayer.visibleIds;
     if (!visible.size) return;
     if (
@@ -4592,7 +5272,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   }
 
   #bindNode(host: TpFlowNode, node: FlowNode): void {
-    const definition = this.#model.definitionOf(node);
+    const view = this.#view;
+    const definition = view.definitionOf(node);
     if (!definition && !this.#unknownTypes.has(node.type)) {
       this.#unknownTypes.add(node.type);
       this.diagnose(
@@ -4607,7 +5288,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     host.icons = this.icons;
     host.tones = this.#dataTypeTones();
     host.strings = this.#resolvedStrings;
-    host.ports = this.mode === 'view' && !this.showPorts ? [] : this.#model.ports(node.id);
+    host.ports = this.mode === 'view' && !this.showPorts ? [] : view.ports(node.id);
     host.portStates = this.#portStatesOf(node.id);
     host.status = this.#runNode(node.id);
     host.issues = this.#nodeIssues.get(node.id) ?? NO_ISSUES;
@@ -4622,6 +5303,13 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     host.showPortLabels = this.showPortLabels;
     const direction = this.#model.layoutDirection;
     host.layoutDirection = direction === 'vertical' ? 'vertical' : 'horizontal';
+    // Groups: the collapsed state, the direct member count (the node names and badges it) and
+    // the drop mark; a terminal stands for one side of the current group's interface.
+    const group = this.#model.isGroup(node);
+    host.collapsed = group && Boolean(node.collapsed);
+    host.memberCount = group ? this.#model.children(node.id).length : 0;
+    host.terminal = view.isTerminal(node.id) ? parseFlowTerminalId(node.id)?.kind : undefined;
+    host.dropTarget = this.#dropTarget === node.id;
   }
 
   #hostAdded(host: TpFlowNode): void {
@@ -4632,7 +5320,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
   #nodeFocus = (event: FocusEvent): void => {
     const host = event.currentTarget as TpFlowNode;
     const id = host.nodeId;
-    if (!id || !this.#model.getNode(id)) return;
+    if (!id || !this.#view.getNode(id)) return;
     this.#setFocusedNode(id);
     host.focused = true;
   };
@@ -4673,8 +5361,8 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const transient = this.#portStates.get(nodeId) ?? {};
     const states: Record<string, FlowPortState> = {};
     let key = '';
-    for (const port of this.#model.ports(nodeId)) {
-      const connected = this.#model.portConnections(nodeId, port.direction, port.id).length > 0;
+    for (const port of this.#view.ports(nodeId)) {
+      const connected = this.#view.portConnections(nodeId, port.direction, port.id).length > 0;
       const state: FlowPortState = { ...(transient[port.id] ?? {}), connected };
       const issue = this.#portIssue(nodeId, port.id);
       if (issue) state.issue = issue;
@@ -4702,7 +5390,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     else delete states[portId];
     this.#portStates.set(nodeId, states);
     const host = this.#nodeLayer.hostOf(nodeId);
-    const node = this.#model.getNode(nodeId);
+    const node = this.#view.getNode(nodeId);
     if (host && node) this.#bindNode(host, node);
   }
 
@@ -4712,17 +5400,46 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     this.#portStates.clear();
     for (const id of ids) {
       const host = this.#nodeLayer.hostOf(id);
-      const node = this.#model.getNode(id);
+      const node = this.#view.getNode(id);
       if (host && node) this.#bindNode(host, node);
     }
   }
 
   #runNode(id: string): FlowNodeRunState | undefined {
-    return this.#runState?.nodes.get(id);
+    const run = this.#runState;
+    const own = run?.nodes.get(id);
+    if (own || !run || !this.#model.nested) return own;
+    // A collapsed group shows the status of its members together.
+    const node = this.#model.getNode(id);
+    if (!node?.collapsed || !this.#model.isGroup(node)) return undefined;
+    const document = this.#model.document;
+    if (this.#runGroups?.document !== document)
+      this.#runGroups = { document, groups: flowRunGraph(this.#model).groups ?? new Map() };
+    const leaves = this.#runGroups.groups.get(id) ?? [];
+    const states = leaves.map((leaf) => run.nodes.get(leaf));
+    if (!states.some((state) => state !== undefined)) return undefined;
+    const status = aggregateRunStatus(states);
+    const cached = this.#groupStatus.get(id);
+    if (cached?.status === status) return cached;
+    const state = { status } as FlowNodeRunState;
+    this.#groupStatus.set(id, state);
+    return state;
   }
 
   #runEdge(id: string): FlowEdgeRunState | undefined {
-    return this.#runState?.edges.get(id);
+    const run = this.#runState;
+    const own = run?.edges.get(id);
+    if (own || !run || !this.#model.nested) return own;
+    // Run edges are leaf to leaf; each document segment of the chain shows the run edge's state.
+    if (this.#runSegments?.run !== run) {
+      const states = new Map<string, FlowEdgeRunState>();
+      const chains = flowRunGraph(this.#model).chains;
+      for (const [flat, state] of run.edges)
+        for (const segment of chains?.get(flat) ?? [])
+          if (!states.has(segment)) states.set(segment, state);
+      this.#runSegments = { run, states };
+    }
+    return this.#runSegments.states.get(id);
   }
 
   // ---- run state and stepper -------------------------------------------------------------------
@@ -4887,6 +5604,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   #runChanged(): void {
     const run = this.#runState;
+    // A live run updates its record in place: segment and group states are derived again.
+    this.#runSegments = undefined;
+    this.#groupStatus.clear();
     this.#root?.toggleAttribute('data-running', Boolean(run && run.status !== 'idle'));
     this.#nodeLayer.rebind();
     this.#edgeLayer.invalidate();
@@ -5000,7 +5720,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
 
   #nodeLabel(id: string): string {
     const node = this.#model.getNode(id);
-    if (!node) return id;
+    if (!node) {
+      const terminal = parseFlowTerminalId(id);
+      if (terminal && this.#view.isTerminal(id))
+        return terminal.kind === 'inputs'
+          ? this.#resolvedStrings.groupInputs
+          : this.#resolvedStrings.groupOutputs;
+      return id;
+    }
     return node.label ?? this.#model.definitionOf(node)?.label ?? node.type ?? id;
   }
 
@@ -5076,7 +5803,15 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     }
     if (event.type === 'pointerdown' && interactiveTargetInPath(event, canvas ?? this))
       return false;
+    // A double press inside an expanded group's frame enters the group instead of zooming.
+    if (event.type === 'dblclick' && this.#groupAtEvent(event as MouseEvent) !== undefined)
+      return false;
     return true;
+  }
+
+  /** The expanded group whose frame holds the pointer (the frame itself takes no presses). */
+  #groupAtEvent(event: MouseEvent): string | undefined {
+    return this.#view.groupAt(this.screenToFlow({ x: event.clientX, y: event.clientY }));
   }
 
   // ---- selection on click (the drag arbiter extends this) ----------------------------------------
@@ -5255,6 +5990,13 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       }
       if (this.selection.nodes.length + this.selection.edges.length)
         this.#selectionState.set(EMPTY_SELECTION, 'escape-key', event);
+      // Nothing left to cancel: Escape leaves the current group for the view it sits in.
+      else if (
+        !event.defaultPrevented &&
+        !interactiveTargetInPath(event, this.#canvas ?? this) &&
+        this.#scopes.exit('escape-key', event, 'keyboard')
+      )
+        event.preventDefault();
     }
   };
 
@@ -5332,7 +6074,12 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const host = this.#nodeHostInPath(event);
     const edge = host ? undefined : this.#edgeInPath(event);
     this.#contextSubject = host?.nodeId
-      ? { kind: 'node', nodeId: host.nodeId, selection }
+      ? {
+          kind: 'node',
+          nodeId: host.nodeId,
+          selection,
+          ...(this.#model.isGroup(host.nodeId) ? { group: true } : {}),
+        }
       : edge
         ? { kind: 'edge', edgeId: edge, selection }
         : {
@@ -5340,7 +6087,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
             point: this.screenToFlow({ x: event.clientX, y: event.clientY }),
             selection,
           };
-    if (host?.nodeId && !selection.nodes.includes(host.nodeId))
+    if (host?.nodeId && !selection.nodes.includes(host.nodeId) && host.node?.selectable !== false)
       this.#selectionState.set({ nodes: [host.nodeId], edges: [] }, 'item-press', event, {
         metadata: { surface: 'node' },
       });
@@ -5363,21 +6110,34 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const strings = this.#resolvedStrings;
     const editable = this.editable;
     // Commands carry their icon and shortcut, as the theme's menus do; Delete is destructive.
+    // A command without an icon of its own lines up with the iconed ones (inset).
     const item = (
       value: string,
-      icon: IconDefinition,
+      icon: IconDefinition | undefined,
       label: string,
       options: { disabled?: boolean; keys?: string; destructive?: boolean } = {},
     ) =>
       html`<tp-menu-item
         value=${value}
         variant=${options.destructive ? 'destructive' : 'ghost'}
+        ?inset=${!icon}
         ?disabled=${options.disabled ?? false}
-        ><tp-icon .icon=${icon}></tp-icon>${label}${renderShortcutHint(
+        >${icon ? html`<tp-icon .icon=${icon}></tp-icon>` : nothing}${label}${renderShortcutHint(
           options.keys,
           'menu',
         )}</tp-menu-item
       >`;
+    const groups = renderGroupMenuItems({
+      subject,
+      model: this.#model,
+      scope: this.#scopeId,
+      nodes: this.selection.nodes,
+      editable,
+      strings,
+      item,
+    });
+    // A terminal stands for the group's interface: its menu is the group commands alone.
+    if (subject.kind === 'node' && this.#view.isTerminal(subject.nodeId)) return groups;
     const runs = this.#runRequests;
     const remove = item('delete', trashIcon, strings.delete, {
       disabled: !editable,
@@ -5421,8 +6181,11 @@ export class TpFlow extends TpFormElement<FlowDocument> {
             <tp-menu-item inset value="run-to">${strings.runTo}</tp-menu-item>
             <tp-separator></tp-separator>`
         : nothing;
+      // A group leads with its own commands (Enter group first); any other node keeps Settings
+      // first and offers grouping after its arrangement.
+      const group = node !== undefined && this.#model.isGroup(node);
       return html`
-        ${run}${settings}${arrange}
+        ${run}${group ? groups : nothing}${settings}${arrange}${group ? nothing : groups}
         ${item('duplicate', copyPlusIcon, strings.duplicate, {
           disabled: !editable,
           keys: DUPLICATE_KEYS,
@@ -5447,6 +6210,7 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         ${remove}
       `;
     return html`
+      ${groups}
       ${
         runs
           ? html`${item('run-graph', playIcon, strings.runGraph, { keys: RUN_KEYS })}
@@ -5570,10 +6334,64 @@ export class TpFlow extends TpFormElement<FlowDocument> {
       case 'layout':
         this.layout(undefined, { sourceEvent: source });
         break;
+      case 'enter-group':
+        if (subject?.kind === 'node')
+          this.#scopes.enter(subject.nodeId, 'item-press', source, 'menu');
+        break;
+      case 'exit-group':
+        this.#scopes.exit('item-press', source, 'menu');
+        break;
+      case 'toggle-collapsed':
+        if (subject?.kind === 'node')
+          this.toggleCollapsed(subject.nodeId, undefined, 'item-press', source);
+        break;
+      case 'ungroup':
+        if (subject?.kind === 'node') this.ungroup(subject.nodeId, 'item-press', source);
+        break;
+      case 'move-out-of-group':
+        if (subject?.kind === 'node') {
+          const ids = this.selection.nodes.length ? this.selection.nodes : [subject.nodeId];
+          const target = moveOutTarget(this.#model, subject.nodeId);
+          if (target !== undefined) this.moveToGroup(ids, target, 'item-press', source);
+        }
+        break;
+      case 'group-selection':
+        if (subject?.kind === 'node')
+          this.groupSelection(
+            { ids: this.selection.nodes.length ? this.selection.nodes : [subject.nodeId] },
+            'item-press',
+            source,
+          );
+        break;
+      case 'reset-terminal':
+        if (subject?.kind === 'node') this.#resetTerminal(subject.nodeId, source);
+        break;
       default:
         break;
     }
   };
+
+  /** Returns a moved terminal to its automatic place beside the members. */
+  #resetTerminal(id: string, sourceEvent: Event): void {
+    const terminal = parseFlowTerminalId(id);
+    const group = terminal ? this.#model.getNode(terminal.groupId) : undefined;
+    if (!terminal || !group?.terminals?.[terminal.kind] || !this.editable) return;
+    const terminals = { ...group.terminals };
+    delete terminals[terminal.kind];
+    const result = this.propose(
+      [
+        {
+          type: 'node-update',
+          id: group.id,
+          patch: { terminals: terminals.inputs || terminals.outputs ? terminals : undefined },
+        },
+      ],
+      'item-press',
+      { surface: 'menu', nodeId: group.id },
+      sourceEvent,
+    );
+    if (result.applied) this.commit('item-press', sourceEvent);
+  }
 
   #canvasDoubleClick = (event: MouseEvent): void => {
     const edgeId = this.#edgeInPath(event);
@@ -5582,6 +6400,14 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     const host = this.#nodeHostInPath(event) ?? (edgeId ? undefined : this.#nodeHostAt(event));
     if (host) {
       this.#nodeDoubleClick(host, event);
+      return;
+    }
+    // The interior of an expanded frame takes no presses: a double press there enters its group.
+    // Navigation is not an edit: it works in view mode, read-only and disabled too.
+    const group = edgeId ? undefined : this.#groupAtEvent(event);
+    if (group !== undefined && event.button === 0) {
+      event.preventDefault();
+      this.#scopes.enter(group, 'item-press', event, 'node');
       return;
     }
     if (!edgeId || !this.editable) return;
@@ -5600,6 +6426,18 @@ export class TpFlow extends TpFormElement<FlowDocument> {
    */
   #nodeDoubleClick(host: TpFlowNode, event: MouseEvent): void {
     const node = this.#model.getNode(host.nodeId);
+    // A group, expanded (header, border) or collapsed, enters on a double press; its settings
+    // stay on the toolbar and the menu.
+    if (
+      node &&
+      this.#model.isGroup(node) &&
+      event.button === 0 &&
+      !interactiveTargetInPath(event, host)
+    ) {
+      event.preventDefault();
+      this.#scopes.enter(node.id, 'item-press', event, 'node');
+      return;
+    }
     if (
       this.effectiveDisabled ||
       event.button !== 0 ||
@@ -5641,6 +6479,82 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     });
     return true;
   }
+
+  // ---- group constituent events ------------------------------------------------------------------
+
+  /** The collapse or expand Button of a group's header. */
+  #groupToggle = (event: CustomEvent<FlowGroupToggleDetail>): void => {
+    event.stopPropagation();
+    this.toggleCollapsed(event.detail.nodeId, undefined, 'trigger-press', event.detail.sourceEvent);
+  };
+
+  /** A terminal's "+": a new port of that side, numbered after the group's others. */
+  #terminalAddPort = (event: CustomEvent<FlowTerminalAddPortDetail>): void => {
+    event.stopPropagation();
+    const { groupId, kind, sourceEvent } = event.detail;
+    this.#addPortFrom(
+      groupId,
+      kind === 'inputs' ? 'input' : 'output',
+      'trigger-press',
+      sourceEvent,
+    );
+  };
+
+  #addPortFrom(
+    groupId: string,
+    direction: 'input' | 'output',
+    reason: ChangeReason,
+    sourceEvent: Event,
+  ): string | undefined {
+    const label = defaultGroupPortLabel(
+      this.#model,
+      groupId,
+      direction,
+      this.#resolvedStrings,
+      this.locale,
+    );
+    return this.addGroupPort(groupId, { direction, label }, reason, sourceEvent);
+  }
+
+  #inspectorGroupLabel = (event: CustomEvent<FlowInspectorGroupLabelDetail>): void => {
+    event.stopPropagation();
+    const { nodeId, label, sourceEvent } = event.detail;
+    const node = this.#model.getNode(nodeId);
+    if (!node || !this.editable || (node.label ?? '') === label) return;
+    const result = this.propose(
+      [{ type: 'node-update', id: nodeId, patch: { label: label || undefined } }],
+      'input',
+      { surface: 'inspector', nodeId },
+      sourceEvent,
+    );
+    if (result.applied) this.commit('input', sourceEvent, { surface: 'inspector', nodeId });
+  };
+
+  #inspectorGroupCollapsed = (event: CustomEvent<FlowInspectorGroupCollapsedDetail>): void => {
+    event.stopPropagation();
+    const { nodeId, collapsed, reason, sourceEvent } = event.detail;
+    this.toggleCollapsed(nodeId, collapsed, reason, sourceEvent);
+  };
+
+  #inspectorPortAdd = (event: CustomEvent<FlowInspectorPortAddDetail>): void => {
+    event.stopPropagation();
+    const { nodeId, direction, sourceEvent } = event.detail;
+    this.#addPortFrom(nodeId, direction, 'trigger-press', sourceEvent);
+  };
+
+  #inspectorPortUpdate = (event: CustomEvent<FlowInspectorPortUpdateDetail>): void => {
+    event.stopPropagation();
+    const { nodeId, portId, patch, sourceEvent } = event.detail;
+    const { direction, ...rest } = patch;
+    void direction;
+    this.updateGroupPort(nodeId, portId, rest, 'input', sourceEvent);
+  };
+
+  #inspectorPortRemove = (event: CustomEvent<FlowInspectorPortRemoveDetail>): void => {
+    event.stopPropagation();
+    const { nodeId, portId, sourceEvent } = event.detail;
+    this.removeGroupPort(nodeId, portId, 'trigger-press', sourceEvent);
+  };
 
   #nodeProperty = (event: CustomEvent<FlowNodePropertyDetail>): void => {
     const detail = event.detail;
@@ -5809,8 +6723,31 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     ) as TemplateResult;
   }
 
+  /** The header shows while one of its slots has content or the view is inside a group. */
   #hasHeader(): boolean {
-    return FLOW_HEADER_SLOTS.some((slot) => this.#adoption.panel(slot).length > 0);
+    return (
+      this.#scopes.effective.length > 0 ||
+      FLOW_HEADER_SLOTS.some((slot) => this.#adoption.panel(slot).length > 0)
+    );
+  }
+
+  /**
+   * The path Breadcrumb, fallback content of `header-start` while the view is inside a group: the
+   * root and the enclosing groups navigate there, the current group is the page.
+   */
+  #renderBreadcrumb(): TemplateResult | typeof nothing {
+    const path = this.#scopes.effective;
+    if (!path.length) return nothing;
+    return renderFlowBreadcrumb({
+      rootLabel: this.#name,
+      crumbs: path.map((id) => ({ id, label: this.#nodeLabel(id) })),
+      strings: this.#resolvedStrings,
+      onNavigate: (index, event) =>
+        this.#scopes.navigate(path.slice(0, index + 1), 'item-press', event, {
+          surface: 'breadcrumb',
+          groupId: path[index + 1] ?? path[path.length - 1]!,
+        }),
+    });
   }
 
   /**
@@ -5828,7 +6765,9 @@ export class TpFlow extends TpFormElement<FlowDocument> {
         content: html`${FLOW_HEADER_SLOTS.map(
           (slot) =>
             html`<div class="header-region" data-region=${slot.slice(7)}>
-              <slot name=${slot}></slot>
+              <slot name=${slot}
+                >${slot === 'header-start' ? this.#renderBreadcrumb() : nothing}</slot
+              >
             </div>`,
         )}`,
       },

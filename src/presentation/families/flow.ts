@@ -53,7 +53,27 @@ const definition: ComponentDefinition = {
     { name: 'flow-node-footer', description: "A card node's footer with its run status." },
     { name: 'flow-node-status', description: "A node's run status pill." },
     { name: 'flow-node-problem', description: "The Button that shows a node's problems." },
-    { name: 'flow-node-group', description: 'The dashed container of a group node.' },
+    { name: 'flow-node-group', description: 'The dashed frame of an expanded group.' },
+    {
+      name: 'flow-node-group-header',
+      description:
+        "A group's header with its label, member count and collapse or expand Button: a strip in the frame's top padding while expanded, the Card header while collapsed.",
+    },
+    { name: 'flow-node-group-count', description: "The Badge with a group's member count." },
+    {
+      name: 'flow-node-group-edge',
+      description:
+        "A border strip along one edge of an expanded group's frame, which takes presses there.",
+    },
+    {
+      name: 'flow-node-terminal',
+      description:
+        "The Card of a group's Inputs or Outputs terminal inside the group, listing its ports.",
+    },
+    {
+      name: 'flow-node-terminal-add',
+      description: 'The "+" Button of a terminal, which adds a port of the terminal\'s direction.',
+    },
     { name: 'flow-node-toolbar', description: 'The toolbar over a selected node.' },
     { name: 'flow-node-resizer', description: 'The frame around a resizable selected node.' },
     { name: 'flow-node-resizer-line', description: 'An edge of the resize frame.' },
@@ -159,6 +179,11 @@ const definition: ComponentDefinition = {
       description: 'The panel at the bottom end corner.',
     },
     {
+      name: 'flow-breadcrumb',
+      description:
+        "The Breadcrumb at the header's start showing the path from the root while inside a group.",
+    },
+    {
       name: 'flow-instructions',
       description: 'The hidden keyboard instructions that describe the canvas.',
     },
@@ -191,6 +216,7 @@ export const flowPresentation = definePresentation({
       '[part~="flow-panel-bottom-center"]': 'flow-panel-bottom-center',
       '[part~="flow-panel-bottom-end"]': 'flow-panel-bottom-end',
       '[part~="flow-instructions"]': 'flow-instructions',
+      '[part~="flow-breadcrumb"]': 'flow-breadcrumb',
     },
     'tp-flow-node': {
       '[part~="flow-node"]': 'flow-node',
@@ -208,6 +234,11 @@ export const flowPresentation = definePresentation({
       '[part~="flow-node-status"]': 'flow-node-status',
       'tp-button.problem': 'flow-node-problem',
       '[part~="flow-node-group"]': 'flow-node-group',
+      '[part~="flow-node-group-header"]': 'flow-node-group-header',
+      '[part~="flow-node-group-count"]': 'flow-node-group-count',
+      '[part~="flow-node-group-edge"]': 'flow-node-group-edge',
+      '[part~="flow-node-terminal"]': 'flow-node-terminal',
+      '[part~="flow-node-terminal-add"]': 'flow-node-terminal-add',
     },
     'tp-flow-port': {
       '[part~="flow-port"]': 'flow-port',

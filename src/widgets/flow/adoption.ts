@@ -5,7 +5,9 @@ import type {
   FlowEdgeKind,
   FlowMarkerType,
   FlowNode,
+  FlowNodePatch,
   FlowPoint,
+  FlowPortInstance,
 } from '../../foundation/flow/types.js';
 import type { TpFlowNode } from './node/node.js';
 import type { TpFlowEdge } from './edge/flow-edge.js';
@@ -44,6 +46,24 @@ function json(value: string | null): Record<string, unknown> {
       : {};
   } catch {
     return {};
+  }
+}
+
+/** The `ports` attribute: a JSON array of port overrides and additions, each with a string `id`. */
+function portInstances(value: string | null): FlowPortInstance[] | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return undefined;
+    return parsed.filter(
+      (port): port is FlowPortInstance =>
+        !!port &&
+        typeof port === 'object' &&
+        !Array.isArray(port) &&
+        typeof (port as { id?: unknown }).id === 'string',
+    );
+  } catch {
+    return undefined;
   }
 }
 
@@ -96,15 +116,18 @@ export class LightDomAdoption {
     this.#observer = new view.MutationObserver((records) => {
       if (this.#writing) return;
       let structural = false;
-      const changed = new Set<Element>();
+      const changed = new Map<Element, Set<string>>();
       for (const record of records) {
         // Only the host's own children are adopted; content inside authored nodes is theirs.
         if (record.type === 'childList') structural ||= record.target === this.#options.host;
-        else if (record.type === 'attributes' && record.target instanceof Element)
-          changed.add(record.target);
+        else if (record.type === 'attributes' && record.target instanceof Element) {
+          const names = changed.get(record.target) ?? new Set<string>();
+          if (record.attributeName) names.add(record.attributeName);
+          changed.set(record.target, names);
+        }
       }
       if (structural) this.scan();
-      else for (const element of changed) this.#readOne(element);
+      else for (const [element, names] of changed) this.#readOne(element, names);
     });
     // One registration: a second observe() on the same target replaces the first's options.
     this.#observer.observe(this.#options.host, {
@@ -120,6 +143,8 @@ export class LightDomAdoption {
         'label',
         'tone',
         'pinned',
+        'collapsed',
+        'ports',
         'data',
         'type',
         'source',
@@ -218,7 +243,8 @@ export class LightDomAdoption {
     }
   }
 
-  #readOne(element: Element): void {
+  /** Reads one changed element; `names` are the attributes that changed. */
+  #readOne(element: Element, names: ReadonlySet<string> = new Set()): void {
     if (element === this.#options.host) {
       this.scan();
       return;
@@ -235,7 +261,13 @@ export class LightDomAdoption {
         changes.push({ type: 'node-size', id: node.id, size: node.size });
       if (JSON.stringify(existing.data) !== JSON.stringify(node.data))
         changes.push({ type: 'node-data', id: node.id, data: node.data });
-      const patch = omit(node, ['id', 'position', 'data', 'size']);
+      const patch: FlowNodePatch = omit(node, ['id', 'position', 'data', 'size']);
+      // A removed `collapsed` or `ports` attribute expands the group or drops the instance ports;
+      // an unchanged absent one leaves what the widget's own commands set.
+      if (names.has('collapsed') && node.collapsed === undefined && existing.collapsed)
+        patch.collapsed = false;
+      if (names.has('ports') && node.ports === undefined && existing.ports?.length)
+        patch.ports = [];
       changes.push({ type: 'node-update', id: node.id, patch });
       this.#options.adopt(changes);
     } else if (element.localName === 'tp-flow-edge' && this.#edges.get(element.id) === element) {
@@ -271,6 +303,9 @@ export class LightDomAdoption {
     if (label !== null) node.label = label;
     if (element.hasAttribute('pinned')) node.pinned = true;
     if (element.hasAttribute('hidden')) node.hidden = true;
+    if (element.hasAttribute('collapsed')) node.collapsed = true;
+    const ports = portInstances(element.getAttribute('ports'));
+    if (ports) node.ports = ports;
     for (const flag of NODE_FLAGS) {
       const value = element.getAttribute(flag);
       if (value === 'false') node[flag] = false;

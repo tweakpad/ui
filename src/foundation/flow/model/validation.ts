@@ -1,8 +1,17 @@
+import { flattenFlowGroups, flowLeafEnds, type FlowLeafEnd } from '../groups/flatten.js';
+import {
+  FLOW_GROUP_DEFINITION,
+  FLOW_GROUP_TYPE,
+  flowEdgeRelation,
+  invertsRole,
+  isFlowGroup,
+} from '../groups/relations.js';
 import type {
   FlowConnection,
   FlowDocument,
   FlowIssue,
   FlowModelLike,
+  FlowNode,
   FlowResolvedPort,
   FlowSchema,
   FlowValidationContext,
@@ -27,7 +36,8 @@ export type FlowConnectionRejection =
   | 'duplicate'
   | 'type-mismatch'
   | 'cycle'
-  | 'predicate';
+  | 'predicate'
+  | 'boundary-crossing';
 
 const REJECTIONS: ReadonlySet<string> = new Set<FlowConnectionRejection>([
   'missing-source',
@@ -43,6 +53,7 @@ const REJECTIONS: ReadonlySet<string> = new Set<FlowConnectionRejection>([
   'type-mismatch',
   'cycle',
   'predicate',
+  'boundary-crossing',
 ]);
 
 export interface FlowConnectionResult {
@@ -67,6 +78,12 @@ export interface FlowConnectionValidationOptions {
   /** Edge being reconnected; its own occupancy and duplicate are ignored. */
   ignoreEdge?: string;
   isValidConnection?: FlowConnectionPredicate;
+  /**
+   * A connection whose ends sit at different group levels: `reject` refuses it with
+   * `boundary-crossing` (default); `expose` checks the leaf pair it stands for, for a caller that
+   * exposes group ports along the way.
+   */
+  boundary?: 'reject' | 'expose';
 }
 
 function portOf(
@@ -95,8 +112,8 @@ function typesCompatible(
   return target?.accepts?.includes(from) ?? false;
 }
 
-function allowsMultiple(port: FlowResolvedPort): boolean {
-  return port.multiple ?? port.direction === 'output';
+function allowsMultiple(port: FlowResolvedPort, facing: 'input' | 'output'): boolean {
+  return port.multiple ?? facing === 'output';
 }
 
 function conn(
@@ -111,6 +128,17 @@ function conn(
   return connection;
 }
 
+/** The opposite port direction. */
+function flipped(direction: 'input' | 'output'): 'input' | 'output' {
+  return direction === 'input' ? 'output' : 'input';
+}
+
+/**
+ * Checks a proposed connection in a fixed order: existence, connectable, ports and orientation,
+ * self loops, group borders, duplicates, occupancy, data types, cycles and the predicate. The
+ * orientation, same-direction, occupancy and multiplicity checks read each end's effective
+ * direction (inverted at the group end of an inner edge and at both ends of a pass-through).
+ */
 export function validateConnection(
   connection: FlowConnection,
   model: FlowModelLike,
@@ -155,22 +183,33 @@ export function validateConnection(
     if (reject('node-not-connectable')) return done();
   }
 
-  // 3. Port lookup and orientation.
+  // 3. Port lookup and orientation, on effective directions.
   const sourcePorts = model.ports(sourceNode.id);
   const targetPorts = model.ports(targetNode.id);
-  let sourcePort = portOf(sourcePorts, connection.sourcePort, 'output', !strict);
-  let targetPort = portOf(targetPorts, connection.targetPort, 'input', !strict);
-  if (
-    strict &&
-    sourcePort &&
-    targetPort &&
-    sourcePort.direction === 'input' &&
-    targetPort.direction === 'output'
-  ) {
+  const sourceFlip = invertsRole(model, sourceNode.id, targetNode.id);
+  const targetFlip = invertsRole(model, targetNode.id, sourceNode.id);
+  let sourcePort = portOf(
+    sourcePorts,
+    connection.sourcePort,
+    sourceFlip ? 'input' : 'output',
+    !strict,
+  );
+  let targetPort = portOf(
+    targetPorts,
+    connection.targetPort,
+    targetFlip ? 'output' : 'input',
+    !strict,
+  );
+  let sourceFacing =
+    sourcePort && (sourceFlip ? flipped(sourcePort.direction) : sourcePort.direction);
+  let targetFacing =
+    targetPort && (targetFlip ? flipped(targetPort.direction) : targetPort.direction);
+  if (strict && sourcePort && targetPort && sourceFacing === 'input' && targetFacing === 'output') {
     // A drag started on an input: swap so the edge always runs output → input.
     oriented = conn(targetNode.id, targetPort.id, sourceNode.id, sourcePort.id);
     reoriented = true;
     [sourcePort, targetPort] = [targetPort, sourcePort];
+    [sourceFacing, targetFacing] = [targetFacing, sourceFacing];
   }
   const sourceId = oriented.source;
   const targetId = oriented.target;
@@ -182,7 +221,7 @@ export function validateConnection(
   }
   if (sourcePort && targetPort) {
     oriented = conn(sourceId, sourcePort.id, targetId, targetPort.id);
-    if (strict && sourcePort.direction === targetPort.direction) {
+    if (strict && sourceFacing === targetFacing) {
       if (reject('same-direction')) return done();
     }
     if (!strict && sourceId === targetId && sourcePort.id === targetPort.id) {
@@ -192,16 +231,46 @@ export function validateConnection(
       if (reject('port-hidden')) return done();
     }
   }
+  const relation = flowEdgeRelation(model, oriented);
 
-  // 4. Self loops.
-  if (sourceId === targetId && !rules?.selfLoops && !reasons.includes('self-connection')) {
+  // 4. Self loops; a pass-through is not one.
+  if (
+    sourceId === targetId &&
+    relation !== 'through' &&
+    !rules?.selfLoops &&
+    !reasons.includes('self-connection')
+  ) {
     if (reject('self-connection')) return done();
   }
 
-  // 5. Duplicates.
+  // 5. Group borders: crossing connections are rejected unless the caller exposes them.
+  const crossing = relation === 'crossing';
+  if (crossing && (options.boundary ?? 'reject') === 'reject') {
+    if (reject('boundary-crossing')) return done();
+  }
+  let leafPairs: Array<[FlowLeafEnd, FlowLeafEnd]> | undefined;
+  const leaves = (): Array<[FlowLeafEnd, FlowLeafEnd]> => {
+    if (leafPairs) return leafPairs;
+    const ends = (role: 'source' | 'target'): FlowLeafEnd[] => {
+      const end: FlowLeafEnd =
+        role === 'source'
+          ? { nodeId: sourceId, portId: oriented.sourcePort }
+          : { nodeId: targetId, portId: oriented.targetPort };
+      return isFlowGroup(model, end.nodeId)
+        ? flowLeafEnds(model.document, end, role, { schema })
+        : [end];
+    };
+    const targets = ends('target');
+    leafPairs = ends('source').flatMap((source) =>
+      targets.map((target): [FlowLeafEnd, FlowLeafEnd] => [source, target]),
+    );
+    return leafPairs;
+  };
+
+  // 6. Duplicates (between the leaves for an exposed crossing).
   if (!rules?.duplicateEdges) {
     const existing = model.portConnections(sourceId, 'output', oriented.sourcePort);
-    const duplicate = existing.some((edgeId) => {
+    let duplicate = existing.some((edgeId) => {
       if (edgeId === options.ignoreEdge) return false;
       const edge = model.getEdge(edgeId);
       if (!edge) return false;
@@ -209,29 +278,39 @@ export function validateConnection(
         edge.targetPort ?? portOf(targetPorts, undefined, 'input', !strict)?.id;
       return edge.target === targetId && edgeTargetPort === oriented.targetPort;
     });
+    if (!duplicate && crossing) {
+      const flat = flattenFlowGroups(model.document, { schema });
+      duplicate = leaves().some(([source, target]) =>
+        flat.document.edges.some(
+          (edge) =>
+            !flat.chains.get(edge.id)?.includes(options.ignoreEdge ?? '\u0000') &&
+            edge.source === source.nodeId &&
+            edge.target === target.nodeId &&
+            samePort(model, edge.source, edge.sourcePort, source.portId, 'output') &&
+            samePort(model, edge.target, edge.targetPort, target.portId, 'input'),
+        ),
+      );
+    }
     if (duplicate && reject('duplicate')) return done();
   }
 
-  // 6. Occupancy.
-  if (targetPort && !allowsMultiple(targetPort)) {
+  // 7. Occupancy: a single port takes one edge in the role its effective direction gives it.
+  if (targetPort && targetFacing && !allowsMultiple(targetPort, targetFacing)) {
     const occupied = model
-      .portConnections(targetId, targetPort.direction, targetPort.id)
+      .portConnections(targetId, targetFacing, targetPort.id)
       .some((edgeId) => edgeId !== options.ignoreEdge);
-    if (occupied && reject(targetPort.direction === 'input' ? 'input-occupied' : 'output-occupied'))
+    if (occupied && reject(targetFacing === 'input' ? 'input-occupied' : 'output-occupied'))
       return done();
   }
-  if (sourcePort && !allowsMultiple(sourcePort)) {
+  if (sourcePort && sourceFacing && !allowsMultiple(sourcePort, sourceFacing)) {
     const occupied = model
-      .portConnections(sourceId, sourcePort.direction, sourcePort.id)
+      .portConnections(sourceId, sourceFacing, sourcePort.id)
       .some((edgeId) => edgeId !== options.ignoreEdge);
-    if (
-      occupied &&
-      reject(sourcePort.direction === 'output' ? 'output-occupied' : 'input-occupied')
-    )
+    if (occupied && reject(sourceFacing === 'output' ? 'output-occupied' : 'input-occupied'))
       return done();
   }
 
-  // 7. Data types.
+  // 8. Data types.
   if (
     sourcePort &&
     targetPort &&
@@ -240,16 +319,15 @@ export function validateConnection(
     if (reject('type-mismatch')) return done();
   }
 
-  // 8. Cycles.
-  if (
-    rules?.cycles === 'forbid' &&
-    sourceId !== targetId &&
-    model.wouldCreateCycle(sourceId, targetId)
-  ) {
-    if (reject('cycle')) return done();
+  // 9. Cycles, between the leaves the ends stand for.
+  if (rules?.cycles === 'forbid' && (sourceId !== targetId || relation === 'through')) {
+    const closes = leaves().some(([source, target]) =>
+      model.wouldCreateCycle(source.nodeId, target.nodeId, options.ignoreEdge),
+    );
+    if (closes && reject('cycle')) return done();
   }
 
-  // 9. Predicate.
+  // 10. Predicate.
   if (options.isValidConnection) {
     const context: FlowValidationContext = { model, schema };
     if (options.ignoreEdge !== undefined) context.edgeId = options.ignoreEdge;
@@ -264,6 +342,21 @@ export function validateConnection(
     }
   }
   return done();
+}
+
+/** Whether an edge end's port (absent: the node's default for the end) is `wanted`. */
+function samePort(
+  model: FlowModelLike,
+  nodeId: string,
+  portId: string | undefined,
+  wanted: string | undefined,
+  natural: 'input' | 'output',
+): boolean {
+  if (portId === wanted) return true;
+  const ports = model.ports(nodeId);
+  const resolve = (id: string | undefined): string | undefined =>
+    id ?? portOf(ports, undefined, natural, true)?.id;
+  return resolve(portId) === resolve(wanted);
 }
 
 function inParentCycle(indices: FlowIndices, id: string): boolean {
@@ -308,7 +401,7 @@ export function validateDocument(
       continue;
     }
     seenNodes.add(node.id);
-    if (schema && !definitions.has(node.type))
+    if (schema && !definitions.has(node.type) && node.type !== FLOW_GROUP_TYPE)
       issues.push(
         issue('unknown-node-type', 'error', `Node "${node.id}" has unknown type "${node.type}".`, {
           nodeId: node.id,
@@ -395,7 +488,36 @@ export function validateDocument(
     }
   }
 
-  if (schema?.rules?.cycles === 'forbid' && hasCycle(doc))
+  // Groups only relay: an edge must stay inside one level of the group tree.
+  const reader = model ?? {
+    getNode: (id: string): FlowNode | undefined => indices.nodes.get(id),
+    definitionOf: (node: FlowNode | string) => {
+      const item = typeof node === 'string' ? indices.nodes.get(node) : node;
+      if (!item) return undefined;
+      return (
+        definitions.get(item.type) ??
+        (item.type === FLOW_GROUP_TYPE ? FLOW_GROUP_DEFINITION : undefined)
+      );
+    },
+  };
+  if (indices.children.size > 0)
+    for (const edge of indices.edges.values()) {
+      if (!indices.nodes.has(edge.source) || !indices.nodes.has(edge.target)) continue;
+      if (flowEdgeRelation(reader, edge) === 'crossing')
+        issues.push(
+          issue(
+            'boundary-crossing',
+            'error',
+            `Edge "${edge.id}" crosses a group border; connect through a group port.`,
+            { edgeId: edge.id },
+          ),
+        );
+    }
+
+  if (
+    schema?.rules?.cycles === 'forbid' &&
+    hasCycle(indices.children.size > 0 ? flattenFlowGroups(doc, { schema }).document : doc)
+  )
     issues.push(issue('cycle', 'error', 'The graph contains a cycle.'));
 
   return issues;

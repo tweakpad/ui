@@ -1002,3 +1002,302 @@ export const pipelineDocument: FlowDocument = {
     },
   ],
 };
+
+/**
+ * A podcast episode pipeline organized in groups: an expanded group with a nested group, a
+ * collapsed group, a pass-through port and one edge that still crosses a border (an issue).
+ */
+export const groupsSchema: FlowSchema = {
+  dataTypes: [
+    { id: 'audio', label: 'Audio' },
+    { id: 'text', label: 'Text' },
+  ],
+  rules: { connectionMode: 'strict', cycles: 'forbid' },
+  nodes: [
+    {
+      type: 'recording',
+      label: 'Recording',
+      description: 'Raw multitrack upload',
+      icon: 'upload-cloud',
+      tone: 'chart-1',
+      ports: [{ id: 'audio', label: 'Audio', direction: 'output', dataType: 'audio' }],
+    },
+    {
+      type: 'filter',
+      label: 'Filter',
+      description: 'Processes audio',
+      icon: 'zap',
+      tone: 'chart-2',
+      ports: [
+        { id: 'in', label: 'In', direction: 'input', dataType: 'audio' },
+        { id: 'out', label: 'Out', direction: 'output', dataType: 'audio' },
+      ],
+      properties: [
+        {
+          key: 'amount',
+          label: 'Amount',
+          control: 'slider',
+          min: 0,
+          max: 1,
+          step: 0.05,
+          default: 0.5,
+        },
+      ],
+    },
+    {
+      type: 'transcribe',
+      label: 'Transcribe',
+      description: 'Speech to text',
+      icon: 'file-text',
+      tone: 'chart-3',
+      ports: [
+        { id: 'in', label: 'Audio', direction: 'input', dataType: 'audio' },
+        { id: 'out', label: 'Transcript', direction: 'output', dataType: 'text' },
+      ],
+    },
+    {
+      type: 'publish',
+      label: 'Publish',
+      description: 'Feed and show notes',
+      icon: 'mail',
+      tone: 'chart-4',
+      ports: [
+        { id: 'audio', label: 'Audio', direction: 'input', dataType: 'audio' },
+        { id: 'notes', label: 'Notes', direction: 'input', dataType: 'text', required: false },
+      ],
+    },
+    {
+      type: 'group',
+      label: 'Group',
+      description: 'Encapsulates a part of the pipeline',
+      shape: 'group',
+      ports: [],
+      properties: [{ key: 'owner', label: 'Owner', control: 'text', default: '' }],
+    },
+  ],
+};
+
+export const groupsDocument: FlowDocument = {
+  version: 1,
+  nodes: [
+    {
+      id: 'rec',
+      type: 'recording',
+      position: { x: 0, y: 120 },
+      data: {},
+      label: 'Episode 42 tracks',
+    },
+    {
+      id: 'cleanup',
+      type: 'group',
+      position: { x: 300, y: 0 },
+      size: { width: 1400, height: 380 },
+      data: { owner: 'audio' },
+      label: 'Audio cleanup',
+      ports: [
+        { id: 'raw', label: 'Raw', direction: 'input', dataType: 'audio' },
+        { id: 'clean', label: 'Clean', direction: 'output', dataType: 'audio' },
+      ],
+    },
+    {
+      id: 'noise',
+      type: 'group',
+      parentId: 'cleanup',
+      position: { x: 100, y: 60 },
+      size: { width: 820, height: 260 },
+      data: {},
+      label: 'Noise reduction',
+      ports: [
+        { id: 'in', label: 'In', direction: 'input', dataType: 'audio' },
+        { id: 'out', label: 'Out', direction: 'output', dataType: 'audio' },
+      ],
+    },
+    {
+      id: 'gate',
+      type: 'filter',
+      parentId: 'noise',
+      position: { x: 100, y: 60 },
+      data: { amount: 0.3 },
+      label: 'Gate',
+    },
+    {
+      id: 'denoise',
+      type: 'filter',
+      parentId: 'noise',
+      position: { x: 480, y: 60 },
+      data: { amount: 0.6 },
+      label: 'Denoise',
+    },
+    {
+      id: 'level',
+      type: 'filter',
+      parentId: 'cleanup',
+      position: { x: 1060, y: 120 },
+      data: { amount: 0.8 },
+      label: 'Loudness',
+    },
+    {
+      id: 'words',
+      type: 'group',
+      position: { x: 1820, y: 260 },
+      size: { width: 360, height: 220 },
+      collapsed: true,
+      data: { owner: 'editorial' },
+      label: 'Show notes',
+      ports: [
+        { id: 'audio', label: 'Audio', direction: 'input', dataType: 'audio' },
+        { id: 'notes', label: 'Notes', direction: 'output', dataType: 'text' },
+        { id: 'passthrough', label: 'Audio', direction: 'output', dataType: 'audio' },
+      ],
+    },
+    {
+      id: 'stt',
+      type: 'transcribe',
+      parentId: 'words',
+      position: { x: 40, y: 70 },
+      data: {},
+      label: 'Transcribe',
+    },
+    {
+      id: 'pub',
+      type: 'publish',
+      position: { x: 2320, y: 100 },
+      data: {},
+      label: 'Publish episode',
+    },
+  ],
+  edges: [
+    {
+      id: 'e-rec-cleanup',
+      source: 'rec',
+      sourcePort: 'audio',
+      target: 'cleanup',
+      targetPort: 'raw',
+    },
+    {
+      id: 'e-cleanup-noise',
+      source: 'cleanup',
+      sourcePort: 'raw',
+      target: 'noise',
+      targetPort: 'in',
+    },
+    { id: 'e-noise-gate', source: 'noise', sourcePort: 'in', target: 'gate', targetPort: 'in' },
+    {
+      id: 'e-gate-denoise',
+      source: 'gate',
+      sourcePort: 'out',
+      target: 'denoise',
+      targetPort: 'in',
+    },
+    {
+      id: 'e-denoise-noise',
+      source: 'denoise',
+      sourcePort: 'out',
+      target: 'noise',
+      targetPort: 'out',
+    },
+    { id: 'e-noise-level', source: 'noise', sourcePort: 'out', target: 'level', targetPort: 'in' },
+    {
+      id: 'e-level-cleanup',
+      source: 'level',
+      sourcePort: 'out',
+      target: 'cleanup',
+      targetPort: 'clean',
+    },
+    {
+      id: 'e-cleanup-pub',
+      source: 'cleanup',
+      sourcePort: 'clean',
+      target: 'pub',
+      targetPort: 'audio',
+    },
+    {
+      id: 'e-cleanup-words',
+      source: 'cleanup',
+      sourcePort: 'clean',
+      target: 'words',
+      targetPort: 'audio',
+    },
+    { id: 'e-words-stt', source: 'words', sourcePort: 'audio', target: 'stt', targetPort: 'in' },
+    { id: 'e-stt-words', source: 'stt', sourcePort: 'out', target: 'words', targetPort: 'notes' },
+    {
+      id: 'e-words-through',
+      source: 'words',
+      sourcePort: 'audio',
+      target: 'words',
+      targetPort: 'passthrough',
+    },
+    { id: 'e-words-pub', source: 'words', sourcePort: 'notes', target: 'pub', targetPort: 'notes' },
+    // Crosses the Audio cleanup border directly: reported as a boundary-crossing issue.
+    { id: 'e-legacy-cross', source: 'rec', sourcePort: 'audio', target: 'gate', targetPort: 'in' },
+  ],
+};
+
+/**
+ * `count` filter nodes spread over groups of `groupSize` members, each group wired through one
+ * input and one output port, for the grouped performance budget.
+ */
+export function generateGroupedDocument(count: number, groupSize = 20, columns = 8): FlowDocument {
+  const nodes: FlowDocument['nodes'] = [];
+  const edges: FlowDocument['edges'] = [];
+  const groups = Math.ceil(count / groupSize);
+  const perRow = 5;
+  for (let g = 0; g < groups; g++) {
+    const id = `g${g}`;
+    const members = Math.min(groupSize, count - g * groupSize);
+    const rows = Math.ceil(members / perRow);
+    nodes.push({
+      id,
+      type: 'group',
+      position: { x: (g % columns) * 1500, y: Math.floor(g / columns) * (rows * 150 + 160) },
+      size: { width: perRow * 260 + 80, height: rows * 150 + 100 },
+      data: {},
+      label: `Stage ${g + 1}`,
+      ports: [
+        { id: 'in', label: 'In', direction: 'input', dataType: 'audio' },
+        { id: 'out', label: 'Out', direction: 'output', dataType: 'audio' },
+      ],
+    });
+    let previous: string | undefined;
+    for (let m = 0; m < members; m++) {
+      const child = `${id}-n${m}`;
+      nodes.push({
+        id: child,
+        type: 'filter',
+        parentId: id,
+        position: { x: 40 + (m % perRow) * 260, y: 60 + Math.floor(m / perRow) * 150 },
+        data: { amount: 0.5 },
+        label: `Filter ${m + 1}`,
+      });
+      edges.push(
+        previous
+          ? {
+              id: `${child}-e`,
+              source: previous,
+              sourcePort: 'out',
+              target: child,
+              targetPort: 'in',
+            }
+          : { id: `${child}-e`, source: id, sourcePort: 'in', target: child, targetPort: 'in' },
+      );
+      previous = child;
+    }
+    if (previous)
+      edges.push({
+        id: `${id}-out`,
+        source: previous,
+        sourcePort: 'out',
+        target: id,
+        targetPort: 'out',
+      });
+    if (g > 0)
+      edges.push({
+        id: `${id}-link`,
+        source: `g${g - 1}`,
+        sourcePort: 'out',
+        target: id,
+        targetPort: 'in',
+      });
+  }
+  return { version: 1, nodes, edges };
+}

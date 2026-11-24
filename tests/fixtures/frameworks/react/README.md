@@ -22,7 +22,8 @@ React 19 under StrictMode, through the generated bindings only.
    - children React adds, removes and reorders inside an element that projects them (Dialog, a
      portaled Menu) stay consistent;
    - three mount/unmount rounds under StrictMode raise no error.
-3. `await reactBindings.lane('<tag>')` runs one row of the lane matrix (`tests/fixtures/frameworks/lanes.ts`;
+3. `await reactBindings.lane('<tag>')` (or `lane('<tag>', '<lane>')` for a tag with two rows, such as
+   `lane('tp-flow', 'path')`) runs one row of the lane matrix (`tests/fixtures/frameworks/lanes.ts`;
    `reactBindings.lanes` lists the tags): a controlled owner that writes the proposal back publishes it, one
    that does not keeps its value, and `default<Lane>` leaves the element free to commit it, with no
    diagnostic, warning or error. A `cancelable` row (Accordion, Collapsible, Description list) has

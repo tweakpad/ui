@@ -9,6 +9,7 @@ import {
 import type { TpValueChangeEvent, TpValueCommitEvent } from '../../../foundation/events.js';
 import type { ChangeReason } from '../../../foundation/types.js';
 import type {
+  FlowGroupTerminal,
   FlowIssue,
   FlowLayoutDirection,
   FlowNode,
@@ -62,11 +63,24 @@ import {
   problemSeverity,
   renderCardShape,
   renderCompactShape,
-  renderGroupShape,
   renderPanelShape,
   renderShellShape,
   type ShapeContext,
 } from './default-templates.js';
+import {
+  groupAccessibleName,
+  renderCollapsedGroupShape,
+  renderGroupFrame,
+  renderTerminalShape,
+  terminalGroupId,
+  type GroupShapeContext,
+} from './group-templates.js';
+import {
+  GROUP_TOGGLE,
+  TERMINAL_ADD_PORT,
+  type FlowGroupToggleDetail,
+  type FlowTerminalAddPortDetail,
+} from '../groups/events.js';
 
 export const NODE_PROPERTY = 'flow-node-property';
 export const NODE_PORTS_MOVED = 'flow-node-ports';
@@ -128,6 +142,11 @@ const EXPORTED_PARTS = [
   'flow-node-footer',
   'flow-node-status',
   'flow-node-group',
+  'flow-node-group-header',
+  'flow-node-group-count',
+  'flow-node-group-edge',
+  'flow-node-terminal',
+  'flow-node-terminal-add',
   'flow-node-ports',
   'flow-port',
   'flow-port-dot',
@@ -148,7 +167,10 @@ interface NumberBinding {
  * and holds its ports and property controls. The flow renders one for each node in view; author
  * one as a child of `tp-flow` to declare a node in markup, with the attributes `id`, `type`, `x`,
  * `y`, `width`, `height`, `parent`, `label`, `data` (JSON), `pinned`, `hidden`, and `draggable`,
- * `selectable`, `connectable`, `deletable` and `resizable` (`"false"` turns one off).
+ * `selectable`, `connectable`, `deletable` and `resizable` (`"false"` turns one off). A group also
+ * takes `collapsed`, which shows it as one node, and any node takes `ports`, a JSON array of port
+ * overrides and additions by `id` (`[{"id": "image", "direction": "input", "label": "Image"}]`),
+ * the interface a group declares.
  *
  * @slot - Authored content of the node body; a library control with
  * `data-flow-property="key"` edits that key of the node's data.
@@ -208,6 +230,10 @@ export class TpFlowNode extends TpElement {
     connectable: { type: Boolean },
     layoutDirection: { type: String, attribute: 'layout-direction' },
     showPortLabels: { type: Boolean, attribute: 'show-port-labels' },
+    collapsed: { type: Boolean },
+    memberCount: { attribute: false },
+    terminal: { attribute: false },
+    dropTarget: { attribute: false },
   };
   static override styles = [TpElement.styles, flowNodeStyles];
 
@@ -256,6 +282,20 @@ export class TpFlowNode extends TpElement {
   layoutDirection: FlowLayoutDirection = 'horizontal';
   /** Shows each port's label beside it. */
   showPortLabels = false;
+  /**
+   * Whether a group shows as one node, a Card listing its ports, instead of a frame around its
+   * members; set by the flow from the document, which an authored `collapsed` attribute declares.
+   */
+  collapsed = false;
+  /** The number of a group's direct members, shown in its header and its name; set by the flow. */
+  memberCount = 0;
+  /**
+   * Inside a group's sub-view, the boundary terminal the node stands for, listing the group's
+   * ports of that direction. Set by the flow; undefined for document nodes.
+   */
+  terminal: FlowGroupTerminal | undefined;
+  /** Whether the group is where the nodes being dragged would move on drop; set by the flow. */
+  dropTarget = false;
 
   readonly #numberFields = new Map<HTMLElement, NumberBinding>();
   #composed = new WeakSet<HTMLElement>();
@@ -290,9 +330,19 @@ export class TpFlowNode extends TpElement {
     return this.definition?.shape ?? 'card';
   }
 
-  /** The node's visible label: its own, else its definition's, else its type. */
+  /**
+   * The node's visible label: its own, else its definition's, else its type; a terminal is
+   * Inputs or Outputs.
+   */
   get label(): string {
+    if (this.terminal)
+      return this.terminal === 'inputs' ? this.strings.groupInputs : this.strings.groupOutputs;
     return this.node?.label ?? this.definition?.label ?? this.node?.type ?? this.id;
+  }
+
+  /** Whether the node is a group of the document (expanded or collapsed), not a terminal. */
+  get #group(): boolean {
+    return this.shape === 'group' && !this.terminal;
   }
 
   /** The host element itself is the focusable group. */
@@ -347,8 +397,23 @@ export class TpFlowNode extends TpElement {
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    this.setAttribute('aria-roledescription', this.strings.node);
-    this.setAttribute('aria-label', this.accessibleName || this.label);
+    const name = this.accessibleName || this.label;
+    this.setAttribute(
+      'aria-roledescription',
+      this.terminal ? this.strings.terminal : this.strings.node,
+    );
+    this.setAttribute(
+      'aria-label',
+      this.terminal
+        ? this.label
+        : this.#group
+          ? groupAccessibleName(name, this.collapsed, this.memberCount, this.strings)
+          : name,
+    );
+    this.toggleAttribute('data-collapsed', this.#group && this.collapsed);
+    if (this.terminal) this.dataset['terminal'] = this.terminal;
+    else delete this.dataset['terminal'];
+    this.toggleAttribute('data-drop-target', this.dropTarget);
     this.toggleAttribute('data-selected', this.selected);
     this.toggleAttribute('data-dragging', this.dragging);
     this.toggleAttribute('data-focused', this.focused);
@@ -430,6 +495,26 @@ export class TpFlowNode extends TpElement {
     this.emit(
       NODE_RESIZE,
       { ...(event as CustomEvent).detail, nodeId: this.nodeId },
+      { composed: false },
+    );
+  };
+
+  /** The header's collapse or expand Button: the flow toggles the group (non-composed). */
+  #toggleGroup = (event: Event): void => {
+    this.emit<FlowGroupToggleDetail>(
+      GROUP_TOGGLE,
+      { nodeId: this.nodeId, sourceEvent: event },
+      { composed: false },
+    );
+  };
+
+  /** A terminal's "+" Button: the flow adds a port of its direction to the group. */
+  #addTerminalPort = (event: Event): void => {
+    const kind = this.terminal;
+    if (!kind) return;
+    this.emit<FlowTerminalAddPortDetail>(
+      TERMINAL_ADD_PORT,
+      { groupId: terminalGroupId(this.nodeId, kind), kind, sourceEvent: event },
       { composed: false },
     );
   };
@@ -690,31 +775,57 @@ export class TpFlowNode extends TpElement {
       slotted: this.#slotted,
     };
     const shape = this.shape;
-    const body = this.template
-      ? html`${this.template({
-          node: context.node,
-          definition,
-          selected: this.selected,
-          dragging: this.dragging,
-          lod: this.lod,
-          status: this.status,
-          ports: (side) =>
-            html`${this.ports.filter((port) => port.geometry.side === side && !port.hidden).map((port) => this.#renderPort(port))}`,
-          control: this.#renderControl,
-        })}${slot}`
-      : this.lod === 'low' && shape !== 'group'
+    const group: GroupShapeContext = {
+      ...context,
+      collapsed: this.collapsed,
+      memberCount: this.memberCount,
+      editable: this.editable && !this.readOnly && !this.disabled,
+      terminal: this.terminal,
+      toggle: this.#toggleGroup,
+      addPort: this.#addTerminalPort,
+    };
+    // A terminal is a card of the view, never a templated document node, and shrinks to the
+    // low-detail shell like the panel shape; a collapsed group does too, as one node. An expanded
+    // group keeps its frame at every detail.
+    const body = this.terminal
+      ? this.lod === 'low'
         ? renderShellShape(context, shape)
-        : shape === 'compact'
-          ? renderCompactShape(context)
-          : shape === 'panel'
-            ? renderPanelShape(context)
-            : shape === 'group'
-              ? renderGroupShape(context)
-              : renderCardShape(context);
+        : renderTerminalShape(group)
+      : this.template
+        ? html`${this.template({
+            node: context.node,
+            definition,
+            selected: this.selected,
+            dragging: this.dragging,
+            lod: this.lod,
+            status: this.status,
+            ports: (side) =>
+              html`${this.ports.filter((port) => port.geometry.side === side && !port.hidden).map((port) => this.#renderPort(port))}`,
+            control: this.#renderControl,
+          })}${slot}`
+        : this.lod === 'low' && (shape !== 'group' || this.collapsed)
+          ? renderShellShape(context, shape)
+          : shape === 'compact'
+            ? renderCompactShape(context)
+            : shape === 'panel'
+              ? renderPanelShape(context)
+              : shape === 'group'
+                ? this.collapsed
+                  ? renderCollapsedGroupShape(group)
+                  : renderGroupFrame(group)
+                : renderCardShape(context);
     const tone = definition?.tone ?? '';
     return this.renderPart(
       'flow-node',
-      { shape, selected: this.selected, dragging: this.dragging, lod: this.lod },
+      {
+        shape,
+        selected: this.selected,
+        dragging: this.dragging,
+        lod: this.lod,
+        collapsed: this.#group && this.collapsed,
+        terminal: this.terminal,
+        dropTarget: this.dropTarget,
+      },
       {
         tag: 'div',
         properties: {
@@ -733,12 +844,21 @@ export class TpFlowNode extends TpElement {
           'data-lod': this.lod,
           'data-pinned': Boolean(node?.pinned),
           'data-parent': Boolean(node?.parentId),
+          'data-collapsed': this.#group && this.collapsed,
+          'data-terminal': this.terminal,
+          'data-drop-target': this.dropTarget,
           'data-slotted': this.#slotted,
           'data-disabled': this.disabled,
           'data-readonly': this.readOnly,
         },
         content: html`${body}${
-          this.resizable && this.selected && this.editable && !this.readOnly && !this.disabled
+          this.resizable &&
+          this.selected &&
+          this.editable &&
+          !this.readOnly &&
+          !this.disabled &&
+          !this.terminal &&
+          !(this.#group && this.collapsed)
             ? html`<tp-flow-node-resizer
                 .strings=${this.strings}
                 node-label=${this.label}

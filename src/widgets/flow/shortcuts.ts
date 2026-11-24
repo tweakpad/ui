@@ -12,5 +12,15 @@ export const CUT_KEYS = 'Mod+X';
 export const PASTE_KEYS = 'Mod+V';
 /** Runs the whole graph (`runnable`). */
 export const RUN_KEYS = 'Mod+Enter';
+/** Opens the sub-view of the focused group. */
+export const ENTER_GROUP_KEYS = 'Alt+ArrowDown';
+/** Returns to the view the current group sits in. */
+export const EXIT_GROUP_KEYS = 'Alt+ArrowUp';
+/** Wraps the selected nodes in a new group. */
+export const GROUP_KEYS = 'Mod+G';
+/** Dissolves the selected group and keeps its members. */
+export const UNGROUP_KEYS = 'Mod+Shift+G';
+/** Collapses or expands the focused group. */
+export const COLLAPSE_KEYS = 'C';
 /** The first chord is the hint: the Backspace key is the Mac keyboard's Delete. */
 export const DELETE_KEYS = ['Backspace', 'Delete'] as const;

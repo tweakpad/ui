@@ -7,6 +7,7 @@ import type {
 } from '../../../../../src/foundation/flow/types.js';
 import type { FlowChangeEvent } from '../../../../../src/foundation/flow/model/hooks.js';
 import { FlowModel } from '../../../../../src/foundation/flow/model/model.js';
+import { model as groupModel } from '../groups/fixture.js';
 
 const schema: FlowSchema = {
   nodes: [
@@ -450,8 +451,16 @@ describe('FlowModel', () => {
       animated: true,
     });
     expect(model.getEdge('edge-made')).toBe(flipped.edge);
-    const moved = model.connect(
+    // `child` sits in group `g`: a root node reaches it only through a group port.
+    const crossing = model.connect(
       { source: 'b', sourcePort: 'out', target: 'child', targetPort: 'in' },
+      {},
+      { reconnect: 'a-child' },
+    );
+    expect(crossing.applied).toBe(false);
+    expect(crossing.validation.reasons).toEqual(['boundary-crossing']);
+    const moved = model.connect(
+      { source: 'b', sourcePort: 'out', target: 'a', targetPort: 'in' },
       {},
       { reconnect: 'a-child' },
     );
@@ -459,7 +468,7 @@ describe('FlowModel', () => {
     expect(model.getEdge('a-child')).toMatchObject({
       source: 'b',
       sourcePort: 'out',
-      target: 'child',
+      target: 'a',
       targetPort: 'in',
     });
     expect(moved.edge?.id).toBe('a-child');
@@ -603,12 +612,13 @@ describe('FlowModel', () => {
     expect(model.portConnections('a', 'output', 'out')).toEqual(['ab', 'a-child', 'a-locked']);
     expect(model.portConnections('child', 'input', 'in')).toEqual(['a-child']);
     expect(model.portConnections('child', 'input', 'in2')).toEqual([]);
-    expect(model.topologicalOrder()).toEqual(['g', 'a', 'child', 'b', 'locked']);
+    // Order and components read the flattened graph: the group `g` only relays.
+    expect(model.topologicalOrder()).toEqual(['a', 'child', 'b', 'locked']);
     expect(model.hasCycle()).toBe(false);
     expect(model.wouldCreateCycle('b', 'a')).toBe(true);
     expect(model.wouldCreateCycle('b', 'a', 'ab')).toBe(false);
     expect([...model.reachable('a')].sort()).toEqual(['b', 'child', 'locked']);
-    expect(model.connectedComponents()).toEqual([['g'], ['child', 'a', 'b', 'locked']]);
+    expect(model.connectedComponents()).toEqual([['child', 'a', 'b', 'locked']]);
     expect(model.bounds()).toEqual({ x: 0, y: 0, width: 1400, height: 1300 });
     expect(model.bounds(['a', 'b'])).toEqual({ x: 0, y: 0, width: 600, height: 100 });
     expect(model.children('g')).toEqual(['child']);
@@ -796,5 +806,82 @@ describe('FlowModel', () => {
     expect(result.changes).toContainEqual({ type: 'layout-settings', layout: next.layout });
     expect(model.layoutDirection).toBe('vertical');
     expect(model.history.depth).toBe(0);
+  });
+});
+
+describe('FlowModel with groups', () => {
+  it('sizes a collapsed group as a card and drops measurements when it toggles', () => {
+    const target = groupModel();
+    const g = target.getNode('G')!;
+    expect(target.isGroup('G')).toBe(true);
+    expect(target.isGroup(target.getNode('a')!)).toBe(false);
+    expect(target.nested).toBe(true);
+    expect(target.declaredSize(g)).toEqual({ width: 700, height: 400 });
+    target.measure('G', { width: 690, height: 390 }, [
+      { id: 'gin', x: -4, y: 10, width: 8, height: 8, side: 'left' },
+    ]);
+    target.apply([{ type: 'node-update', id: 'G', patch: { collapsed: true } }]);
+    const collapsed = target.getNode('G')!;
+    expect(target.declaredSize(collapsed)).toBeUndefined();
+    expect(target.measuredSize('G')).toBeUndefined();
+    expect(target.ports('G')[0]!.measured).toBeUndefined();
+    expect(target.nodeSize(collapsed)).toEqual({ width: 220, height: 160 });
+    target.measure('G', { width: 240, height: 120 });
+    expect(target.nodeRect('G')).toEqual({ x: 200, y: 100, width: 240, height: 120 });
+    // Expanding gives the frame back.
+    target.apply([{ type: 'node-update', id: 'G', patch: { collapsed: undefined } }]);
+    expect(target.measuredSize('G')).toBeUndefined();
+    expect(target.nodeRect('G')).toEqual({ x: 200, y: 100, width: 700, height: 400 });
+    expect(target.nodesInRect({ x: 850, y: 450, width: 10, height: 10 })).toContain('G');
+  });
+
+  it('anchors inner group-port ends on the inside of the port', () => {
+    const target = groupModel();
+    expect(target.endpoint('g-a', 'source')).toMatchObject({
+      nodeId: 'G',
+      portId: 'gin',
+      side: 'right',
+      point: { x: 204, y: 300 },
+    });
+    expect(target.endpoint('h-g', 'target')).toMatchObject({
+      nodeId: 'G',
+      portId: 'gout',
+      side: 'left',
+      point: { x: 896, y: 300 },
+    });
+    expect(target.endpoint('x-g', 'target')).toMatchObject({
+      side: 'left',
+      point: { x: 196, y: 300 },
+    });
+    // A router drawing every edge orthogonally resolves the same ends without facing fallbacks.
+    expect(target.endpoints('x-g', 'orthogonal')?.target.side).toBe('left');
+  });
+
+  it('runs order and cycle queries on the flattened graph', () => {
+    const target = groupModel();
+    // b ↔ H and H → G would be cycles node by node; the ports only relay.
+    expect(target.hasCycle()).toBe(false);
+    expect(target.topologicalOrder()).toEqual(['x', 'a', 'b', 'y']);
+    expect(target.connectedComponents()).toEqual([['x', 'a', 'b', 'y']]);
+    expect(target.wouldCreateCycle('y', 'x')).toBe(true);
+    expect(target.wouldCreateCycle('y', 'x', 'g-y')).toBe(false);
+    expect(target.wouldCreateCycle('G', 'x')).toBe(true);
+    expect(target.wouldCreateCycle('x', 'y')).toBe(false);
+    expect([...target.reachable('x')].sort()).toEqual(['a', 'b', 'y']);
+    expect([...target.reachable('G')]).toEqual(['y']);
+    expect([...target.reachable('y', 'upstream')].sort()).toEqual(['a', 'b', 'x']);
+  });
+
+  it('falls back to the built-in group definition', () => {
+    const target = new FlowModel({
+      document: {
+        version: 1,
+        nodes: [{ id: 'g', type: 'group', position: { x: 0, y: 0 }, data: {} }],
+        edges: [],
+      },
+    });
+    expect(target.definitionOf('g')?.shape).toBe('group');
+    expect(target.nodeRect('g')).toEqual({ x: 0, y: 0, width: 320, height: 240 });
+    expect(target.validate()).toEqual([]);
   });
 });

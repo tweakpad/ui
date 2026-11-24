@@ -272,3 +272,42 @@ describe('parseFlowDocument', () => {
     expect(document.nodes[0]!.type).toBe('default');
   });
 });
+
+describe('group fields', () => {
+  it('keeps collapsed and terminals, copying the terminal positions', () => {
+    const group = node('g', {
+      type: 'group',
+      collapsed: true,
+      terminals: { inputs: { x: -100, y: 20 }, outputs: { x: 400, y: 20 } },
+    });
+    const document: FlowDocument = { version: 1, nodes: [group], edges: [] };
+    const json = serializeFlowDocument(document);
+    expect(json.nodes[0]).toEqual(group);
+    expect(json.nodes[0]!.terminals).not.toBe(group.terminals);
+    expect(json.nodes[0]!.terminals!.inputs).not.toBe(group.terminals!.inputs);
+    const parsed = parseFlowDocument(JSON.parse(JSON.stringify(json)));
+    expect(parsed.issues).toEqual([]);
+    expect(parsed.document.nodes[0]).toMatchObject({
+      collapsed: true,
+      terminals: { inputs: { x: -100, y: 20 }, outputs: { x: 400, y: 20 } },
+    });
+  });
+
+  it('drops invalid group fields with a warning', () => {
+    const parsed = parseFlowDocument({
+      version: 1,
+      nodes: [
+        { ...node('g'), collapsed: 'yes', terminals: { inputs: { x: 1 } } },
+        { ...node('h'), terminals: 3 },
+      ],
+      edges: [],
+    });
+    expect(parsed.issues.map((issue) => issue.path)).toEqual([
+      'nodes[0].collapsed',
+      'nodes[0].terminals',
+      'nodes[1].terminals',
+    ]);
+    expect(parsed.document.nodes[0]!.collapsed).toBeUndefined();
+    expect(parsed.document.nodes[0]!.terminals).toBeUndefined();
+  });
+});

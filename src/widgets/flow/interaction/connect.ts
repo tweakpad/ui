@@ -11,6 +11,7 @@ import type {
 } from '../../../foundation/flow/types.js';
 import type { FlowPortDirection } from '../../../foundation/flow/edges/endpoints.js';
 import { fillTemplate } from '../../../foundation/template.js';
+import { flowPortFacing } from '../../../foundation/flow/groups/relations.js';
 import type { FlowInteractionHost } from './host.js';
 
 export interface ConnectionStart {
@@ -199,19 +200,40 @@ export class ConnectionSession {
     return host.model.portNear(point, radius, (port, node) => this.#acceptable(port, node));
   }
 
+  /**
+   * The effective directions of the start port and a candidate port facing each other: a group
+   * port reads inverted toward its own member (inner edges) and toward itself (a pass-through), so
+   * a group input pairs with a member's input. Terminals already carry the flipped direction.
+   */
+  #facing(
+    port: FlowResolvedPort,
+    nodeId: string,
+  ): { start: 'input' | 'output'; end: 'input' | 'output' } {
+    const model = this.#host.model;
+    const start = this.#start;
+    return {
+      start: flowPortFacing(model, start.nodeId, start.direction, nodeId),
+      end: flowPortFacing(model, nodeId, port.direction, start.nodeId),
+    };
+  }
+
   #acceptable(port: FlowResolvedPort, node: FlowNode): boolean {
     const start = this.#start;
     if (port.hidden || node.connectable === false) return false;
     if (node.id === start.nodeId && port.id === start.portId) return false;
-    if (this.#host.connectionMode === 'strict' && port.direction === start.direction) return false;
+    if (this.#host.connectionMode === 'strict') {
+      const facing = this.#facing(port, node.id);
+      if (facing.start === facing.end) return false;
+    }
     return true;
   }
 
   #connectionFor(hit: FlowPortHit): FlowConnection {
     const start = this.#start;
+    const facing = this.#facing(hit.port, hit.nodeId);
     const startIsSource =
-      start.direction === 'output' ||
-      (this.#host.connectionMode === 'loose' && hit.port.direction === 'input');
+      facing.start === 'output' ||
+      (this.#host.connectionMode === 'loose' && facing.end === 'input');
     const connection: FlowConnection = startIsSource
       ? { source: start.nodeId, target: hit.nodeId }
       : { source: hit.nodeId, target: start.nodeId };

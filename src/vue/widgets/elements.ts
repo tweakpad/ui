@@ -372,6 +372,7 @@ type Tags = {
     | 'defaultInspectorOpen'
     | 'defaultMode'
     | 'defaultPaletteOpen'
+    | 'defaultPath'
     | 'defaultSelection'
     | 'defaultTool'
     | 'defaultValue'
@@ -413,6 +414,7 @@ type Tags = {
     | 'paletteTrigger'
     | 'partContracts'
     | 'partPresentation'
+    | 'path'
     | 'propertyControls'
     | 'readOnly'
     | 'renderer'
@@ -437,12 +439,7 @@ type Tags = {
     | 'wheel'
     | 'zoomPresets',
     {
-      'tp-connect': CustomEvent<{
-        connection: foundationFlowTypes.FlowConnection;
-        edge: foundationFlowTypes.FlowEdge<Record<string, unknown>>;
-        reason: foundationTypes.ChangeReason;
-        sourceEvent: Event | undefined;
-      }>;
+      'tp-connect': CustomEvent<widgetsFlowTypes.FlowConnectDetail>;
       'tp-delete': CustomEvent<{
         nodes: foundationFlowTypes.FlowNode<Record<string, unknown>>[];
         edges: foundationFlowTypes.FlowEdge<Record<string, unknown>>[];
@@ -460,6 +457,7 @@ type Tags = {
       'tp-mode-change': foundationEvents.TpValueChangeEvent<'view' | 'design'>;
       'tp-open-change': foundationEvents.TpValueChangeEvent<boolean>;
       'tp-open-change-complete': CustomEvent<{ open: boolean; surface: string }>;
+      'tp-path-change': foundationEvents.TpValueChangeEvent<readonly string[]>;
       'tp-run-change': CustomEvent<{
         index?: number;
         length?: number;

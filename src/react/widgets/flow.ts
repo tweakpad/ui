@@ -31,6 +31,7 @@ export type FlowProps = ElementProps<
   | 'defaultInspectorOpen'
   | 'defaultMode'
   | 'defaultPaletteOpen'
+  | 'defaultPath'
   | 'defaultSelection'
   | 'defaultTool'
   | 'defaultValue'
@@ -66,6 +67,7 @@ export type FlowProps = ElementProps<
   | 'name'
   | 'nodeTemplates'
   | 'nodeToolbar'
+  | 'onPathChange'
   | 'onValueChange'
   | 'onValueCommitted'
   | 'orientation'
@@ -74,6 +76,7 @@ export type FlowProps = ElementProps<
   | 'paletteTrigger'
   | 'partContracts'
   | 'partPresentation'
+  | 'path'
   | 'propertyControls'
   | 'readOnly'
   | 'renderer'
@@ -98,12 +101,7 @@ export type FlowProps = ElementProps<
   | 'wheel'
   | 'zoomPresets',
   {
-    onTpConnect: CustomEvent<{
-      connection: foundationFlowTypes.FlowConnection;
-      edge: foundationFlowTypes.FlowEdge<Record<string, unknown>>;
-      reason: foundationTypes.ChangeReason;
-      sourceEvent: Event | undefined;
-    }>;
+    onTpConnect: CustomEvent<widgetsFlowTypes.FlowConnectDetail>;
     onTpDelete: CustomEvent<{
       nodes: foundationFlowTypes.FlowNode<Record<string, unknown>>[];
       edges: foundationFlowTypes.FlowEdge<Record<string, unknown>>[];
@@ -121,6 +119,7 @@ export type FlowProps = ElementProps<
     onTpModeChange: foundationEvents.TpValueChangeEvent<'view' | 'design'>;
     onTpOpenChange: foundationEvents.TpValueChangeEvent<boolean>;
     onTpOpenChangeComplete: CustomEvent<{ open: boolean; surface: string }>;
+    onTpPathChange: foundationEvents.TpValueChangeEvent<readonly string[]>;
     onTpRunChange: CustomEvent<{
       index?: number;
       length?: number;
@@ -162,6 +161,7 @@ export const Flow = /*#__PURE__*/ createBinding<FlowProps>(
     onTpModeChange: 'tp-mode-change',
     onTpOpenChange: 'tp-open-change',
     onTpOpenChangeComplete: 'tp-open-change-complete',
+    onTpPathChange: 'tp-path-change',
     onTpRunChange: 'tp-run-change',
     onTpRunRequest: 'tp-run-request',
     onTpSelectionChange: 'tp-selection-change',
@@ -171,5 +171,5 @@ export const Flow = /*#__PURE__*/ createBinding<FlowProps>(
     onTpValueCommit: 'tp-value-commit',
     onTpViewportChange: 'tp-viewport-change',
   },
-  ['onValueChange', 'onValueCommitted'],
+  ['onPathChange', 'onValueChange', 'onValueCommitted'],
 );

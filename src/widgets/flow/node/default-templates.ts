@@ -108,7 +108,7 @@ export function renderSidePorts(context: ShapeContext, only?: readonly string[])
 }
 
 /** The icon tile; beside a title and a description (`lines` 2) it spans both lines. */
-function iconTile(
+export function iconTile(
   context: ShapeContext,
   size: 'default' | 'lg' = 'default',
   lines: 1 | 2 = 1,
@@ -137,7 +137,7 @@ export function problemSeverity(
  * The node's problems behind one icon in their tone: a Tooltip lists the validation issues and
  * the run's warnings (the run's error reads in the status row).
  */
-function problemIndicator(context: ShapeContext): TemplateResult | typeof nothing {
+export function problemIndicator(context: ShapeContext): TemplateResult | typeof nothing {
   const severity = problemSeverity(context.issues, context.status);
   if (!severity || context.lod === 'low') return nothing;
   const messages = [
@@ -170,7 +170,7 @@ function progressPercent(status: FlowNodeRunState): number | undefined {
  * waits for, the progress of a running one, else its message or duration), the warning count and
  * the status pill.
  */
-function statusRow(context: ShapeContext): TemplateResult | typeof nothing {
+export function statusRow(context: ShapeContext): TemplateResult | typeof nothing {
   const status = context.status;
   if (!status) return nothing;
   const strings = context.strings;
@@ -259,7 +259,7 @@ function propertyRows(context: ShapeContext, options: { ports?: boolean } = {}):
   return rows;
 }
 
-function portRows(
+export function portRows(
   context: ShapeContext,
   direction: 'input' | 'output',
   skip: ReadonlySet<string>,
@@ -288,7 +288,7 @@ function portRows(
 }
 
 /** Port groups for the panel shape: absolutely positioned at the rows' centers (see node.ts). */
-function renderRowPorts(context: ShapeContext): TemplateResult {
+export function renderRowPorts(context: ShapeContext): TemplateResult {
   const groups = sides(context.ports);
   return html`${[...groups].map(
     ([side, ports]) =>
@@ -426,14 +426,6 @@ export function renderPanelShape(context: ShapeContext): TemplateResult {
       ${context.status ? html`<span slot="footer" class="footer" part="flow-node-footer">${statusRow(context)}</span>` : nothing}
     </tp-card>
     ${renderRowPorts(context)}`;
-}
-
-/** Group shape: a resizable container whose children are separate nodes positioned relative to it. */
-export function renderGroupShape(context: ShapeContext): TemplateResult {
-  return html`<div class="group" part="flow-node-group" data-shape="group">
-    <span class="group-label" part="flow-node-title">${context.label}</span>
-    ${context.slot ?? nothing} ${renderSidePorts(context)}
-  </div>`;
 }
 
 export function statusAnnouncement(context: ShapeContext): string {

@@ -507,6 +507,33 @@ export const laneRows: LaneRow[] = [
     settle: 200,
   },
   {
+    entry: 'tp-flow',
+    binding: 'Flow',
+    lane: 'path',
+    initial: [],
+    propose: call('enterGroup', 'g'),
+    props: {
+      label: 'Grouped pipeline',
+      schema: stepSchema,
+      defaultValue: {
+        version: 1,
+        nodes: [
+          {
+            id: 'g',
+            type: 'group',
+            position: { x: 0, y: 0 },
+            size: { width: 400, height: 200 },
+            data: {},
+          },
+          { id: 'a', type: 'step', parentId: 'g', position: { x: 40, y: 60 }, data: {} },
+        ],
+        edges: [],
+      },
+      style: { display: 'block', blockSize: '240px' },
+    },
+    settle: 200,
+  },
+  {
     entry: 'tp-map',
     binding: 'Map',
     lane: 'selectedPin',

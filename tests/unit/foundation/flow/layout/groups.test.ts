@@ -9,11 +9,12 @@ import {
 } from '../../../../../src/foundation/flow/layout/types.js';
 
 /** A fake level layout: nodes left to right in a row, spaced by 10; lifted edges recorded. */
-const calls: Array<{ parentIds: string[]; edges: string[] }> = [];
+const calls: Array<{ parentIds: string[]; edges: string[]; ports: string[] }> = [];
 const rowLayout: LevelLayout = (nodes, edges, direction, options, origin) => {
   calls.push({
     parentIds: nodes.map((n) => n.id),
     edges: edges.map((e) => `${e.source}>${e.target}`),
+    ports: nodes.flatMap((n) => n.ports.map((port) => `${n.id}.${port.id}`)),
   });
   void direction;
   void options;
@@ -73,5 +74,25 @@ describe('layoutGroupTree', () => {
     expect(result.sizes.get('inner')).toEqual({ width: 120, height: 70 });
     expect(result.sizes.get('outer')).toEqual({ width: 140, height: 90 });
     expect(result.positions.get('leaf')).toEqual({ x: 20, y: 20 });
+  });
+
+  it('keeps the own ports of a group at its parent level', () => {
+    calls.length = 0;
+    const g: FlowLayoutNode = {
+      ...node('g'),
+      ports: [{ id: 'gout', direction: 'output', side: 'right', index: 0 }],
+    };
+    const edges = [
+      { id: 'inner', source: 'a', target: 'g', targetPort: 'gout' },
+      { id: 'outer', source: 'g', sourcePort: 'gout', target: 'c' },
+    ];
+    layoutGroupTree(
+      [g, node('a', 'g'), node('c')],
+      edges,
+      'horizontal',
+      resolveLayoutOptions(),
+      rowLayout,
+    );
+    expect(calls[1]).toMatchObject({ parentIds: ['g', 'c'], edges: ['g>c'], ports: ['g.gout'] });
   });
 });

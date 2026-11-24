@@ -1074,12 +1074,153 @@ export const edgeKindsDocument = {
   })),
 };
 
+/**
+ * A greenhouse controller organized in groups: an expanded Irrigation group wired through its
+ * ports, a collapsed Climate group, and a Lighting group nested inside Climate.
+ */
+export const groupsSchema = {
+  nodes: [
+    {
+      type: 'probe',
+      label: 'Probe',
+      description: 'Soil and air readings',
+      icon: 'upload-cloud',
+      tone: 'chart-1',
+      shape: 'compact',
+      ports: [
+        { id: 'soil', label: 'Soil', direction: 'output' },
+        { id: 'air', label: 'Air', direction: 'output' },
+      ],
+    },
+    {
+      type: 'rule',
+      label: 'Rule',
+      description: 'Passes readings that match',
+      icon: 'git-branch',
+      tone: 'chart-3',
+      shape: 'compact',
+      ports: [
+        { id: 'in', label: 'In', direction: 'input' },
+        { id: 'out', label: 'Out', direction: 'output' },
+      ],
+    },
+    {
+      type: 'device',
+      label: 'Device',
+      description: 'Switches a greenhouse actuator',
+      icon: 'zap',
+      tone: 'chart-4',
+      shape: 'compact',
+      ports: [{ id: 'in', label: 'In', direction: 'input' }],
+    },
+    { type: 'zone', label: 'Zone', shape: 'group', tone: 'chart-2', ports: [] },
+  ],
+};
+
+export const groupsDocument = {
+  version: 1,
+  nodes: [
+    { id: 'probe', type: 'probe', position: { x: 0, y: 150 }, label: 'Greenhouse probe', data: {} },
+    {
+      id: 'irrigation',
+      type: 'zone',
+      position: { x: 200, y: 0 },
+      size: { width: 400, height: 180 },
+      label: 'Irrigation',
+      data: {},
+      ports: [
+        { id: 'soil', label: 'Soil', direction: 'input' },
+        { id: 'water', label: 'Water', direction: 'output' },
+      ],
+    },
+    {
+      id: 'dry',
+      type: 'rule',
+      parentId: 'irrigation',
+      position: { x: 60, y: 70 },
+      label: 'Soil too dry',
+      data: {},
+    },
+    {
+      id: 'morning',
+      type: 'rule',
+      parentId: 'irrigation',
+      position: { x: 240, y: 70 },
+      label: 'Morning only',
+      data: {},
+    },
+    {
+      id: 'climate',
+      type: 'zone',
+      position: { x: 290, y: 260 },
+      size: { width: 560, height: 280 },
+      collapsed: true,
+      label: 'Climate',
+      data: {},
+      ports: [
+        { id: 'air', label: 'Air', direction: 'input' },
+        { id: 'vent', label: 'Vent', direction: 'output' },
+        { id: 'shade', label: 'Shade', direction: 'output' },
+      ],
+    },
+    {
+      id: 'warm',
+      type: 'rule',
+      parentId: 'climate',
+      position: { x: 60, y: 70 },
+      label: 'Air too warm',
+      data: {},
+    },
+    {
+      id: 'lighting',
+      type: 'zone',
+      parentId: 'climate',
+      position: { x: 220, y: 60 },
+      size: { width: 300, height: 180 },
+      label: 'Lighting',
+      data: {},
+      ports: [
+        { id: 'in', label: 'In', direction: 'input' },
+        { id: 'out', label: 'Out', direction: 'output' },
+      ],
+    },
+    {
+      id: 'sunny',
+      type: 'rule',
+      parentId: 'lighting',
+      position: { x: 100, y: 70 },
+      label: 'Bright midday',
+      data: {},
+    },
+    { id: 'drip', type: 'device', position: { x: 720, y: 60 }, label: 'Drip lines', data: {} },
+    { id: 'vents', type: 'device', position: { x: 960, y: 260 }, label: 'Roof vents', data: {} },
+    { id: 'blinds', type: 'device', position: { x: 960, y: 420 }, label: 'Shade cloth', data: {} },
+  ],
+  edges: [
+    { id: 'g1', source: 'probe', sourcePort: 'soil', target: 'irrigation', targetPort: 'soil' },
+    { id: 'g2', source: 'irrigation', sourcePort: 'soil', target: 'dry', targetPort: 'in' },
+    { id: 'g3', source: 'dry', sourcePort: 'out', target: 'morning', targetPort: 'in' },
+    { id: 'g4', source: 'morning', sourcePort: 'out', target: 'irrigation', targetPort: 'water' },
+    { id: 'g5', source: 'irrigation', sourcePort: 'water', target: 'drip', targetPort: 'in' },
+    { id: 'g6', source: 'probe', sourcePort: 'air', target: 'climate', targetPort: 'air' },
+    { id: 'g7', source: 'climate', sourcePort: 'air', target: 'warm', targetPort: 'in' },
+    { id: 'g8', source: 'warm', sourcePort: 'out', target: 'climate', targetPort: 'vent' },
+    { id: 'g9', source: 'climate', sourcePort: 'air', target: 'lighting', targetPort: 'in' },
+    { id: 'g10', source: 'lighting', sourcePort: 'in', target: 'sunny', targetPort: 'in' },
+    { id: 'g11', source: 'sunny', sourcePort: 'out', target: 'lighting', targetPort: 'out' },
+    { id: 'g12', source: 'lighting', sourcePort: 'out', target: 'climate', targetPort: 'shade' },
+    { id: 'g13', source: 'climate', sourcePort: 'vent', target: 'vents', targetPort: 'in' },
+    { id: 'g14', source: 'climate', sourcePort: 'shade', target: 'blinds', targetPort: 'in' },
+  ],
+};
+
 const samples = {
   workflow: { schema: workflowSchema, document: workflowDocument },
   edges: { schema: workflowSchema, document: edgeKindsDocument },
   lighting: { schema: lightingSchema, document: lightingDocument },
   pipeline: { schema: pipelineSchema, document: pipelineDocument },
   photo: { schema: photoSchema, document: photoDocument },
+  groups: { schema: groupsSchema, document: groupsDocument },
 };
 
 /**

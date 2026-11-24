@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import type { FlowDocument } from '../../../../../src/foundation/flow/types.js';
 import {
   FlowRunState,
+  aggregateRunStatus,
   deriveEdgeStatus,
   flowRunGraph,
   flowRunScope,
   flowRunSummary,
 } from '../../../../../src/foundation/flow/run/state.js';
 import type { FlowRunEvent, FlowRunGraph } from '../../../../../src/foundation/flow/run/types.js';
+import { model as groupModel, nested, schema } from '../groups/fixture.js';
 
 const document: FlowDocument = {
   version: 1,
@@ -375,5 +377,47 @@ describe('flowRunScope', () => {
     expect(flowRunScope(cyclic, 'graph')).toEqual(['a', 'lone', 'b', 'c']);
     expect(flowRunScope(cyclic, 'from', 'b')).toEqual(['b', 'c']);
     expect(flowRunScope(cyclic, 'to', 'c')).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('runs over groups', () => {
+  it('flattens the graph and lists the leaves of each group', () => {
+    const graph = flowRunGraph(groupModel());
+    expect(graph.nodes).toEqual(['x', 'a', 'b', 'y']);
+    expect(graph.edges.map((item) => `${item.id}:${item.source}>${item.target}`)).toEqual([
+      'x-g>g-a:x>a',
+      'a-h>h-b:a>b',
+      'b-h>h-g>g-y:b>y',
+    ]);
+    expect(graph.groups).toEqual(
+      new Map([
+        ['G', ['a', 'b']],
+        ['H', ['b']],
+      ]),
+    );
+    expect(graph.chains?.get('b-h>h-g>g-y')).toEqual(['b-h', 'h-g', 'g-y']);
+    expect(flowRunGraph(nested(), schema).groups?.get('H')).toEqual(['b']);
+    expect(flowRunGraph(document).groups).toBeUndefined();
+  });
+
+  it('expands a group scope to its members', () => {
+    const graph = flowRunGraph(groupModel());
+    expect(flowRunScope(graph, 'node', 'G')).toEqual(['a', 'b']);
+    expect(flowRunScope(graph, 'from', 'H')).toEqual(['b', 'y']);
+    expect(flowRunScope(graph, 'to', 'H')).toEqual(['x', 'a', 'b']);
+    expect(flowRunScope(graph, 'graph')).toEqual(['x', 'a', 'b', 'y']);
+    expect(flowRunScope(graph, 'node', 'missing')).toEqual([]);
+  });
+
+  it('aggregates member statuses, problems and work first', () => {
+    expect(aggregateRunStatus([])).toBe('idle');
+    expect(aggregateRunStatus(['success', 'skipped', 'idle'])).toBe('success');
+    expect(aggregateRunStatus(['success', 'running', 'pending'])).toBe('running');
+    expect(aggregateRunStatus(['running', 'waiting'])).toBe('waiting');
+    expect(aggregateRunStatus(['success', 'failed', 'running'])).toBe('failed');
+    expect(aggregateRunStatus([{ status: 'cancelled', attempts: 1 }, undefined, 'skipped'])).toBe(
+      'cancelled',
+    );
+    expect(aggregateRunStatus(['skipped', 'idle'])).toBe('skipped');
   });
 });

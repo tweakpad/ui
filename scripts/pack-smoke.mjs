@@ -406,7 +406,7 @@ run(
   [
     '--input-type=module',
     '-e',
-    "const { FlowModel, layoutFlow } = await import('@tweakpad/ui/flow'); const model = new FlowModel({ document: { version: 1, nodes: [{ id: 'a', type: 't', position: { x: 0, y: 0 }, size: { width: 100, height: 40 }, data: {} }, { id: 'b', type: 't', position: { x: 0, y: 0 }, size: { width: 100, height: 40 }, data: {} }], edges: [{ id: 'e', source: 'a', target: 'b' }] } }); if (layoutFlow(model, 'horizontal').changes.length === 0) process.exit(1);",
+    "const { FlowModel, layoutFlow, flattenFlowGroups } = await import('@tweakpad/ui/flow'); const model = new FlowModel({ document: { version: 1, nodes: [{ id: 'a', type: 't', position: { x: 0, y: 0 }, size: { width: 100, height: 40 }, data: {} }, { id: 'b', type: 't', position: { x: 0, y: 0 }, size: { width: 100, height: 40 }, data: {} }], edges: [{ id: 'e', source: 'a', target: 'b' }] } }); if (layoutFlow(model, 'horizontal').changes.length === 0) process.exit(1); const grouped = { version: 1, nodes: [{ id: 'x', type: 't', position: { x: 0, y: 0 }, data: {} }, { id: 'g', type: 'group', position: { x: 200, y: 0 }, data: {}, ports: [{ id: 'in', direction: 'input' }] }, { id: 'c', type: 't', parentId: 'g', position: { x: 20, y: 40 }, data: {} }], edges: [{ id: 'x-g', source: 'x', target: 'g', targetPort: 'in' }, { id: 'g-c', source: 'g', sourcePort: 'in', target: 'c' }] }; const flat = flattenFlowGroups(grouped).document; if (flat.nodes.length !== 2 || flat.edges.length !== 1 || flat.edges[0].target !== 'c') process.exit(2);",
   ],
   consumer,
 );

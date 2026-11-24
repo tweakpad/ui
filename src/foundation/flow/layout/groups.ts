@@ -84,7 +84,7 @@ export function layoutGroupTree(
       const position = member.position
         ? { x: member.position.x - parentAbsolute.x, y: member.position.y - parentAbsolute.y }
         : undefined;
-      return { ...member, size, position, ports: children.has(member.id) ? [] : member.ports };
+      return { ...member, size, position };
     });
     const lifted = new Map<string, FlowLayoutEdge>();
     for (const edge of edges) {

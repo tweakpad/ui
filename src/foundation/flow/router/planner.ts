@@ -260,14 +260,16 @@ class RoutingPlanner implements FlowRoutingPlanner {
     const sourceNode = this.#source.getNode(edge.source);
     const targetNode = this.#source.getNode(edge.target);
     if (!sourceNode || !targetNode || sourceNode.hidden || targetNode.hidden) return undefined;
+    const ends = this.#source.endpoints(edge);
+    if (!ends) return undefined;
     const kind = this.#kindOf(edge);
     const options = edgeKindOptions(kind, this.#source.schema?.edgeKinds?.[kind], edge.options);
     const request: Omit<FlowRouteRequest, 'context'> = {
       edgeId: edge.id,
       kind,
       options,
-      source: this.#source.endpoint(edge.source, edge.sourcePort, 'output'),
-      target: this.#source.endpoint(edge.target, edge.targetPort, 'input'),
+      source: ends.source,
+      target: ends.target,
     };
     if (edge.waypoints && edge.waypoints.length > 0) request.waypoints = edge.waypoints;
     return request;
@@ -276,7 +278,9 @@ class RoutingPlanner implements FlowRoutingPlanner {
   #syncObstacle(id: string): void {
     const node = this.#source.getNode(id);
     const definition = node ? this.#source.definitionOf(node) : undefined;
-    if (!node || node.hidden || definition?.shape === 'group') this.obstacles.remove(id);
+    // An expanded group frames the edges inside it; a collapsed one is a card to route around.
+    if (!node || node.hidden || (definition?.shape === 'group' && !node.collapsed))
+      this.obstacles.remove(id);
     else this.obstacles.set(id, this.#source.nodeRect(id));
     if (node && this.#source.children)
       for (const child of this.#source.children(id)) this.#syncObstacle(child);

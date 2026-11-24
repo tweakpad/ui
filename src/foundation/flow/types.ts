@@ -105,7 +105,27 @@ export interface FlowNode<Data extends Record<string, unknown> = Record<string, 
   label?: string;
   /** Kept in place by automatic layout. */
   pinned?: boolean;
+  /** Groups only: presented as one node; members and inner edges are not shown on that canvas. */
+  collapsed?: boolean;
+  /** Groups only: positions of the boundary terminals, relative to the group; unset is automatic. */
+  terminals?: FlowGroupTerminals;
 }
+
+/** Which boundary terminal of a group: its inputs or its outputs. */
+export type FlowGroupTerminal = 'inputs' | 'outputs';
+
+/** Group-relative positions of a group's boundary terminals, shown inside the group. */
+export interface FlowGroupTerminals {
+  inputs?: FlowPoint;
+  outputs?: FlowPoint;
+}
+
+/**
+ * How an edge relates to the group tree: between two siblings, from a group input to a direct
+ * child (`inner-input`), from a direct child to a group output (`inner-output`), from a group input
+ * to an output of the same group (`through`), or across a group border (`crossing`, an error).
+ */
+export type FlowEdgeRelation = 'sibling' | 'inner-input' | 'inner-output' | 'through' | 'crossing';
 
 /** The path shape an edge is drawn with. */
 export type FlowEdgeKind = 'bezier' | 'straight' | 'step' | 'smoothstep' | 'orthogonal';
@@ -416,7 +436,7 @@ export interface FlowModelLike {
     direction?: 'input' | 'output',
     portId?: string,
   ): readonly string[];
-  wouldCreateCycle(source: string, target: string): boolean;
+  wouldCreateCycle(source: string, target: string, ignoreEdge?: string): boolean;
 }
 
 /** A port definition merged with its instance override and runtime geometry. */

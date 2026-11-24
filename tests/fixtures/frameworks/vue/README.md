@@ -20,7 +20,8 @@ the `<lane>` prop with its `onUpdate:<lane>` listener, as templates compile it.
    - a transforming model publishes its own value; children Vue adds, removes and reorders
      inside an element that projects them (Dialog, a portaled Menu) stay consistent;
    - three mount/unmount rounds raise no error.
-3. `await vueBindings.lane('<tag>')` runs one row of the lane matrix (`tests/fixtures/frameworks/lanes.ts`;
+3. `await vueBindings.lane('<tag>')` (or `lane('<tag>', '<lane>')` for a tag with two rows, such as
+   `lane('tp-flow', 'path')`) runs one row of the lane matrix (`tests/fixtures/frameworks/lanes.ts`;
    `vueBindings.lanes` lists the tags): a controlled owner that writes the proposal back publishes it, one
    that does not keeps its value, and `default<Lane>` leaves the element free to commit it, with no
    diagnostic, warning or error. A `cancelable` row (Accordion, Collapsible, Description list) has

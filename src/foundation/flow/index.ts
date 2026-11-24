@@ -1,7 +1,7 @@
 /**
  * Flow engine (Widgets Specification §6.3), DOM-free; published as `@tweakpad/ui/flow`.
  * Documents, lookup indices, history, validation, serialization, viewport math, the spatial
- * index, edge geometry, routing, layout, run state and the renderer contract.
+ * index, edge geometry, routing, layout, run state, groups and the renderer contract.
  */
 export * from './types.js';
 export * from './defaults.js';
@@ -21,3 +21,4 @@ export * from './renderer.js';
 export * from './router/index.js';
 export * from './layout/index.js';
 export * from './run/index.js';
+export * from './groups/index.js';

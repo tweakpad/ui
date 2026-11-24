@@ -1,9 +1,11 @@
+import { flattenFlowGroups, flowGroupIds } from '../groups/flatten.js';
 import { adjacencyOrder, reachable, type FlowAdjacency } from '../model/queries.js';
-import type { FlowDocument, FlowModelLike } from '../types.js';
+import type { FlowDocument, FlowModelLike, FlowSchema } from '../types.js';
 import type {
   FlowEdgeRunState,
   FlowEdgeRunStatus,
   FlowNodeRunState,
+  FlowNodeRunStatus,
   FlowRun,
   FlowRunEvent,
   FlowRunGraph,
@@ -12,9 +14,19 @@ import type {
   FlowRunSummary,
 } from './types.js';
 
-/** Builds the run graph (node ids plus edges and adjacency) from a document or a model. */
-export function flowRunGraph(source: FlowDocument | FlowModelLike): FlowRunGraph {
-  const flow = 'document' in source ? source.document : source;
+/**
+ * Builds the run graph from a document or a model: the leaves (groups flattened away), the
+ * leaf-to-leaf edges their port chains resolve to, adjacency, each group's leaf members and each
+ * run edge's chain of document edges. Pass the schema with a document whose groups use a schema
+ * type other than `group`.
+ */
+export function flowRunGraph(
+  source: FlowDocument | FlowModelLike,
+  schema?: FlowSchema,
+): FlowRunGraph {
+  const doc = 'document' in source ? source.document : source;
+  const options = { schema: schema ?? ('document' in source ? source.schema : undefined) };
+  const { document: flow, chains } = flattenFlowGroups(doc, options);
   const nodes = flow.nodes.map((node) => node.id);
   const edges: FlowRunGraphEdge[] = flow.edges.map((edge) => ({
     id: edge.id,
@@ -33,7 +45,30 @@ export function flowRunGraph(source: FlowDocument | FlowModelLike): FlowRunGraph
     outgoing.get(edge.source)?.push(edge.id);
     incoming.get(edge.target)?.push(edge.id);
   }
-  return { nodes, edges, outgoing, incoming };
+  const graph: FlowRunGraph = { nodes, edges, outgoing, incoming, chains };
+  if (flow !== doc) {
+    const groupIds = flowGroupIds(doc, options);
+    const children = new Map<string, string[]>();
+    for (const node of doc.nodes)
+      if (node.parentId !== undefined) {
+        const list = children.get(node.parentId);
+        if (list) list.push(node.id);
+        else children.set(node.parentId, [node.id]);
+      }
+    const groups = new Map<string, string[]>();
+    const collect = (id: string, out: string[], seen: Set<string>): string[] => {
+      for (const child of children.get(id) ?? []) {
+        if (seen.has(child)) continue;
+        seen.add(child);
+        if (groupIds.has(child)) collect(child, out, seen);
+        else out.push(child);
+      }
+      return out;
+    };
+    for (const id of groupIds) groups.set(id, collect(id, [], new Set([id])));
+    graph.groups = groups;
+  }
+  return graph;
 }
 
 /** Node-to-node adjacency of a run graph, in its node order. */
@@ -63,11 +98,46 @@ export function flowRunScope(graph: FlowRunGraph, scope: FlowRunScope, nodeId?: 
   const adjacency = runAdjacency(graph);
   const order = adjacencyOrder(adjacency);
   if (scope === 'graph') return order;
-  if (nodeId === undefined || !adjacency.outgoing.has(nodeId)) return [];
-  if (scope === 'node') return [nodeId];
-  const covered = reachable(adjacency, nodeId, scope === 'from' ? 'downstream' : 'upstream');
-  covered.add(nodeId);
+  if (nodeId === undefined) return [];
+  // A group stands for its leaf members.
+  const starts = graph.groups?.get(nodeId) ?? (adjacency.outgoing.has(nodeId) ? [nodeId] : []);
+  if (starts.length === 0) return [];
+  const covered =
+    scope === 'node'
+      ? new Set<string>()
+      : reachable(adjacency, starts, scope === 'from' ? 'downstream' : 'upstream');
+  for (const id of starts) covered.add(id);
   return order.filter((id) => covered.has(id));
+}
+
+/** Statuses from the most to the least telling, for `aggregateRunStatus`. */
+const STATUS_RANK: readonly FlowNodeRunStatus[] = [
+  'failed',
+  'waiting',
+  'running',
+  'pending',
+  'cancelled',
+  'success',
+  'skipped',
+  'idle',
+];
+
+/**
+ * The one status a set of node states shows together (a collapsed group's members): the first of
+ * failed, waiting, running, pending, cancelled, success, skipped and idle that any member has, so
+ * a problem or work in progress outweighs completion; no members are idle.
+ */
+export function aggregateRunStatus(
+  states: Iterable<FlowNodeRunState | FlowNodeRunStatus | undefined>,
+): FlowNodeRunStatus {
+  let best = STATUS_RANK.length - 1;
+  for (const state of states) {
+    if (state === undefined) continue;
+    const rank = STATUS_RANK.indexOf(typeof state === 'string' ? state : state.status);
+    if (rank >= 0 && rank < best) best = rank;
+    if (best === 0) break;
+  }
+  return STATUS_RANK[best]!;
 }
 
 /** Node counts per status, plus the nodes carrying warnings, for a summary of a run. */

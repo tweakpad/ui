@@ -79,6 +79,11 @@ export interface PasteOptions {
   offset: FlowPoint;
   /** Existing ids; copies keep their id when it is free (cut + paste round trip). */
   taken: (id: string) => boolean;
+  /**
+   * The group the top-level copies go into, with its absolute origin: their absolute positions
+   * become relative to it. Absent, they land at the root.
+   */
+  parent?: { id: string; origin: FlowPoint } | undefined;
 }
 
 /**
@@ -97,15 +102,20 @@ export function pasteChanges(
   for (const node of payload.nodes) {
     const id = nodeIds.get(node.id)!;
     const topLevel = !node.parentId || !copiedIds.has(node.parentId);
+    const parent = options.parent;
     const copy: FlowNode = {
       ...node,
       id,
       position: topLevel
-        ? { x: node.position.x + options.offset.x, y: node.position.y + options.offset.y }
+        ? {
+            x: node.position.x + options.offset.x - (parent?.origin.x ?? 0),
+            y: node.position.y + options.offset.y - (parent?.origin.y ?? 0),
+          }
         : { ...node.position },
       selected: true,
     };
     if (node.parentId && copiedIds.has(node.parentId)) copy.parentId = nodeIds.get(node.parentId)!;
+    else if (parent) copy.parentId = parent.id;
     else delete copy.parentId;
     changes.push({ type: 'node-add', node: copy });
   }

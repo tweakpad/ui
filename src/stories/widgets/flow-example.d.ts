@@ -14,6 +14,8 @@ export const pipelineDocument: FlowDocument;
 export const photoSchema: FlowSchema;
 export const photoDocument: FlowDocument;
 export const edgeKindsDocument: FlowDocument;
+export const groupsSchema: FlowSchema;
+export const groupsDocument: FlowDocument;
 export function generateDocument(
   count: number,
   columns?: number,
