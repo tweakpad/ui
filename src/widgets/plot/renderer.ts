@@ -54,6 +54,29 @@ function transparentOf(color: string): string {
   return 'transparent';
 }
 
+/**
+ * How far a line reaches past its own path, in CSS pixels: half the widest stroke of the series
+ * that draw a line, plus a pixel of antialiasing.
+ */
+export function strokeReach(series: readonly Pick<PlotSeries, 'line' | 'lineWidth'>[]): number {
+  let widest = 0;
+  for (const s of series) if (s.line !== false) widest = Math.max(widest, s.lineWidth ?? 1.5);
+  return widest > 0 ? widest / 2 + 0.5 : 0;
+}
+
+/**
+ * The y domain a plot draws: the configured domain widened by `edge` pixels on both sides of a
+ * `height`-pixel plot, so a value at either bound keeps its whole stroke inside the plot instead
+ * of being drawn on its edge. Lines, fills, guides, the grid and inspection all map through it.
+ */
+export function drawnDomain(y: PlotDomain, height: number, edge: number): PlotDomain {
+  const span = y[1] - y[0],
+    inner = height - 2 * edge;
+  if (!(edge > 0) || !(inner > 0) || !(span > 0)) return y;
+  const pad = (edge * span) / inner;
+  return [y[0] - pad, y[1] + pad];
+}
+
 /** Draw a clipped set of ordered paths; signed paint is clipped at the exact baseline. */
 export function paintPlotSeries(
   context: CanvasRenderingContext2D,

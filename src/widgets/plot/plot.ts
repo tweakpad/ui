@@ -26,6 +26,7 @@ import {
 } from './geometry.js';
 import { PlotDecorations, plotRect, axisFormat, crosshairFormat } from './decorations.js';
 import { PlotHistoryRaster } from './history-raster.js';
+import { drawnDomain, strokeReach } from './renderer.js';
 import {
   plotFrameDeadline,
   plotSchedulerFor,
@@ -186,6 +187,8 @@ export class TpPlot extends TpElement {
   #paint: PlotPaint | undefined;
   #end: number | undefined;
   #domains: { x: PlotDomain; y: PlotDomain } = { x: [0, 1], y: [0, 1] };
+  /** The y domain painted and inspected: `#domains.y` widened so edge values keep their stroke. */
+  #drawnY: PlotDomain = [0, 1];
   /** The plot rectangle of the last paint, in CSS pixels; absent before the first paint. */
   #overlay: { left: number; top: number; width: number; height: number } | undefined;
   #active: PlotInspection | null = null;
@@ -572,10 +575,12 @@ export class TpPlot extends TpElement {
       const paint = this.#paint ?? (this.#paint = this.#appearance());
       const layout = this.#layoutConfig();
       const rect = plotRect(layout, w, h, r);
+      this.#drawnY = drawnDomain(this.#domains.y, rect.height, strokeReach(c.series) * r);
       const fraction = this.#history.paint({
         config: c,
         views: this.#views,
-        ...this.#domains,
+        x: this.#domains.x,
+        y: this.#drawnY,
         width: rect.width,
         height: rect.height,
         ratio: r,
@@ -588,7 +593,7 @@ export class TpPlot extends TpElement {
         ctx,
         layout,
         this.#domains.x,
-        this.#domains.y,
+        this.#drawnY,
         rect,
         w,
         h,
@@ -607,7 +612,7 @@ export class TpPlot extends TpElement {
         ctx,
         layout,
         this.#domains.x,
-        this.#domains.y,
+        this.#drawnY,
         rect,
         w,
         h,
@@ -865,8 +870,7 @@ export class TpPlot extends TpElement {
             bounds.top +
             (rect.top +
               rect.height -
-              ((p[1] - this.#domains.y[0]) / (this.#domains.y[1] - this.#domains.y[0])) *
-                rect.height) /
+              ((p[1] - this.#drawnY[0]) / (this.#drawnY[1] - this.#drawnY[0])) * rect.height) /
               r;
           const d = Math.hypot(px - position[0], py - position[1]);
           if (d < best) {
@@ -882,8 +886,7 @@ export class TpPlot extends TpElement {
             rect.height -
             (p[1] === null
               ? rect.height / 2
-              : ((p[1] - this.#domains.y[0]) / (this.#domains.y[1] - this.#domains.y[0])) *
-                rect.height)) /
+              : ((p[1] - this.#drawnY[0]) / (this.#drawnY[1] - this.#drawnY[0])) * rect.height)) /
             r;
       const pixelX =
         bounds.left +
@@ -932,7 +935,8 @@ export class TpPlot extends TpElement {
   /** The CSS-pixel position of a data point inside the viewport. */
   #at(x: number, y: number): [number, number] {
     const o = this.#overlay!,
-      { x: dx, y: dy } = this.#domains;
+      dx = this.#domains.x,
+      dy = this.#drawnY;
     return [
       o.left + ((x - dx[0]) / (dx[1] - dx[0])) * o.width,
       o.top + o.height - ((y - dy[0]) / (dy[1] - dy[0])) * o.height,
