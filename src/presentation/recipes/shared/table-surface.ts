@@ -67,11 +67,15 @@ export const tableCellFillLayer: PresentationDeclarations = {
  * never darkens the rows above and below or the pinned cells themselves.
  */
 // The theme's shadows are a light-scheme black that a dark surface swallows: the shade is the
-// surface itself, darkened, and stronger in the dark scheme, so it reads on either.
-const shade = (alpha: number) => `oklch(from var(--tp-background) calc(l * 0.2) c h / ${alpha})`;
+// surface itself, darkened, and stronger in the dark scheme, so it reads on either. Its width and
+// strength are the scroll-edge fade tokens, so the shadows match the fades.
+const edgeSize = 'var(--tp-scroll-edge-fade-size)';
+const edgeIntensity = 'var(--tp-scroll-edge-fade-intensity)';
+const shade = (alpha: number) =>
+  `oklch(from var(--tp-background) calc(l * 0.2) c h / calc(${alpha} * ${edgeIntensity}))`;
 const pinnedShade = `light-dark(${shade(0.22)}, ${shade(0.9)})`;
-const pinnedShadow = `0 0 var(--tp-space-5) ${pinnedShade}`;
-const reach = 'calc(var(--tp-space-6) * -1)';
+const pinnedShadow = `0 0 ${edgeSize} ${pinnedShade}`;
+const reach = `calc(${edgeSize} * -1)`;
 const towardRight = `inset(0 ${reach} 0 0)`;
 const towardLeft = `inset(0 0 0 ${reach})`;
 export const tablePinnedStartEdge: PresentationDeclarations = {
@@ -87,6 +91,15 @@ export const tablePinnedEndEdge: PresentationDeclarations = {
 /** Right to left, the shadows fall the other way. */
 export const tablePinnedStartEdgeRtl: PresentationDeclarations = { 'clip-path': towardLeft };
 export const tablePinnedEndEdgeRtl: PresentationDeclarations = { 'clip-path': towardRight };
+/** A sticky header or footer while rows scroll under it casts the same shadow onto the rows. */
+export const tableStickyHeaderEdge: PresentationDeclarations = {
+  'box-shadow': pinnedShadow,
+  'clip-path': `inset(0 0 ${reach} 0)`,
+};
+export const tableStickyFooterEdge: PresentationDeclarations = {
+  'box-shadow': pinnedShadow,
+  'clip-path': `inset(${reach} 0 0 0)`,
+};
 
 /** How a table draws its lines. */
 export type TableBorders = 'rows' | 'grid' | 'none';

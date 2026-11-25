@@ -365,13 +365,14 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     super();
     this.#scrollEdges = new NativeScrollEdges(this, {
       viewports: () => (this.#viewport ? [this.#viewport] : []),
-      // A pinned edge never fades: its column covers it. The fades are a mask on the rows that
-      // follows them a frame late, so pinned cells fade with their rows rather than being masked
-      // out of it, which would clip them while the columns scroll.
+      // A pinned edge never fades: its column covers it, and its boundary casts the pinned-column
+      // shadow instead.
       threshold: () => ({
         xStart: this.#pinOf(0) === 'start' ? Number.MAX_SAFE_INTEGER : 0,
         xEnd: this.#pinOf(this.#columns.length - 1) === 'end' ? Number.MAX_SAFE_INTEGER : 0,
       }),
+      // Pinned cells fade with their rows at the block edges.
+      sticky: 'content',
     });
   }
 

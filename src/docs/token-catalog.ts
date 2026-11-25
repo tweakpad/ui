@@ -370,7 +370,7 @@ export const DESCRIPTIONS = {
   'icon-size-md': 'Default icon extent.',
   'icon-size-lg': 'Large icons.',
   'scroll-edge-fade-size':
-    'Maximum content fade at hidden native scroll edges. Defaults to 24px; 0px disables it.',
+    'Width of the content fade at hidden native scroll edges and of the shadow sticky table chrome casts over scrolled content. Defaults to 24px; 0px disables the fades.',
   'target-size-min':
     'Minimum pointer target. Smaller controls extend their hit area to it on touch; it is never a visual size.',
   'border-width': 'Default width of borders and separators.',
@@ -398,6 +398,8 @@ export const DESCRIPTIONS = {
   'opacity-drag-ghost':
     'The dimmed copy that holds a dragged item’s place: where it lands, or where it was.',
   'opacity-drag-copy': 'The dragged item that follows the pointer while its ghost holds its place.',
+  'scroll-edge-fade-intensity':
+    'Strength of the scroll-edge fades and of the sticky table chrome shadow, from 0 (none) to 1.',
   'duration-fast': 'Feedback: color, fill, track and thumb changes, and dialog fades.',
   'duration-normal': 'Anchored surfaces, panels, layout changes and viewport moves.',
   'duration-slow': 'Reveals and hover zoom.',

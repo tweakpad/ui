@@ -19,6 +19,7 @@ import { GeneratedStyleResource } from '../../foundation/generated-style.js';
 import {
   scrollEdgeCss,
   scrollEdgeMask,
+  type ScrollEdgeBand,
   type ScrollEdgeMaskRect,
 } from '../../presentation/recipes/shared/scroll-edge.js';
 
@@ -26,12 +27,24 @@ type Host = HTMLElement & ReactiveControllerHost & { renderRoot: HTMLElement | D
 export interface NativeScrollEdgeOptions {
   /** Explicit library-owned native scrollports; never scans the document for overflow. */
   viewports: () => readonly HTMLElement[];
-  /** Optional explicit non-scroll content layers; otherwise uses flattened viewport children. */
+  /**
+   * The scrolling content layers, watched for changes and searched for sticky content; otherwise
+   * the flattened viewport children. The fade itself masks the whole viewport.
+   */
   content?: (viewport: HTMLElement) => readonly HTMLElement[];
-  /** Native chrome known by an owner, including parts across shadow boundaries. */
+  /** Elements that stay unfaded where they are, such as a highlighted option. */
   protectedElements?: () => readonly HTMLElement[];
-  /** Uncovered content region, using the native owner's measured overlay extents. */
+  /**
+   * The owner's chrome over the scrollport edges (a sticky header or footer, scroll buttons):
+   * the fades start inside it, so content fades as it slides under the chrome.
+   */
   insets?: () => ScrollportInsets;
+  /**
+   * How sticky and fixed content meets the fades: `solid` (default) keeps it unfaded where it
+   * is; `content` fades it with the rest, for owners that draw their own edge treatment for
+   * their sticky parts (pinned columns).
+   */
+  sticky?: 'solid' | 'content';
   /** Existing owners can provide their measured state rather than a second state owner. */
   read?: (viewport: HTMLElement) => ScrollEdges;
   threshold?: () => number | Partial<Record<'xStart' | 'xEnd' | 'yStart' | 'yEnd', number>>;
@@ -72,7 +85,10 @@ function fadeEnabled(host: Element): boolean {
   );
 }
 
-/** Shared content-layer adapter; it does not move nodes or replace native scrolling. */
+/**
+ * Shared scroll-edge fades: a mask on each native scroll container. It does not move nodes or
+ * replace native scrolling.
+ */
 export class NativeScrollEdges implements ReactiveController {
   readonly #bindings = new Map<HTMLElement, Binding>();
   readonly #owned = new Map<HTMLElement, Owned>();
@@ -254,9 +270,15 @@ export class NativeScrollEdges implements ReactiveController {
       if (binding.probe.style.font !== viewportStyle.font)
         binding.probe.style.font = viewportStyle.font;
       const size = Number.parseFloat(owner.getComputedStyle(binding.probe).inlineSize);
+      // How strongly the fades reach transparent, from 0 (no fade) to 1.
+      const raw = Number.parseFloat(
+        viewportStyle.getPropertyValue('--tp-scroll-edge-fade-intensity'),
+      );
+      const intensity = Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 1;
       if (
         contentSecurityPolicy(this.host).disableStyleElements ||
         !(size > 0) ||
+        !(intensity > 0) ||
         this.#media?.matches ||
         !owner.CSS.supports('mask-clip', 'no-clip')
       )
@@ -268,14 +290,19 @@ export class NativeScrollEdges implements ReactiveController {
         this.options.insets?.(),
       );
       const threshold = this.options.threshold?.() ?? 0;
+      // A band keeps one width while the content scrolls; only its strength follows the
+      // distance, so the fade never moves or grows with the content.
       const limit = (
         edge: 'xStart' | 'xEnd' | 'yStart' | 'yEnd',
         distance: number,
         extent: number,
-      ) => {
+      ): ScrollEdgeBand => {
         const raw = typeof threshold === 'number' ? threshold : (threshold[edge] ?? 0);
         const cutoff = Number.isFinite(raw) ? Math.max(0, raw) : 0;
-        return distance > cutoff ? Math.min(size, distance, extent / 4) : 0;
+        const width = Math.min(size, extent / 4);
+        const strength =
+          distance > cutoff && width > 0 ? intensity * Math.min(1, distance / width) : 0;
+        return { size: width, strength };
       };
       const xStart = limit('xStart', edges.xStart, visible.width),
         xEnd = limit('xEnd', edges.xEnd, visible.width);
@@ -287,10 +314,18 @@ export class NativeScrollEdges implements ReactiveController {
         top: edges.reverseY ? yEnd : yStart,
         bottom: edges.reverseY ? yStart : yEnd,
       };
-      if (!Object.values(bands).some(Boolean)) continue;
+      if (!Object.values(bands).some((band) => band.strength > 0)) continue;
       const box = viewport.getBoundingClientRect();
       const scaleX = viewport.offsetWidth ? box.width / viewport.offsetWidth : 1;
       const scaleY = viewport.offsetHeight ? box.height / viewport.offsetHeight : 1;
+      const local = (rect: DOMRect): ScrollEdgeMaskRect => ({
+        left: (rect.left - box.left) / scaleX,
+        top: (rect.top - box.top) / scaleY,
+        width: rect.width / scaleX,
+        height: rect.height / scaleY,
+      });
+      const islands: ScrollEdgeMaskRect[] = [];
+      const solid = new Set(this.options.protectedElements?.() ?? []);
       for (const content of contents) {
         if (
           content === viewport ||
@@ -299,90 +334,75 @@ export class NativeScrollEdges implements ReactiveController {
         )
           continue;
         if (!this.options.external) observed.add(content);
-        const style = owner.getComputedStyle(content);
-        if (style.position === 'sticky' || style.position === 'fixed') continue;
-        const target = content.getBoundingClientRect();
-        const local = (rect: DOMRect): ScrollEdgeMaskRect => ({
-          left: (rect.left - target.left) / scaleX,
-          top: (rect.top - target.top) / scaleY,
-          width: rect.width / scaleX,
-          height: rect.height / scaleY,
-        });
-        const protectedRects: ScrollEdgeMaskRect[] = [];
-        let protectedNodes = this.#protected.get(content);
-        if (!protectedNodes) {
-          protectedNodes = composedElements(content).filter((child) => {
-            if (child.hasAttribute('data-tp-scroll-edge-probe')) return false;
-            const cs = owner.getComputedStyle(child);
-            return (
-              cs.position === 'sticky' ||
-              cs.position === 'fixed' ||
-              !!child.shadowRoot?.querySelector('[data-tp-scroll-edge-probe]') ||
-              ((cs.overflowX === 'auto' ||
-                cs.overflowX === 'scroll' ||
-                cs.overflowY === 'auto' ||
-                cs.overflowY === 'scroll') &&
-                (child.scrollWidth > child.clientWidth || child.scrollHeight > child.clientHeight))
-            );
-          });
-          this.#protected.set(content, protectedNodes);
-        }
-        for (const child of new Set([
-          ...protectedNodes,
-          ...(this.options.protectedElements?.() ?? []),
-        ])) {
-          const bounds = child.getBoundingClientRect();
-          if (
-            bounds.right > box.left &&
-            bounds.left < box.right &&
-            bounds.bottom > box.top &&
-            bounds.top < box.bottom
-          )
-            protectedRects.push(local(bounds));
-        }
-        // A list that keeps focus on itself and points at its current item through
-        // `aria-activedescendant` protects nothing: the owner's scroll padding keeps a revealed item
-        // clear of the fade, and an item highlighted by hover at the edge fades like its neighbours.
-        const focused =
-          active &&
-          composedContains(content, active) &&
-          !active.hasAttribute('aria-activedescendant')
-            ? active
-            : null;
-        if (focused) {
-          let focusRect = focused.getBoundingClientRect();
-          if ((focused as HTMLElement).isContentEditable) {
-            const selection = this.host.ownerDocument.getSelection();
-            if (selection?.focusNode) {
-              const caret = this.host.ownerDocument.createRange();
-              caret.setStart(selection.focusNode, selection.focusOffset);
-              caret.collapse(true);
-              const box = caret.getBoundingClientRect();
-              if (box.height) focusRect = box;
-            }
+        if (this.options.sticky !== 'content')
+          for (const element of this.#stickyContent(content)) solid.add(element);
+      }
+      for (const element of solid) {
+        const bounds = element.getBoundingClientRect();
+        if (
+          bounds.right > box.left &&
+          bounds.left < box.right &&
+          bounds.bottom > box.top &&
+          bounds.top < box.bottom
+        )
+          islands.push(local(bounds));
+      }
+      // Keyboard focus stays clear of the fade: the element showing a focus ring (`:focus-visible`,
+      // which includes every text field and editable surface) is where the user is working. An
+      // element focused by a press fades with its neighbours once it scrolls to an edge. A list
+      // that keeps focus on itself and points at its current item through
+      // `aria-activedescendant` protects nothing: the owner's scroll padding keeps a revealed item
+      // clear of the fade, and an item highlighted by hover at the edge fades like its neighbours.
+      const focused =
+        active &&
+        active !== viewport &&
+        composedContains(viewport, active) &&
+        active.matches(':focus-visible') &&
+        !active.hasAttribute('aria-activedescendant')
+          ? active
+          : null;
+      if (focused) {
+        let focusRect = focused.getBoundingClientRect();
+        if ((focused as HTMLElement).isContentEditable) {
+          const selection = this.host.ownerDocument.getSelection();
+          if (selection?.focusNode) {
+            const caret = this.host.ownerDocument.createRange();
+            caret.setStart(selection.focusNode, selection.focusOffset);
+            caret.collapse(true);
+            const caretBox = caret.getBoundingClientRect();
+            if (caretBox.height) focusRect = caretBox;
           }
-          const focus = local(focusRect);
-          protectedRects.push({
-            left: focus.left - 8,
-            top: focus.top - 8,
-            width: focus.width + 16,
-            height: focus.height + 16,
-          });
         }
-        const rect = {
-          left: (box.left + viewport.clientLeft * scaleX - target.left) / scaleX + visible.left,
-          top: (box.top + viewport.clientTop * scaleY - target.top) / scaleY + visible.top,
+        const focus = local(focusRect);
+        islands.push({
+          left: focus.left - 8,
+          top: focus.top - 8,
+          width: focus.width + 16,
+          height: focus.height + 16,
+        });
+      }
+      const original =
+        targetMasks.get(viewport)?.state.original ?? owner.getComputedStyle(viewport).maskImage;
+      // The container's own focus ring, where it is drawn inside the box (an inset outline).
+      const ring =
+        viewportStyle.outlineStyle === 'none'
+          ? 0
+          : Math.max(0, -(Number.parseFloat(viewportStyle.outlineOffset) || 0));
+      const mask = scrollEdgeMask(
+        { width: viewport.offsetWidth, height: viewport.offsetHeight },
+        {
+          left: viewport.clientLeft + visible.left,
+          top: viewport.clientTop + visible.top,
           width: visible.width,
           height: visible.height,
-        };
-        const original = targetMasks.get(content)?.state.original ?? style.maskImage;
-        const mask = scrollEdgeMask(rect, bands, protectedRects, original, {
-          width: target.width / scaleX,
-          height: target.height / scaleY,
-        });
-        this.#apply(content, mask, original);
-        next.add(content);
-      }
+        },
+        bands,
+        islands,
+        original,
+        ring,
+      );
+      this.#apply(viewport, mask, original);
+      next.add(viewport);
     }
     for (const element of this.#observed)
       if (!observed.has(element)) this.#resize?.unobserve(element);
@@ -397,6 +417,19 @@ export class NativeScrollEdges implements ReactiveController {
         resource.dispose();
         this.#resources.delete(root);
       }
+  }
+  /** Sticky and fixed elements in a content layer (cached until the content changes). */
+  #stickyContent(content: HTMLElement): HTMLElement[] {
+    let found = this.#protected.get(content);
+    if (!found) {
+      found = [content, ...composedElements(content)].filter((element) => {
+        if (element.hasAttribute('data-tp-scroll-edge-probe')) return false;
+        const position = this.#owner!.getComputedStyle(element).position;
+        return position === 'sticky' || position === 'fixed';
+      });
+      this.#protected.set(content, found);
+    }
+    return found;
   }
   #children(element: HTMLElement): HTMLElement[] {
     return [...element.children].flatMap((child) =>

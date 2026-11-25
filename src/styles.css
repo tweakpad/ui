@@ -127,7 +127,11 @@
   --_tp-destructive-border-default: var(--tp-destructive-border);
   --_tp-success-border-default: var(--tp-success-border);
   --_tp-warning-border-default: var(--tp-warning-border);
+
+  /* Scroll edges: the width and strength of every scroll-edge fade and of the shadow sticky
+     table chrome casts over scrolled content. */
   --tp-scroll-edge-fade-size: 24px;
+  --tp-scroll-edge-fade-intensity: 1;
   --tp-chart-1: #6d5dfc;
   --tp-chart-2: #0ea5e9;
   --tp-chart-3: #16a34a;

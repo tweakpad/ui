@@ -1,4 +1,4 @@
-import { focusHalo } from './shared/focus.js';
+import { focusHalo, focusRing } from './shared/focus.js';
 import type { PresentationDictionary } from '../resolver.js';
 import { motionTransition } from '../motion.js';
 import { fillColor, fillShown } from './shared/fill.js';
@@ -11,8 +11,12 @@ export const attachmentAppearance: PresentationDictionary = {
         gap: 'var(--tp-space-3)',
         'padding-block': 'var(--tp-space-1)',
         'scroll-padding-inline': 'var(--tp-space-1)',
+        outline: 'none',
       },
     },
+    // The row takes focus so keyboard users can scroll it. The ring sits outside the row: cards
+    // running to its edges would paint over an inset ring.
+    { selector: '&:focus-visible', declarations: focusRing },
   ],
   'attachment-root': [
     {

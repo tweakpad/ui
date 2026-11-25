@@ -157,7 +157,7 @@ A Scroll Area keeps the browser's own scrolling (wheel, touch, keyboard, focus a
 
 ### Overflow markers
 
-The host exposes `data-overflow-y-start` and `data-overflow-y-end` while content is hidden past an edge. Content fades are off by default. Add `scroll-edge-fade` to enable them on this component. Remove the attribute to disable them. The inherited `--tp-scroll-edge-fade-size` theme token controls their maximum width (24px by default). Scroll the viewport itself with the standard `scrollTo` and `scrollTop` APIs on `viewportElement`. No second scroll position or component change event is maintained. Horizontal offsets follow the native RTL model.
+The host exposes `data-overflow-y-start` and `data-overflow-y-end` while content is hidden past an edge. Content fades are off by default. Add `scroll-edge-fade` to enable them on this component. Remove the attribute to disable them. The inherited `--tp-scroll-edge-fade-size` theme token controls their maximum width (24px by default), and `--tp-scroll-edge-fade-intensity` their strength (`1` by default). Scroll the viewport itself with the standard `scrollTo` and `scrollTop` APIs on `viewportElement`. No second scroll position or component change event is maintained. Horizontal offsets follow the native RTL model.
 
 <Preview
   title="Edge fade"

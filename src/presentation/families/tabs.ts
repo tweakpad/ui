@@ -25,6 +25,11 @@ const definition: ComponentDefinition = {
       axes: ['orientation', 'variant'],
     },
     {
+      name: 'tabs-list-frame',
+      description: 'The surface around the tab list; it stays in place while the list scrolls.',
+      axes: ['orientation', 'variant'],
+    },
+    {
       name: 'tabs-list',
       description: 'The tab list, which scrolls when the tabs overflow.',
       axes: ['orientation', 'variant'],
@@ -52,6 +57,7 @@ export const tabsPresentation = definePresentation({
   bindings: {
     'tp-tabs': {
       "[part='tabs']": 'tabs',
+      "[part='tabs-list-frame']": 'tabs-list-frame',
       "[part='tabs-list']": 'tabs-list',
     },
   },

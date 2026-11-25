@@ -10,8 +10,14 @@ import {
   tableHeaderType,
   tableLastColumn,
   tableLastRow,
+  tablePinnedEndEdge,
+  tablePinnedEndEdgeRtl,
+  tablePinnedStartEdge,
+  tablePinnedStartEdgeRtl,
   tableRowHover,
   tableSelectedFill,
+  tableStickyFooterEdge,
+  tableStickyHeaderEdge,
   tableStripeFill,
   tableText,
 } from './shared/table-surface.js';
@@ -21,6 +27,11 @@ const rowFill = '--_tp-table-row-fill';
 const cells = [
   { declarations: { ...tableCellBox, 'vertical-align': 'middle', ...tableCellLines } },
   { selector: '&[data-sticky-column]', declarations: { background: 'inherit' } },
+  // The innermost pinned cell while other columns scroll under its side: the pinned boundary.
+  { selector: '&[data-sticky-edge="start"]', declarations: tablePinnedStartEdge },
+  { selector: '&[data-sticky-edge="end"]', declarations: tablePinnedEndEdge },
+  { selector: '&[data-sticky-edge="start"]:dir(rtl)', declarations: tablePinnedStartEdgeRtl },
+  { selector: '&[data-sticky-edge="end"]:dir(rtl)', declarations: tablePinnedEndEdgeRtl },
   { selector: '&[data-last-column]', declarations: tableLastColumn },
   // The last row of a body or footer section has no bottom border.
   { selector: '&[data-last-row]', declarations: tableLastRow },
@@ -56,7 +67,11 @@ export const tableAppearance: PresentationDictionary = {
       },
     },
   ],
-  'table-header': [{ declarations: { background: 'inherit' } }],
+  'table-header': [
+    { declarations: { background: 'inherit' } },
+    // While rows scroll under a sticky header, it casts the pinned shadow onto them.
+    { selector: '&[data-sticky-edge="start"]', declarations: tableStickyHeaderEdge },
+  ],
   'table-body': [{ declarations: { background: 'inherit' } }],
   'table-footer': [
     {
@@ -65,6 +80,7 @@ export const tableAppearance: PresentationDictionary = {
         'font-weight': 'var(--tp-font-medium)',
       },
     },
+    { selector: '&[data-sticky-edge="end"]', declarations: tableStickyFooterEdge },
   ],
   'table-row': [
     { declarations: { background: 'inherit', [rowFill]: '0' } },

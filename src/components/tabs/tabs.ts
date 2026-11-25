@@ -112,14 +112,27 @@ export class TpTabs extends Scrollable(TpElement) {
         min-inline-size: 0;
       }
 
+      /* The frame paints the list's surface and does not scroll, so the edge fades of the list
+         inside it fade only the tabs. */
+      .list-frame {
+        display: flex;
+        inline-size: fit-content;
+        max-inline-size: 100%;
+        min-inline-size: 0;
+        flex: none;
+      }
+
+      /* Overflowing tabs scroll without a native scrollbar: an overlay thumb would cover the
+         labels of a one-row strip. The edge fades show the overflow; trackpads, Shift with the
+         wheel and keyboard focus scroll it. */
       .list {
         position: relative;
         display: flex;
         align-items: center;
-        inline-size: fit-content;
-        max-inline-size: 100%;
+        flex: 1 1 auto;
+        min-inline-size: 0;
         overflow: auto;
-        flex: none;
+        scrollbar-width: none;
       }
 
       .panels {
@@ -135,13 +148,16 @@ export class TpTabs extends Scrollable(TpElement) {
         flex-direction: row;
       }
 
-      :host([orientation='vertical']) .list {
-        flex-direction: column;
-        align-items: stretch;
+      :host([orientation='vertical']) .list-frame {
         max-inline-size: 50%;
       }
 
-      :host([full-width]:not([orientation='vertical'])) .list {
+      :host([orientation='vertical']) .list {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      :host([full-width]:not([orientation='vertical'])) .list-frame {
         inline-size: 100%;
       }
 
@@ -777,25 +793,27 @@ export class TpTabs extends Scrollable(TpElement) {
   protected override render() {
     this.#renderedPanelless = this.#panelless();
     return html`<div class="root" part="tabs">
-      <div
-        class="list"
-        part="tabs-list"
-        role="tablist"
-        aria-label=${this.label || nothing}
-        aria-orientation=${this.orientation}
-        aria-disabled=${this.disabled ? 'true' : nothing}
-        @click=${this.#click}
-        @focusin=${this.#focus}
-        @focusout=${this.#blur}
-        @pointerdown=${this.#pointer}
-        @keydown=${this.#key}
-        @keyup=${this.#keyUp}
-        @scroll=${this.#scheduleGeometry}
-      >
-        <slot name="tab" @slotchange=${this.#sync}></slot>
-        <slot name="indicator" @slotchange=${this.#sync}
-          ><span class="indicator" part="tabs-indicator" aria-hidden="true"></span
-        ></slot>
+      <div class="list-frame" part="tabs-list-frame">
+        <div
+          class="list"
+          part="tabs-list"
+          role="tablist"
+          aria-label=${this.label || nothing}
+          aria-orientation=${this.orientation}
+          aria-disabled=${this.disabled ? 'true' : nothing}
+          @click=${this.#click}
+          @focusin=${this.#focus}
+          @focusout=${this.#blur}
+          @pointerdown=${this.#pointer}
+          @keydown=${this.#key}
+          @keyup=${this.#keyUp}
+          @scroll=${this.#scheduleGeometry}
+        >
+          <slot name="tab" @slotchange=${this.#sync}></slot>
+          <slot name="indicator" @slotchange=${this.#sync}
+            ><span class="indicator" part="tabs-indicator" aria-hidden="true"></span
+          ></slot>
+        </div>
       </div>
       <div class="panels" ?hidden=${this.#renderedPanelless}>
         <slot name="panel" @slotchange=${this.#sync}></slot>

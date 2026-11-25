@@ -1,10 +1,18 @@
 import { Scrollable } from '../../foundation/scrollable.js';
 import { NativeScrollEdges } from '../shared/scroll-edges.js';
+import { nativeScrollEdges } from '../../foundation/scroll.js';
 import { css, html, type PropertyValues } from 'lit';
 import { TpElement } from '../../foundation/element.js';
 import { tableSections } from './parts.js';
 import { tableColumns, TableGeometry } from './sticky.js';
 import { tablePresentation } from '../../presentation/families/table.js';
+type ScrollEdge = 'xStart' | 'xEnd' | 'yStart' | 'yEnd';
+const noEdges: Record<ScrollEdge, boolean> = {
+  xStart: false,
+  xEnd: false,
+  yStart: false,
+  yEnd: false,
+};
 const parts: Record<string, string> = {
   table: 'table-table',
   caption: 'table-caption',
@@ -28,7 +36,16 @@ export class TpTable extends Scrollable(TpElement) {
     super();
     this.#scrollEdges = new NativeScrollEdges(this, {
       viewports: () => [...this.renderRoot.querySelectorAll<HTMLElement>('.root')],
-      protectedElements: () => this.#stickyElements,
+      // An edge covered by sticky chrome (pinned columns, a sticky header or footer) never fades:
+      // the chrome casts the shared pinned shadow while content scrolls under it.
+      threshold: () => ({
+        xStart: this.#covered.xStart ? Number.MAX_SAFE_INTEGER : 0,
+        xEnd: this.#covered.xEnd ? Number.MAX_SAFE_INTEGER : 0,
+        yStart: this.#covered.yStart ? Number.MAX_SAFE_INTEGER : 0,
+        yEnd: this.#covered.yEnd ? Number.MAX_SAFE_INTEGER : 0,
+      }),
+      // Pinned cells fade with their rows at the other edges.
+      sticky: 'content',
     });
   }
 
@@ -105,7 +122,12 @@ export class TpTable extends Scrollable(TpElement) {
   #table: HTMLTableElement | null = null;
   readonly #geometry = new TableGeometry();
   readonly #scrollEdges: NativeScrollEdges;
-  #stickyElements: HTMLElement[] = [];
+  /** The scroll edges covered by sticky chrome. */
+  #covered = { ...noEdges };
+  /** The chrome that casts each covered edge's shadow: innermost pinned cells, header, footer. */
+  #casters: Array<{ element: HTMLElement; edge: ScrollEdge; side: 'start' | 'end' }> = [];
+  /** Which covered edges have content scrolled under them. */
+  #shadowed = { ...noEdges };
   #registerParts = (): void => {
     const native = [...this.children].some((child) => child.localName === 'table');
     if (this.#native !== native) {
@@ -149,7 +171,9 @@ export class TpTable extends Scrollable(TpElement) {
   };
   #measure(): void {
     this.#geometry.clear();
-    this.#stickyElements = [];
+    this.#covered = { ...noEdges };
+    this.#casters = [];
+    this.#shadowed = { ...noEdges };
     const table = this.#table;
     if (!table || !this.isConnected) return;
     this.#geometry.marker(
@@ -192,14 +216,19 @@ export class TpTable extends Scrollable(TpElement) {
     const bounds = table.getBoundingClientRect();
     const rtl = this.direction === 'rtl';
     const pinned = cells.flatMap((record) => {
-      const side = record.end <= start ? 'start' : record.start >= count - end ? 'end' : null;
+      const side: 'start' | 'end' | null =
+        record.end <= start ? 'start' : record.start >= count - end ? 'end' : null;
       if (!side) return [];
       const rect = record.cell.getBoundingClientRect();
       const offset =
         (side === 'start') !== rtl ? rect.left - bounds.left : bounds.right - rect.right;
       return [{ ...record, side, offset: Math.max(0, offset) }];
     });
-    this.#stickyElements = pinned.map(({ cell }) => cell);
+    this.#covered.xStart = start > 0;
+    this.#covered.xEnd = end > 0;
+    for (const { cell, side, ...record } of pinned)
+      if (side === 'start' ? record.end === start : record.start === count - end)
+        this.#casters.push({ element: cell, edge: side === 'start' ? 'xStart' : 'xEnd', side });
     for (const { cell, side, offset } of pinned) {
       this.#geometry.style(cell, 'position', 'sticky');
       this.#geometry.style(cell, `inset-inline-${side}`, `${offset}px`);
@@ -223,8 +252,11 @@ export class TpTable extends Scrollable(TpElement) {
       this.#geometry.style(section, `inset-block-${edge}`, '0');
       this.#geometry.style(section, 'z-index', '2');
       this.#geometry.marker(section, 'data-sticky', edge);
-      this.#stickyElements.push(section);
+      const covered = edge === 'start' ? 'yStart' : 'yEnd';
+      this.#covered[covered] = true;
+      this.#casters.push({ element: section, edge: covered, side: edge });
     }
+    this.#syncOverflow();
     this.#scrollEdges.invalidateContent();
     const root = this.renderRoot.querySelector<HTMLElement>('.root');
     const scrollable =
@@ -235,6 +267,23 @@ export class TpTable extends Scrollable(TpElement) {
       this.requestUpdate();
     }
   }
+  /** Marks the chrome of each covered edge while content scrolls under it. */
+  readonly #syncOverflow = (): void => {
+    const root = this.renderRoot.querySelector<HTMLElement>('.root');
+    if (!root || !this.#casters.length) return;
+    const edges = nativeScrollEdges(root);
+    const shadowed = { ...noEdges };
+    for (const edge of Object.keys(shadowed) as ScrollEdge[])
+      shadowed[edge] = this.#covered[edge] && edges[edge] > 0.5;
+    const changed = (Object.keys(shadowed) as ScrollEdge[]).filter(
+      (edge) => shadowed[edge] !== this.#shadowed[edge],
+    );
+    if (!changed.length) return;
+    this.#shadowed = shadowed;
+    for (const { element, edge, side } of this.#casters)
+      if (changed.includes(edge))
+        this.#geometry.marker(element, 'data-sticky-edge', shadowed[edge] ? side : null);
+  };
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
     if (!this.#table) this.#registerParts();
@@ -264,16 +313,21 @@ export class TpTable extends Scrollable(TpElement) {
       attributes: true,
       attributeFilter: ['colspan', 'rowspan'],
     });
+    this.renderRoot.addEventListener('scroll', this.#syncOverflow, {
+      capture: true,
+      passive: true,
+    });
     this.#registerParts();
   }
   override disconnectedCallback(): void {
+    this.renderRoot.removeEventListener('scroll', this.#syncOverflow, { capture: true });
     this.#observer?.disconnect();
     this.#resize?.disconnect();
     if (this.#frame !== undefined)
       this.ownerDocument.defaultView?.cancelAnimationFrame(this.#frame);
     this.#frame = undefined;
     this.#geometry.clear();
-    this.#stickyElements = [];
+    this.#casters = [];
     for (const cleanup of this.#registrations.splice(0)) cleanup();
     super.disconnectedCallback();
   }

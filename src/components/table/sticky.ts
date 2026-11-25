@@ -45,11 +45,13 @@ export class TableGeometry {
     element.style.setProperty(key, value);
     record.get(key)!.applied = element.style.getPropertyValue(key);
   }
-  marker(element: HTMLElement, key: string, value: string): void {
+  /** Sets a marker, or removes it for `null`; `clear()` restores the original value. */
+  marker(element: HTMLElement, key: string, value: string | null): void {
     let record = this.#markers.get(element);
     if (!record) this.#markers.set(element, (record = new Map()));
     if (!record.has(key)) record.set(key, element.getAttribute(key));
-    element.setAttribute(key, value);
+    if (value === null) element.removeAttribute(key);
+    else element.setAttribute(key, value);
   }
   clear(): void {
     for (const [element, record] of this.#styles)

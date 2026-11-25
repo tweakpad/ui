@@ -27,10 +27,14 @@ export class TpAttachmentGroup extends Scrollable(TpElement) {
         min-inline-size: 0;
       }
 
+      /* The row scrolls without a native scrollbar: an overlay thumb would cover the cards. The
+         edge fades show the overflow; trackpads, Shift with the wheel and the keyboard (the row
+         takes focus) scroll it. */
       .group {
         display: flex;
         min-inline-size: 0;
         overflow-x: auto;
+        scrollbar-width: none;
         overscroll-behavior-inline: contain;
         scroll-snap-type: x mandatory;
       }

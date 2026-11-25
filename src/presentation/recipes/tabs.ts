@@ -9,6 +9,16 @@ export const tabsAppearance: PresentationDictionary = {
       },
     },
   ],
+  // The frame paints the list's surface; the list inside it scrolls, so its edge fades fade only
+  // the tabs.
+  'tabs-list-frame': [
+    { selector: '&', declarations: { 'border-radius': 'var(--tp-radius-lg)' } },
+    { selector: ":host([variant='enclosed']) &", declarations: { background: 'var(--tp-muted)' } },
+    {
+      selector: ":host([variant='underline']) &",
+      declarations: { background: 'transparent', 'border-radius': '0' },
+    },
+  ],
   'tabs-list': [
     {
       selector: '&',
@@ -23,10 +33,9 @@ export const tabsAppearance: PresentationDictionary = {
       selector: ":host(:not([orientation='vertical'])) &",
       declarations: { 'box-sizing': 'border-box', 'block-size': 'var(--tp-control-height-md)' },
     },
-    { selector: ":host([variant='enclosed']) &", declarations: { background: 'var(--tp-muted)' } },
     {
       selector: ":host([variant='underline']) &",
-      declarations: { background: 'transparent', gap: 'var(--tp-space-1)', 'border-radius': '0' },
+      declarations: { gap: 'var(--tp-space-1)', 'border-radius': '0' },
     },
   ],
   'tabs-trigger': [

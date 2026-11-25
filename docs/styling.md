@@ -28,6 +28,7 @@ Spacing is the exception: the `space-*` roles, control heights and icon sizes de
 - Extents: `control-height-xs|sm|md|lg`, `icon-size-xs|sm|md|lg`, and `target-size-min`.
 - Lines and shape: `border-width`, `border-width-strong`, `border-style`, `ring-width`, `ring-offset`, and `radius-*`.
 - Elevation and opacity: `shadow-*`, `opacity-disabled`, `opacity-backdrop`, `opacity-drag-ghost`, and `opacity-drag-copy`.
+- Scroll edges: `scroll-edge-fade-size` (24px) sets the width of every scroll-edge fade and of the shadow that sticky table headers, footers and pinned columns cast over scrolled content; `scroll-edge-fade-intensity` (`1`) sets how strong both are, from `0` (none) to `1`.
 - Motion: `duration-fast`, `duration-normal` and `duration-slow`, plus `easing-standard`, `easing-enter` and `easing-exit`. See [Motion](motion.md).
 
 Every CSS custom property uses the `--tp-` prefix. For example, the `primary` role is exposed as `--tp-primary`.

@@ -18,12 +18,11 @@ export interface CategoryBarOptions {
 const stop = (event: Event): void => event.stopPropagation();
 /** The tabs share the bar's width; extra categories scroll instead of wrapping. */
 const FULL_WIDTH: PartPresentation = {
+  'tabs-list-frame': { styleHook: { 'inline-size': '100%' } },
   'tabs-list': {
     styleHook: {
-      'inline-size': '100%',
       gap: '0',
       'overscroll-behavior-x': 'contain',
-      'scrollbar-width': 'none',
     },
   },
   // At least a small control wide, growing to share the bar.

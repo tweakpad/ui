@@ -1,3 +1,5 @@
 #!/bin/sh
 # Lints the staged files as CI's lint step would. Skip once with `git commit --no-verify`.
+# Git clients started from the desktop run hooks with a minimal PATH: add the usual Node locations.
+command -v node >/dev/null 2>&1 || PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.volta/bin:$PATH"
 exec node scripts/hooks/pre-commit.mjs
