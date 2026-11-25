@@ -1207,6 +1207,23 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
   }
 
   /** Rebinds the mounted rows after their rows or the hooks changed. */
+  /**
+   * A row's drag carries the data `source` returns as the drag starts, not as the row mounted: a
+   * selection or other state that changed since then reaches the drag.
+   */
+  #refreshDragData(event: DragEvent): void {
+    const config = this.dragAndDrop;
+    const sourceId = event.operation.source?.id;
+    if (!config?.source || sourceId === undefined) return;
+    for (const [id, entry] of this.#dnd) {
+      if (entry.draggable?.id !== sourceId) continue;
+      const index = this.#identities.index.get(id);
+      const row = index === undefined ? undefined : this.#shown[index];
+      const data = row === undefined ? null : config.source(row, id);
+      if (data) entry.draggable.data = { ...data, rowId: id, view: this };
+      return;
+    }
+  }
   #refreshDragAndDrop(): void {
     const manager = this.dragAndDrop?.manager;
     if (manager !== this.#dndManager) {
@@ -1217,6 +1234,9 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
         const over = (event: DragEvent) => this.#markDropTarget(event);
         const end = () => this.#markDropTarget(null);
         const releases = [
+          manager.monitor.addEventListener('beforedragstart', (event: DragEvent) =>
+            this.#refreshDragData(event),
+          ),
           manager.monitor.addEventListener('dragover', over),
           manager.monitor.addEventListener('dragend', end),
         ];

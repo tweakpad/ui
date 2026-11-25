@@ -34,7 +34,11 @@ export type DataViewHeaderVisibility = 'visible' | 'hidden';
  */
 export interface DataViewDragAndDrop<T = unknown> {
   readonly manager: DragDropManager;
-  /** The data a row's drag carries, or `null` when the row does not drag. */
+  /**
+   * The data a row's drag carries, or `null` when the row does not drag. Called when a row mounts,
+   * to decide whether it drags, and again as its drag starts, so the drag carries the data of that
+   * moment (such as the current selection) from `dragstart` on.
+   */
   source?(row: T, rowId: string): Record<string, unknown> | null;
   /** Whether a row receives drops. */
   target?(row: T, rowId: string): boolean;
