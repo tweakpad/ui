@@ -182,7 +182,7 @@ export function tableContent(kind: TableExample) {
                         .ariaLabel=${`Actions for ${invoice}`}
                       ></tp-button
                       ><tp-menu-item>View invoice</tp-menu-item><tp-menu-item>Download</tp-menu-item
-                      ><tp-menu-separator></tp-menu-separator
+                      ><tp-separator></tp-separator
                       ><tp-menu-item variant="destructive">Delete invoice</tp-menu-item></tp-menu
                     >
                   </tp-table-cell>`
@@ -257,7 +257,7 @@ export function tableSource(kind: TableExample): string {
   else
     rows = invoices.map(
       ([invoice, status, method, amount]) =>
-        `<tp-table-head scope="row">${invoice}</tp-table-head><tp-table-cell>${status}</tp-table-cell><tp-table-cell>${method}</tp-table-cell><tp-table-cell>${money(amount)}</tp-table-cell>${kind === 'actions' ? `<tp-table-cell><tp-menu label="Actions for ${invoice}"><tp-button slot="trigger" variant="ghost">Actions</tp-button><tp-menu-item>View invoice</tp-menu-item><tp-menu-item>Download</tp-menu-item><tp-menu-separator></tp-menu-separator><tp-menu-item variant="destructive">Delete invoice</tp-menu-item></tp-menu></tp-table-cell>` : ''}`,
+        `<tp-table-head scope="row">${invoice}</tp-table-head><tp-table-cell>${status}</tp-table-cell><tp-table-cell>${method}</tp-table-cell><tp-table-cell>${money(amount)}</tp-table-cell>${kind === 'actions' ? `<tp-table-cell><tp-menu label="Actions for ${invoice}"><tp-button slot="trigger" variant="ghost">Actions</tp-button><tp-menu-item>View invoice</tp-menu-item><tp-menu-item>Download</tp-menu-item><tp-separator></tp-separator><tp-menu-item variant="destructive">Delete invoice</tp-menu-item></tp-menu></tp-table-cell>` : ''}`,
     );
   const footer =
     kind === 'footer'

@@ -119,6 +119,17 @@ describe('relative presentation', () => {
     expect(text(reference - 40 * day, { mode: 'relative' })).toBe('last month');
     expect(text(reference - 400 * day, { mode: 'relative' })).toBe('last year');
   });
+  it('counts at least one of a unit reached exactly at its boundary', () => {
+    const relative = { mode: 'relative' } as const;
+    expect(text(reference - 29 * day, relative)).toBe('4 weeks ago');
+    expect(text(reference - 30 * day, relative)).toBe('last month');
+    expect(text(reference - 31 * day, relative)).toBe('last month');
+    expect(text(reference + 30 * day, relative)).toBe('next month');
+    expect(text(reference - 364 * day, relative)).toBe('11 months ago');
+    expect(text(reference - 365 * day, relative)).toBe('last year');
+    expect(text(reference - 366 * day, relative)).toBe('last year');
+    expect(text(reference + 365 * day, relative)).toBe('next year');
+  });
   it('promotes rounded counts that reach the next boundary', () => {
     expect(text(reference - 59 * minute - 40 * second, { rounding: 'round' })).toBe('1 hour ago');
     expect(text(reference - 90 * minute, { rounding: 'round' })).toBe('2 hours ago');

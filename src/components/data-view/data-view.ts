@@ -633,6 +633,11 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
       }
     root.style.setProperty('--_pinned-start', `${start}px`);
     root.style.setProperty('--_pinned-end', `${end}px`);
+    // The resolved column tracks, for a row lifted out of the grid while it is dragged.
+    const body = this.renderRoot.querySelector<HTMLElement>('.body');
+    const tracks = body ? getComputedStyle(body).gridTemplateColumns : 'none';
+    if (tracks && tracks !== 'none') root.style.setProperty('--_tracks', tracks);
+    else root.style.removeProperty('--_tracks');
   }
 
   #measureGutter(): void {

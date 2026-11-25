@@ -521,6 +521,9 @@ function relativeParts(delta: number, environment: TimeFormatOptions): RelativeP
     index += 1;
     count = round(distance / unitLength[units[index]!]);
   }
+  // A unit chosen because the distance passed the previous unit's boundary counts at least one:
+  // the boundary (30 days, 365 days) is shorter than the unit's average length.
+  if (count === 0 && index > 0 && distance >= unitBoundary[units[index - 1]!]) count = 1;
   if (count === 0) return nowParts;
   return { value: delta < 0 ? -count : count, unit: units[index]!, now: false };
 }

@@ -65,8 +65,11 @@ export abstract class TextRevealElement extends TpElement {
   static override styles = [
     TpElement.styles,
     css`
+      /* A text effect wraps the consumer's own text: it keeps the surrounding color, like the rest
+         of its typography (and Text stroke's outline follows it). */
       :host {
         display: block;
+        color: inherit;
       }
     `,
   ];

@@ -95,6 +95,12 @@ export const dataViewStyles = [
       cursor: default;
     }
 
+    /* A dragged row lifts into the top layer, outside the grid, where subgrid has no tracks: it
+       takes the grid's measured tracks instead, so its cells keep their columns. */
+    .body [role='row'][data-dragging] {
+      grid-template-columns: var(--_tracks, var(--_columns));
+    }
+
     /* A virtual window: the browser's anchoring would jump a reused row. */
     .body {
       grid-auto-rows: max-content;

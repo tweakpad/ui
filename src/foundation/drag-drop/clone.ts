@@ -1,6 +1,35 @@
 import { createId } from '../id.js';
 import { markFeedbackRoot } from './feedback-scope.js';
 
+/** Reactive property declarations of an upgraded library element's class. */
+interface ReactiveElementClass {
+  readonly elementProperties?: ReadonlyMap<PropertyKey, { readonly state?: boolean }>;
+}
+
+/**
+ * A cloned custom element upgrades with its class defaults: `cloneNode` copies attributes, not
+ * the properties a template set (an icon, a date, an image source). Copy the declared ones before
+ * the copy first renders. Values that are nodes stay behind, so the copy never joins the
+ * original's group, form or owner.
+ */
+function copyProperties(source: Element, target: Element): void {
+  if (source.constructor !== target.constructor) return;
+  const declared = (source.constructor as ReactiveElementClass).elementProperties;
+  if (!declared) return;
+  const from = source as unknown as Record<PropertyKey, unknown>,
+    to = target as unknown as Record<PropertyKey, unknown>;
+  for (const [key, options] of declared) {
+    if (options.state) continue;
+    const value = from[key];
+    if (value instanceof Node || Object.is(to[key], value)) continue;
+    try {
+      to[key] = value;
+    } catch {
+      // A read-only property keeps the copy's own value.
+    }
+  }
+}
+
 /** DOM clone adaptation: native values, coherent local IDs, inert non-form participation. */
 export function cloneFeedback(element: Element): {
   element: HTMLElement;
@@ -42,6 +71,7 @@ export function cloneFeedback(element: Element): {
         (target as HTMLCanvasElement).getContext('2d')?.drawImage(canvas, 0, 0);
     }
     if (target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    if (target.localName.includes('-')) copyProperties(source, target);
     if (target.localName.includes('-')) {
       target.setAttribute('disabled', '');
       target.setAttribute('form', suffix);

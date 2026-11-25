@@ -162,12 +162,6 @@ export class DragFeedback {
       view = original.ownerDocument.defaultView;
     if (!initial || !view) throw new Error('Feedback source is no longer measurable.');
     const computed = view.getComputedStyle(original);
-    // The box the element that follows the pointer draws, read before it enters the top layer:
-    // there it keeps this box instead of the platform's default frame for popovers.
-    const drawn = view.getComputedStyle(element);
-    const box = new Map(
-      BOX_PROPERTIES.map((property) => [property, drawn.getPropertyValue(property)]),
-    );
     // Capture live computed values before markers or generated presentation writes.
     const transform = computed.transform,
       scale = computed.scale,
@@ -354,7 +348,11 @@ export class DragFeedback {
       scope.add(() => follow.stop());
     }
     if (topLayer) {
-      for (const [property, value] of box) styles.set(property, value);
+      // The box the element that follows the pointer draws, read as it is about to enter the top
+      // layer (its owner's drag styles for `[data-dragging]` applied, the platform's popover frame
+      // not yet): there it keeps this box instead of that default frame.
+      const drawn = view.getComputedStyle(element);
+      for (const property of BOX_PROPERTIES) styles.set(property, drawn.getPropertyValue(property));
       attributes.set('popover', 'manual');
       try {
         element.showPopover();

@@ -1,4 +1,6 @@
 #!/bin/sh
 # Runs CI's lint, type check and tests before anything leaves this machine (about two minutes).
 # Skip once with `git push --no-verify`.
+# Git clients started from the desktop run hooks with a minimal PATH: add the usual Node locations.
+command -v npm >/dev/null 2>&1 || PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.volta/bin:$PATH"
 exec npm run --silent check
