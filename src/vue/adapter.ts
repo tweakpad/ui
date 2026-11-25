@@ -3,12 +3,15 @@ import {
   defineComponent,
   getCurrentInstance,
   h,
+  inject,
+  ssrContextKey,
   type DefineSetupFnComponent,
   type PropType,
   type SlotsType,
   type VNodeProps,
 } from 'vue';
 import { defineElement } from '../foundation/define.js';
+import { attributeValue, propertyAttributes } from '../foundation/property-attributes.js';
 
 /** A library element class; its static `tagName` names the element a binding renders. */
 export type BindingElementClass = CustomElementConstructor & { readonly tagName: string };
@@ -67,6 +70,10 @@ interface ReactiveElementClass {
  * assigned too, which Vue would otherwise turn into listeners. `@tp-…` listeners, `class`,
  * `style`, `slot` and other attributes fall through to the element. Each lane's callback also
  * emits `update:<lane>` (and `update:modelValue`) with the proposed value, for `v-model`.
+ *
+ * Server rendering skips DOM properties, so on the server each prop the element reads from an
+ * attribute is written under that attribute's name (`defaultOpen` → `default-open`), when the value
+ * has an attribute form: text, numbers and `true`. Hydration then assigns the properties.
  */
 export function createBinding(
   element: BindingElementClass,
@@ -106,15 +113,26 @@ export function createBinding(
     setup(_, { emit, slots }) {
       if (typeof customElements !== 'undefined') defineElement(tagName, element);
       const instance = getCurrentInstance()!;
+      // Vue provides a server rendering context only while it renders on the server.
+      const server = inject(ssrContextKey, null) !== null;
       return () => {
         const values = instance.props as Record<string, unknown>;
         const written = new Set(Object.keys(instance.vnode.props ?? {}).map(camelize));
         const properties: Record<string, unknown> & VNodeProps = {};
+        const assign = (key: string, value: unknown) => {
+          if (!server) {
+            properties[`.${key}`] = value;
+            return;
+          }
+          const attribute = propertyAttributes(element).get(key);
+          const text = attributeValue(value);
+          if (attribute && text !== undefined) properties[attribute] = text;
+        };
         for (const key of Object.keys(props()))
           if (key !== 'modelValue' && !laneCallbacks.has(key) && written.has(key))
-            properties[`.${key}`] = values[key];
+            assign(key, values[key]);
         if (options.model && written.has('modelValue') && !written.has(options.model))
-          properties[`.${options.model}`] = values.modelValue;
+          assign(options.model, values.modelValue);
         for (const [lane, callback] of lanes) {
           const own = values[callback] as ((...args: unknown[]) => void) | undefined;
           properties[`.${callback}`] = (...args: unknown[]) => {

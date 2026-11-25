@@ -468,14 +468,15 @@ console.log(
 );
 
 // The React bindings import in Node and server-render: a framework renders client modules on
-// the server first. Primitive props become attributes; objects and functions wait for the client.
+// the server first. Primitive props become attributes under the elements' own attribute names
+// (`defaultOpen` → `default-open`); objects, functions and `false` wait for the client.
 writeFileSync(
   join(consumer, 'react-ssr.mjs'),
   `import { createElement as h } from 'react';
 import { renderToString } from 'react-dom/server';
-import { Button, Select } from '@tweakpad/ui/react';
+import { Button, Checkbox, Dialog, Select } from '@tweakpad/ui/react';
 process.stdout.write(
-  renderToString(h('div', null, h(Button, { variant: 'outline', onClick() {} }, 'Save'), h(Select, { items: [{ value: 'a', label: 'A' }], label: 'Fruit' }))),
+  renderToString(h('div', null, h(Button, { variant: 'outline', onClick() {} }, 'Save'), h(Select, { items: [{ value: 'a', label: 'A' }], defaultValue: 'a', label: 'Fruit' }), h(Dialog, { defaultOpen: true, label: 'Notice', showCloseControl: false }), h(Checkbox, { defaultChecked: true }))),
 );
 `,
 );
@@ -485,7 +486,10 @@ const serverRendered = execFileSync(process.execPath, ['react-ssr.mjs'], {
 });
 if (
   !serverRendered.includes('<tp-button variant="outline">Save</tp-button>') ||
-  !serverRendered.includes('<tp-select label="Fruit"></tp-select>')
+  !serverRendered.includes('<tp-select default-value="a" label="Fruit"></tp-select>') ||
+  !serverRendered.includes('<tp-dialog default-open="" label="Notice"></tp-dialog>') ||
+  !serverRendered.includes('<tp-checkbox default-checked=""></tp-checkbox>') ||
+  /defaultvalue|defaultopen|showclosecontrol|defaultchecked/iu.test(serverRendered)
 )
   fail(`the React bindings server-render unexpected markup: ${serverRendered}`);
 console.log('pack-smoke: the React bindings import in Node and server-render their elements');
@@ -493,8 +497,8 @@ writeFileSync(
   join(consumer, 'vue-ssr.mjs'),
   `import { createSSRApp, h } from 'vue';
 import { renderToString } from 'vue/server-renderer';
-import { Button, Checkbox } from '@tweakpad/ui/vue';
-const app = createSSRApp(() => h('div', null, [h(Button, { variant: 'outline' }, () => 'Save'), h(Checkbox, { checked: true })]));
+import { Button, Checkbox, Dialog } from '@tweakpad/ui/vue';
+const app = createSSRApp(() => h('div', null, [h(Button, { variant: 'outline' }, () => 'Save'), h(Checkbox, { checked: true }), h(Dialog, { defaultOpen: true, label: 'Notice', showCloseControl: false })]));
 process.stdout.write(await renderToString(app));
 `,
 );
@@ -502,7 +506,12 @@ const vueRendered = execFileSync(process.execPath, ['vue-ssr.mjs'], {
   cwd: consumer,
   encoding: 'utf8',
 });
-if (!vueRendered.includes('<tp-button') || !vueRendered.includes('<tp-checkbox'))
+if (
+  !vueRendered.includes('<tp-button variant="outline">') ||
+  !vueRendered.includes('<tp-checkbox checked>') ||
+  !vueRendered.includes('<tp-dialog default-open label="Notice">') ||
+  /show-close-control/u.test(vueRendered)
+)
   fail(`the Vue bindings server-render unexpected markup: ${vueRendered}`);
 console.log('pack-smoke: the Vue bindings import in Node and server-render their elements');
 
