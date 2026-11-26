@@ -249,6 +249,7 @@
     "changeset": "changeset",
     "release": "changeset publish",
     "size:report": "npm run build && node scripts/size-report.mjs",
+    "size:check": "npm run build && node scripts/size-report.mjs --check",
     "docs:build": "node scripts/docs/build.mjs",
     "bindings": "node scripts/bindings/generate.mjs",
     "typecheck:frameworks": "tsc -p tests/frameworks/react && tsc -p tests/frameworks/preact && tsc -p tests/frameworks/solid && vue-tsc -p tests/frameworks/vue && cd tests/frameworks/svelte && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"

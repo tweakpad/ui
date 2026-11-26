@@ -114,19 +114,16 @@ export function createBinding(
       if (typeof customElements !== 'undefined') defineElement(tagName, element);
       const instance = getCurrentInstance()!;
       // Vue provides a server rendering context only while it renders on the server.
-      const server = inject(ssrContextKey, null) !== null;
+      const server = !!inject(ssrContextKey, null);
       return () => {
         const values = instance.props as Record<string, unknown>;
         const written = new Set(Object.keys(instance.vnode.props ?? {}).map(camelize));
         const properties: Record<string, unknown> & VNodeProps = {};
         const assign = (key: string, value: unknown) => {
-          if (!server) {
-            properties[`.${key}`] = value;
-            return;
-          }
-          const attribute = propertyAttributes(element).get(key);
+          const attribute = server && propertyAttributes(element).get(key);
           const text = attributeValue(value);
-          if (attribute && text !== undefined) properties[attribute] = text;
+          if (!server) properties[`.${key}`] = value;
+          else if (attribute && text !== undefined) properties[attribute] = text;
         };
         for (const key of Object.keys(props()))
           if (key !== 'modelValue' && !laneCallbacks.has(key) && written.has(key))

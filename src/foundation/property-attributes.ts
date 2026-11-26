@@ -48,6 +48,7 @@ export function propertyAttributes(
 export function attributeValue(value: unknown): string | undefined {
   if (value === true) return '';
   if (typeof value === 'string') return value;
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  // False for anything but a finite number, so no type check is needed.
+  if (Number.isFinite(value)) return String(value);
   return undefined;
 }

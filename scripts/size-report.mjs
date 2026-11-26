@@ -161,8 +161,12 @@ entries['react-adapter'] = reactAdapterEntry;
 const vueAdapterEntry = join(work, 'entries', 'vue-adapter.js');
 writeFileSync(vueAdapterEntry, "export { createBinding } from '@tweakpad/ui/vue/adapter';\n");
 entries['vue-adapter'] = vueAdapterEntry;
-/** Budgets of the framework bindings, in gzip bytes: a shared adapter, and what one binding adds. */
-const ADAPTER_BUDGET = 1000;
+/**
+ * Budgets of the framework bindings, in gzip bytes: a shared adapter, and what one binding adds.
+ * They catch a binding that pulls in a module it should not; the adapter's leaves room for its
+ * features (server rendering took it near 1 kB).
+ */
+const ADAPTER_BUDGET = 1200;
 const BINDING_BUDGET = 350;
 const BUNDLE_EXTERNALS = [/^lit($|\/)/, /^@lit\//, /^react($|\/)/, /^vue$/];
 // Gzip is not additive: subtracting a large component bundle from a bound one can make the
@@ -301,6 +305,11 @@ for (const name of Object.keys(bindingByFramework)) {
 }
 if (violations.length)
   throw new Error(`size-report: tree-shaking failed:\n${violations.join('\n')}`);
+// `--check` (the pre-push hook) verifies the guards and budgets without rewriting the report.
+if (process.argv.includes('--check')) {
+  console.log('size-report: tree-shaking and budgets verified (report not written)');
+  process.exit(0);
+}
 const sizes = ({ bytes, gzip }) => ({ bytes, gzip });
 const report = {
   generatedAt: new Date().toISOString(),
