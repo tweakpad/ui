@@ -33,7 +33,7 @@ Acceptance IDs refer to plan.md; all rows require V-01–V-08, with risks highli
 
 ## Explicit exclusions and classified search matches
 
-- Plot histories, Data Visualization renderers and Flow/map canvas clipping: no native scrolling
+- Plot histories, Chart renderers and Flow/map canvas clipping: no native scrolling
   viewport; user explicitly excluded these from this contract.
 - Citation's inline mask: truncation/reveal affordance, not scrolling.
 - Code Block collapsed end fade: separate collapse semantics; its native horizontal scroller is included.

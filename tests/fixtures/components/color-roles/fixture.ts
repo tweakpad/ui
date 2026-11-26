@@ -499,7 +499,7 @@ const usage = html`
   )}
   ${usageGroup(
     'Categorical palette',
-    'Two palettes: chart-1..5 are fixed hex values that do not follow the color scheme (Plot, Data visualization, Flow tones, glow borders); content-* are nine scheme-aware hues used only by the text editor.',
+    'Two palettes: chart-1..5 are fixed hex values that do not follow the color scheme (Plot, Chart, Flow tones, glow borders); content-* are nine scheme-aware hues used only by the text editor.',
     html`
       ${usageItem(
         'Chart (5, fixed)',

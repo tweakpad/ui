@@ -1,39 +1,7 @@
 import type { PlotConfiguration, PlotData, PlotDomain, PlotSamples, PlotSeries } from './types.js';
 import { validPoint } from './stream.js';
-export const domainConverter = {
-  fromAttribute: (text: string | null): 'auto' | PlotDomain => {
-    if (!text || text === 'auto') return 'auto';
-    const v = text.trim().split(/\s+/u).map(Number);
-    return v.length === 2 ? [v[0]!, v[1]!] : [NaN, NaN];
-  },
-  toAttribute: (v: 'auto' | PlotDomain) => (v === 'auto' ? 'auto' : v.join(' ')),
-};
-/**
- * An object option in its attribute: JSON, or the option's default when the attribute is absent.
- * Text that is not JSON passes through unchanged, so validation reports it.
- */
-export function jsonOption<T>(fallback: T) {
-  return {
-    fromAttribute: (text: string | null): T | string => {
-      if (text === null) return fallback;
-      try {
-        return JSON.parse(text) as T;
-      } catch {
-        return text;
-      }
-    },
-    toAttribute: (value: T) => JSON.stringify(value),
-  };
-}
-/** An axis or legend in its attribute: absent or `false` hides it, empty shows its defaults. */
-export const jsonAxisOption = {
-  fromAttribute: (text: string | null): unknown => {
-    if (text === null || text.trim() === 'false') return false;
-    if (text.trim() === '' || text.trim() === 'true') return {};
-    return jsonOption(false).fromAttribute(text);
-  },
-  toAttribute: (value: unknown) => (value === false ? null : JSON.stringify(value)),
-};
+export { domainConverter, jsonAxisOption, jsonOption } from '../../foundation/chart-axis.js';
+import { jsonOption } from '../../foundation/chart-axis.js';
 /** The crosshair in its attribute: a Boolean attribute, or JSON options. */
 export const crosshairOption = {
   fromAttribute: (text: string | null): unknown => {

@@ -295,7 +295,7 @@ type Tags = {
       'tp-open-change-complete': CustomEvent<{ open: boolean }>;
       'tp-query-change': foundationEvents.TpValueChangeEvent<string>;
       'tp-skin-tone-change': foundationEvents.TpValueChangeEvent<
-        'none' | 'light' | 'dark' | 'medium-light' | 'medium' | 'medium-dark'
+        'none' | 'medium' | 'light' | 'dark' | 'medium-light' | 'medium-dark'
       >;
       'tp-value-change': foundationEvents.TpValueChangeEvent<string>;
       'tp-value-commit': foundationEvents.TpValueCommitEvent<string>;

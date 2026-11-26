@@ -5,11 +5,11 @@ import { ComposedEnvironmentObserver } from '../../foundation/composed-environme
 import { resolveLocale } from '../../foundation/services.js';
 import { createId } from '../../foundation/id.js';
 import {
-  visualizationLegendContent,
-  visualizationTooltipContent,
-  type VisualizationMetadataProvider,
-} from '../../components/data-visualization/content.js';
-import type { VisualizationSeriesMap } from '../../components/data-visualization/types.js';
+  chartLegendContent,
+  chartTooltipContent,
+  type ChartMetadataProvider,
+} from '../../components/chart/content.js';
+import type { ChartSeriesMap } from '../../components/chart/types.js';
 import { plotPresentation } from '../../presentation/families/plot.js';
 import { plotStrings, type PlotStrings } from './strings.js';
 import { plotStyles } from './styles.js';
@@ -672,8 +672,8 @@ export class TpPlot extends TpElement {
       ? { ...c, yAxis: { ...c.yAxis, position: c.yAxis.position === 'end' ? 'start' : 'end' } }
       : c;
   }
-  #metadata(): VisualizationMetadataProvider {
-    const series: Record<string, VisualizationSeriesMap[string]> = Object.create(null);
+  #metadata(): ChartMetadataProvider {
+    const series: Record<string, ChartSeriesMap[string]> = Object.create(null);
     for (const s of this.#config?.series ?? [])
       series[s.id] = { label: s.label, ...(s.color ? { color: s.color } : {}) };
     return {
@@ -1080,7 +1080,7 @@ export class TpPlot extends TpElement {
     }`;
 
     const legend = this.#legendOptions
-      ? visualizationLegendContent(
+      ? chartLegendContent(
           provider,
           (this.#config?.series ?? [])
             .filter((s) => s.visible !== false)
@@ -1120,7 +1120,7 @@ export class TpPlot extends TpElement {
           ${this.renderPart('plot-surface', Object.freeze({}), { tag: 'canvas', properties: { part: 'plot-surface', 'aria-hidden': 'true' }, content: html`<span class="probe" aria-hidden="true"></span>` })}
           ${!this.#hasData ? this.renderPart('plot-empty', Object.freeze({}), { tag: 'span', properties: { part: 'plot-empty', class: 'empty' }, content: this.strings.empty ?? plotStrings.empty }) : nothing}
           ${overlay}
-          ${active ? this.renderPart('plot-inspection', Object.freeze({ source: active.source }), { tag: 'div', properties: { part: 'plot-inspection', class: 'inspection', 'data-edge': crosshair ? crosshair.hint : nothing, 'aria-live': active.source === 'keyboard' ? 'polite' : 'off' }, content: visualizationTooltipContent(provider, { active: true, label: chip ? chipText(active.x) : axisFormat(this.#config!, this.xAxis || {}, active.x), payload: this.#inspectionRows(active), source: active.source === 'keyboard' ? 'focus' : 'pointer' }, { hideLabel: !!chip && active.source === 'pointer', formatter: (value, name, item) => html`<span>${name}</span><span class="series-value">${valueText(value, String(item.dataKey))}</span>` }) }) : nothing}
+          ${active ? this.renderPart('plot-inspection', Object.freeze({ source: active.source }), { tag: 'div', properties: { part: 'plot-inspection', class: 'inspection', 'data-edge': crosshair ? crosshair.hint : nothing, 'aria-live': active.source === 'keyboard' ? 'polite' : 'off' }, content: chartTooltipContent(provider, { active: true, label: chip ? chipText(active.x) : axisFormat(this.#config!, this.xAxis || {}, active.x), payload: this.#inspectionRows(active), source: active.source === 'keyboard' ? 'focus' : 'pointer' }, { hideLabel: !!chip && active.source === 'pointer', formatter: (value, name, item) => html`<span>${name}</span><span class="series-value">${valueText(value, String(item.dataKey))}</span>` }) }) : nothing}
         </div>
         ${this.#legendOptions && this.#legendOptions.placement !== 'top' ? legend : nothing}
         ${this.description ? this.renderPart('plot-description', Object.freeze({}), { tag: 'figcaption', properties: { part: 'plot-description', id: `${this.#id}-description` }, content: this.description }) : nothing}

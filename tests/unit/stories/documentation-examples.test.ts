@@ -380,7 +380,7 @@ describe('copyable example sources (uwg-req-102)', () => {
       String.raw`setupSource.replace(/^import \{ fillGeneratedText \}.*\n/mu, '')`,
       String.raw`casesSource.replace(/import type \{ TpMessageScroller \} from '[^']+';\n/, '')`,
       String.raw`casesSource.replace(/import \{[^}]+\} from '\.\/message-scroller-streaming.js';\n/, '')`,
-      `source.replaceAll("'../data-visualization.examples.js'", "'./chart.js'")`,
+      `source.replaceAll("'../chart.examples.js'", "'./chart.js'")`,
       `source.replace(\n  "  import '@tweakpad/ui/register';",\n  "  import '@tweakpad/ui/register';\\n  import { plusIcon } from '@tweakpad/ui/icons/plus';",\n)`,
       "title.toLowerCase().replace(/[^a-z0-9]+/g, '-')",
       String.raw`setupSource.replace(/^import \{ applyDatePickerTrigger \}.*\n/mu, '')`,

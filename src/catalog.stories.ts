@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import './stories/workspace/workspace.js';
 import CatalogDocs from '../.storybook/catalog-docs.mdx';
-import rendererSource from './stories/data-visualization.examples.ts?raw';
+import rendererSource from './stories/chart.examples.ts?raw';
 import datePickerSource from './stories/date-picker-trigger.js?raw';
 import mapSource from './stories/map-example.js?raw';
 import mediaSource from './stories/media.ts?raw';
@@ -17,8 +17,8 @@ const workspaceSources = import.meta.glob<string>('./stories/workspace/**/*.{ts,
 /** Rewrites repository-relative imports to the published package and the files listed below. */
 const published = (source: string) =>
   publishedPackageImports(source)
-    .replaceAll("'../data-visualization.examples.js'", "'./chart.js'")
-    .replaceAll("'../../data-visualization.examples.js'", "'../chart.js'")
+    .replaceAll("'../chart.examples.js'", "'./chart.js'")
+    .replaceAll("'../../chart.examples.js'", "'../chart.js'")
     .replaceAll("'../date-picker-trigger.js'", "'./date-picker-trigger.js'")
     .replaceAll("'../../map-example.js'", "'../map-example.js'")
     .replaceAll("'../../media.js'", "'../media.js'");

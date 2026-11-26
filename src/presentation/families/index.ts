@@ -38,7 +38,7 @@ import { navigationMenuPresentation } from './navigation-menu.js';
 import { paginationPresentation } from './pagination.js';
 import { avatarPresentation } from './avatar.js';
 import { carouselPresentation } from './carousel.js';
-import { dataVisualizationPresentation } from './data-visualization.js';
+import { chartPresentation } from './chart.js';
 import { messageScrollerPresentation } from './message-scroller.js';
 import { progressPresentation } from './progress.js';
 import { resizablePanelGroupPresentation } from './resizable-panel-group.js';
@@ -129,7 +129,7 @@ export { navigationMenuPresentation } from './navigation-menu.js';
 export { paginationPresentation } from './pagination.js';
 export { avatarPresentation } from './avatar.js';
 export { carouselPresentation } from './carousel.js';
-export { dataVisualizationPresentation } from './data-visualization.js';
+export { chartPresentation } from './chart.js';
 export { messageScrollerPresentation } from './message-scroller.js';
 export { progressPresentation } from './progress.js';
 export { resizablePanelGroupPresentation } from './resizable-panel-group.js';
@@ -222,7 +222,7 @@ export const presentationFamilies: readonly PresentationFamily[] = [
   paginationPresentation,
   avatarPresentation,
   carouselPresentation,
-  dataVisualizationPresentation,
+  chartPresentation,
   messageScrollerPresentation,
   progressPresentation,
   resizablePanelGroupPresentation,

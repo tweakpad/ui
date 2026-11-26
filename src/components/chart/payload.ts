@@ -1,14 +1,10 @@
-import type { VisualizationPayload, VisualizationSeriesMap } from './types.js';
+import type { ChartPayload, ChartSeriesMap } from './types.js';
 
 const keyOf = (value: unknown): string | undefined =>
   typeof value === 'string' || typeof value === 'number' ? String(value) : undefined;
 
 /** Same resolver for every metadata consumer; never mutate the engine payload. */
-export function resolveVisualizationSeries(
-  series: VisualizationSeriesMap,
-  item: VisualizationPayload,
-  nameKey?: string,
-) {
+export function resolveChartSeries(series: ChartSeriesMap, item: ChartPayload, nameKey?: string) {
   const declared = nameKey
     ? (keyOf(item[nameKey]) ?? keyOf(item.payload?.[nameKey]) ?? nameKey)
     : undefined;
@@ -24,6 +20,6 @@ export function resolveVisualizationSeries(
 }
 
 /** A collision-free CSS identifier, including punctuation and Unicode keys. */
-export function visualizationIdentifier(value: string): string {
+export function chartIdentifier(value: string): string {
   return `v-${Array.from(value, (character) => character.codePointAt(0)!.toString(16)).join('-')}`;
 }

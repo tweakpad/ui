@@ -49,7 +49,7 @@ export const catalog = [
   ['Pagination', 'tp-pagination', 'flattening-compound'],
   ['Avatar', 'tp-avatar', 'compound-reexport'],
   ['Carousel', 'tp-carousel', 'compound-reexport'],
-  ['Data visualization', 'tp-data-visualization', 'presentational-primitive'],
+  ['Chart', 'tp-chart', 'presentational-primitive'],
   ['Message scroller', 'tp-message-scroller', 'compound-reexport'],
   ['Progress', 'tp-progress', 'compound-reexport'],
   ['Resizable panel group', 'tp-resizable-panel-group', 'compound-reexport'],

@@ -51,7 +51,7 @@ Frames shrink to the available space. Omitting `width` preserves existing Previe
 | components/color-input | Inline; Chip or text; Formats and alpha; Sizes; In a form; Disabled and read-only; Right-to-left |
 | components/command-palette | Command palette; Custom empty state; Server-filtered list |
 | components/copy-button | Copy button; Beside a value; In an input group and a field group |
-| components/data-visualization | Data visualization; Line chart; Description and table |
+| components/chart | Chart; Line chart; Description and table |
 | components/description-list | Description list; Record details; Show more; Summary row |
 | components/drag-drop-list | Drag drop list; Commit events; Variants and sizes; Whole-row drag with swap; Custom rows and overlay; Horizontal; Read-only; Board lanes; Controlled lanes; Approve before committing; Vertical axis only |
 | components/empty-state | In a card |
@@ -352,7 +352,7 @@ Frames shrink to the available space. Omitting `width` preserves existing Previe
 | src/stories/skeleton.examples.ts | `max-inline-size:calc(var(--tp-spacing) * 100)` |
 | src/stories/skeleton.examples.ts | `display:grid;gap:calc(var(--tp-spacing) * 7);max-inline-size:calc(var(--tp-spacing) * 100)` |
 | src/stories/skeleton.examples.ts | `max-inline-size:calc(var(--tp-spacing) * 120)` |
-| src/stories/data-visualization.stories.ts | `max-inline-size:calc(var(--tp-spacing) * 200);margin-inline:auto` |
+| src/stories/chart.stories.ts | `max-inline-size:calc(var(--tp-spacing) * 200);margin-inline:auto` |
 | src/stories/tree-view.stories.ts | `max-inline-size: 18rem` |
 | src/stories/widgets/gradient-picker.stories.ts | `max-inline-size: calc(var(--tp-spacing) * 100)` |
 | src/stories/media-player.stories.ts | `max-inline-size: 48rem` |

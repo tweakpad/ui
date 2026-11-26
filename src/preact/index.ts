@@ -19,6 +19,7 @@ import type { TpButton } from '../components/button/button.js';
 import type { TpCalendar } from '../components/calendar/calendar.js';
 import type { TpCard } from '../components/card/card.js';
 import type { TpCarousel } from '../components/carousel/carousel.js';
+import type { TpChart } from '../components/chart/chart.js';
 import type { TpCheckbox } from '../components/checkbox/checkbox.js';
 import type { TpCitationList } from '../components/citation/citation-list.js';
 import type { TpCitation } from '../components/citation/citation.js';
@@ -31,7 +32,6 @@ import type { TpCopyButton } from '../components/copy-button/copy-button.js';
 import type { TpCursorZone } from '../components/cursor/cursor-zone.js';
 import type { TpCursor } from '../components/cursor/cursor.js';
 import type { TpDataView } from '../components/data-view/data-view.js';
-import type { TpDataVisualization } from '../components/data-visualization/data-visualization.js';
 import type { TpDescriptionListItem } from '../components/description-list/description-list-item.js';
 import type { TpDescriptionList } from '../components/description-list/description-list.js';
 import type { TpDialog } from '../components/dialog/dialog.js';
@@ -212,11 +212,11 @@ import type { TpTooltip } from '../components/tooltip/tooltip.js';
 import type { TpTreeItem } from '../components/tree-view/tree-item.js';
 import type { TpTreeView } from '../components/tree-view/tree-view.js';
 import type { TpVisuallyHidden } from '../components/visually-hidden/visually-hidden.js';
+import type * as componentsChartTypes from '../components/chart/types.js';
 import type * as componentsCodeBlockCodeBlock from '../components/code-block/code-block.js';
 import type * as componentsCopyButtonCopyButton from '../components/copy-button/copy-button.js';
 import type * as componentsCursorCursor from '../components/cursor/cursor.js';
 import type * as componentsDataViewTypes from '../components/data-view/types.js';
-import type * as componentsDataVisualizationTypes from '../components/data-visualization/types.js';
 import type * as componentsDrawerTypes from '../components/drawer/types.js';
 import type * as componentsFieldGroupFieldGroup from '../components/field-group/field-group.js';
 import type * as componentsFieldTypes from '../components/field/types.js';
@@ -810,6 +810,40 @@ type Tags = {
       'tp-value-commit': foundationEvents.TpValueCommitEvent<number>;
     }
   >;
+  'tp-chart': Tag<
+    TpChart,
+    | 'angleRange'
+    | 'appearance'
+    | 'data'
+    | 'density'
+    | 'description'
+    | 'disabled'
+    | 'innerRadius'
+    | 'interaction'
+    | 'invalid'
+    | 'label'
+    | 'legendOptions'
+    | 'loading'
+    | 'motionPolicy'
+    | 'orientation'
+    | 'partContracts'
+    | 'partPresentation'
+    | 'readOnly'
+    | 'renderer'
+    | 'required'
+    | 'series'
+    | 'stacked'
+    | 'tooltipOptions'
+    | 'type'
+    | 'xAxis'
+    | 'xDomain'
+    | 'yAxis'
+    | 'yDomain',
+    {
+      'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
+      'tp-resize': CustomEvent<componentsChartTypes.ChartDimensions>;
+    }
+  >;
   'tp-checkbox': Tag<
     TpCheckbox,
     | 'appearance'
@@ -1275,31 +1309,6 @@ type Tags = {
       'tp-row-focus': CustomEvent<componentsDataViewTypes.DataViewFocusDetail<unknown>>;
       'tp-sort-change': foundationEvents.TpValueChangeEvent<componentsDataViewTypes.DataViewSort | null>;
       'tp-value-change': foundationEvents.TpValueChangeEvent<readonly string[]>;
-    }
-  >;
-  'tp-data-visualization': Tag<
-    TpDataVisualization,
-    | 'appearance'
-    | 'data'
-    | 'density'
-    | 'description'
-    | 'disabled'
-    | 'interaction'
-    | 'invalid'
-    | 'label'
-    | 'legendOptions'
-    | 'motionPolicy'
-    | 'orientation'
-    | 'partContracts'
-    | 'partPresentation'
-    | 'readOnly'
-    | 'renderer'
-    | 'required'
-    | 'series'
-    | 'tooltipOptions',
-    {
-      'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
-      'tp-resize': CustomEvent<componentsDataVisualizationTypes.VisualizationDimensions>;
     }
   >;
   'tp-description-list': Tag<

@@ -1,3 +1,4 @@
+import type { AxisOptions } from '../../foundation/chart-axis.js';
 import type { PlotStream } from './stream.js';
 import type { PlotRenderScheduler } from './scheduler.js';
 
@@ -42,17 +43,7 @@ export interface PlotSeries {
   marker?: 'latest';
 }
 /** Options of an x or y axis: its scale type, side, ticks, labels and title. */
-export interface PlotAxis {
-  type?: 'number' | 'time';
-  position?: 'start' | 'end';
-  line?: boolean;
-  ticks?: boolean;
-  labels?: boolean;
-  tickCount?: number;
-  values?: readonly number[];
-  format?: (value: number) => string;
-  title?: string;
-}
+export type PlotAxis = AxisOptions;
 /** Options of the background grid: its directions, units, spacing, origin and major lines. */
 export interface PlotGrid {
   x?: boolean;

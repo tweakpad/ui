@@ -1,7 +1,7 @@
 import { css } from 'lit';
-import { visualizationStructure } from '../../components/data-visualization/styles.js';
+import { chartStructure } from '../../components/chart/styles.js';
 export const plotStyles = [
-  visualizationStructure,
+  chartStructure,
   css`
     :host {
       block-size: 10rem;

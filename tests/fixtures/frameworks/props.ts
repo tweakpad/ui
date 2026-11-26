@@ -181,8 +181,8 @@ export const propRows: PropRow[] = [
     text: ['Coastal loop'],
   },
   {
-    entry: 'tp-data-visualization',
-    binding: 'DataVisualization',
+    entry: 'tp-chart',
+    binding: 'Chart',
     props: {
       label: 'Weekly visits',
       description: 'Visits rose every week.',

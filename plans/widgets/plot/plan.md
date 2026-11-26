@@ -27,17 +27,17 @@ Fresh direct Spec Blocks reads: UI Library project `prj_c5a403a0-d1d5-4487-ac78-
 Relevant anchors:
 
 - Foundation `sec-122-scheduling-and-cleanup`: cancellation and correct owner environment.
-- Foundation `sec-188-data-visualization`: series metadata, responsive sizing, inspection, accessible alternatives and deterministic cleanup.
-- Library `ucl21-data-visualization`: renderer-adapter chart shell; series identity and non-color encodings.
+- Foundation `sec-188-chart`: series metadata, responsive sizing, inspection, accessible alternatives and deterministic cleanup.
+- Library `ucl21-chart`: renderer-adapter chart shell; series identity and non-color encodings.
 - Widgets `uwg-sec-scope-and-relationships`: currently excludes series charting.
 - Widgets `uwg-sec-shared-widget-contracts`: currently assumes an editable value lane; rendering/performance, accessibility and presentation requirements still apply.
 
 Before implementation, propose and approve these precise amendments through direct MCP:
 
-1. Extend Widgets scope to include **bounded numeric monitoring/plotting surfaces**. General chart engines and external renderer integration remain with Data visualization.
+1. Extend Widgets scope to include **bounded numeric monitoring/plotting surfaces**. General chart engines and external renderer integration remain with Chart.
 2. Add a display-only widget profile: data is application input or an explicitly attached bounded stream, not `value/defaultValue`, no editing proposals/commit events, no form participation, no required/invalid/dirty state. Configuration is reactive, not user-editable internal document state.
 3. Add Plot's definition, anatomy, configuration tables, streaming ownership, scheduling, inspection, accessibility, presentation, reference and conformance sections.
-4. State Plot's relationship to Data visualization explicitly: Plot owns a built-in numeric renderer; shared metadata, appearance resolution and inspection content have one owner. It does not duplicate the generic renderer-adapter root's control lifecycle.
+4. State Plot's relationship to Chart explicitly: Plot owns a built-in numeric renderer; shared metadata, appearance resolution and inspection content have one owner. It does not duplicate the generic renderer-adapter root's control lifecycle.
 5. Record no-point-editing semantics: read-only data; keyboard inspection never mutates it. Avoid exposing a misleading editable `readOnly` lane.
 6. Specify hidden/offscreen scheduling and bounded retention separately; data collection is allowed to continue without painting.
 
@@ -329,8 +329,8 @@ Controls to configure plots use existing Slider, Input, Select, Switch, Field gr
 | Canvas sizing, DPR, context loss | src/foundation/canvas-surface.ts, existing color surfaces | Reuse CanvasSurface; add an optional external scheduling hook and DPR cap with existing defaults preserved; never create a parallel surface lifecycle |
 | Shared frames | src/foundation/frame-loop.ts | Reuse owner-window frame source/cancellation; a deadline queue gates wakeups, rather than subscribing idle plots forever |
 | Low-frequency deadline pattern | src/foundation/time/scheduler.ts | Design evidence for one earliest timer; do not couple numeric monitors to Time's locale-refresh owner |
-| Appearance environment | ComposedEnvironmentObserver, Data visualization color-scheme resolution | One shared theme/scoped-token observer strategy; canvas reads computed paint only on invalidation, never per sample |
-| Metadata/legend/inspection | data-visualization/payload.ts, content.ts, types.ts | Extract/reuse renderer-independent metadata resolution and content, preserving existing Data visualization consumers; do not mount its record-array update path for every sample |
+| Appearance environment | ComposedEnvironmentObserver, Chart color-scheme resolution | One shared theme/scoped-token observer strategy; canvas reads computed paint only on invalidation, never per sample |
+| Metadata/legend/inspection | chart/payload.ts, content.ts, types.ts | Extract/reuse renderer-independent metadata resolution and content, preserving existing Chart consumers; do not mount its record-array update path for every sample |
 | Read-only numeric buffer/monitor | local external common/model/buffered-value.ts, monitor-binding/number/* | Behavior evidence only; implement bounded O(1) storage instead of array copying and SVG points-string replacement per update |
 | Graph appearance | local reference _graph-log.scss, existing chart roles, supplied images | Existing theme chart colors/surface/border/text; surface structure stays separate from replaceable paint |
 | Actions and settings | Public library controls | Compose only in authored examples; no new parallel controls |

@@ -36,6 +36,7 @@ export * from './services.js';
 export * from './intl.js';
 export * from './format-bytes.js';
 export * from './date-locale.js';
+export type { AxisDomain, AxisEnvironment, AxisOptions } from './chart-axis.js';
 export * from './duration-format.js';
 export * from './image-load.js';
 export * from './time/index.js';

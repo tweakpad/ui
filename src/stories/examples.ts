@@ -1,4 +1,4 @@
-import { dataVisualizationExample } from './data-visualization.examples.js';
+import { chartExample } from './chart.examples.js';
 import { fieldStations, stationColumns, statusColumn } from './data-view.examples.js';
 import { renderFormExample } from './form.examples.js';
 import { skeletonProfile } from './skeleton.examples.js';
@@ -299,7 +299,7 @@ const examples = {
       )}
     </tp-carousel>
   `,
-  'tp-data-visualization': () => dataVisualizationExample(),
+  'tp-chart': () => chartExample(),
   'tp-message-scroller': () => html`
     <tp-message-scroller>
       <tp-message-scroller-item message-id="1"

@@ -1,6 +1,5 @@
 import type { PlotAxis, PlotConfiguration, PlotDomain, PlotPaint } from './types.js';
-import { dateTimeFormatter } from '../../foundation/date-locale.js';
-import { numberFormatter } from '../../foundation/intl.js';
+import { axisDetail, axisLabel, axisTicks } from '../../foundation/chart-axis.js';
 export interface PlotRect {
   left: number;
   top: number;
@@ -27,76 +26,14 @@ export function plotRect(c: PlotConfiguration, w: number, h: number, r: number):
 }
 /** Nice bounded numeric tick positions. Formatting never affects their scale. */
 export function plotTicks(domain: PlotDomain, axis: PlotAxis): number[] {
-  if (axis.values)
-    return axis.values
-      .filter((v) => Number.isFinite(v) && v >= domain[0] && v <= domain[1])
-      .slice(0, 128);
-  const count = Math.max(2, Math.min(64, Math.floor(axis.tickCount ?? 5))),
-    raw = (domain[1] - domain[0]) / (count - 1),
-    power = 10 ** Math.floor(Math.log10(raw));
-  if (axis.type === 'time' && raw >= 28 * 86400000) {
-    const months = Math.max(1, Math.ceil(raw / (30 * 86400000))),
-      start = new Date(domain[0]);
-    const index = start.getUTCFullYear() * 12 + start.getUTCMonth(),
-      aligned = Math.ceil(index / months) * months;
-    start.setUTCFullYear(Math.floor(aligned / 12), ((aligned % 12) + 12) % 12, 1);
-    start.setUTCHours(0, 0, 0, 0);
-    if (start.getTime() < domain[0]) start.setUTCMonth(start.getUTCMonth() + months);
-    const result: number[] = [];
-    while (result.length < 128 && start.getTime() <= domain[1]) {
-      result.push(start.getTime());
-      start.setUTCMonth(start.getUTCMonth() + months);
-    }
-    return result;
-  }
-  const base = raw / power,
-    numericStep = (base <= 1 ? 1 : base <= 2 ? 2 : base <= 5 ? 5 : 10) * power;
-  const timeSteps = [
-    1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 15000, 30000, 60000, 120000,
-    300000, 600000, 900000, 1800000, 3600000, 7200000, 10800000, 21600000, 43200000, 86400000,
-    172800000, 604800000, 1209600000,
-  ];
-  const step =
-    axis.type === 'time' ? (timeSteps.find((value) => value >= raw) ?? numericStep) : numericStep;
-  const values: number[] = [];
-  for (let i = Math.ceil(domain[0] / step), n = 0; n < 128; n++, i++) {
-    const value = i * step;
-    if (value > domain[1] + step * 1e-9) break;
-    values.push(value === 0 ? 0 : value);
-  }
-  return values;
+  return axisTicks(domain, axis);
 }
 export function axisFormat(c: PlotConfiguration, axis: PlotAxis, value: number, span = 0): string {
-  if (axis.format) return axis.format(value);
-  const locale = c.locale || undefined;
-  return axis.type === 'time'
-    ? dateTimeFormatter(locale, {
-        ...(span >= 86400000
-          ? {
-              year: span >= 31536000000 ? ('numeric' as const) : undefined,
-              month: 'short' as const,
-              day: 'numeric' as const,
-            }
-          : {
-              hour: '2-digit' as const,
-              minute: '2-digit' as const,
-              ...(span < 60000 ? { second: '2-digit' as const } : {}),
-              ...(span < 1000 ? { fractionalSecondDigits: 3 as const } : {}),
-            }),
-        ...(c.timeZone ? { timeZone: c.timeZone } : {}),
-      }).format(value)
-    : numberFormatter(locale, { maximumFractionDigits: 5 }).format(value);
+  return axisLabel(axis, value, span, c);
 }
 /** An inspected x in full: date and time on time axes, the number otherwise. */
 export function crosshairFormat(c: PlotConfiguration, axis: PlotAxis, value: number): string {
-  const locale = c.locale || undefined;
-  return axis.type === 'time'
-    ? dateTimeFormatter(locale, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-        ...(c.timeZone ? { timeZone: c.timeZone } : {}),
-      }).format(value)
-    : axisFormat(c, axis, value);
+  return axisDetail(axis, value, c);
 }
 /** Separate fixed patterns from domain-dependent guides/ticks; neither is baked into history. */
 export class PlotDecorations {

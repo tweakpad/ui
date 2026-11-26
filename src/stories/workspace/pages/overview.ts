@@ -5,7 +5,7 @@ import type { IconDefinition } from '../../../icons/types.js';
 import { gregorianCalendarAdapter, todayCalendarDate } from '../../../foundation/calendar.js';
 import type { TpValueChangeEvent } from '../../../foundation/events.js';
 import type { HeatmapDatum, HeatmapMessages } from '../../../widgets/heatmap/types.js';
-import { quarterlyRenderer } from '../../data-visualization.examples.js';
+import { quarterlyRenderer } from '../../chart.examples.js';
 import { initials } from '../data.js';
 import { date, dateText, type PageView, type WorkspaceHost } from '../host.js';
 import { plusIcon } from '../../../icons/plus.js';
@@ -302,14 +302,14 @@ export function renderOverview(host: WorkspaceHost): PageView {
                 >`
           }
         </div>
-        <tp-data-visualization
+        <tp-chart
           label="Weekly throughput"
           description="Completed tasks outpace newly opened tasks in the latest period. Striped bars are opened tasks."
           interaction="both"
           .data=${throughput[range]}
           .series=${throughputSeries}
           .renderer=${quarterlyRenderer}
-        ></tp-data-visualization>
+        ></tp-chart>
       </tp-card>
       <tp-card>
         <h2 slot="header">Latest activity</h2>

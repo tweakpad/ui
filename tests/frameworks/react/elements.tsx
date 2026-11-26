@@ -21,6 +21,7 @@ import {
   Calendar,
   Card,
   Carousel,
+  Chart,
   Checkbox,
   Citation,
   CitationList,
@@ -33,7 +34,6 @@ import {
   Cursor,
   CursorZone,
   DataView,
-  DataVisualization,
   DescriptionList,
   DescriptionListItem,
   Dialog,
@@ -242,6 +242,7 @@ import type { TpButton as TpButtonType } from '../../../src/components/button/bu
 import type { TpCalendar as TpCalendarType } from '../../../src/components/calendar/calendar.js';
 import type { TpCard as TpCardType } from '../../../src/components/card/card.js';
 import type { TpCarousel as TpCarouselType } from '../../../src/components/carousel/carousel.js';
+import type { TpChart as TpChartType } from '../../../src/components/chart/chart.js';
 import type { TpCheckbox as TpCheckboxType } from '../../../src/components/checkbox/checkbox.js';
 import type { TpCitationList as TpCitationListType } from '../../../src/components/citation/citation-list.js';
 import type { TpCitation as TpCitationType } from '../../../src/components/citation/citation.js';
@@ -254,7 +255,6 @@ import type { TpCopyButton as TpCopyButtonType } from '../../../src/components/c
 import type { TpCursorZone as TpCursorZoneType } from '../../../src/components/cursor/cursor-zone.js';
 import type { TpCursor as TpCursorType } from '../../../src/components/cursor/cursor.js';
 import type { TpDataView as TpDataViewType } from '../../../src/components/data-view/data-view.js';
-import type { TpDataVisualization as TpDataVisualizationType } from '../../../src/components/data-visualization/data-visualization.js';
 import type { TpDescriptionListItem as TpDescriptionListItemType } from '../../../src/components/description-list/description-list-item.js';
 import type { TpDescriptionList as TpDescriptionListType } from '../../../src/components/description-list/description-list.js';
 import type { TpDialog as TpDialogType } from '../../../src/components/dialog/dialog.js';
@@ -484,6 +484,7 @@ export const elements: ReactElement[] = [
   <Calendar ref={(element: TpCalendarType | null) => void element} />,
   <Card ref={(element: TpCardType | null) => void element} />,
   <Carousel ref={(element: TpCarouselType<never> | null) => void element} />,
+  <Chart ref={(element: TpChartType | null) => void element} />,
   <Checkbox ref={(element: TpCheckboxType | null) => void element} />,
   <Citation ref={(element: TpCitationType | null) => void element} />,
   <CitationList ref={(element: TpCitationListType | null) => void element} />,
@@ -496,7 +497,6 @@ export const elements: ReactElement[] = [
   <Cursor ref={(element: TpCursorType | null) => void element} />,
   <CursorZone ref={(element: TpCursorZoneType | null) => void element} />,
   <DataView ref={(element: TpDataViewType<never> | null) => void element} />,
-  <DataVisualization ref={(element: TpDataVisualizationType | null) => void element} />,
   <DescriptionList ref={(element: TpDescriptionListType | null) => void element} />,
   <DescriptionListItem ref={(element: TpDescriptionListItemType | null) => void element} />,
   <Dialog ref={(element: TpDialogType | null) => void element} />,

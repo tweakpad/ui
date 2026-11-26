@@ -1,11 +1,11 @@
 import { html } from 'lit';
 import type {
-  VisualizationRenderer,
-  VisualizationSnapshot,
-  VisualizationInteraction,
-  VisualizationTooltipOptions,
-  VisualizationLegendOptions,
-} from '../components/data-visualization/index.js';
+  ChartRenderer,
+  ChartSnapshot,
+  ChartInteraction,
+  ChartTooltipOptions,
+  ChartLegendOptions,
+} from '../components/chart/index.js';
 
 export const quarterlyData = [
   { quarter: 'Q1', desktop: 186, mobile: 80 },
@@ -18,7 +18,7 @@ export const quarterlySeries = {
   mobile: { label: 'Mobile', color: 'var(--tp-chart-2)', appearance: { pattern: 'striped' } },
 };
 /** Consumer SVG adapter. Geometry belongs here, outside the library control. */
-export const quarterlyRenderer: VisualizationRenderer = {
+export const quarterlyRenderer: ChartRenderer = {
   mount(plot, context) {
     const doc = plot.ownerDocument;
     const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -30,8 +30,8 @@ export const quarterlyRenderer: VisualizationRenderer = {
     const defs = doc.createElementNS(svg.namespaceURI, 'defs');
     svg.append(defs, axes, marks);
     plot.append(svg);
-    let current: VisualizationSnapshot;
-    let legendSeries: VisualizationSnapshot['series'] | undefined;
+    let current: ChartSnapshot;
+    let legendSeries: ChartSnapshot['series'] | undefined;
     let focused: SVGElement | null = null;
     const records = new Map<
       string,
@@ -207,12 +207,12 @@ export const quarterlyRenderer: VisualizationRenderer = {
   },
 };
 
-export function dataVisualizationExample(
-  interaction: VisualizationInteraction = 'both',
-  tooltipOptions: VisualizationTooltipOptions = {},
-  legendOptions: VisualizationLegendOptions = {},
+export function chartExample(
+  interaction: ChartInteraction = 'both',
+  tooltipOptions: ChartTooltipOptions = {},
+  legendOptions: ChartLegendOptions = {},
 ) {
-  return html`<tp-data-visualization
+  return html`<tp-chart
     label="Quarterly visits"
     description="Desktop visits peaked in Q2. Desktop exceeded mobile in every quarter; stripes distinguish mobile bars."
     .data=${quarterlyData}
@@ -253,5 +253,5 @@ export function dataVisualizationExample(
         </tfoot>
       </table>
     </tp-table>
-  </tp-data-visualization>`;
+  </tp-chart>`;
 }

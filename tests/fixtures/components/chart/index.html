@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chart verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        margin: 24px;
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        font-family: var(--tp-font-sans);
+      }
+      main {
+        display: grid;
+        gap: 32px;
+        max-inline-size: 960px;
+      }
+      section > h2 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--tp-muted-foreground);
+      }
+      .total {
+        display: grid;
+        gap: 2px;
+      }
+      .total strong {
+        font-size: var(--tp-text-2xl);
+        font-weight: var(--tp-font-semibold);
+        font-variant-numeric: tabular-nums;
+      }
+      .total span {
+        font-size: var(--tp-text-xs);
+        color: var(--tp-muted-foreground);
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Chart</h1>
+      <section>
+        <h2>Latency percentiles: lines on a time axis</h2>
+        <tp-chart
+          id="latency"
+          type="line"
+          label="Request latency"
+          description="Latency stays near zero all day, with short spikes around 05:00, 09:30, 13:30 and 14:45; the largest reaches 0.35 ms at P999."
+          interaction="both"
+          x-axis='{"type":"time","key":"time"}'
+          y-axis='{"title":"ms"}'
+        ></tp-chart>
+      </section>
+      <section>
+        <h2>Deployments: bars on a time axis</h2>
+        <tp-chart
+          id="deployments"
+          type="bar"
+          label="Deployments of build ef6fbbd2"
+          description="Most hours had no deployment; 14:00 had 26."
+          interaction="both"
+          x-axis='{"type":"time","key":"time"}'
+          style="max-inline-size: 560px"
+        ></tp-chart>
+      </section>
+      <section>
+        <tp-card style="max-inline-size: 600px">
+          <h3 slot="header">Requests by status code</h3>
+          <tp-chart
+            id="requests"
+            type="bar"
+            stacked
+            label="Requests by status code"
+            description="Requests peak at 18:00 with 282, mostly 2xx; 4xx responses dominate at 03:00 and 10:00."
+            interaction="both"
+            x-axis='{"type":"time","key":"time"}'
+          ></tp-chart>
+        </tp-card>
+      </section>
+      <section class="pair">
+        <div>
+          <h2>Monthly change: signed lollipops</h2>
+          <tp-chart
+            id="change"
+            type="lollipop"
+            label="Monthly change"
+            description="Gains in five months, losses in February, April and June; August was the best month."
+            interaction="both"
+            x-axis='{"key":"month"}'
+            y-axis="false"
+          ></tp-chart>
+        </div>
+        <div>
+          <h2>Monthly signups: lollipops</h2>
+          <tp-chart
+            id="signups"
+            type="lollipop"
+            label="Monthly signups"
+            description="Signups grew from January to August, with dips in March and May."
+            interaction="both"
+            x-axis='{"key":"month"}'
+            y-axis="false"
+          ></tp-chart>
+        </div>
+      </section>
+      <section class="pair">
+        <div>
+          <h2>Net cash flow: bars below zero</h2>
+          <tp-chart
+            id="cash"
+            type="bar"
+            label="Net cash flow"
+            description="Cash flow was positive in five months and negative in February, April and June."
+            interaction="both"
+            x-axis='{"key":"month"}'
+            y-axis="false"
+          ></tp-chart>
+        </div>
+        <div>
+          <h2>Loading</h2>
+          <tp-chart
+            id="loading-bar"
+            type="bar"
+            label="Requests"
+            description="Loading."
+            loading
+          ></tp-chart>
+          <tp-chart
+            id="loading-line"
+            type="line"
+            label="Latency"
+            description="Loading."
+            loading
+          ></tp-chart>
+        </div>
+      </section>
+      <section>
+        <h2>Sales by category: pie with a titled legend at the end</h2>
+        <tp-chart
+          id="sales"
+          type="pie"
+          label="Sales by category"
+          description="Electronics leads with 38% of sales, then clothing at 24%; books and toys are the smallest."
+          interaction="both"
+          style="max-inline-size: 640px"
+        ></tp-chart>
+      </section>
+      <section class="pair">
+        <div>
+          <h2>Team skills: radar</h2>
+          <tp-chart
+            id="skills"
+            type="radar"
+            label="Team skills"
+            description="The platform team is strongest in reliability; the product team in design and research."
+            interaction="both"
+            x-axis='{"key":"skill"}'
+          ></tp-chart>
+        </div>
+        <div>
+          <h2>Storage: half donut</h2>
+          <tp-chart
+            id="storage"
+            type="pie"
+            angle-range="-90 90"
+            inner-radius="0.6"
+            label="Storage by file type"
+            description="Video takes half the storage; photos a quarter."
+            interaction="both"
+          >
+            <div slot="center" class="total"><strong>512 GB</strong><span>Used</span></div>
+          </tp-chart>
+        </div>
+      </section>
+      <section>
+        <h2>Campaign performance: radial bars with a center total and meters in the legend</h2>
+        <tp-chart
+          id="campaigns"
+          type="radial"
+          angle-range="-90 180"
+          label="Sessions by campaign"
+          description="Search brings the most sessions, 4,890 of 12,847; referral the fewest."
+          interaction="both"
+          y-axis="false"
+          style="max-inline-size: 720px"
+        >
+          <div slot="center" class="total"><strong>12,847</strong><span>Total sessions</span></div>
+        </tp-chart>
+      </section>
+      <section class="pair">
+        <div>
+          <h2>Activity: radial gauges labeled inline</h2>
+          <tp-chart
+            id="activity"
+            type="radial"
+            angle-range="-90 180"
+            inner-radius="0.4"
+            y-domain="0 100"
+            label="Activity goals"
+            description="Move is at 84% of its goal, exercise at 62% and stand at 45%."
+            interaction="both"
+            y-axis="false"
+          >
+            <div slot="center" class="total"><strong>10,004</strong><span>Steps</span></div>
+          </tp-chart>
+        </div>
+        <div>
+          <h2>Error rate: lines labeled at their ends</h2>
+          <tp-chart
+            id="errors"
+            type="line"
+            label="Error rate by region"
+            description="Errors fell in every region over the week; EU ended lowest."
+            interaction="both"
+            x-axis='{"key":"day"}'
+          ></tp-chart>
+        </div>
+      </section>
+      <section class="pair">
+        <div>
+          <h2>Loading: pie and radar</h2>
+          <tp-chart
+            id="loading-pie"
+            type="pie"
+            label="Sales"
+            description="Loading."
+            loading
+          ></tp-chart>
+        </div>
+        <div>
+          <h2>Loading: radial</h2>
+          <tp-chart
+            id="loading-radial"
+            type="radial"
+            label="Goals"
+            description="Loading."
+            loading
+          ></tp-chart>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>

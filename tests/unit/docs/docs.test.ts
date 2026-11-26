@@ -81,7 +81,7 @@ const NATIVE_ALLOWED: Record<string, readonly string[]> = {
   // two-axis scroll body are native tables, Input group pairs a native textarea, Markdown renders
   // a script's kbd child.
   'components/tabs': ['button'],
-  'components/data-visualization': ['table'],
+  'components/chart': ['table'],
   'components/scroll-area': ['table'],
   'components/input-group': ['textarea'],
   'components/markdown': ['kbd'],

@@ -4542,29 +4542,29 @@ styleHook: {
   </style>
 ~~~~~
 
-### components/data-visualization / Data visualization
+### components/chart / Chart
 
-**JS style write** · target: resolve from expression · [docs/components/data-visualization.mdx:56](../../docs/components/data-visualization.mdx#L56)
+**JS style write** · target: resolve from expression · [docs/components/chart.mdx:56](../../docs/components/chart.mdx#L56)
 
 ~~~~~text
 group.style.outline = 'none';
 ~~~~~
 
-### components/data-visualization / Line chart
+### components/chart / Line chart
 
-**JS style write** · target: resolve from expression · [docs/components/data-visualization.mdx:143](../../docs/components/data-visualization.mdx#L143)
+**JS style write** · target: resolve from expression · [docs/components/chart.mdx:143](../../docs/components/chart.mdx#L143)
 
 ~~~~~text
 dot.style.outline = 'none';
 ~~~~~
 
-### components/data-visualization / Description and table
+### components/chart / Description and table
 
-**embedded stylesheet** · target: resolve from expression · [docs/components/data-visualization.mdx:177](../../docs/components/data-visualization.mdx#L177)
+**embedded stylesheet** · target: resolve from expression · [docs/components/chart.mdx:177](../../docs/components/chart.mdx#L177)
 
 ~~~~~text
 <style>
-  #data-visualization-demo-table::part(data-visualization-plot-region) { aspect-ratio: 3 / 1; }
+  #chart-demo-table::part(chart-plot-region) { aspect-ratio: 3 / 1; }
 </style>
 ~~~~~
 
@@ -9910,13 +9910,13 @@ Source: docs/components/cursor.mdx
 | Programmatic state | 169 | 2 |
 | Reduced motion | 205 | 2 |
 
-### components/data-visualization
+### components/chart
 
-Source: docs/components/data-visualization.mdx
+Source: docs/components/chart.mdx
 
 | Use case | Source line | Styling sites |
 | --- | ---: | ---: |
-| Data visualization | 7 | 1 |
+| Chart | 7 | 1 |
 | Line chart | 110 | 1 |
 | Description and table | 173 | 1 |
 
@@ -11030,7 +11030,7 @@ Shared helpers and imported styling are listed at their source; names in story/h
 | docs/components/command-palette.mdx | 1 |
 | docs/components/copy-button.mdx | 6 |
 | docs/components/cursor.mdx | 35 |
-| docs/components/data-visualization.mdx | 3 |
+| docs/components/chart.mdx | 3 |
 | docs/components/description-list.mdx | 5 |
 | docs/components/dialog.mdx | 7 |
 | docs/components/drag-drop-list.mdx | 10 |
@@ -11148,8 +11148,8 @@ Shared helpers and imported styling are listed at their source; names in story/h
 | src/stories/command-palette.stories.ts | 0 |
 | src/stories/copy-button.stories.ts | 0 |
 | src/stories/cursor.stories.ts | 1 |
-| src/stories/data-visualization.examples.ts | 0 |
-| src/stories/data-visualization.stories.ts | 0 |
+| src/stories/chart.examples.ts | 0 |
+| src/stories/chart.stories.ts | 0 |
 | src/stories/date-picker-trigger.d.ts | 0 |
 | src/stories/date-picker-trigger.js | 3 |
 | src/stories/description-list.stories.ts | 0 |

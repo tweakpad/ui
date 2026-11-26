@@ -1,7 +1,4 @@
-import type {
-  VisualizationRenderer,
-  VisualizationSnapshot,
-} from '../../components/data-visualization/index.js';
+import type { ChartRenderer, ChartSnapshot } from '../../components/chart/index.js';
 
 /** One bar: an independent component bundle, measured before and after gzip. */
 export interface SizeChartRow extends Record<string, unknown> {
@@ -22,7 +19,7 @@ export const kb = (bytes: number) => `${(Math.floor(bytes / 10) / 100).toFixed(2
  * Rows are focusable: Arrow keys move between them and both pointer and focus report the same
  * inspection payload, so the composed Tooltip shows the gzip size for either input.
  */
-export const sizeChartRenderer: VisualizationRenderer = {
+export const sizeChartRenderer: ChartRenderer = {
   mount(plot, context) {
     const doc = plot.ownerDocument;
     const ns = 'http://www.w3.org/2000/svg';
@@ -34,7 +31,7 @@ export const sizeChartRenderer: VisualizationRenderer = {
     const body = doc.createElementNS(ns, 'g');
     svg.append(body);
     plot.append(svg);
-    let snapshot: VisualizationSnapshot;
+    let snapshot: ChartSnapshot;
     const set = (element: Element, values: Record<string, string | number>) => {
       for (const [key, value] of Object.entries(values)) element.setAttribute(key, String(value));
     };

@@ -67,7 +67,7 @@ export type EmojiPickerProps = ElementProps<
     onTpOpenChangeComplete: CustomEvent<{ open: boolean }>;
     onTpQueryChange: foundationEvents.TpValueChangeEvent<string>;
     onTpSkinToneChange: foundationEvents.TpValueChangeEvent<
-      'none' | 'light' | 'dark' | 'medium-light' | 'medium' | 'medium-dark'
+      'none' | 'medium' | 'light' | 'dark' | 'medium-light' | 'medium-dark'
     >;
     onTpValueChange: foundationEvents.TpValueChangeEvent<string>;
     onTpValueCommit: foundationEvents.TpValueCommitEvent<string>;
