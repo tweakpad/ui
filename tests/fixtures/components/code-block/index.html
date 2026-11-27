@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Code block verification</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+    <style>
+      body {
+        font-family: var(--tp-font-sans);
+        background: var(--tp-background);
+        color: var(--tp-foreground);
+        margin: var(--tp-space-8);
+      }
+      main {
+        display: grid;
+        gap: var(--tp-space-6);
+        max-inline-size: calc(var(--tp-spacing) * 160);
+      }
+      section {
+        display: grid;
+        gap: var(--tp-space-3);
+      }
+      h1,
+      h2 {
+        font-size: var(--tp-text-lg);
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Code block verification</h1>
+      <section>
+        <h2>Collapsible with a title</h2>
+        <tp-code-block
+          data-source="config"
+          id="titled"
+          language="json"
+          label="tsconfig.json"
+          collapsible
+          collapsed-lines="8"
+        ></tp-code-block>
+      </section>
+      <section>
+        <h2>Collapsible without a title</h2>
+        <tp-code-block
+          data-source="config"
+          id="untitled"
+          language="json"
+          collapsible
+          collapsed-lines="8"
+        ></tp-code-block>
+      </section>
+      <section>
+        <h2>Collapsible, shorter than the collapsed height</h2>
+        <tp-code-block
+          data-source="short"
+          id="short"
+          language="json"
+          label="package.json"
+          collapsible
+          collapsed-lines="8"
+        ></tp-code-block>
+      </section>
+      <section>
+        <h2>Collapsible with line numbers, long lines and no copy action</h2>
+        <tp-code-block
+          data-source="palette"
+          id="wide"
+          language="javascript"
+          line-numbers
+          copyable="false"
+          collapsible
+          collapsed-lines="6"
+        ></tp-code-block>
+      </section>
+      <section>
+        <h2>Collapsible, wrapped lines</h2>
+        <tp-code-block
+          data-source="palette"
+          id="wrapped"
+          language="javascript"
+          label="palette.js"
+          wrap
+          collapsible
+          collapsed-lines="6"
+        ></tp-code-block>
+      </section>
+      <section>
+        <h2>Collapsible, starts expanded</h2>
+        <tp-code-block
+          data-source="config"
+          id="expanded"
+          language="json"
+          label="tsconfig.json"
+          collapsible
+          default-expanded
+          collapsed-lines="8"
+        ></tp-code-block>
+      </section>
+      <section dir="rtl">
+        <h2>Collapsible, right to left</h2>
+        <tp-code-block
+          data-source="config"
+          id="rtl"
+          language="json"
+          label="tsconfig.json"
+          collapsible
+          collapsed-lines="8"
+        ></tp-code-block>
+      </section>
+      <section>
+        <h2>Controlled: the page vetoes the first proposal</h2>
+        <tp-code-block
+          data-source="config"
+          id="vetoed"
+          language="json"
+          label="tsconfig.json"
+          collapsible
+          collapsed-lines="8"
+        ></tp-code-block>
+        <output id="log"></output>
+      </section>
+    </main>
+    <script type="module">
+      const built = new URLSearchParams(location.search).has('built');
+      await import(/* @vite-ignore */ built ? '/dist/register.js' : '/src/register.ts');
+      await customElements.whenDefined('tp-code-block');
+      const sources = {
+        config: `{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["**/*.test.ts"]
+}`,
+        short: `{
+  "private": true,
+  "type": "module"
+}`,
+        palette: `export const palette = {
+  accent: mix(tokens.brand.primary, tokens.surface.raised, { space: "oklab", amount: 0.62, clamp: true, fallback: tokens.brand.fallback }),
+  muted: mix(tokens.neutral[400], tokens.surface.base, { space: "oklab", amount: 0.4 }),
+  ring: tokens.brand.primary,
+  danger: tokens.status.danger,
+  success: tokens.status.success,
+  warning: tokens.status.warning,
+  info: tokens.status.info,
+  border: tokens.neutral[300],
+  surface: tokens.surface.base,
+};`,
+      };
+      for (const block of document.querySelectorAll('tp-code-block'))
+        block.code = sources[block.dataset.source];
+      const log = document.querySelector('#log');
+      let vetoes = 1;
+      document.querySelector('#vetoed').addEventListener('tp-value-change', (event) => {
+        if (vetoes-- > 0) event.preventDefault();
+        log.textContent = `${event.detail.reason} ${event.detail.value} ${event.defaultPrevented ? 'vetoed' : 'accepted'}`;
+      });
+      await import('./contract-checks.js');
+      document.documentElement.dataset.ready = '';
+    </script>
+  </body>
+</html>

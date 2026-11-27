@@ -1,4 +1,4 @@
-import { motionTransition } from '../motion.js';
+import { motionDuration, motionEasing, motionTransition } from '../motion.js';
 import type { PresentationDictionary, PresentationRule } from '../resolver.js';
 import { CODE_SCOPES } from '../../foundation/code/types.js';
 import {
@@ -28,6 +28,22 @@ const tokenColors: PresentationRule[] = [
     declarations: { 'text-decoration': 'underline' },
   },
 ];
+
+/** The figure's end corners inside its border, which the Expand row follows. */
+const expandCorner = 'calc(var(--tp-radius-xl) - var(--tp-border-width))';
+
+/** The block size of the Expand control, which fills its row. */
+const expandControlSize = 'calc(var(--tp-control-height-sm) + var(--tp-space-1) * 2)';
+
+/**
+ * An expand-only row leaves without a height change at the end: while the viewport opens, the row
+ * slides over the code's last lines, so the figure lands on its final height; then it fades.
+ */
+const expandLeave = [
+  motionTransition(['margin-block-start'], 'normal'),
+  `opacity ${motionDuration('normal')} ${motionEasing('exit')} ${motionDuration('normal')}`,
+  `visibility 0s linear calc(${motionDuration('normal')} * 2)`,
+].join(', ');
 
 /** Default Code block appearance (`ucl21-code-block`): existing roles plus the syntax extension. */
 export const codeBlockAppearance: PresentationDictionary = {
@@ -162,13 +178,48 @@ export const codeBlockAppearance: PresentationDictionary = {
   'code-block-expand': [
     {
       declarations: {
-        padding: 'var(--tp-space-1)',
         'border-block-start': divider.border,
         'font-family': 'var(--tp-font-sans)',
       },
     },
+    // The leaving row covers the code beneath it with the code surface until it has faded.
     {
-      selector: '& tp-button[data-expanded]::part(button-trailing-mark)',
+      selector: '&[data-leaving]',
+      declarations: {
+        position: 'relative',
+        'margin-block-start': `calc(-1 * (${expandControlSize} + var(--tp-border-width)))`,
+        background: codeSurfaceFill,
+        opacity: '0',
+        visibility: 'hidden',
+        'pointer-events': 'none',
+        transition: expandLeave,
+      },
+    },
+    // The Button fills the row, so the whole row is the target. It takes no fill: the label and
+    // chevron alone answer hover and focus.
+    {
+      selector: '& tp-button::part(button)',
+      declarations: {
+        'block-size': expandControlSize,
+        'border-radius': `0 0 ${expandCorner} ${expandCorner}`,
+        color: 'var(--tp-muted-foreground)',
+      },
+    },
+    { selector: '& tp-button::part(button)::before', declarations: { content: 'none' } },
+    {
+      selector: '& tp-button::part(button):hover',
+      declarations: { color: 'var(--tp-foreground)' },
+    },
+    {
+      selector: '& tp-button::part(button):focus-visible',
+      declarations: { color: 'var(--tp-foreground)', ...codeFocusRing },
+    },
+    {
+      selector: '& tp-button::part(button-leading-mark)',
+      declarations: { transition: motionTransition(['rotate'], 'fast') },
+    },
+    {
+      selector: '& tp-button[data-expanded]::part(button-leading-mark)',
       declarations: { rotate: '180deg' },
     },
   ],

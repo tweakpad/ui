@@ -18,6 +18,7 @@ export type CodeBlockProps = ElementProps<
   | 'defaultExpanded'
   | 'density'
   | 'disabled'
+  | 'expandOnly'
   | 'expanded'
   | 'highlightLines'
   | 'highlighter'

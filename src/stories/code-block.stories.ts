@@ -23,6 +23,7 @@ interface Args {
   highlightLines: string;
   collapsible: boolean;
   collapsedLines: number;
+  expandOnly: boolean;
   copyable: boolean;
   wrap: boolean;
 }
@@ -38,6 +39,7 @@ const meta = {
     highlightLines: '',
     collapsible: false,
     collapsedLines: 12,
+    expandOnly: false,
     copyable: true,
     wrap: false,
   },
@@ -73,6 +75,11 @@ const meta = {
       description: '`collapsed-lines`: visible lines while collapsed.',
       table: { defaultValue: { summary: '12' } },
     },
+    expandOnly: {
+      control: 'boolean',
+      description: '`expand-only`: removes the Collapse control once expanded.',
+      table: { defaultValue: { summary: 'false' } },
+    },
     copyable: {
       control: 'boolean',
       description: 'Shows the copy action; `copyable="false"` removes it.',
@@ -93,6 +100,7 @@ const meta = {
       .highlightLines=${args.highlightLines}
       .collapsible=${args.collapsible}
       .collapsedLines=${args.collapsedLines}
+      .expandOnly=${args.expandOnly}
       .copyable=${args.copyable}
       .wrap=${args.wrap}
     ></tp-code-block>`,

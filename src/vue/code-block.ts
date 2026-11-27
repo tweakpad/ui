@@ -20,6 +20,7 @@ export const CodeBlock = /*#__PURE__*/ createBinding(TpCodeBlock, 'CodeBlock', {
   | 'defaultExpanded'
   | 'density'
   | 'disabled'
+  | 'expandOnly'
   | 'expanded'
   | 'highlightLines'
   | 'highlighter'

@@ -936,6 +936,7 @@ type Tags = {
     | 'defaultExpanded'
     | 'density'
     | 'disabled'
+    | 'expandOnly'
     | 'expanded'
     | 'highlightLines'
     | 'highlighter'

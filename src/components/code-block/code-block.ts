@@ -103,6 +103,7 @@ export class TpCodeBlock extends Scrollable(TpElement) {
     collapsible: { type: Boolean, reflect: true },
     defaultExpanded: { type: Boolean, attribute: 'default-expanded' },
     collapsedLines: { type: Number, attribute: 'collapsed-lines' },
+    expandOnly: { type: Boolean, attribute: 'expand-only', reflect: true },
     copyable: { converter: defaultTrue, reflect: true },
     wrap: { type: Boolean, reflect: true },
     messages: { attribute: false },
@@ -182,7 +183,12 @@ export class TpCodeBlock extends Scrollable(TpElement) {
 
       .expand {
         display: flex;
-        justify-content: center;
+      }
+
+      /* The whole row is the Expand control. */
+      .expand tp-button {
+        flex: 1;
+        min-inline-size: 0;
       }
 
       ${hiddenStyles}
@@ -211,6 +217,8 @@ export class TpCodeBlock extends Scrollable(TpElement) {
   defaultExpanded = false;
   /** How many lines a collapsed block shows. */
   collapsedLines = 12;
+  /** Removes the Collapse control, so a collapsible block stays expanded once it is expanded. */
+  expandOnly = false;
   /** Shows the copy action; `copyable="false"` removes it. */
   copyable = true;
   /** Wraps long lines instead of scrolling them sideways. */
@@ -415,6 +423,8 @@ export class TpCodeBlock extends Scrollable(TpElement) {
   }
 
   #toggle = (event: Event): void => {
+    // An expand-only row is on its way out once the block is expanded.
+    if (this.expandOnly && this.expanded) return;
     this.#expanded.set(!this.expanded, 'trigger-press', event);
   };
 
@@ -462,6 +472,8 @@ export class TpCodeBlock extends Scrollable(TpElement) {
     const titleId = `${this.#id}-title`;
     const languageName = this.language && this.language !== 'plaintext' ? this.language : '';
     const collapsed = this.collapsible && !this.expanded;
+    // An expand-only row keeps its Expand face while it fades out after the block has opened.
+    const leaving = this.expandOnly && this.expanded;
     const copy = this.copyable
       ? html`<tp-tooltip class="copy"
           ><tp-copy-button
@@ -542,15 +554,14 @@ export class TpCodeBlock extends Scrollable(TpElement) {
       )}</code></pre>
       ${
         this.collapsible
-          ? html`<div part="expand" class="expand">
+          ? html`<div part="expand" class="expand" ?data-leaving=${leaving}>
               <tp-button
                 variant="ghost"
                 size="sm"
                 .icon=${chevronDownIcon}
-                icon-position="end"
-                data-expanded=${collapsed ? nothing : ''}
+                data-expanded=${collapsed || leaving ? nothing : ''}
                 @click=${this.#toggle}
-                >${collapsed ? messages.expand : messages.collapse}</tp-button
+                >${collapsed || leaving ? messages.expand : messages.collapse}</tp-button
               >
             </div>`
           : nothing
