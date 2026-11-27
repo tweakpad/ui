@@ -292,8 +292,6 @@ export class TpColorPicker extends TpFormElement<string> {
     strings: { attribute: false },
     open: { type: Boolean, noAccessor: true },
     defaultOpen: { type: Boolean, attribute: 'default-open' },
-    onValueChange: { attribute: false },
-    onValueCommitted: { attribute: false },
   };
   static override styles = [TpElement.styles, colorPickerStyles];
 

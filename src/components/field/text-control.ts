@@ -43,7 +43,6 @@ export abstract class TpTextControl extends TpFormElement {
     ...TpFormElement.properties,
     value: { noAccessor: true },
     defaultValue: { attribute: 'default-value' },
-    onValueChange: { attribute: false },
     hostProperties: { attribute: false },
     placeholder: { type: String },
     autocomplete: { type: String },

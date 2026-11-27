@@ -51,7 +51,6 @@ export class TpMenubar extends TpElement implements MenuBarOwner {
     ...TpElement.properties,
     value: { type: String, noAccessor: true },
     defaultValue: { type: String, attribute: 'default-value' },
-    onValueChange: { attribute: false },
     loopFocus: { type: Boolean, attribute: 'loop-focus' },
     modal: { type: Boolean },
   };

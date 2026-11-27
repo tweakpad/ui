@@ -55,9 +55,6 @@ export class TpCommandPalette extends TpDialog {
     shouldFilter: { type: Boolean, attribute: 'should-filter' },
     loopNavigation: { type: Boolean, attribute: 'loop-navigation' },
     placeholder: { type: String },
-    onQueryChange: { attribute: false },
-    onValueChange: { attribute: false },
-    onExecute: { attribute: false },
   };
   static override styles = [
     TpDialog.styles,

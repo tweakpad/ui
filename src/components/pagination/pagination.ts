@@ -42,7 +42,6 @@ export class TpPagination extends TpElement {
     showNext: { type: Boolean, attribute: 'show-next' },
     showPageLinks: { type: Boolean, attribute: 'show-page-links' },
     showLabels: { type: Boolean, attribute: 'show-labels' },
-    onPageChange: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

@@ -41,10 +41,6 @@ export class TpEmojiPickerList extends TpSelect {
     ...TpSelect.properties,
     listName: { attribute: false },
     optionName: { attribute: false },
-    onPick: { attribute: false },
-    onHighlight: { attribute: false },
-    onTopGroup: { attribute: false },
-    onUserScroll: { attribute: false },
   };
   override searchable = true;
   override inline = true;

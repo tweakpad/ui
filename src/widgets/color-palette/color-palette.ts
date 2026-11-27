@@ -278,9 +278,6 @@ export class TpColorPalette extends TpFormElement<string> {
     label: { type: String },
     locale: { type: String },
     strings: { attribute: false },
-    onValueChange: { attribute: false },
-    onValueCommitted: { attribute: false },
-    onLoadingStatusChange: { attribute: false },
   };
   static override styles = [TpElement.styles, colorPaletteStyles];
 

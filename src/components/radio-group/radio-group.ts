@@ -32,7 +32,6 @@ export class TpRadioGroup extends TpFormElement<unknown> implements RadioSelecti
     ...TpFormElement.properties,
     value: { type: String, noAccessor: true },
     defaultValue: { type: String, attribute: 'default-value' },
-    onValueChange: { attribute: false },
     label: { type: String },
   };
   static override styles = [

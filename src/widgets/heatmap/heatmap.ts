@@ -237,12 +237,9 @@ export class TpHeatmap extends TpElement {
     renderTooltip: { attribute: false },
     formatters: { attribute: false },
     messages: { attribute: false },
-    onValueChange: { attribute: false },
-    onInspectionChange: { attribute: false },
     legendFilter: { type: Boolean, attribute: 'legend-filter' },
     levelFilter: { noAccessor: true, attribute: 'level-filter', converter: levelListConverter },
     defaultLevelFilter: { attribute: 'default-level-filter', converter: levelListConverter },
-    onLevelFilterChange: { attribute: false },
   };
   static override styles = [TpElement.styles, heatmapStyles];
 

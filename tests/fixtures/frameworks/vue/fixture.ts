@@ -2,7 +2,7 @@
 import { createApp, defineComponent, h, nextTick, ref, type App, type Component } from 'vue';
 import type * as Bindings from '../../../../src/vue/index.js';
 import { laneRows, sameValue, type LaneChild, type LaneRow } from '../lanes.js';
-import { carries, eventProp, propRows, type PropRow } from '../props.js';
+import { carries, countUpdates, eventProp, propRows, type PropRow } from '../props.js';
 import type { TpButton } from '../../../../src/components/button/button.js';
 import type { TpCheckbox } from '../../../../src/components/checkbox/checkbox.js';
 import type { TpDialog } from '../../../../src/components/dialog/dialog.js';
@@ -317,6 +317,41 @@ const scenarios: Record<string, Scenario> = {
     (items()[0] as unknown as { activate(event?: Event): void }).activate();
     await settle();
     check('@tp-action receives the item', actions.join() === 'duplicate', actions);
+    await unmount(mounted);
+  },
+  async rerender(check) {
+    // A parent re-render hands every binding a new inline handler. An element whose own props
+    // did not change stays idle, and calls the handler of the latest render.
+    const calls: number[] = [];
+    const generation = ref(0);
+    const mounted = await mount(() => {
+      const now = generation.value;
+      return [
+        h(Checkbox, { id: 'changing', checked: now > 0, onCheckedChange: () => {} }),
+        h(Checkbox, { id: 'steady', checked: false, onCheckedChange: () => calls.push(now) }),
+      ];
+    });
+    const changing = mounted.host.querySelector<TpCheckbox>('#changing')!;
+    const steady = mounted.host.querySelector<TpCheckbox>('#steady')!;
+    const changingUpdates = countUpdates(changing);
+    const steadyUpdates = countUpdates(steady);
+    generation.value = 1;
+    await nextTick();
+    await settle();
+    check(
+      'the element whose prop changed updates',
+      changing.checked === true && changingUpdates() > 0,
+      changingUpdates(),
+    );
+    check(
+      'an element that only received a new handler does not update',
+      steadyUpdates() === 0,
+      steadyUpdates(),
+    );
+    steady.setChecked(true);
+    await nextTick();
+    await settle();
+    check('it calls the handler of the latest render', calls.join() === '1', calls);
     await unmount(mounted);
   },
 };

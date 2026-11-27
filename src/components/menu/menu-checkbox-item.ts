@@ -26,7 +26,6 @@ export class TpMenuCheckboxItem extends TpMenuItem {
     checked: { type: Boolean, noAccessor: true },
     defaultChecked: { type: Boolean, attribute: 'default-checked' },
     keepMounted: { type: Boolean, attribute: 'keep-mounted' },
-    onCheckedChange: { attribute: false },
   };
   override closeOnClick = false;
   /** Initial checked state when `checked` is not set. */

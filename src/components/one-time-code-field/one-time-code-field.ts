@@ -71,9 +71,6 @@ export class TpOneTimeCodeField extends TpFormElement {
     label: { type: String },
     placeholder: { type: String },
     variant: { type: String, reflect: true },
-    onValueChange: { attribute: false },
-    onValueComplete: { attribute: false },
-    onValueInvalid: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

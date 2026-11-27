@@ -20,7 +20,6 @@ export class TpSelectOption extends TpElement {
     row: { type: Number },
     nativeAction: { type: Boolean, attribute: 'native-action' },
     indicatorKeepMounted: { type: Boolean, attribute: 'indicator-keep-mounted' },
-    onClick: { attribute: false },
     textContract: { attribute: false },
     indicatorContract: { attribute: false },
   };

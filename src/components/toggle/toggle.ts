@@ -51,7 +51,6 @@ export class TpToggle extends TpFormElement {
     ...TpFormElement.properties,
     pressed: { type: Boolean, noAccessor: true },
     defaultPressed: { type: Boolean, attribute: 'default-pressed' },
-    onPressedChange: { attribute: false },
     ariaLabel: { type: String, attribute: 'aria-label' },
     nativeAction: { type: Boolean, attribute: 'native-action' },
     variant: { type: String, reflect: true, noAccessor: true },

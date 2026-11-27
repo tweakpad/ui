@@ -54,7 +54,6 @@ export class TpNativeSelect extends TpFormElement<NativeSelectValue> {
     ...TpFormElement.properties,
     value: { noAccessor: true },
     defaultValue: { attribute: 'default-value' },
-    onValueChange: { attribute: false },
     hostProperties: { attribute: false },
     multiple: { type: Boolean, reflect: true },
     placeholder: { type: String },

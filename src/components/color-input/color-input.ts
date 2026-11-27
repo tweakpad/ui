@@ -76,8 +76,6 @@ export class TpColorInput extends TpFormElement<string> {
     showValue: { type: Boolean, attribute: 'show-value', converter: defaultTrue },
     copyable: { converter: defaultTrue, reflect: true },
     label: { type: String },
-    onValueChange: { attribute: false },
-    onValueCommitted: { attribute: false },
   };
   static override styles = [
     TpFormElement.styles,

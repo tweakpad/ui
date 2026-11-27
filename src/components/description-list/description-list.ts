@@ -87,7 +87,6 @@ export class TpDescriptionList extends TpElement {
     layout: { type: String, reflect: true },
     align: { type: String, reflect: true },
     messages: { attribute: false },
-    onOpenChange: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

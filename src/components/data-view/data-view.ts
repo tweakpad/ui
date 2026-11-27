@@ -201,8 +201,6 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     label: { type: String },
     scrollEdgeFade: { converter: fadeOnByDefault, attribute: 'scroll-edge-fade', reflect: true },
     messages: { attribute: false },
-    onValueChange: { attribute: false },
-    onSortChange: { attribute: false },
   };
   static override styles = [TpElement.styles, dataViewStyles];
 

@@ -82,7 +82,6 @@ export class TpCheckbox extends TpFormElement {
     ...TpFormElement.properties,
     checked: { type: Boolean, noAccessor: true },
     defaultChecked: { type: Boolean, attribute: 'default-checked' },
-    onCheckedChange: { attribute: false },
     indeterminate: { type: Boolean, reflect: true, noAccessor: true },
     uncheckedValue: { type: String, attribute: 'unchecked-value' },
     nativeAction: { type: Boolean, attribute: 'native-action' },

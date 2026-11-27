@@ -53,7 +53,6 @@ export class TpNavigationMenu extends TpHoverSurface implements NavigationMenuOw
     ...TpHoverSurface.properties,
     value: { type: String, noAccessor: true },
     defaultValue: { type: String, attribute: 'default-value' },
-    onValueChange: { attribute: false },
   };
   static override styles = [
     TpHoverSurface.styles,

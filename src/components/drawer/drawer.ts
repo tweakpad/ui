@@ -83,7 +83,6 @@ export class TpDrawer extends TpDialog {
     snapPoint: { attribute: false, noAccessor: true },
     activeSnapPoint: { attribute: false, noAccessor: true },
     defaultSnapPoint: { attribute: false },
-    onSnapPointChange: { attribute: false },
     snapToSequentialPoints: { type: Boolean, attribute: 'snap-to-sequential-points' },
     dismissible: { type: Boolean },
     showSwipeHandle: { type: Boolean, attribute: 'show-swipe-handle' },

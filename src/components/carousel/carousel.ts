@@ -102,6 +102,12 @@ interface Shell {
 export class TpCarousel<T = unknown> extends Scrollable(TpElement) {
   constructor() {
     super();
+    // A callback set before the element upgraded goes through the setter like a later one.
+    if (Object.hasOwn(this, 'onControllerChange')) {
+      const callback = this.onControllerChange;
+      delete (this as { onControllerChange?: unknown }).onControllerChange;
+      this.onControllerChange = callback;
+    }
     new NativeScrollEdges(this, {
       viewports: () =>
         this.options.transport === 'scroll'
@@ -132,7 +138,6 @@ export class TpCarousel<T = unknown> extends Scrollable(TpElement) {
     getItemOptions: { attribute: false },
     renderItem: { attribute: false },
     options: { attribute: false },
-    onControllerChange: { attribute: false },
     label: { type: String },
     effect: { attribute: false },
   };
@@ -161,8 +166,17 @@ export class TpCarousel<T = unknown> extends Scrollable(TpElement) {
   renderItem: ((item: T, context: CarouselRenderContext) => unknown) | undefined;
   /** Layout, interaction, navigation, indicators, scrollbar, wheel, keyboard, autoplay, virtualization and breakpoint settings, merged over the defaults. */
   options: CarouselOptions = {};
+  #onControllerChange: ((controller: CarouselController | null) => void) | undefined;
   /** Called with the carousel's controller once it initializes, and with null when it is released. */
-  onControllerChange: ((controller: CarouselController | null) => void) | undefined;
+  get onControllerChange(): ((controller: CarouselController | null) => void) | undefined {
+    return this.#onControllerChange;
+  }
+  set onControllerChange(callback: ((controller: CarouselController | null) => void) | undefined) {
+    if (callback === this.#onControllerChange) return;
+    this.#onControllerChange = callback;
+    // A callback set later receives the controller the carousel already has, without a render.
+    if (this.hasUpdated) queueMicrotask(() => this.#notify(this.controller));
+  }
   /** The accessible name of the carousel, such as "Customer stories". */
   label = '';
   /** A transition created by an effect factory, such as `carouselCrossfadeEffect()`; null keeps the sliding track. Effects transform each slide's element marked `data-carousel-media` and reveal `data-carousel-layer` elements in order. */
@@ -455,8 +469,7 @@ export class TpCarousel<T = unknown> extends Scrollable(TpElement) {
       this.#collect();
       this.#queueControllerUpdate();
     } else if (changed.has('value')) this.#queueControllerUpdate(true);
-    if (changed.has('onControllerChange') && this.#lastCallback !== this.onControllerChange)
-      this.#notify(this.controller);
+    if (this.#lastCallback !== this.onControllerChange) this.#notify(this.controller);
     this.#bar.measure();
     this.#syncVisibility();
   }

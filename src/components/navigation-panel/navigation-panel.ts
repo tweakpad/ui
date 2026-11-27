@@ -94,8 +94,6 @@ export class TpNavigationPanel extends Scrollable(TpElement) {
     shortcut: { attribute: false },
     persistenceAdapter: { attribute: false },
     persistenceKey: { attribute: 'persistence-key' },
-    onExpandedChange: { attribute: false },
-    onCompactOpenChange: { attribute: false },
   };
   static override styles = [TpElement.styles, navigationPanelStyles];
   /** @internal Marks the element as a navigation panel for its constituents. */

@@ -89,7 +89,6 @@ export class TpTabs extends Scrollable(TpElement) {
     ...TpElement.properties,
     value: { noAccessor: true },
     defaultValue: { attribute: 'default-value' },
-    onValueChange: { attribute: false },
     activation: { type: String, reflect: true },
     activateOnFocus: { type: Boolean, attribute: 'activate-on-focus', noAccessor: true },
     loopFocus: { type: Boolean, attribute: 'loop-focus' },

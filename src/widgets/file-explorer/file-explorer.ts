@@ -265,10 +265,6 @@ export class TpFileExplorer extends TpElement {
     details: { type: Boolean, reflect: true },
     showHidden: { type: Boolean, attribute: 'show-hidden' },
     label: { type: String },
-    onFolderChange: { attribute: false },
-    onValueChange: { attribute: false },
-    onViewChange: { attribute: false },
-    onSortChange: { attribute: false },
   };
   static override styles = [TpElement.styles, fileExplorerStyles];
 

@@ -38,7 +38,6 @@ export class TpAvatar extends TpElement {
     sizes: { type: String },
     crossOrigin: { type: String, attribute: 'crossorigin' },
     referrerPolicy: { type: String, attribute: 'referrerpolicy' },
-    onLoadingStatusChange: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

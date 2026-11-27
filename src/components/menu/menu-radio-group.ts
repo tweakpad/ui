@@ -24,7 +24,6 @@ export class TpMenuRadioGroup extends TpElement {
     value: { attribute: false, noAccessor: true },
     defaultValue: { attribute: 'default-value' },
     label: { type: String },
-    onValueChange: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

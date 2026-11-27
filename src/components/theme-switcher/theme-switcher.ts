@@ -68,7 +68,6 @@ export class TpThemeSwitcher extends TpElement {
     variant: { type: String, reflect: true },
     value: { noAccessor: true },
     defaultValue: { attribute: 'default-value' },
-    onValueChange: { attribute: false },
     storageKey: { attribute: 'storage-key' },
     target: { attribute: false },
     size: { type: String, reflect: true },

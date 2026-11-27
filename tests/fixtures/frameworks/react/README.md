@@ -21,7 +21,9 @@ React 19 under StrictMode, through the generated bindings only.
      `default…` props apply uncontrolled;
    - children React adds, removes and reorders inside an element that projects them (Dialog, a
      portaled Menu) stay consistent;
-   - three mount/unmount rounds under StrictMode raise no error.
+   - three mount/unmount rounds under StrictMode raise no error;
+   - a parent re-render with new inline handlers leaves an element whose own props did not
+     change idle (no update), and that element calls the handler of the latest render.
 3. `await reactBindings.lane('<tag>')` (or `lane('<tag>', '<lane>')` for a tag with two rows, such as
    `lane('tp-flow', 'path')`) runs one row of the lane matrix (`tests/fixtures/frameworks/lanes.ts`;
    `reactBindings.lanes` lists the tags): a controlled owner that writes the proposal back publishes it, one

@@ -56,7 +56,6 @@ export class TpCollapsible extends TpElement {
     indicatorPosition: { type: String, attribute: 'indicator-position', reflect: true },
     contentAlignment: { type: String, attribute: 'content-alignment', reflect: true },
     headingLevel: { type: Number, attribute: 'heading-level', reflect: true },
-    onOpenChange: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

@@ -652,9 +652,6 @@ export class TpFlow extends TpFormElement<FlowDocument> {
     validate: { type: Boolean },
     issues: { attribute: false },
     locked: { type: Boolean, reflect: true },
-    onValueChange: { attribute: false },
-    onValueCommitted: { attribute: false },
-    onPathChange: { attribute: false },
   };
   static override styles = [TpFormElement.styles, flowStyles];
 

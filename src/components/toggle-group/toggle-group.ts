@@ -46,7 +46,6 @@ export class TpToggleGroup
     ...TpFormElement.properties,
     value: { noAccessor: true, converter: listConverter },
     defaultValue: { attribute: 'default-value', converter: listConverter },
-    onValueChange: { attribute: false },
     multiple: { type: Boolean, reflect: true, noAccessor: true },
     selectionMode: { type: String, attribute: 'selection-mode', reflect: true, noAccessor: true },
     loopFocus: { type: Boolean, attribute: 'loop-focus' },

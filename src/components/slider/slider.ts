@@ -150,8 +150,6 @@ export class TpSlider extends TpFormElement<SliderValue | undefined> implements 
     label: { type: String },
     locale: { type: String },
     format: { attribute: false },
-    onValueChange: { attribute: false },
-    onValueCommitted: { attribute: false },
     getAccessibleLabel: { attribute: false },
     getAccessibleValueText: { attribute: false },
     buffered: { attribute: false },

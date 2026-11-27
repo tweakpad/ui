@@ -23,6 +23,12 @@ Every generated binding already passes the automated checks (`npm test` drift an
 install, type check, server render and tree-shaking); a row records the per-entry browser
 verification on top of them.
 
+`on…` callback properties left the reactive property lists (2026-11-27): a parent re-render with
+inline handlers no longer updates an element whose own props did not change. The `rerender`
+scenario checks it in both fixtures (it fails on the 0.5.3 package and passes on the source); the
+7 scenarios, 39 lane rows, 60 props rows and the 214-binding smoke run pass again in React and Vue.
+The Carousel's `onControllerChange` is a setter that hands the controller to a callback set later.
+
 | Tag | Entry | Smoke | React | Vue | Types | Library fixes | Evidence |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `tp-accordion` | Accordion | passed | passed | passed | passed |  | Lane matrix `tp-accordion` `value` in the React and Vue fixtures: controlled accept, reject by cancelling `tp-value-change` (no owner-held mode), uncontrolled default (2026-10-31); smoke 201/201 bindings mount in React and Vue (2026-10-31); `npm run typecheck`, `npm test`, `npm run test:package` |

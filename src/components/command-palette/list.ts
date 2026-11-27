@@ -39,8 +39,6 @@ export class TpCommandList extends TpSelect {
   static override properties = {
     ...TpSelect.properties,
     activeValue: { attribute: false },
-    onActiveChange: { attribute: false },
-    onExecute: { attribute: false },
   };
   override searchable = true;
   override inline = true;

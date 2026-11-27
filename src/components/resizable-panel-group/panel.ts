@@ -34,7 +34,6 @@ export class TpResizablePanel extends Scrollable(TpElement) {
     collapsedSize: { attribute: 'collapsed-size' },
     collapsible: { type: Boolean, reflect: true },
     resizeBehavior: { attribute: 'resize-behavior' },
-    onResize: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

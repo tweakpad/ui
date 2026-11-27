@@ -11,7 +11,7 @@ import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import type * as Bindings from '../../../../src/react/index.js';
 import { laneRows, sameValue, type LaneChild, type LaneRow } from '../lanes.js';
-import { carries, eventProp, propRows, type PropRow } from '../props.js';
+import { carries, countUpdates, eventProp, propRows, type PropRow } from '../props.js';
 import type { TpButton } from '../../../../src/components/button/button.js';
 import type { TpCheckbox } from '../../../../src/components/checkbox/checkbox.js';
 import type { TpDialog } from '../../../../src/components/dialog/dialog.js';
@@ -347,6 +347,47 @@ const scenarios: Record<string, Scenario> = {
     check('the item onClick callback prop runs', itemClicks.join() === 'duplicate', itemClicks);
     await unmount(mounted);
     await churn(() => h(Menu, null, h(MenuItem, { value: 'a' }, 'A')), check);
+  },
+  async rerender(check) {
+    // A parent re-render hands every binding a new inline handler. An element whose own props
+    // did not change stays idle, and calls the handler of the latest render.
+    const calls: number[] = [];
+    let render: (generation: number) => void = () => {};
+    function Panel(): ReactElement {
+      const [generation, setGeneration] = useState(0);
+      render = setGeneration;
+      return h(
+        Fragment,
+        null,
+        h(Checkbox, { id: 'changing', checked: generation > 0, onCheckedChange: () => {} }),
+        h(Checkbox, {
+          id: 'steady',
+          checked: false,
+          onCheckedChange: () => calls.push(generation),
+        }),
+      );
+    }
+    const mounted = await mount(h(Panel));
+    const changing = mounted.host.querySelector<TpCheckbox>('#changing')!;
+    const steady = mounted.host.querySelector<TpCheckbox>('#steady')!;
+    const changingUpdates = countUpdates(changing);
+    const steadyUpdates = countUpdates(steady);
+    flushSync(() => render(1));
+    await settle();
+    check(
+      'the element whose prop changed updates',
+      changing.checked === true && changingUpdates() > 0,
+      changingUpdates(),
+    );
+    check(
+      'an element that only received a new handler does not update',
+      steadyUpdates() === 0,
+      steadyUpdates(),
+    );
+    steady.setChecked(true);
+    await settle();
+    check('it calls the handler of the latest render', calls.join() === '1', calls);
+    await unmount(mounted);
   },
 };
 

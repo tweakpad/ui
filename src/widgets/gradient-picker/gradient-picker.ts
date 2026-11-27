@@ -195,9 +195,6 @@ export class TpGradientPicker extends TpFormElement<GradientPickerValue> {
     label: { type: String },
     required: { type: Boolean, reflect: true },
     strings: { attribute: false },
-    onValueChange: { attribute: false },
-    onValueCommitted: { attribute: false },
-    onSelectionChange: { attribute: false },
   };
   static override styles = [
     TpFormElement.styles,

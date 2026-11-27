@@ -186,8 +186,6 @@ export class TpCalendar extends TpFormElement<CalendarValue> {
     formatters: { attribute: false },
     messages: { attribute: false },
     dayModifiers: { attribute: false },
-    onValueChange: { attribute: false },
-    onDisplayedMonthChange: { attribute: false },
   };
   static override styles = [TpElement.styles, calendarStyles];
   override get value(): CalendarValue {

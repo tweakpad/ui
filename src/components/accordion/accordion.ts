@@ -64,7 +64,6 @@ export class TpAccordion extends TpElement {
     keepMounted: { type: Boolean, attribute: 'keep-mounted', reflect: true },
     hiddenUntilFound: { type: Boolean, attribute: 'hidden-until-found', reflect: true },
     contentAlignment: { type: String, attribute: 'content-alignment', reflect: true },
-    onValueChange: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

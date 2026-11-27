@@ -154,8 +154,6 @@ export class TpDialog extends Scrollable(TpElement) {
     description: { type: String },
     forceRender: { type: Boolean, attribute: 'force-render' },
     backdrop: { type: String },
-    onOpenChange: { attribute: false },
-    onOpenChangeComplete: { attribute: false },
     handle: { attribute: false },
     triggerIdentifier: { attribute: 'trigger-identifier' },
     defaultTriggerIdentifier: { attribute: 'default-trigger-identifier' },

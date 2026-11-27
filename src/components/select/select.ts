@@ -203,8 +203,6 @@ export class TpSelect extends Scrollable(TpFormElement)<unknown> {
     showClear: { type: Boolean, attribute: 'show-clear' },
     showChipRemove: { type: Boolean, attribute: 'show-chip-remove' },
     clearKeepMounted: { type: Boolean, attribute: 'clear-keep-mounted' },
-    onInputValueChange: { attribute: false },
-    onItemHighlighted: { attribute: false },
 
     value: { type: String, noAccessor: true },
     defaultValue: { type: String, attribute: 'default-value', noAccessor: true },
@@ -254,9 +252,6 @@ export class TpSelect extends Scrollable(TpFormElement)<unknown> {
     isItemEqual: { attribute: false },
     itemToText: { attribute: false },
     itemToLabel: { attribute: false },
-    onValueChange: { attribute: false },
-    onOpenChange: { attribute: false },
-    onOpenChangeComplete: { attribute: false },
   };
   static override styles: CSSResultGroup = [
     TpElement.styles,

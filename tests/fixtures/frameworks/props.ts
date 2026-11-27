@@ -644,3 +644,18 @@ export function carries(element: HTMLElement, key: string, value: unknown): bool
     return actual === value || JSON.stringify(actual) === JSON.stringify(value);
   return actual === value;
 }
+
+/**
+ * Counts the updates `element` performs from now on; the returned function reads the count. A
+ * re-render scenario uses it to prove that an element whose props did not change stays idle.
+ */
+export function countUpdates(element: HTMLElement): () => number {
+  const target = element as unknown as { performUpdate(): void };
+  const original = target.performUpdate;
+  let count = 0;
+  target.performUpdate = function (this: unknown) {
+    count++;
+    original.call(this);
+  };
+  return () => count;
+}

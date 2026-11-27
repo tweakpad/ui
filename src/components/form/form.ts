@@ -46,7 +46,6 @@ export class TpForm extends TpElement {
   static override presentation = formPresentation;
   static override properties = {
     ...TpElement.properties,
-    onFormSubmit: { attribute: false },
     errors: { attribute: false, noAccessor: true },
   };
   static override get observedAttributes(): string[] {

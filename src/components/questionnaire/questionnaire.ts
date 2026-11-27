@@ -110,8 +110,6 @@ export class TpQuestionnaire extends TpElement {
     shortcutMode: { type: String, attribute: 'shortcut-mode', reflect: true },
     nativeValidation: { type: String, attribute: 'native-validation', reflect: true },
     label: { type: String },
-    onValueChange: { attribute: false },
-    onItemChange: { attribute: false },
   };
   static override styles = [TpElement.styles, questionnaireStyles];
 

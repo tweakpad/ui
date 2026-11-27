@@ -162,6 +162,15 @@ describe('attribute conventions', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('never declares an on… callback as a reactive property', () => {
+    // A framework hands an element a new function on every render; a reactive callback would
+    // re-render the element each time although it only ever calls the function.
+    const offenders = all
+      .filter(({ name }) => /^on[A-Z]/.test(name))
+      .map(({ tag, name }) => `${tag}.${name}`);
+    expect(offenders).toEqual([]);
+  });
+
   it('reflects the canonical variant axes on public hosts', () => {
     const offenders = all
       .filter(

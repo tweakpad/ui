@@ -170,8 +170,6 @@ export abstract class TpAnchoredSurface extends Scrollable(TpElement) {
     handle: { attribute: false },
     triggerIdentifier: { attribute: 'trigger-identifier' },
     defaultTriggerIdentifier: { attribute: 'default-trigger-identifier' },
-    onOpenChange: { attribute: false },
-    onOpenChangeComplete: { attribute: false },
     content: { attribute: false },
     portal: { type: Boolean },
     container: { attribute: false },

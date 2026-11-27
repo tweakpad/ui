@@ -152,10 +152,6 @@ export class TpLayers extends TpElement {
     messages: { attribute: false },
     renderLayer: { attribute: false },
     createLayerId: { attribute: false },
-    onLayersChange: { attribute: false },
-    onValueChange: { attribute: false },
-    onActiveChange: { attribute: false },
-    onExpandedChange: { attribute: false },
   };
   static override styles = [TpElement.styles, layersStyles];
 

@@ -74,9 +74,6 @@ export class TpResizablePanelGroup extends Scrollable(TpElement) {
     resizeTargetMinimumSize: { attribute: false },
     persistenceKey: { type: String, attribute: 'persistence-key' },
     persistenceAdapter: { attribute: false },
-    onSizesChange: { attribute: false },
-    onLayoutChange: { attribute: false },
-    onLayoutChanged: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

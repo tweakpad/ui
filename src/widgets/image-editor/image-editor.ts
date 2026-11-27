@@ -221,8 +221,6 @@ export class TpImageEditor extends TpFormElement<ImageEditorValue | undefined> {
     controls: { converter: controlsConverter },
     controlsPosition: { type: String, attribute: 'controls-position', reflect: true },
     messages: { attribute: false },
-    onValueChange: { attribute: false },
-    onValueCommitted: { attribute: false },
   };
   static override styles = [TpFormElement.styles, imageEditorStyles];
 

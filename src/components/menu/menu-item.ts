@@ -34,7 +34,6 @@ export class TpMenuItem extends TpElement {
     value: { type: String },
     nativeAction: { type: Boolean, attribute: 'native-action' },
     closeOnClick: { type: Boolean, attribute: 'close-on-click' },
-    onClick: { attribute: false },
   };
   static override styles = [
     TpElement.styles,

@@ -11,6 +11,9 @@ These rules apply to every component and widget.
   `autocomplete`, `colSpan` / `colspan`.
 - Internal reactive state is declared with `state: true` (leading underscore by
   convention) and never becomes an attribute. Object-valued inputs use `attribute: false`.
+- An `on…` callback (`onValueChange`, `onOpenChange`) is an ordinary class field, never a
+  reactive property: the element only calls it, so a new function is no reason to render. An
+  element that must act when its callback is replaced gives it a setter.
 - Boolean properties are positive (`showArrow`, `keepMounted`), except a few established
   negative names (`noAutofill`, `disableHoverablePopup`).
 - A property that controls a layout relationship uses Alignment terminology (`align`,

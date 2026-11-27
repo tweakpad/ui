@@ -19,7 +19,9 @@ the `<lane>` prop with its `onUpdate:<lane>` listener, as templates compile it.
      an own lane callback still runs, and `@tp-…` listeners receive the event once;
    - a transforming model publishes its own value; children Vue adds, removes and reorders
      inside an element that projects them (Dialog, a portaled Menu) stay consistent;
-   - three mount/unmount rounds raise no error.
+   - three mount/unmount rounds raise no error;
+   - a parent re-render with new inline handlers leaves an element whose own props did not
+     change idle (no update), and that element calls the handler of the latest render.
 3. `await vueBindings.lane('<tag>')` (or `lane('<tag>', '<lane>')` for a tag with two rows, such as
    `lane('tp-flow', 'path')`) runs one row of the lane matrix (`tests/fixtures/frameworks/lanes.ts`;
    `vueBindings.lanes` lists the tags): a controlled owner that writes the proposal back publishes it, one

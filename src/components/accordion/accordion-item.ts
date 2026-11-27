@@ -50,7 +50,6 @@ export class TpAccordionItem extends TpElement {
       reflect: true,
     },
     headingLevel: { type: Number, attribute: 'heading-level', reflect: true },
-    onOpenChange: { attribute: false },
   };
 
   static override styles = [
