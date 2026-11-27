@@ -4,10 +4,13 @@ import { surfaceEdge } from './edges.js';
 /** The code surface fill: the card fill mixed halfway toward muted (`dcp-roles-table-r8`). */
 export const codeSurfaceFill = 'color-mix(in oklab, var(--tp-card) 50%, var(--tp-muted))';
 
+/** The code surface's corner radius. */
+export const codeSurfaceRadius = 'var(--tp-radius-xl)';
+
 /** The code surface (`dcp-roles-table-r8`): border, extra-large radius, the code fill and its text. */
 export const codeSurface: PresentationDeclarations = {
   border: surfaceEdge.border,
-  'border-radius': 'var(--tp-radius-xl)',
+  'border-radius': codeSurfaceRadius,
   background: codeSurfaceFill,
   color: 'var(--tp-foreground)',
 };

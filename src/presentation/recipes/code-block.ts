@@ -7,6 +7,7 @@ import {
   codeInsetInline,
   codeSurface,
   codeSurfaceFill,
+  codeSurfaceRadius,
   codeTypography,
 } from './shared/code-surface.js';
 import { divider } from './shared/edges.js';
@@ -30,7 +31,7 @@ const tokenColors: PresentationRule[] = [
 ];
 
 /** The figure's end corners inside its border, which the Expand row follows. */
-const expandCorner = 'calc(var(--tp-radius-xl) - var(--tp-border-width))';
+const expandCorner = `calc(${codeSurfaceRadius} - var(--tp-border-width))`;
 
 /** The block size of the Expand control, which fills its row. */
 const expandControlSize = 'calc(var(--tp-control-height-sm) + var(--tp-space-1) * 2)';
