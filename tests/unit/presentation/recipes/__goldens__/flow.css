@@ -209,7 +209,7 @@
 /* flow-control */
 /* flow-run-summary */
 /* flow-palette */
-&[data-layout="sidebar"]{padding:var(--tp-space-3);border:var(--tp-border-width) var(--tp-border-style) var(--tp-edge);border-radius:var(--tp-radius-lg);color:var(--tp-popover-foreground);background:var(--tp-popover);box-shadow:var(--tp-shadow-lg)}
+&[data-layout="sidebar"]{padding:var(--tp-space-3);border:var(--tp-border-width) var(--tp-border-style) var(--tp-edge);border-radius:var(--tp-radius-lg);color:var(--tp-popover-foreground);background:var(--tp-popover);--tp-surface:var(--tp-popover);box-shadow:var(--tp-shadow-lg)}
 &[data-layout="sidebar"]{padding:0;overflow:clip;--_tp-flow-palette-offset:calc(var(--tp-space-10) * -1);opacity:1;translate:0 0}
 &[data-layout="sidebar"]{transition:opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale) * 1) var(--tp-easing-enter), translate calc(var(--tp-duration-normal) * var(--tp-motion-scale) * 1) var(--tp-easing-enter)}
 &[data-layout="sidebar"][data-ending-style]{transition-timing-function:var(--tp-easing-exit)}
@@ -247,7 +247,7 @@
 &{cursor:grab}
 &:active{cursor:grabbing}
 /* flow-inspector */
-&{padding:var(--tp-space-3);border:var(--tp-border-width) var(--tp-border-style) var(--tp-edge);border-radius:var(--tp-radius-lg);color:var(--tp-popover-foreground);background:var(--tp-popover);box-shadow:var(--tp-shadow-lg)}
+&{padding:var(--tp-space-3);border:var(--tp-border-width) var(--tp-border-style) var(--tp-edge);border-radius:var(--tp-radius-lg);color:var(--tp-popover-foreground);background:var(--tp-popover);--tp-surface:var(--tp-popover);box-shadow:var(--tp-shadow-lg)}
 &{padding:0;overflow:clip;--_tp-flow-inspector-offset:var(--tp-space-10);opacity:1;translate:0 0}
 &{transition:opacity calc(var(--tp-duration-normal) * var(--tp-motion-scale) * 1) var(--tp-easing-enter), translate calc(var(--tp-duration-normal) * var(--tp-motion-scale) * 1) var(--tp-easing-enter)}
 &[data-ending-style]{transition-timing-function:var(--tp-easing-exit)}
@@ -260,7 +260,7 @@
 /* flow-inspector-tabs */
 /* flow-inspector-body */
 /* flow-inspector-footer */
-&{background:var(--tp-muted);border-block-start:var(--tp-border-width) var(--tp-border-style) var(--tp-border)}
+&{background:var(--tp-muted);--tp-surface:var(--tp-muted);border-block-start:var(--tp-border-width) var(--tp-border-style) var(--tp-border)}
 /* flow-panel-top-start */
 &{transition:translate calc(var(--tp-duration-normal) * var(--tp-motion-scale) * 1) var(--tp-easing-standard)}
 /* flow-panel-top-center */

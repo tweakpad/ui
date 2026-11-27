@@ -23,6 +23,9 @@ interface Args {
   navigation: DataViewNavigation;
   selectionMode: DataViewSelectionMode;
   sorting: DataViewSorting;
+  striped: boolean;
+  borders: 'rows' | 'grid' | 'none';
+  variant: 'default' | 'outline';
   loading: boolean;
   rows: number;
 }
@@ -37,6 +40,9 @@ const meta: Meta<Args> = {
     navigation: 'cell',
     selectionMode: 'single',
     sorting: 'local',
+    striped: false,
+    borders: 'rows',
+    variant: 'default',
     loading: false,
     rows: 200,
   },
@@ -46,6 +52,9 @@ const meta: Meta<Args> = {
     navigation: { control: 'inline-radio', options: ['cell', 'row'] },
     selectionMode: { control: 'inline-radio', options: ['none', 'single'] },
     sorting: { control: 'inline-radio', options: ['local', 'manual'] },
+    striped: { control: 'boolean' },
+    borders: { control: 'inline-radio', options: ['rows', 'grid', 'none'] },
+    variant: { control: 'inline-radio', options: ['default', 'outline'] },
     loading: { control: 'boolean' },
     rows: { control: { type: 'number', min: 0, max: 20000, step: 100 } },
   },
@@ -56,6 +65,9 @@ const meta: Meta<Args> = {
       navigation=${args.navigation}
       selection-mode=${args.selectionMode}
       sorting=${args.sorting}
+      borders=${args.borders}
+      variant=${args.variant}
+      ?striped=${args.striped}
       ?loading=${args.loading}
       default-sort="name"
       style="block-size: calc(var(--tp-spacing) * 90)"

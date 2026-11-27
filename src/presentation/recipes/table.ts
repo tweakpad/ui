@@ -6,10 +6,13 @@ import {
   tableCellBox,
   tableCellFillLayer,
   tableCellLines,
+  tableFooterFill,
   tableHeaderBlockSize,
   tableHeaderType,
   tableLastColumn,
   tableLastRow,
+  tableOutline,
+  tableOverSurface,
   tablePinnedEndEdge,
   tablePinnedEndEdgeRtl,
   tablePinnedStartEdge,
@@ -19,14 +22,23 @@ import {
   tableStickyFooterEdge,
   tableStickyHeaderEdge,
   tableStripeFill,
+  tableSurface,
   tableText,
 } from './shared/table-surface.js';
 
 /** Whether a row's cells show their fill layer; each row resets it for nested tables. */
 const rowFill = '--_tp-table-row-fill';
+/** The fills of a cell's row and section, which a pinned cell repeats over the surface. */
+const rowPaint = '--_tp-table-row-paint';
+const sectionPaint = '--_tp-table-section-paint';
 const cells = [
   { declarations: { ...tableCellBox, 'vertical-align': 'middle', ...tableCellLines } },
-  { selector: '&[data-sticky-column]', declarations: { background: 'inherit' } },
+  {
+    selector: '&[data-sticky-column]',
+    declarations: {
+      background: `linear-gradient(var(${rowPaint}, transparent) 0 0), ${tableOverSurface(`var(${sectionPaint}, transparent)`)}`,
+    },
+  },
   // The innermost pinned cell while other columns scroll under its side: the pinned boundary.
   { selector: '&[data-sticky-edge="start"]', declarations: tablePinnedStartEdge },
   { selector: '&[data-sticky-edge="end"]', declarations: tablePinnedEndEdge },
@@ -43,6 +55,8 @@ export const tableAppearance: PresentationDictionary = {
   'table-borders-rows': [{ declarations: tableBorders('rows') }],
   'table-borders-grid': [{ declarations: tableBorders('grid') }],
   'table-borders-none': [{ declarations: tableBorders('none') }],
+  'table-variant-default': [],
+  'table-variant-outline': [{ declarations: tableOutline }],
   'table-table': [
     {
       declarations: {
@@ -53,6 +67,7 @@ export const tableAppearance: PresentationDictionary = {
         'border-spacing': '0',
         'caption-side': 'bottom',
         ...tableText,
+        [sectionPaint]: 'transparent',
       },
     },
   ],
@@ -68,30 +83,33 @@ export const tableAppearance: PresentationDictionary = {
     },
   ],
   'table-header': [
-    { declarations: { background: 'inherit' } },
+    // A pinned header covers the rows that scroll under it.
+    { selector: '&[data-sticky]', declarations: { background: tableSurface } },
     // While rows scroll under a sticky header, it casts the pinned shadow onto them.
     { selector: '&[data-sticky-edge="start"]', declarations: tableStickyHeaderEdge },
   ],
-  'table-body': [{ declarations: { background: 'inherit' } }],
+  'table-body': [],
   'table-footer': [
     {
       declarations: {
-        background: 'color-mix(in oklab, var(--tp-muted) 50%, var(--tp-background))',
+        [sectionPaint]: tableFooterFill,
+        background: `var(${sectionPaint})`,
         'font-weight': 'var(--tp-font-medium)',
       },
     },
+    { selector: '&[data-sticky]', declarations: { background: tableOverSurface(tableFooterFill) } },
     { selector: '&[data-sticky-edge="end"]', declarations: tableStickyFooterEdge },
   ],
   'table-row': [
-    { declarations: { background: 'inherit', [rowFill]: '0' } },
+    { declarations: { [rowPaint]: 'transparent', background: `var(${rowPaint})`, [rowFill]: '0' } },
     // Alternate body rows: one fill under all the row's cells, which a selected row replaces.
-    { selector: '&[data-stripe]', declarations: { background: tableStripeFill } },
+    { selector: '&[data-stripe]', declarations: { [rowPaint]: tableStripeFill } },
     { selector: '&:hover', declarations: { [rowFill]: '1' } },
     {
       selector:
         ':host([selection-presentation="row"]) &[data-selected], &[data-selection-presentation="row"][data-selected]',
       declarations: {
-        background: tableSelectedFill,
+        [rowPaint]: tableSelectedFill,
         [rowFill]: '0',
       },
     },

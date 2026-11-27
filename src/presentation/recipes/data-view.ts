@@ -9,6 +9,8 @@ import {
   tableHeaderBlockSize,
   tableHeaderType,
   tableLastColumn,
+  tableOutline,
+  tableOverSurface,
   tablePinnedEndEdge,
   tablePinnedEndEdgeRtl,
   tablePinnedStartEdge,
@@ -18,6 +20,7 @@ import {
   tableSelectedFill,
   tableSortedIndicator,
   tableStripeFill,
+  tableSurface,
   tableText,
 } from './shared/table-surface.js';
 
@@ -55,7 +58,7 @@ const pinned = (surface: string) => [
 ];
 
 /**
- * A dragged row or tile lifts onto the page surface with a shadow, in place of the top layer's
+ * A dragged row or tile lifts onto a floating surface with a shadow, in place of the top layer's
  * default frame; the drag feedback dims the copy it leaves in the list (the shared drag ghost).
  */
 const dragFeedback = [
@@ -64,7 +67,7 @@ const dragFeedback = [
     declarations: {
       border: 'none',
       'border-radius': 'var(--tp-radius-md)',
-      background: `linear-gradient(var(${rowFill}) 0 0), var(--tp-background)`,
+      background: `linear-gradient(var(${rowFill}) 0 0), var(--tp-popover)`,
       'box-shadow': 'var(--tp-shadow-lg)',
       overflow: 'hidden',
     },
@@ -98,13 +101,16 @@ export const dataViewAppearance: PresentationDictionary = {
   'data-view-borders-rows': [{ declarations: tableBorders('rows') }],
   'data-view-borders-grid': [{ declarations: tableBorders('grid') }],
   'data-view-borders-none': [{ declarations: tableBorders('none') }],
+  'data-view-variant-default': [],
+  // The frame clips the header and the scroller to its rounded corners.
+  'data-view-variant-outline': [{ declarations: { ...tableOutline, overflow: 'clip' } }],
   'data-view-viewport': [],
-  'data-view-header': [{ declarations: { background: 'var(--tp-background)' } }],
+  'data-view-header': [],
   'data-view-column-header': [
     { declarations: { ...tableCellBox, ...tableCellLines, ...tableHeaderType } },
     { selector: '&:last-child', declarations: tableLastColumn },
     { selector: '&[data-sortable]:hover', declarations: { color: 'var(--tp-foreground)' } },
-    ...pinned('var(--tp-background)'),
+    ...pinned(tableSurface),
     { selector: '&:focus-visible', declarations: insetFocusRing },
   ],
   'data-view-sort-indicator': [
@@ -139,14 +145,10 @@ export const dataViewAppearance: PresentationDictionary = {
     { declarations: { ...tableCellBox, ...tableCellLines } },
     { selector: '&:last-child', declarations: tableLastColumn },
     { selector: '&[data-row-header]', declarations: tableRowHeaderType },
-    ...pinned(`linear-gradient(var(${rowFill}) 0 0), var(--tp-background)`),
+    ...pinned(tableOverSurface(`var(${rowFill})`)),
     { selector: '&:focus-visible', declarations: insetFocusRing },
   ],
-  'data-view-state': [
-    { declarations: { background: 'var(--tp-background)' } },
-    // The loading Progress bar paints its own track.
-    { selector: '&[data-status="loading"]', declarations: { background: 'transparent' } },
-  ],
+  'data-view-state': [],
   'data-view-skeleton': [],
   'data-view-selection-box': [...checkboxRules],
   // Tiles take the rows' fills in the same order of strength, on a rounded surface.

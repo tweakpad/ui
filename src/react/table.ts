@@ -35,7 +35,8 @@ export type TableProps = ElementProps<
   | 'stickyFooter'
   | 'stickyHeader'
   | 'stickyStartColumns'
-  | 'striped',
+  | 'striped'
+  | 'variant',
   {
     onTpDiagnostic: CustomEvent<foundationServices.Diagnostic>;
   }

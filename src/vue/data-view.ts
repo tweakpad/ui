@@ -53,7 +53,8 @@ export const DataView = /*#__PURE__*/ createBinding(TpDataView, 'DataView', {
   | 'stickyEndColumns'
   | 'stickyStartColumns'
   | 'striped'
-  | 'value',
+  | 'value'
+  | 'variant',
   {
     'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
     'tp-retry': CustomEvent<NonNullable<unknown>>;

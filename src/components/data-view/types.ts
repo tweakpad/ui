@@ -49,6 +49,8 @@ export type DataViewNavigation = 'cell' | 'row';
 
 /** How the cells draw their lines: row lines, a grid of row and column lines, or none. */
 export type DataViewBorders = 'rows' | 'grid' | 'none';
+/** Whether the view draws the surface edge around itself, with rounded corners. */
+export type DataViewVariant = 'default' | 'outline';
 
 /** Row height, cell inset and text. */
 export type DataViewSize = 'sm' | 'default' | 'lg';
@@ -192,6 +194,7 @@ export interface DataViewPartStates<T = unknown> {
   'data-view': {
     readonly size: DataViewSize;
     readonly borders: DataViewBorders;
+    readonly variant: DataViewVariant;
     readonly navigation: DataViewNavigation;
     readonly loading: boolean;
     readonly state: 'rows' | 'loading' | 'empty' | 'error';

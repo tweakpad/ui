@@ -20,12 +20,7 @@ abstract class TablePart extends TpElement {
     css`
       :host {
         display: contents;
-        background: inherit;
         vertical-align: middle;
-      }
-
-      slot {
-        background: inherit;
       }
 
       /*

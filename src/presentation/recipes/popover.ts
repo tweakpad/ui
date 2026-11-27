@@ -11,6 +11,7 @@ export const popoverAppearance: PresentationDictionary = {
       declarations: {
         '--_tp-popup-spacing': 'var(--tp-space-2-5)',
         background: 'var(--tp-popover)',
+        '--tp-surface': 'var(--tp-popover)',
         color: 'var(--tp-popover-foreground)',
         gap: 'var(--tp-space-2-5)',
         'border-radius': 'var(--tp-radius-lg)',

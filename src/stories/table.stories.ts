@@ -13,6 +13,9 @@ const meta = {
     stickyFooter: { control: 'boolean' },
     stickyStartColumns: { control: { type: 'number', min: 0 } },
     stickyEndColumns: { control: { type: 'number', min: 0 } },
+    striped: { control: 'boolean' },
+    borders: { control: 'inline-radio', options: ['rows', 'grid', 'none'] },
+    variant: { control: 'inline-radio', options: ['default', 'outline'] },
   },
   render: (args) => renderTable(args),
 } satisfies Meta<TableArgs>;

@@ -11,12 +11,26 @@ import { rowEdge, surfaceEdge } from './edges.js';
 //   the cells read.
 // - Fills: alternating rows, a hovered row and a selected row each take their own fill, in that
 //   order of strength, so stripes never read as hover or selection.
+// - Surface: a table paints no surface of its own, so it sits on the page, a card or a dialog
+//   alike. Only the cells that stay put while others scroll under them (a sticky header or
+//   footer, pinned columns) are filled, with the surface the table sits on.
 
-/** The table's text and surface. */
+/** The table's text. */
 export const tableText: PresentationDeclarations = {
   'font-size': 'var(--tp-text-sm)',
   color: 'var(--tp-foreground)',
-  background: 'var(--tp-background)',
+};
+
+/** The surface a table sits on, which its sticky and pinned cells paint to cover scrolled cells. */
+export const tableSurface = 'var(--tp-surface)';
+
+/** A fill over the surface, for a cell that has to stay opaque. */
+export const tableOverSurface = (fill: string) => `linear-gradient(${fill} 0 0), ${tableSurface}`;
+
+/** The outline variant: the surface edge around the table, rounded by the radius token. */
+export const tableOutline: PresentationDeclarations = {
+  border: surfaceEdge.border,
+  'border-radius': 'var(--tp-radius-lg)',
 };
 
 /**
@@ -72,7 +86,7 @@ export const tableCellFillLayer: PresentationDeclarations = {
 const edgeSize = 'var(--tp-scroll-edge-fade-size)';
 const edgeIntensity = 'var(--tp-scroll-edge-fade-intensity)';
 const shade = (alpha: number) =>
-  `oklch(from var(--tp-background) calc(l * 0.2) c h / calc(${alpha} * ${edgeIntensity}))`;
+  `oklch(from ${tableSurface} calc(l * 0.2) c h / calc(${alpha} * ${edgeIntensity}))`;
 const pinnedShade = `light-dark(${shade(0.22)}, ${shade(0.9)})`;
 const pinnedShadow = `0 0 ${edgeSize} ${pinnedShade}`;
 const reach = `calc(${edgeSize} * -1)`;
@@ -130,7 +144,10 @@ export const tableRowHeaderType: PresentationDeclarations = {
 export const tableHeaderBlockSize = 'var(--tp-space-10)';
 
 /** An alternating row's fill: the lightest step. */
-export const tableStripeFill = 'color-mix(in oklab, var(--tp-muted) 45%, var(--tp-background))';
+export const tableStripeFill = 'color-mix(in oklab, var(--tp-muted) 45%, transparent)';
+
+/** A footer's fill: the muted tint, as translucent as a stripe so any surface shows through. */
+export const tableFooterFill = 'color-mix(in oklab, var(--tp-muted) 50%, transparent)';
 
 /** A hovered row's fill: stronger than a stripe; it reaches every cell, sticky cells included. */
 export const tableRowHover = 'var(--tp-muted)';

@@ -13,6 +13,7 @@ export const cardCoreAppearance: PresentationDictionary = {
       'border-radius': 'var(--tp-radius-xl)',
       color: 'var(--tp-card-foreground)',
       background: 'var(--tp-card)',
+      '--tp-surface': 'var(--tp-card)',
       'box-shadow': 'var(--tp-shadow-none)',
     }),
     rule({ 'border-width': '0' }, ':host([borders="off"]) &'),
@@ -28,14 +29,21 @@ export const cardCoreAppearance: PresentationDictionary = {
   'card-content': [
     rule({
       background: 'color-mix(in oklab, var(--tp-card) 50%, var(--tp-muted))',
+      '--tp-surface': 'color-mix(in oklab, var(--tp-card) 50%, var(--tp-muted))',
       'line-height': 'var(--tp-leading-normal)',
     }),
-    rule({ background: 'var(--tp-card)' }, ':host([section-colors="off"]) &'),
+    rule(
+      { background: 'var(--tp-card)', '--tp-surface': 'var(--tp-card)' },
+      ':host([section-colors="off"]) &',
+    ),
   ],
   'card-footer': [
     ...sectionFooterAppearance,
     rule({ 'border-width': '0' }, ':host([borders="off"]) &'),
-    rule({ background: 'var(--tp-card)' }, ':host([section-colors="off"]) &'),
+    rule(
+      { background: 'var(--tp-card)', '--tp-surface': 'var(--tp-card)' },
+      ':host([section-colors="off"]) &',
+    ),
   ],
   'card-title': [
     rule({

@@ -8,6 +8,9 @@ export interface TableArgs {
   stickyFooter: boolean;
   stickyStartColumns: number;
   stickyEndColumns: number;
+  striped: boolean;
+  borders: 'rows' | 'grid' | 'none';
+  variant: 'default' | 'outline';
 }
 export const tableDefaults: TableArgs = {
   label: 'Recent invoices',
@@ -17,6 +20,9 @@ export const tableDefaults: TableArgs = {
   stickyFooter: false,
   stickyStartColumns: 0,
   stickyEndColumns: 0,
+  striped: false,
+  borders: 'rows',
+  variant: 'default',
 };
 const invoices = [
   ['INV001', 'Paid', 'Credit card', 250],
@@ -215,6 +221,9 @@ export function renderTable(args: TableArgs, kind: TableExample = 'basic') {
     .stickyFooter=${args.stickyFooter}
     .stickyStartColumns=${args.stickyStartColumns}
     .stickyEndColumns=${args.stickyEndColumns}
+    .striped=${args.striped}
+    .borders=${args.borders}
+    .variant=${args.variant}
     style=${kind === 'sticky' ? 'max-block-size:calc(var(--tp-spacing) * 72);max-inline-size:calc(var(--tp-spacing) * 160)' : ''}
     >${tableContent(kind)}</tp-table
   >`;

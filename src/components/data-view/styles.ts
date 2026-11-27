@@ -183,7 +183,7 @@ export const dataViewStyles = [
     }
 
     .skeleton-cell[data-pinned] {
-      background: var(--tp-background);
+      background: var(--tp-surface);
     }
 
     .skeleton-cell tp-skeleton {

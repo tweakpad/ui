@@ -11,6 +11,7 @@ export const surfaceAppearance: readonly PresentationRule[] = [
     'border-radius': 'var(--tp-radius-lg)',
     color: 'var(--tp-popover-foreground)',
     background: 'var(--tp-popover)',
+    '--tp-surface': 'var(--tp-popover)',
     'box-shadow': 'var(--tp-shadow-lg)',
   }),
 ];
@@ -35,6 +36,7 @@ export const surfaceFooterLayout = {
 export const sectionFooterAppearance: readonly PresentationRule[] = [
   rule({
     background: 'var(--tp-muted)',
+    '--tp-surface': 'var(--tp-muted)',
     'border-block-start': divider.border,
   }),
 ];

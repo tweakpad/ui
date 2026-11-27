@@ -1302,7 +1302,8 @@ type Tags = {
     | 'stickyEndColumns'
     | 'stickyStartColumns'
     | 'striped'
-    | 'value',
+    | 'value'
+    | 'variant',
     {
       'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
       'tp-retry': CustomEvent<NonNullable<unknown>>;
@@ -4988,7 +4989,8 @@ type Tags = {
     | 'stickyFooter'
     | 'stickyHeader'
     | 'stickyStartColumns'
-    | 'striped',
+    | 'striped'
+    | 'variant',
     { 'tp-diagnostic': CustomEvent<foundationServices.Diagnostic> }
   >;
   'tp-table-body': Tag<

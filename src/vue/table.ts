@@ -36,7 +36,8 @@ export const Table = /*#__PURE__*/ createBinding(TpTable, 'Table', {
   | 'stickyFooter'
   | 'stickyHeader'
   | 'stickyStartColumns'
-  | 'striped',
+  | 'striped'
+  | 'variant',
   {
     'tp-diagnostic': CustomEvent<foundationServices.Diagnostic>;
   }

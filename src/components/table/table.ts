@@ -62,6 +62,7 @@ export class TpTable extends Scrollable(TpElement) {
     stickyEndColumns: { type: Number, attribute: 'sticky-end-columns' },
     striped: { type: Boolean, reflect: true },
     borders: { type: String, reflect: true },
+    variant: { type: String, reflect: true },
   };
   static override styles = [
     TpElement.styles,
@@ -82,10 +83,6 @@ export class TpTable extends Scrollable(TpElement) {
         inline-size: 100%;
         block-size: 100%;
         max-block-size: inherit;
-      }
-
-      slot {
-        background: inherit;
       }
 
       ::slotted(table) {
@@ -112,6 +109,8 @@ export class TpTable extends Scrollable(TpElement) {
   striped = false;
   /** The cell lines: row lines, a grid of row and column lines, or none. A flat appearance clears them. */
   borders: 'rows' | 'grid' | 'none' = 'rows';
+  /** `outline` draws the surface edge around the table and rounds its corners by the radius token. */
+  variant: 'default' | 'outline' = 'default';
   #native = false;
   /** The table overflows its region, which is then a focusable named region. */
   #scrollable = false;
@@ -338,6 +337,7 @@ export class TpTable extends Scrollable(TpElement) {
         layout: this.layout,
         selectionPresentation: this.selectionPresentation,
         borders: this.borders,
+        variant: this.variant,
       },
       {
         // Only a table that scrolls is a Tab stop, so keyboard users can scroll it.

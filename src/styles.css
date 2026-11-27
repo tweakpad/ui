@@ -8,6 +8,9 @@
 
   /* Semantic color pairs. */
   --tp-background: light-dark(#fff, #18181b);
+
+  /* The fill content sits on: the page here, and each surface (card, popover, dialog) sets its own. */
+  --tp-surface: var(--tp-background);
   --tp-foreground: light-dark(#18181b, #fafafa);
   --tp-card: light-dark(#fff, #202024);
   --tp-card-foreground: var(--tp-foreground);

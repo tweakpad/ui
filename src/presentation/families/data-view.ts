@@ -10,11 +10,12 @@ const definition: ComponentDefinition = {
   axes: [
     { name: 'size', values: ['sm', 'default', 'lg'], default: 'default' },
     { name: 'borders', values: ['rows', 'grid', 'none'], default: 'rows' },
+    { name: 'variant', values: ['default', 'outline'], default: 'default' },
   ],
   parts: [
     {
       name: 'data-view',
-      axes: ['size', 'borders'],
+      axes: ['size', 'borders', 'variant'],
       description:
         'The root: the scrolling grid, then the state layer; `data-status` names its state and `data-overflow` (`start`, `end`) the edges columns scroll past.',
     },

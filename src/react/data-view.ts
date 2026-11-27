@@ -51,7 +51,8 @@ export type DataViewProps<T = DataViewDefaults[0]> = ElementProps<
   | 'stickyEndColumns'
   | 'stickyStartColumns'
   | 'striped'
-  | 'value',
+  | 'value'
+  | 'variant',
   {
     onTpDiagnostic: CustomEvent<foundationServices.Diagnostic>;
     onTpRetry: CustomEvent<NonNullable<unknown>>;

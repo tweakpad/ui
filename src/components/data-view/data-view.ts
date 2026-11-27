@@ -50,6 +50,7 @@ import type {
   DataViewActivateDetail,
   DataViewFocusDetail,
   DataViewBorders,
+  DataViewVariant,
   DataViewCellContext,
   DataViewColumn,
   DataViewDragAndDrop,
@@ -184,6 +185,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
     sorting: { type: String },
     striped: { type: Boolean, reflect: true },
     borders: { type: String, reflect: true },
+    variant: { type: String, reflect: true },
     selectionMode: { type: String, attribute: 'selection-mode', reflect: true },
     selectionBehavior: { type: String, attribute: 'selection-behavior' },
     selectionCheckboxes: { type: Boolean, attribute: 'selection-checkboxes', reflect: true },
@@ -244,6 +246,8 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
   striped = false;
   /** The cell lines: row lines, a grid of row and column lines, or none. A flat appearance clears them. */
   borders: DataViewBorders = 'rows';
+  /** `outline` draws the surface edge around the view and rounds its corners by the radius token. */
+  variant: DataViewVariant = 'default';
   /** What arrow keys move: a cell, header cells included, or a whole row. */
   navigation: DataViewNavigation = 'cell';
   /** Row height, cell inset and text. */
@@ -1723,6 +1727,7 @@ export class TpDataView<T = unknown> extends Scrollable(TpElement) {
       {
         size: this.size,
         borders: this.borders,
+        variant: this.variant,
         navigation: this.navigation,
         loading: this.loading,
         state,

@@ -6,11 +6,14 @@ const definition: ComponentDefinition = {
   name: 'Table',
   tagName: 'tp-table',
   kind: 'presentational-primitive',
-  axes: [{ name: 'borders', values: ['rows', 'grid', 'none'], default: 'rows' }],
+  axes: [
+    { name: 'borders', values: ['rows', 'grid', 'none'], default: 'rows' },
+    { name: 'variant', values: ['default', 'outline'], default: 'default' },
+  ],
   parts: [
     {
       name: 'table',
-      axes: ['borders'],
+      axes: ['borders', 'variant'],
       description:
         'The overflow region that scrolls the table and holds its pinned edges; focusable while the table scrolls.',
     },
